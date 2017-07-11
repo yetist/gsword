@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/home/yetist/checkout/gswrod/build",
+    "command": "c++  -Ilib/gsword@sha -Ilib -I../lib -I/usr/include/sword -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -O2 -g -fPIC -MMD -MQ 'lib/gsword@sha/flatapi.cpp.o' -MF 'lib/gsword@sha/flatapi.cpp.o.d' -o 'lib/gsword@sha/flatapi.cpp.o' -c ../lib/flatapi.cpp",
+    "file": "../lib/flatapi.cpp"
+  }
+]

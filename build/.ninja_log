@@ -1,0 +1,8 @@
+# ninja log v5
+0	1932	0	gsword@sha/flatapi.cpp.o	76ab20eb185aa802
+1933	2007	0	libgsword.so	bb0a525296f7bb41
+0	201	0	build.ninja	ba3fd9bbf4dc36dd
+0	1913	0	lib/gsword@sha/flatapi.cpp.o	68fe727d808c903b
+1913	2007	0	lib/libgsword.so	e55dab8884f6e1ca
+0	1914	0	lib/gsword@sha/flatapi.cpp.o	68fe727d808c903b
+1914	1985	0	lib/libgsword.so	e55dab8884f6e1ca
