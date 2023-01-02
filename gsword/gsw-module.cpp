@@ -24,6 +24,7 @@
 #include <swmodule.h>
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
+#include "gsw-private.h"
 
 enum {
 	SEARCH_UPDATE,

@@ -22,6 +22,7 @@
 
 #include <versekey.h>
 #include "gsw-verse-key.h"
+#include "gsw-private.h"
 
 typedef struct _GswVerseKey        GswVerseKey;
 

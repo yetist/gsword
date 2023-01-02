@@ -31,8 +31,6 @@ G_BEGIN_DECLS
 #define GSW_TYPE_VERSE_KEY              (gsw_verse_key_get_type ())
 G_DECLARE_FINAL_TYPE (GswVerseKey, gsw_verse_key, GSW, VERSE_KEY, GObject);
 
-GType            gsw_verse_key_get_type           (void) G_GNUC_CONST;
-GswVerseKey*     gsw_verse_key_new                (gpointer data);
 gpointer         gsw_verse_key_get_data           (GswVerseKey *key);
 void             gsw_verse_key_set_verse          (GswVerseKey *key, gint iverse);
 gint             gsw_verse_key_get_verse          (GswVerseKey *key);

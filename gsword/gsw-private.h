@@ -23,11 +23,13 @@
 #ifndef __GSW_STATUS_REPORTER_PRIV_H__ 
 #define __GSW_STATUS_REPORTER_PRIV_H__  1
 
+#include "gsw-verse-key.h"
 #include "gsw-status-reporter.h"
 
 G_BEGIN_DECLS
 
-gpointer gsw_status_reporter_get_internal (GswStatusReporter *reporter);
+GswVerseKey*  gsw_verse_key_new                (gpointer data);
+gpointer      gsw_status_reporter_get_internal (GswStatusReporter *reporter);
 
 G_END_DECLS
 
