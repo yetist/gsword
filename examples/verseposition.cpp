@@ -32,7 +32,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-        const char *modName = "HunKar";
+        const char *modName = "KJV";
         SWMgr library;
         SWModule *book = library.getModule(modName);
         if (!book) {

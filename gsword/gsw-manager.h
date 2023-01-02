@@ -34,6 +34,7 @@ GswManager*   gsw_manager_new              (void);
 GswManager*   gsw_manager_new_with_path    (const gchar *path);
 void          gsw_manager_delete           (GswManager *manager);
 const gchar*  gsw_manager_get_version      (GswManager *manager);
+GList*        gsw_manager_get_modules      (GswManager *manager);
 GList *       gsw_manager_get_modinfo_list (GswManager *manager);
 GswModule*    gsw_manager_get_module_by_name (GswManager *manager, const gchar *moduleName);
 const gchar*  gsw_manager_get_prefix_path (GswManager *manager);

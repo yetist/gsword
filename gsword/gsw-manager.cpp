@@ -159,6 +159,23 @@ const gchar* gsw_manager_get_version (GswManager *manager)
 	return v.currentVersion;
 }
 
+GList* gsw_manager_get_modules (GswManager *manager)
+{
+	WebMgr *mgr;
+	GList *modlist = NULL;
+
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
+
+	for (sword::ModMap::iterator it = mgr->Modules.begin(); it != mgr->Modules.end(); ++it) {
+		sword::SWModule  *mod  = it->second;
+		GswModule *module = gsw_module_new(mod);
+		modlist = g_list_append(modlist, module);
+	}
+	return modlist;
+}
+
 GList* gsw_manager_get_modinfo_list (GswManager *manager)
 {
 	WebMgr *mgr;

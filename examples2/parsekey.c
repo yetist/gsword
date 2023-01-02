@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	 	list = gsw_manager_get_modinfo_list(manager);
 		for (l=list; l != NULL; l=l->next) {
 			GswModinfo *info;
-			info = l->data;
+			info = (GswModinfo*) l->data;
 			fprintf(stderr, "[%s]\t - %s\n", gsw_modinfo_get_name (info), gsw_modinfo_get_description (info));
 		}
 		gsw_manager_delete (manager);
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	printf("Parsing: %s\n", argv[2]);
 	printf("==========================\n");
 	for (l=li; l != NULL; l = l->next) {
-		printf("%s\n", l->data);
+		printf("%s\n", (gchar*) l->data);
 	}
 	printf("==========================\n");
 

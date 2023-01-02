@@ -442,6 +442,22 @@ const gchar* gsw_module_get_name (GswModule *module)
 	return mod->getName();
 }
 
+const gchar* gsw_module_get_type (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
+	return mod->getType();
+}
+
 const gchar* gsw_module_get_description (GswModule *module)
 {
 	HandleSWModule *hmod;
@@ -558,8 +574,7 @@ void gsw_module_begin (GswModule *module)
 	mod->setPosition(sword::TOP);
 }
 
-
-const gchar* gsw_module_strip_text (GswModule *module)
+gchar* gsw_module_strip_text (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
@@ -642,7 +657,6 @@ void gsw_module_set_raw_entry (GswModule *module, const gchar *entryBuffer)
 	mod->setEntry(entryBuffer);
 }
 
-
 const gchar* gsw_module_get_config_entry (GswModule *module, const gchar *key)
 {
 
@@ -696,4 +710,70 @@ gboolean gsw_module_has_search_framework (GswModule *module)
 	}
 
 	return (mod->hasSearchFramework() && mod->isSearchOptimallySupported("God", -4, 0, 0));
+}
+
+GswVerseKey* gsw_module_get_verse_key (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return FALSE;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return FALSE;
+	}
+
+	return gsw_verse_key_new (mod->getKey());
+}
+
+GswVerseKey* gsw_module_create_key (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return FALSE;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return FALSE;
+	}
+
+	return gsw_verse_key_new (mod->createKey());
+}
+
+void gsw_module_set_skip_consecutive_links (GswModule *module, gboolean val)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod -> setSkipConsecutiveLinks(val);
+}
+
+void gsw_module_set_position (GswModule *module, GswPosition pos)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod->setPosition(SW_POSITION((char) pos));
 }

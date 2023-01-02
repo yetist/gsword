@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 		printf("[ %s ]\n", gsw_module_get_key_text(module));
 		printf("%s", gsw_module_render_text(module));
 		printf("\n\nEnter new cipher key: ");
-		scanf("%[^\n]", key);
+		if (scanf("%[^\n]", key)){};
 		printf("\nSetting key to: %s",  key);
 		gsw_manager_set_cipherkey(manager, argv[1], key);
 	}

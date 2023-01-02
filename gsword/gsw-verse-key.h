@@ -24,6 +24,7 @@
 #define __GSW_VERSE_KEY_H__  1
 
 #include <glib-object.h>
+#include <gsw-enum.h>
 
 G_BEGIN_DECLS
 
@@ -32,10 +33,27 @@ G_DECLARE_FINAL_TYPE (GswVerseKey, gsw_verse_key, GSW, VERSE_KEY, GObject);
 
 GType            gsw_verse_key_get_type           (void) G_GNUC_CONST;
 GswVerseKey*     gsw_verse_key_new                (gpointer data);
+gpointer         gsw_verse_key_get_data           (GswVerseKey *key);
 void             gsw_verse_key_set_verse          (GswVerseKey *key, gint iverse);
 gint             gsw_verse_key_get_verse          (GswVerseKey *key);
 gint             gsw_verse_key_get_chapter        (GswVerseKey *key);
+void             gsw_verse_key_set_chapter        (GswVerseKey *key, gint ichapter);
 gint             gsw_verse_key_get_book           (GswVerseKey *key);
+gint             gsw_verse_key_get_verse_max      (GswVerseKey *key);
+const gchar*     gsw_verse_key_get_text           (GswVerseKey *key);
+void             gsw_verse_key_set_text           (GswVerseKey *key, const gchar* ikey);
+gboolean         gsw_verse_key_pop_error          (GswVerseKey *key);
+void             gsw_verse_key_set_auto_normalize (GswVerseKey *key, gboolean iautonorm);
+void             gsw_verse_key_set_intros         (GswVerseKey *key, gboolean val);
+void             gsw_verse_key_set_lower_bound    (GswVerseKey *key, GswVerseKey *akey);
+void             gsw_verse_key_set_position       (GswVerseKey *key, GswPosition pos);
+void             gsw_verse_key_set_upper_bound    (GswVerseKey *key, GswVerseKey *akey);
+void             gsw_verse_key_set_testament      (GswVerseKey *key, guint itestament);
+void             gsw_verse_key_clear_bounds       (GswVerseKey *key);
+const gchar*     gsw_verse_key_get_range_text     (GswVerseKey *key);
+void             gsw_verse_key_prev               (GswVerseKey *key);
+gint             gsw_verse_key_get_chapter_max    (GswVerseKey *key);
+const gchar*     gsw_verse_key_get_versification_system    (GswVerseKey *key);
 
 G_END_DECLS
 

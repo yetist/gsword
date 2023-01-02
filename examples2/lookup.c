@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <gsword.h>
 
 int main(int argc, char **argv)

@@ -3,11 +3,11 @@ all_sources = ['ciphercng.c',
 'lookup.c',
 'parsekey.c',
 'search.c',
-'lastVerseInChapter.cpp',
-'simplechapter.cpp',
-'swmgrex.cpp',
-'versenorm.cpp',
-'verseposition.cpp',
+'lastVerseInChapter.c',
+'simplechapter.c',
+'swmgrex.c',
+'versenorm.c',
+'verseposition.c',
 'verseranges.cpp' ]
 
 foreach src : all_sources

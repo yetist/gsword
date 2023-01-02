@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 		vk->setVerse(vk->getVerseMax());
 		SWBuf text = book->stripText();
 		text = text.trim();
-		if (text.endsWith(",")) {
+		if (text.endsWith(".")) {
 			cout << vk->getText() << ":\n\n";
 			cout << text << endl;
 		}

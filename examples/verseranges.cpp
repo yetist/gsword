@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 
 	cout << "\n";
 
-	const char *modName = "KJVA";
+	const char *modName = "KJV";
 	SWMgr manager;
 	SWModule *bible = manager.getModule(modName);
 	if (!bible) {

@@ -29,5 +29,6 @@
 #include <gsword/gsw-module.h>
 #include <gsword/gsw-search-hit.h>
 #include <gsword/gsw-status-reporter.h>
+#include <gsword/gsw-enum.h>
 
 #endif /* __GSWORD_H__ */
