@@ -26,9 +26,62 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
+typedef struct _GswModule             GswModule;
+
+struct _GswModule
+{
+  GObject          object;
+  sword::SWModule *mod;
+  PercentCallback  callback;
+  void            *userdata;
+};
+
+enum {
+    LAST_SIGNAL
+};
+
+G_DEFINE_TYPE (GswModule, gsw_module, G_TYPE_OBJECT);
+
 static void percent(gchar, gpointer) {
 }
 
+void gsw_module_dispose (GObject *object)
+{
+	GswModule* module = GSW_MODULE(object);
+	if (module->mod != NULL)
+	{
+		delete module->mod;
+		module->mod = NULL;
+	}
+
+	G_OBJECT_CLASS (gsw_module_parent_class)->dispose (object);
+}
+
+static void
+gsw_module_class_init (GswModuleClass *klass)
+{
+    GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+	gobject_class->dispose = gsw_module_dispose;
+}
+
+static void
+gsw_module_init (GswModule *module)
+{
+	module->mod = NULL;
+  	module->callback = percent;
+  	module->userdata = NULL;
+}
+
+GswModule* gsw_module_new (gpointer data)
+{
+	GswModule *module;
+	module = (GswModule*) g_object_new (GSW_TYPE_MODULE, NULL);
+	module->mod = (sword::SWModule*) data;
+	return module;
+}
+
+#if 0
 namespace {
 	using namespace sword;
 	class HandleSWModule {
@@ -56,74 +109,41 @@ namespace {
 			}
 	};
 }
-
-GswModule* gsw_module_new (gpointer data)
-{
-	SWModule *mod;
-	GswModule* module;
-
-	mod = (SWModule*) data;
-	module = new HandleSWModule(mod);
-
-	return (GswModule*) module;
-}
+#endif
 
 void  gsw_module_terminate_search (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_if_fail(module != NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->terminateSearch = true;
+	module->mod->terminateSearch = true;
 }
 
 void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, gpointer userdata)
 {
-	HandleSWModule *hmod;
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-
-	hmod->setPercentFunc(func);
-	hmod->setPercentUserdata(userdata);
+	g_return_if_fail(module != NULL);
+	module->callback = func;
+	module->userdata = userdata;
 }
 
 GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearchType searchType, glong flags, const gchar *scope)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
+	g_return_val_if_fail(module != NULL, NULL);
 
 	sword::ListKey lscope;
 	sword::ListKey result;
 	if (scope != NULL && strlen(scope) > 0) {
-		sword::SWKey *p = mod->createKey();
-		sword::VerseKey *parser = SWDYNAMIC_CAST(VerseKey, p);
+		sword::SWKey *p = module->mod->createKey();
+		sword::VerseKey *parser = SWDYNAMIC_CAST(sword::VerseKey, p);
 		if (!parser) {
 			delete p;
-			parser = new VerseKey();
+			parser = new sword::VerseKey();
 		}
-		*parser = mod->getKeyText();
+		*parser = module->mod->getKeyText();
 		lscope = parser->parseVerseList(scope, *parser, true);
-		result = mod->search(searchString, searchType, flags, &lscope, 0, hmod->callback, hmod->userdata);
+		result = module->mod->search(searchString, searchType, flags, &lscope, 0, module->callback, module->userdata);
 		delete parser;
 	} else {
-		result = mod->search(searchString, searchType, flags, 0, 0, hmod->callback, hmod->userdata);
+		result = module->mod->search(searchString, searchType, flags, 0, 0, module->callback, module->userdata);
 	}
 
 	int count = 0;
@@ -138,7 +158,7 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
 		GswSearchHit *hit;
-		hit = gsw_search_hit_new(mod->getName(), assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
+		hit = gsw_search_hit_new(module->mod->getName(), sword::assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
 		results = g_list_append(results, hit);
 		i++;
 		if (i >= count) break;
@@ -148,57 +168,27 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 
 gboolean gsw_module_pop_error (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, FALSE);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return FALSE;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return FALSE;
-	}
-
-	return mod->popError();
+	return module->mod->popError();
 }
 
 long gsw_module_get_entry_size (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, 0);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return 0;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return 0;
-	}
-
-	return mod->getEntrySize();
+	return module->mod->getEntrySize();
 }
 
 GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, const gchar *level2,
 		const gchar *level3, gboolean filteredBool)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, 0);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return 0;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return 0;
-	}
+	module->mod->renderText();	// force parse
+	std::vector<sword::SWBuf> results;
 
-	mod->renderText();	// force parse
-	std::vector<SWBuf> results;
-
-	sword::AttributeTypeList &entryAttribs = mod->getEntryAttributes();
+	sword::AttributeTypeList &entryAttribs = module->mod->getEntryAttributes();
 	sword::AttributeTypeList::iterator i1Start, i1End;
 	sword::AttributeList::iterator i2Start, i2End;
 	sword::AttributeValue::iterator i3Start, i3End;
@@ -248,10 +238,10 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 	GList *attributes = NULL;
 	for (int i = 0; i < (int)results.size(); i++) {
 		if (filteredBool) {
-			attributes = g_list_append(attributes, g_strdup(assureValidUTF8(mod->renderText(results[i].c_str())).c_str()));
+			attributes = g_list_append(attributes, g_strdup(sword::assureValidUTF8(module->mod->renderText(results[i].c_str())).c_str()));
 		}
 		else {
-			attributes = g_list_append(attributes, g_strdup(assureValidUTF8(results[i].c_str()).c_str()));
+			attributes = g_list_append(attributes, g_strdup(sword::assureValidUTF8(results[i].c_str()).c_str()));
 		}
 	}
 
@@ -260,27 +250,17 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 
 GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 	GList *list = NULL;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-	sword::VerseKey *parser = dynamic_cast<VerseKey *>(mod->getKey());
+	sword::VerseKey *parser = dynamic_cast<sword::VerseKey *>(module->mod->getKey());
 	if (parser) {
 		sword::ListKey result;
 		result = parser->parseVerseList(keyText, *parser, true);
 		for (result = sword::TOP; !result.popError(); result++) {
-			list = g_list_append(list, g_strdup(assureValidUTF8(VerseKey(result).getOSISRef())));
+			list = g_list_append(list, g_strdup(sword::assureValidUTF8(sword::VerseKey(result).getOSISRef())));
 		}
 	} else {
-		list = g_list_append(list, g_strdup(assureValidUTF8(keyText)));
+		list = g_list_append(list, g_strdup(sword::assureValidUTF8(keyText)));
 	}
 
 	return list;
@@ -293,20 +273,10 @@ GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
 void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_if_fail(module != NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-
-	sword::SWKey *key = mod->getKey();
-	sword::VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, key);
+	sword::SWKey *key = module->mod->getKey();
+	sword::VerseKey *vkey = SWDYNAMIC_CAST(sword::VerseKey, key);
 	if (vkey) {
 		if ((*keyText=='+' || *keyText=='-')) {
 			if (!sword::stricmp(keyText+1, "book")) {
@@ -325,44 +295,24 @@ void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 			return;
 		}
 	}
-	mod->setKey(keyText);
+	module->mod->setKey(keyText);
 }
 
 const gchar*  gsw_module_get_key_text (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	return mod->getKeyText();
+	return module->mod->getKeyText();
 }
 
 gboolean gsw_module_has_key_children (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
 	gboolean retVal = FALSE;
+	g_return_val_if_fail(module != NULL, FALSE);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return FALSE;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return FALSE;
-	}
+	sword::SWKey *key = module->mod->getKey();
 
-	sword::SWKey *key = mod->getKey();
-
-	TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
+	sword::TreeKeyIdx *tkey = SWDYNAMIC_CAST(sword::TreeKeyIdx, key);
 	if (tkey) {
 		retVal = tkey->hasChildren() ? TRUE : FALSE;
 	}
@@ -374,25 +324,15 @@ gboolean gsw_module_has_key_children (GswModule *module)
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
 GList* gsw_module_get_key_children (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
+	g_return_val_if_fail(module != NULL, NULL);
 
 	GList *list = NULL;
 
-	sword::SWKey *key = mod->getKey();
+	sword::SWKey *key = module->mod->getKey();
 
-	sword::VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, key);
+	sword::VerseKey *vkey = SWDYNAMIC_CAST(sword::VerseKey, key);
 	if (vkey) {
-		SWBuf num;
+		sword::SWBuf num;
 		num.appendFormatted("%d", vkey->getTestament());
 		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
@@ -413,11 +353,11 @@ GList* gsw_module_get_key_children (GswModule *module)
 		list = g_list_append(list, g_strdup(vkey->getBookName()));
 		list = g_list_append(list, g_strdup(vkey->getOSISRef()));
 	} else {
-		TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
+		sword::TreeKeyIdx *tkey = SWDYNAMIC_CAST(sword::TreeKeyIdx, key);
 		if (tkey) {
 			if (tkey->firstChild()) {
 				do {
-					list = g_list_append(list,  g_strdup(assureValidUTF8(tkey->getLocalName())));
+					list = g_list_append(list,  g_strdup(sword::assureValidUTF8(tkey->getLocalName())));
 				} while (tkey->nextSibling());
 				tkey->parent();
 			}
@@ -428,352 +368,151 @@ GList* gsw_module_get_key_children (GswModule *module)
 
 const gchar* gsw_module_get_name (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-	return mod->getName();
+	g_return_val_if_fail(module != NULL, NULL);
+	return module->mod->getName();
 }
 
-const gchar* gsw_module_get_type (GswModule *module)
+const gchar* gsw_module_get_mod_type (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-	return mod->getType();
+	g_return_val_if_fail(module != NULL, NULL);
+	return module->mod->getType();
 }
 
 const gchar* gsw_module_get_description (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	return mod->getDescription();
+	return module->mod->getDescription();
 }
 
-const gchar* gsw_module_get_category (GswModule *module)
+gchar* gsw_module_get_category (GswModule *module)
 {
-	static SWBuf type;
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
+	const gchar* type;
+	gchar* category;
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
+	type = gsw_module_get_mod_type(module);
+	category =  gsw_module_get_config_entry (module, "Category");
+	if (category != NULL) {
+		return category;
+	} else {
+		return g_strdup(type);
 	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	type = mod->getType();
-	SWBuf cat = mod->getConfigEntry("Category");
-	if (cat.length() > 0)
-		type = cat;
-
-	return type.c_str();
 }
 
 const gchar* gsw_module_get_key_parent  (GswModule *module)
 {
-	static SWBuf retVal;
-	HandleSWModule *hmod;
-	SWModule *mod;
+	static sword::SWBuf retVal;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	sword::SWKey *key = mod->getKey();
+	sword::SWKey *key = module->mod->getKey();
 
 	retVal = "";
 
-	TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
+	sword::TreeKeyIdx *tkey = SWDYNAMIC_CAST(sword::TreeKeyIdx, key);
 	if (tkey) {
 		if (tkey->parent()) {
 			retVal = tkey->getText();
 		}
 	}
-	return assureValidUTF8(retVal.c_str());
+	return sword::assureValidUTF8(retVal.c_str());
 }
 
 void gsw_module_previous (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->decrement();
+	g_return_if_fail(module != NULL);
+	module->mod->decrement();
 }
 
 void gsw_module_next (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->increment();
+	g_return_if_fail(module != NULL);
+	module->mod->increment();
 }
 
 void gsw_module_begin (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->setPosition(sword::TOP);
+	g_return_if_fail(module != NULL);
+	module->mod->setPosition(sword::TOP);
 }
 
 gchar* gsw_module_strip_text (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-	return g_strdup(assureValidUTF8((const char *)mod->stripText()));
+	g_return_val_if_fail(module != NULL, NULL);
+	return g_strdup(sword::assureValidUTF8((const char *)module->mod->stripText()));
 }
 
-const gchar* gsw_module_render_text (GswModule *module)
+gchar* gsw_module_render_text (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	return g_strdup(assureValidUTF8((const char *)mod->renderText().c_str()));
+	g_return_val_if_fail(module != NULL, NULL);
+	return g_strdup(sword::assureValidUTF8((const char *)module->mod->renderText().c_str()));
 }
 
 // CSS styles associated with this text
-const gchar* gsw_module_get_render_header (GswModule *module)
+gchar* gsw_module_get_render_header (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-	return g_strdup(assureValidUTF8(((const char *)(mod->getRenderHeader() ? mod->getRenderHeader():""))));
+	g_return_val_if_fail(module != NULL, NULL);
+	return g_strdup(sword::assureValidUTF8(((const char *)(module->mod->getRenderHeader() ? module->mod->getRenderHeader():""))));
 }
 
-const gchar* gsw_module_get_raw_entry (GswModule *module)
+gchar* gsw_module_get_raw_entry (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	return g_strdup(assureValidUTF8(((const char *)mod->getRawEntry())));
+	return g_strdup(sword::assureValidUTF8(((const char *)module->mod->getRawEntry())));
 }
 
 void gsw_module_set_raw_entry (GswModule *module, const gchar *entryBuffer)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->setEntry(entryBuffer);
+	g_return_if_fail(module != NULL);
+	module->mod->setEntry(entryBuffer);
 }
 
-const gchar* gsw_module_get_config_entry (GswModule *module, const gchar *key)
+gchar* gsw_module_get_config_entry (GswModule *module, const gchar *key)
 {
+	g_return_val_if_fail(module != NULL, NULL);
 
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return NULL;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return NULL;
-	}
-
-	if (mod->getConfigEntry(key) != NULL)
-		return g_strdup(assureValidUTF8(mod->getConfigEntry(key)).c_str());
+	if (module->mod->getConfigEntry(key) != NULL)
+		return g_strdup(sword::assureValidUTF8(module->mod->getConfigEntry(key)).c_str());
 	else
 		return NULL;
 }
 
 void gsw_module_delete_search_framework (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->deleteSearchFramework(); 
+	g_return_if_fail(module != NULL);
+	module->mod->deleteSearchFramework(); 
 }
 
 gboolean gsw_module_has_search_framework (GswModule *module)
 {
+	g_return_val_if_fail(module != NULL, FALSE);
 
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return FALSE;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return FALSE;
-	}
-
-	return (mod->hasSearchFramework() && mod->isSearchOptimallySupported("God", -4, 0, 0));
+	return (module->mod->hasSearchFramework() && module->mod->isSearchOptimallySupported("God", -4, 0, 0));
 }
 
 GswVerseKey* gsw_module_get_verse_key (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return FALSE;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return FALSE;
-	}
-
-	return gsw_verse_key_new (mod->getKey());
+	return gsw_verse_key_new (module->mod->getKey());
 }
 
 GswVerseKey* gsw_module_create_key (GswModule *module)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
+	g_return_val_if_fail(module != NULL, NULL);
 
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return FALSE;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return FALSE;
-	}
-
-	return gsw_verse_key_new (mod->createKey());
+	return gsw_verse_key_new (module->mod->createKey());
 }
 
 void gsw_module_set_skip_consecutive_links (GswModule *module, gboolean val)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod -> setSkipConsecutiveLinks(val);
+	g_return_if_fail(module != NULL);
+	module->mod -> setSkipConsecutiveLinks(val);
 }
 
 void gsw_module_set_position (GswModule *module, GswPosition pos)
 {
-	HandleSWModule *hmod;
-	SWModule *mod;
-
-	hmod = (HandleSWModule *) module;
-	if (!hmod) {
-		return;
-	}
-	mod = hmod->mod;
-	if (!mod) {
-		return;
-	}
-	mod->setPosition(SW_POSITION((char) pos));
+	g_return_if_fail(module != NULL);
+	module->mod->setPosition(sword::SW_POSITION((char) pos));
 }

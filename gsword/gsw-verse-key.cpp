@@ -51,9 +51,9 @@ static void gsw_verse_key_class_init (GswVerseKeyClass *klass)
 	gobject_class->dispose = gsw_verse_key_dispose;
 }
 
-static void gsw_verse_key_init (GswVerseKey *verse_key)
+static void gsw_verse_key_init (GswVerseKey *key)
 {
-	verse_key->vkey = NULL;
+	key->vkey = NULL;
 }
 
 GswVerseKey* gsw_verse_key_new (gpointer data)

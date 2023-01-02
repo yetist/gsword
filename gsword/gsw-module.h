@@ -22,13 +22,16 @@
 #ifndef __GSW_MODULE_H__ 
 #define __GSW_MODULE_H__  1
 
-#include <glib.h>
+#include <glib-object.h>
 #include "gsw-verse-key.h"
 #include "gsw-enum.h"
 
 G_BEGIN_DECLS
 
-typedef void GswModule;
+#define GSW_TYPE_MODULE              (gsw_module_get_type ())
+G_DECLARE_FINAL_TYPE (GswModule, gsw_module, GSW, MODULE, GObject)
+
+//typedef void GswModule;
 
 typedef enum
 {
@@ -41,6 +44,7 @@ typedef enum
 
 typedef void (*PercentCallback) (gchar, gpointer);
 
+GType        gsw_module_get_type           (void) G_GNUC_CONST;
 GswModule*   gsw_module_new                     (gpointer data);
 void         gsw_module_terminate_search        (GswModule *module);
 void         gsw_module_set_percent_callback    (GswModule *module, PercentCallback func, gpointer userdata);
@@ -55,20 +59,20 @@ const gchar* gsw_module_get_key_text            (GswModule *module);
 gboolean     gsw_module_has_key_children        (GswModule *module);
 GList*       gsw_module_get_key_children        (GswModule *module);
 const gchar* gsw_module_get_name                (GswModule *module);
-const gchar* gsw_module_get_type                (GswModule *module);
+const gchar* gsw_module_get_mod_type            (GswModule *module);
 const gchar* gsw_module_get_description         (GswModule *module);
-const gchar* gsw_module_get_category            (GswModule *module);
+gchar*       gsw_module_get_category            (GswModule *module);
 const gchar* gsw_module_get_key_parent          (GswModule *module);
 GswVerseKey* gsw_module_get_verse_key           (GswModule *module);
 void         gsw_module_previous                (GswModule *module);
 void         gsw_module_next                    (GswModule *module);
 void         gsw_module_begin                   (GswModule *module);
 gchar*       gsw_module_strip_text              (GswModule *module);
-const gchar* gsw_module_render_text             (GswModule *module);
-const gchar* gsw_module_get_render_header       (GswModule *module);
-const gchar* gsw_module_get_raw_entry           (GswModule *module);
+gchar*       gsw_module_render_text             (GswModule *module);
+gchar*       gsw_module_get_render_header       (GswModule *module);
+gchar*       gsw_module_get_raw_entry           (GswModule *module);
 void         gsw_module_set_raw_entry           (GswModule *module, const gchar *entryBuffer);
-const gchar* gsw_module_get_config_entry        (GswModule *module, const gchar *key);
+gchar*       gsw_module_get_config_entry        (GswModule *module, const gchar *key);
 void         gsw_module_delete_search_framework (GswModule *module);
 gboolean     gsw_module_has_search_framework    (GswModule *module);
 GswVerseKey* gsw_module_create_key              (GswModule *module);
