@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
 	for (l = list; l != NULL; l=l->next) {
 		module = (GswModule*) l->data;
-		printf("%s|%s\n", gsw_module_get_mod_name(module), gsw_module_get_mod_type(module));
+		printf("%s|%s\n", gsw_module_get_mod_name(module), gsw_module_get_mod_type_str(module));
 	}
 	l = list;
 	module = (GswModule*) l->data;

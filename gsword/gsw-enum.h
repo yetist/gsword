@@ -35,6 +35,7 @@ typedef enum
 } GswPosition;
 
 typedef enum {
+    GSW_MODTYPE_UNKNOWN,
 	GSW_MODTYPE_BIBLES,
 	GSW_MODTYPE_COMMENTARIES,
 	GSW_MODTYPE_LEXDICTS,

@@ -352,11 +352,30 @@ const gchar* gsw_module_get_mod_name (GswModule *module)
 	return priv->module->getName();
 }
 
-const gchar* gsw_module_get_mod_type (GswModule *module)
+const gchar* gsw_module_get_mod_type_str (GswModule *module)
 {
 	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
 	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 	return priv->module->getType();
+}
+
+GSWModType gsw_module_get_mod_type (GswModule *module)
+{
+	g_return_val_if_fail(GSW_IS_MODULE(module), GSW_MODTYPE_UNKNOWN);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	const gchar* type = priv->module->getType();
+	if (strcmp(type, "Biblical Texts") == 0)
+		return GSW_MODTYPE_BIBLES;
+	else if (strcmp(type, "Commentaries") == 0)
+		return GSW_MODTYPE_COMMENTARIES;
+	else if (strcmp(type, "Lexicons / Dictionaries") == 0)
+		return GSW_MODTYPE_LEXDICTS;
+	else if (strcmp(type, "Generic Books") == 0)
+		return GSW_MODTYPE_GENBOOKS;
+	else if (strcmp(type, "Daily Devotional") == 0)
+		return GSW_MODTYPE_DAILYDEVOS;
+	else
+		return GSW_MODTYPE_UNKNOWN;
 }
 
 const gchar* gsw_module_get_mod_description (GswModule *module)
@@ -372,7 +391,7 @@ gchar* gsw_module_get_mod_category (GswModule *module)
 	const gchar* type;
 	gchar* category;
 
-	type = gsw_module_get_mod_type(module);
+	type = gsw_module_get_mod_type_str(module);
 	category =  gsw_module_get_config_entry (module, "Category");
 	if (category != NULL) {
 		return category;
