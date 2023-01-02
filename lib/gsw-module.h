@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 
 typedef void GswModule;
 
-typedef struct _GswSearchHit GswSearchHit;
 typedef enum
 {
 	MODULE_SEARCH_TYPE_REGEX     = 1L,
@@ -39,21 +38,16 @@ typedef enum
 	MODULE_SEARCH_TYPE_LUCENE    = -4L,
 }ModuleSearchType;
 
-GswSearchHit* gsw_search_hit_new       (const char *modName, char *key, long  score);
-const gchar*  gsw_search_hit_get_name  (GswSearchHit *hit);
-gchar*        gsw_search_hit_get_key   (GswSearchHit *hit);
-long          gsw_search_hit_get_score (GswSearchHit *hit);
-void          gsw_search_hit_free      (GswSearchHit *hit);
-
-GswModule*     gsw_module_new                (void);
-void           gsw_module_terminate_search   (GswModule *module);
+GswModule*   gsw_module_new                (void);
+void         gsw_module_terminate_search   (GswModule *module);
 
 //const struct gSearchHit *  gsw_module_search (SWHANDLE module, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter);
-gboolean       gsw_module_pop_error          (GswModule *module);
-long           gsw_module_get_entry_size     (GswModule *module);
+//GList*         gsw_module_search (GswModule *module, const char *searchString, ModuleSearchType searchType, glong flags, const gchar *scope, SWHANDLE progressReporter);
+gboolean     gsw_module_pop_error          (GswModule *module);
+long         gsw_module_get_entry_size     (GswModule *module);
+GList*       gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, const gchar *level2,
+		const gchar *level3, gboolean filteredBool);
 /*
-
-const char **  gsw_module_getEntryAttribute (SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool);
 
 const char **  gsw_module_parseKeyList (SWHANDLE hSWModule, const char *keyText);
 */
@@ -65,7 +59,7 @@ const char **  gsw_module_parseKeyList (SWHANDLE hSWModule, const char *keyText)
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
 void  gsw_module_set_key_text (GswModule *module, const char *key);
 
-const gchar *  gsw_module_get_key_text (GswModule *module);
+const gchar*  gsw_module_get_key_text (GswModule *module);
 
 gboolean gsw_module_has_key_children (GswModule *module);
 

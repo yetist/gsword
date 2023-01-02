@@ -7,3 +7,5 @@ status-check:
 	g++ -o aa.so --shared gsw-status-reporter.* `pkg-config --cflags --libs sword glib-2.0` -fPIC
 modinfo-check:
 	gcc -o aa.so --shared gsw-modinfo.* `pkg-config --cflags --libs sword gobject-2.0` -fPIC
+search-hit-check:
+	gcc -o aa.so --shared gsw-search-hit.* `pkg-config --cflags --libs sword gobject-2.0` -fPIC

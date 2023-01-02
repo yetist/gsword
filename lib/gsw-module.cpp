@@ -19,54 +19,18 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
+#include <vector>
 #include <versekey.h>
 #include <treekeyidx.h>
 #include <swbuf.h>
+#include <utilstr.h>
 #include "webmgr.hpp"
 #include "gsw-module.h"
+#include "gsw-search-hit.h"
 
 // should clean begin
 #define SWHANDLE intptr_t
 // should clean end
-
-struct _GswSearchHit {
-	const gchar *modName;
-	gchar *key;
-	long  score;
-};
-
-GswSearchHit* gsw_search_hit_new (const char *modName, char *key, long  score)
-{
-	GswSearchHit *hit;
-	hit = g_new0(GswSearchHit, 1);
-	hit->modName     = modName;
-	hit->key = g_strdup(key);
-	hit->score = score;
-	return hit;
-}
-
-const char* gsw_search_hit_get_name  (GswSearchHit *hit)
-{
-	g_return_val_if_fail(hit, NULL);
-	return hit->modName;
-}
-
-char* gsw_search_hit_get_key   (GswSearchHit *hit)
-{
-	g_return_val_if_fail(hit, NULL);
-	return hit->key;
-}
-
-long gsw_search_hit_get_score (GswSearchHit *hit)
-{
-	g_return_val_if_fail(hit, 0);
-	return hit->score;
-}
-
-void gsw_search_hit_free      (GswSearchHit *hit)
-{
-	if (hit->key != NULL) g_free(hit->key);
-}
 
 #define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
 
@@ -115,8 +79,8 @@ namespace {
 			// making searchHits cache static saves memory only having a single
 			// outstanding copy, but also is not threadsafe.  Remove static here
 			// and fix compiling bugs and add clearSearchHits() to d-tor to change
-			static gsw_SearchHit *searchHits;
-			static const char **entryAttributes;
+			static GList *searchHits;
+			static GList *attributes;
 			static const char **parseKeyList;
 			static const char **keyChildren;
 
@@ -137,19 +101,15 @@ namespace {
 			}
 
 			static void clearSearchHits() {
-				if (searchHits) {
-					for (int i = 0; true; ++i) {
-						if (searchHits[i].modName) {
-							delete [] searchHits[i].key;
-						}
-						else break;
-					}
-					free(searchHits);
-					searchHits = 0;
+				if (searchHits != NULL) {
+					g_list_free_full (searchHits, gsw_search_hit_unref);
 				}
 			}
+
 			static void clearEntryAttributes() {
-				clearStringArray(&entryAttributes);
+				if (attributes != NULL) {
+					g_list_free_full (attributes, g_free);
+				}
 			}
 			static void clearParseKeyList() {
 				clearStringArray(&parseKeyList);
@@ -159,14 +119,11 @@ namespace {
 			}
 	};
 
-
-	gsw_SearchHit *HandleSWModule::searchHits = 0;
-	const char **HandleSWModule::entryAttributes = 0;
+	GList *HandleSWModule::searchHits = NULL;
+	GList *HandleSWModule::attributes = NULL;
 	const char **HandleSWModule::parseKeyList = 0;
 	const char **HandleSWModule::keyChildren = 0;
 }
-
-
 
 void  gsw_module_terminate_search (GswModule *module)
 {
@@ -223,16 +180,16 @@ const struct gsw_SearchHit *  gsw_SWModule_search
 	struct gsw_SearchHit *retVal = (struct gsw_SearchHit *)calloc(count+1, sizeof(struct gsw_SearchHit));
 
 	int i = 0;
+	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
-		// don't alloc this; we have a persistent const char * in SWModule we can just reference
-		retVal[i].modName = module->getName();
-		stdstr(&(retVal[i].key), assureValidUTF8(result.getShortText()));
-		retVal[i++].score = (long)result.getElement()->userData;
-		// in case we limit count to a max number of hits
+		GswSearchHit *result;
+		result = gsw_search_hit_new(module->getName(), assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
+		results = g_list_append(results, result);
+		i++;
 		if (i >= count) break;
 	}
-	hmod->searchHits = retVal;
-	return retVal;
+	hmod->searchHits = results;
+	return results;
 }
 #endif
 
@@ -255,7 +212,6 @@ gboolean gsw_module_pop_error (GswModule *module)
 
 long gsw_module_get_entry_size (GswModule *module)
 {
-
 	HandleSWModule *hmod;
 	SWModule *mod;
 	
@@ -271,19 +227,27 @@ long gsw_module_get_entry_size (GswModule *module)
 	return mod->getEntrySize();
 }
 
-#if 0
-const char **  gsw_SWModule_getEntryAttribute
-(SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool)
+GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, const gchar *level2,
+		const gchar *level3, gboolean filteredBool)
 {
-
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return 0;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return 0;
+	}
 
 	hmod->clearEntryAttributes();
 
-	module->renderText();	// force parse
+	mod->renderText();	// force parse
 	std::vector<SWBuf> results;
 
-	sword::AttributeTypeList &entryAttribs = module->getEntryAttributes();
+	sword::AttributeTypeList &entryAttribs = mod->getEntryAttributes();
 	sword::AttributeTypeList::iterator i1Start, i1End;
 	sword::AttributeList::iterator i2Start, i2End;
 	sword::AttributeValue::iterator i3Start, i3End;
@@ -330,22 +294,22 @@ const char **  gsw_SWModule_getEntryAttribute
 			break;
 	}
 
-	const char **retVal = (const char **)calloc(results.size()+1, sizeof(const char *));
+	GList *attributes = NULL;
 	for (int i = 0; i < (int)results.size(); i++) {
 		if (filteredBool) {
-			stdstr((char **)&(retVal[i]), assureValidUTF8(module->renderText(results[i].c_str())));
+			attributes = g_list_append(attributes, g_strdup(assureValidUTF8(mod->renderText(results[i].c_str())).c_str()));
 		}
 		else {
-			stdstr((char **)&(retVal[i]), assureValidUTF8(results[i].c_str()));
+			attributes = g_list_append(attributes, g_strdup(assureValidUTF8(results[i].c_str()).c_str()));
 		}
 	}
 
-	hmod->entryAttributes = retVal;
-	return retVal;
+	hmod->attributes = attributes;
+	return attributes;
 }
+#if 0
 
-const char **  gsw_SWModule_parseKeyList
-(SWHANDLE hSWModule, const char *keyText)
+const char **  gsw_SWModule_parseKeyList (SWHANDLE hSWModule, const char *keyText)
 {
 
 	GETSWMODULE(hSWModule, 0);
