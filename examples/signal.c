@@ -21,11 +21,11 @@ void test_module(GswModule *module)
 	g_signal_connect(G_OBJECT(module), "searching", G_CALLBACK(search_percent), "searching...");
 	list = gsw_module_search (module, "God", GSW_SEARCH_TYPE_REGEX, 0, "Rev");
 	for (l = list; l != NULL; l = l->next) {
-		GswSearchHit *search_hit;
-		search_hit = l->data;
-		g_print("name =%s\n", gsw_search_hit_get_name  (search_hit));
-		g_print("key =%s\n", gsw_search_hit_get_key (search_hit));
-		g_print("score =%ld\n", gsw_search_hit_get_score (search_hit));
+		GswResult *result;
+		result = l->data;
+		g_print("name =%s\n", gsw_result_get_name  (result));
+		g_print("key =%s\n", gsw_result_get_key (result));
+		g_print("score =%ld\n", gsw_result_get_score (result));
 	}
 	g_print("render header=%s\n", gsw_module_get_render_header (module));
 	gsw_module_set_key_text(module, "jn.2.3");
@@ -33,7 +33,7 @@ void test_module(GswModule *module)
 	g_print("strip text =%s\n", gsw_module_strip_text (module));
 	g_print("raw entry=%s\n",  gsw_module_get_raw_entry (module));
 	//const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
-	//gsw_search_hit_unref(search_hit);
+	//gsw_result_unref(result);
 }
 
 void test_modinfo(GList *list)

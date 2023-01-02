@@ -23,7 +23,7 @@
 #include <treekeyidx.h>
 #include <swmodule.h>
 #include "gsw-module.h"
-#include "gsw-search-hit.h"
+#include "gsw-result.h"
 #include "gsw-private.h"
 
 enum {
@@ -131,8 +131,8 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 	int i = 0;
 	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
-		GswSearchHit *hit;
-		hit = gsw_search_hit_new(priv->module->getName(), sword::assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
+		GswResult *hit;
+		hit = gsw_result_new(priv->module->getName(), sword::assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
 		results = g_list_append(results, hit);
 		i++;
 		if (i >= count) break;

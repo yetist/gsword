@@ -44,9 +44,9 @@ int main(int argc, char **argv)
 	printf("Parsing: %s\n", argv[2]);
 	printf("==========================\n");
 	for (l = list; l !=NULL; l=l->next) {
-		GswSearchHit *hit;
+		GswResult *hit;
 		hit = l->data;
-		printf("%s, %s\n", gsw_search_hit_get_name(hit), gsw_search_hit_get_key(hit));
+		printf("%s, %s\n", gsw_result_get_name(hit), gsw_result_get_key(hit));
 	}
 	printf("==========================\n");
 

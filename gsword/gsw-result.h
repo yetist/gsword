@@ -20,21 +20,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 
-#ifndef __GSW_SEARCH_HIT_H__ 
-#define __GSW_SEARCH_HIT_H__  1
+#ifndef __GSW_RESULT_H__ 
+#define __GSW_RESULT_H__  1
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-#define GSW_TYPE_SEARCH_HIT              (gsw_search_hit_get_type ())
-G_DECLARE_FINAL_TYPE (GswSearchHit, gsw_search_hit, GSW, SEARCH_HIT, GObject);
+#define GSW_TYPE_RESULT              (gsw_result_get_type ())
+G_DECLARE_FINAL_TYPE (GswResult, gsw_result, GSW, RESULT, GObject);
 
-GswSearchHit*     gsw_search_hit_new       (const gchar *name, const gchar *key, glong  score);
-const gchar*      gsw_search_hit_get_name  (GswSearchHit *search_hit);
-const gchar*      gsw_search_hit_get_key   (GswSearchHit *search_hit);
-glong             gsw_search_hit_get_score (GswSearchHit *search_hit);
+GswResult*        gsw_result_new       (const gchar *name, const gchar *key, glong  score);
+const gchar*      gsw_result_get_name  (GswResult *result);
+const gchar*      gsw_result_get_key   (GswResult *result);
+glong             gsw_result_get_score (GswResult *result);
 
 G_END_DECLS
 
-#endif /* __GSW_SEARCH_HIT_H__ */
+#endif /* __GSW_RESULT_H__ */
