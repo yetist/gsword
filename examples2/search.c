@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	if (module == NULL) {
 		fprintf(stderr, "Could not find module [%s].  Available modules:\n", argv[1]);
 		GList *list, *l;
-	 	list = gsw_manager_get_modinfo_list(manager);
+		list = gsw_manager_get_modinfo_list(manager);
 		for (l=list; l != NULL; l=l->next) {
 			GswModinfo *info;
 			info = l->data;
