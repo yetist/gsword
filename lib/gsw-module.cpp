@@ -25,7 +25,6 @@
 #include <swbuf.h>
 #include <swmodule.h>
 #include <utilstr.h>
-#include "webmgr.hpp"
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
@@ -35,6 +34,7 @@
 
 #define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
 
+using namespace sword;
 using sword::SWModule;
 using sword::VerseKey;
 using sword::SWBuf;

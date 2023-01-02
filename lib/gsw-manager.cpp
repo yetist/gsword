@@ -19,315 +19,332 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
-#include <iostream>
-#include <vector>
-#include <map>
-
 #include <swversion.h>
 #include <swmgr.h>
-#include <installmgr.h>
-#include <remotetrans.h>
-#include <versekey.h>
-#include <treekeyidx.h>
-#include <filemgr.h>
+#include <swmodule.h>
 #include <swbuf.h>
 #include <localemgr.h>
 #include <utilstr.h>
+#include <markupfiltmgr.h>
+#include <osiswordjs.h>
+#include <thmlwordjs.h>
+#include <gbfwordjs.h>
+
 #include "gsw-manager.h"
-#include "webmgr.hpp"
 #include "gsw-modinfo.h"
 
-using sword::VerseKey;
-using sword::SWVersion;
-using sword::SWBuf;
-using sword::TreeKeyIdx;
-
-#define GETSWMGR(handle, failReturn) HandleSWMgr *hmgr = (HandleSWMgr *)handle; if (!hmgr) return failReturn; WebMgr *mgr = hmgr->mgr; if (!mgr) return failReturn;
-
-#define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
-
-#define GETINSTMGR(handle, failReturn) HandleInstMgr *hinstmgr = (HandleInstMgr *)handle; if (!hinstmgr) return failReturn; InstallMgr *installMgr = hinstmgr->installMgr; if (!installMgr) return failReturn;
-
+using namespace sword;
+using sword::SWMgr;
+using sword::SWModule;
 namespace {
-	class HandleSWMgr {
+	class WebMgr : public SWMgr {
+		OSISWordJS *osisWordJS;
+		ThMLWordJS *thmlWordJS;
+		GBFWordJS *gbfWordJS;
+		SWModule *defaultGreekLex;
+		SWModule *defaultHebLex;
+		SWModule *defaultGreekParse;
+		SWModule *defaultHebParse;
+
 		public:
-			WebMgr *mgr;
-			GList *modInfo;
-			std::map<SWModule *, HandleSWModule *> moduleHandles;
-			SWBuf filterBuf;
-			static const char **globalOptions;
-			static const char **globalOptionValues;
-			static const char **availableLocales;
+		WebMgr(const char *path) : SWMgr(path, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
+		WebMgr(SWConfig *sysConf) : SWMgr(0, sysConf, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
+		void init() {
+			defaultGreekLex   = 0;
+			defaultHebLex     = 0;
+			defaultGreekParse = 0;
+			defaultHebParse   = 0;
 
-			HandleSWMgr(WebMgr *mgr) {
-				this->mgr = mgr;
-				this->modInfo = NULL;
+			osisWordJS = new OSISWordJS();
+			thmlWordJS = new ThMLWordJS();
+			gbfWordJS = new GBFWordJS();
+			Load();
+			osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+			thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+			gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+			osisWordJS->setMgr(this);
+			thmlWordJS->setMgr(this);
+			gbfWordJS->setMgr(this);
+			setGlobalOption("Textual Variants", "Primary Reading");
+		}
+
+		~WebMgr() {
+			delete osisWordJS;
+			delete thmlWordJS;
+			delete gbfWordJS;
+		}
+
+		void AddGlobalOptions(SWModule *module, ConfigEntMap &section, ConfigEntMap::iterator start, ConfigEntMap::iterator end) {
+
+			// ThML word stuff needs to process before strongs strip
+			if (module->getMarkup() == FMT_THML) {
+				module->addOptionFilter(thmlWordJS);
 			}
 
-			void clearModInfo() {
-				g_list_free_full (modInfo, gsw_modinfo_unref);
+			if (module->getMarkup() == FMT_GBF) {
+				module->addOptionFilter(gbfWordJS);
 			}
 
-			~HandleSWMgr() {
-				clearModInfo();
-				for (std::map<SWModule *, HandleSWModule *>::iterator it = moduleHandles.begin(); it != moduleHandles.end(); ++it) {
-					delete it->second;
+			// add other module filters
+			SWMgr::AddGlobalOptions(module, section, start, end);
+
+			// add our special filters
+			if (module->getConfig().has("Feature", "GreekDef")) {
+				defaultGreekLex = module;
+			}
+			if (module->getConfig().has("Feature", "HebrewDef")) {
+				defaultHebLex = module;
+			}
+			if (module->getConfig().has("Feature", "GreekParse")) {
+				defaultGreekParse = module;
+			}
+			if (module->getConfig().has("Feature", "HebrewParse")) {
+				defaultHebParse = module;
+			}
+			if (module->getConfig().has("GlobalOptionFilter", "ThMLVariants")) {
+				OptionFilterMap::iterator it = optionFilters.find("ThMLVariants");
+				if (it != optionFilters.end()) {
+					module->addOptionFilter((*it).second);	// add filter to module and option as a valid option
 				}
-				delete mgr;
 			}
 
-			HandleSWModule *getModuleHandle(SWModule *mod) {
-				if (!mod) return 0;
-				if (moduleHandles.find(mod) == moduleHandles.end()) {
-					moduleHandles[mod] = new HandleSWModule(mod);
-				}
-				return moduleHandles[mod];
+			if (module->getMarkup() == FMT_OSIS) {
+				module->addOptionFilter(osisWordJS);
 			}
-
-			static void clearGlobalOptions() {
-				clearStringArray(&globalOptions);
-			}
-
-			static void clearGlobalOptionValues() {
-				clearStringArray(&globalOptionValues);
-			}
-
-			static void clearAvailableLocales() {
-				clearStringArray(&availableLocales);
-			}
+		}
+		void setJavascript(bool val) {
+			osisWordJS->setOptionValue((val)?"On":"Off");
+			thmlWordJS->setOptionValue((val)?"On":"Off");
+			gbfWordJS->setOptionValue((val)?"On":"Off");
+		}
 	};
 }
 
 GswManager* gsw_manager_new (void)
 {
 	SWConfig *sysConf = NULL;
-	return (GswManager*) new HandleSWMgr(new WebMgr(sysConf));
+	return (GswManager*) new WebMgr(sysConf);
 }
 
-#if 0
+GswManager* gsw_manager_new_with_path (const gchar *path)
+{
+	g_autofree gchar* modsd;
+	g_autofree gchar* confpath;
 
-SWHANDLE  gsw_SWMgr_newWithPath(const gchar *path) {
-	SWBuf confPath = path;
-	if (!confPath.endsWith("/")) confPath.append('/');
-	SWBuf modsd = confPath + "mods.d";
+	modsd = g_build_path(path, "mods.d", NULL);
+
 	// be sure we have at least some config file already out there
-	if (!FileMgr::existsFile(modsd.c_str())) {
-		modsd.append("/globals.conf");
-		FileMgr::createParent(modsd.c_str());
-		SWConfig config(modsd.c_str());
+	if (!g_file_test(modsd, G_FILE_TEST_EXISTS)) {
+		g_mkdir_with_parents (modsd, 0755);
+		confpath = g_build_path(modsd, "globals.conf", NULL);
+		SWConfig config(confpath);
 		config["Globals"]["HiAndroid"] = "weeee";
 		config.Save();
 	}
-	return (SWHANDLE) new HandleSWMgr(new WebMgr(confPath.c_str()));
+
+	return (GswManager*) new WebMgr(confpath);
 }
 
+void gsw_manager_delete (GswManager *manager)
+{
+	WebMgr *mgr;
 
-void  gsw_SWMgr_delete(SWHANDLE hSWMgr) {
-	HandleSWMgr *hmgr = (HandleSWMgr *)hSWMgr;
-	if (hmgr) delete hmgr;
+	mgr = (WebMgr *)manager;
+	if (mgr)
+		delete mgr;
 }
 
-const char *  gsw_SWMgr_version (SWHANDLE hSWMgr)
+const gchar* gsw_manager_get_version (GswManager *manager)
 {
 	// we don't actually need an SWMgr to get version
 	static SWVersion v;
 	return v.currentVersion;
 }
 
-const struct gsw_ModInfo *  gsw_SWMgr_getModInfoList (SWHANDLE hSWMgr)
+GList* gsw_manager_get_modinfo_list (GswManager *manager)
 {
+	WebMgr *mgr;
+	sword::SWModule *module = NULL;
+	GList *milist = NULL;
 
-	GETSWMGR(hSWMgr, 0);
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
-	sword::SWModule *module = 0;
-
-	hmgr->clearModInfo();
-
-	int size = 0;
-	for (sword::ModMap::iterator it = mgr->Modules.begin(); it != mgr->Modules.end(); ++it) {
-		if ((!(it->second->getConfigEntry("CipherKey"))) || (*(it->second->getConfigEntry("CipherKey"))))
-			size++;
-	}
-
-	struct gsw_ModInfo *milist = (struct gsw_ModInfo *)calloc(size+1, sizeof(struct gsw_ModInfo));
-	int i = 0;
 	for (sword::ModMap::iterator it = mgr->Modules.begin(); it != mgr->Modules.end(); ++it) {
 		module = it->second;
 		if ((!(module->getConfigEntry("CipherKey"))) || (*(module->getConfigEntry("CipherKey")))) {
+			GswModinfo*  modinfo;
 			SWBuf type = module->getType();
 			SWBuf cat = module->getConfigEntry("Category");
-			SWBuf version = module->getConfigEntry("Version");
 			if (cat.length() > 0) type = cat;
-			stdstr(&(milist[i].name), assureValidUTF8(module->getName()));
-			stdstr(&(milist[i].description), assureValidUTF8(module->getDescription()));
-			stdstr(&(milist[i].category), assureValidUTF8(type.c_str()));
-			stdstr(&(milist[i++].language), assureValidUTF8(module->getLanguage()));
-			stdstr(&(milist[i++].version), assureValidUTF8(version.c_str()));
-			stdstr(&(milist[i++].delta), "");
-			if (i >= size) break;
+			SWBuf version = module->getConfigEntry("Version");
+
+			modinfo = gsw_modinfo_new (
+					assureValidUTF8(module->getName()),
+					assureValidUTF8(module->getDescription()),
+					assureValidUTF8(type.c_str()),
+					assureValidUTF8(module->getLanguage()),
+					assureValidUTF8(version.c_str()),
+					"");
+			milist = g_list_append(milist, modinfo);
 		}
 	}
-	hmgr->modInfo = milist;
 	return milist;
 }
 
-SWHANDLE  gsw_SWMgr_getModuleByName (SWHANDLE hSWMgr, const char *moduleName)
+GswModule* gsw_manager_get_module_by_name (GswManager *manager, const gchar *moduleName)
 {
+	WebMgr *mgr;
+	SWModule *mod;
 
-	GETSWMGR(hSWMgr, 0);
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
-	return (SWHANDLE)hmgr->getModuleHandle(hmgr->mgr->getModule(moduleName));
+	mod = mgr->getModule(moduleName);
+	return (GswModule*) mod;
 }
 
-const char *  gsw_SWMgr_getPrefixPath (SWHANDLE hSWMgr)
+const gchar* gsw_manager_get_prefix_path (GswManager *manager)
 {
-
-	GETSWMGR(hSWMgr, 0);
-
+	WebMgr *mgr;
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 	return mgr->prefixPath;
 }
 
-const char *  gsw_SWMgr_getConfigPath (SWHANDLE hSWMgr) 
+const gchar*  gsw_manager_get_config_path (GswManager *manager)
 {
-
-	GETSWMGR(hSWMgr, 0);
-
+	WebMgr *mgr;
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 	return mgr->configPath;
 }
 
-void  gsw_SWMgr_setGlobalOption (SWHANDLE hSWMgr, const char *option, const char *value)
+void  gsw_manager_set_global_option (GswManager *manager, const gchar *option, const gchar *value)
 {
-
-	GETSWMGR(hSWMgr, );
+	WebMgr *mgr;
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return;
 	mgr->setGlobalOption(option, value);
 }
 
-const char *  gsw_SWMgr_getGlobalOption (SWHANDLE hSWMgr, const char *option)
+const gchar*  gsw_manager_get_global_option (GswManager *manager, const gchar *option)
 {
+	WebMgr *mgr;
 
-	GETSWMGR(hSWMgr, 0);
-
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 	return mgr->getGlobalOption(option);
 }
 
-const char *  gsw_SWMgr_getGlobalOptionTip (SWHANDLE hSWMgr, const char *option)
+const gchar*  gsw_manager_get_global_option_tip (GswManager *manager, const gchar *option)
 {
-
-	GETSWMGR(hSWMgr, 0);
+	WebMgr *mgr;
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
 	return mgr->getGlobalOptionTip(option);
 }
 
-const char *  gsw_SWMgr_filterText (SWHANDLE hSWMgr, const char *filterName, const char *text)
+const gchar*  gsw_manager_filter_text (GswManager *manager, const gchar *filterName, const gchar *text)
 {
+	WebMgr *mgr;
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
-	GETSWMGR(hSWMgr, 0);
-
-	hmgr->filterBuf = text;
+	SWBuf filterBuf = text;
 
 	// why was this in bindings/corba/omniorb?
 	//	mgr->setGlobalOption("Greek Accents", "Off");
-
-	char errStatus = mgr->filterText(filterName, hmgr->filterBuf);
+	gboolean errStatus = mgr->filterText(filterName, filterBuf);
 	(void)errStatus;
-	return hmgr->filterBuf.c_str();
+	return filterBuf.c_str();
 }
 
-const char **  gsw_SWMgr_getGlobalOptions (SWHANDLE hSWMgr)
+GList* gsw_manager_get_global_options (GswManager *manager)
 {
+	GList *list = NULL;
+	WebMgr *mgr;
 
-	GETSWMGR(hSWMgr, 0);
-
-	const char **retVal;
-	hmgr->clearGlobalOptions();
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
 	sword::StringList options = mgr->getGlobalOptions();
-	int count = 0;
 	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		count++;
+		list = g_list_append(list, (gpointer)it->c_str());
 	}
-	retVal = (const char **)calloc(count+1, sizeof(const char *));
-	count = 0;
-	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		stdstr((char **)&(retVal[count++]), it->c_str());
-	}
-
-	hmgr->globalOptions = retVal;
-	return retVal;
+	return list;
 }
 
-const char **  gsw_SWMgr_getGlobalOptionValues (SWHANDLE hSWMgr, const char *option)
+GList* gsw_manager_get_global_option_values (GswManager *manager, const gchar *option)
 {
+	GList *list = NULL;
+	WebMgr *mgr;
 
-	GETSWMGR(hSWMgr, 0);
-
-	const char **retVal = 0;
-	hmgr->clearGlobalOptionValues();
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
 
 	sword::StringList options = mgr->getGlobalOptionValues(option);
-	int count = 0;
 	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		count++;
+		list = g_list_append(list, (gpointer) it->c_str());
 	}
-	retVal = (const char **)calloc(count+1, sizeof(const char *));
-	count = 0;
-	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		stdstr((char **)&(retVal[count++]), it->c_str());
-	}
-
-	hmgr->globalOptionValues = retVal;
-	return retVal;
+	return list;
 }
 
-void  gsw_SWMgr_setCipherKey (SWHANDLE hSWMgr, const char *modName, const char *key)
+void gsw_manager_set_cipherkey (GswManager *manager, const gchar *modName, const gchar *key)
 {
+	WebMgr *mgr;
 
-	GETSWMGR(hSWMgr, );
-
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return;
 	mgr->setCipherKey(modName, key);
 }
 
-void  gsw_SWMgr_setJavascript (SWHANDLE hSWMgr, char valueBool)
+void gsw_manager_set_javascript (GswManager *manager, gboolean valueBool)
 {
+	WebMgr *mgr;
 
-	GETSWMGR(hSWMgr, );
-
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return;
 	mgr->setJavascript(valueBool);
 }
 
-const char **  gsw_SWMgr_getAvailableLocales (SWHANDLE hSWMgr)
+GList* gsw_manager_get_available_locales (GswManager *manager)
 {
-	GETSWMGR(hSWMgr, 0);
-	hmgr->clearAvailableLocales();
+	GList *list = NULL;
+	WebMgr *mgr;
+
+	mgr = (WebMgr *)manager;
+	if (!mgr)
+		return NULL;
+
 	sword::StringList localeNames = LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();
-	const char **retVal = 0;
-	int count = 0;
 	for (sword::StringList::iterator it = localeNames.begin(); it != localeNames.end(); ++it) {
-		count++;
-	}
-	retVal = (const char **)calloc(count+1, sizeof(const char *));
-	count = 0;
-	for (sword::StringList::iterator it = localeNames.begin(); it != localeNames.end(); ++it) {
-		stdstr((char **)&(retVal[count++]), it->c_str());
+		list = g_list_append(list, (gpointer) it->c_str());
 	}
 
-	hmgr->availableLocales = retVal;
-	return retVal;
+	return list;
 }
 
-void  gsw_SWMgr_setDefaultLocale (SWHANDLE hSWMgr, const char *name)
+void gsw_manager_set_default_locale (GswManager *manager, const gchar *name)
 {
 	// we don't actually need an SWMgr instance for this
-	GETSWMGR(hSWMgr, );
-
 	LocaleMgr::getSystemLocaleMgr()->setDefaultLocaleName(name);
 }
 
-const char *  gsw_SWMgr_translate (SWHANDLE hSWMgr, const char *text, const char *localeName)
+const gchar*  gsw_manager_translate (GswManager *manager, const char *text, const gchar *localeName)
 {
-
-	GETSWMGR(hSWMgr, 0);
-
 	return LocaleMgr::getSystemLocaleMgr()->translate(text, localeName);
 }
-#endif
