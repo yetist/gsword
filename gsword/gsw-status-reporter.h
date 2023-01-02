@@ -27,15 +27,22 @@
 
 G_BEGIN_DECLS
 
-typedef void GswStatusReporter;
+#define GSW_TYPE_STATUS_REPORTER              (gsw_status_reporter_get_type ())
+G_DECLARE_DERIVABLE_TYPE (GswStatusReporter, gsw_status_reporter, GSW, STATUS_REPORTER, GObject)
 
-typedef void  (*UpdateCallback) (gulong total, gulong completed);
-typedef void  (*PreStatusCallback) (glong total, glong completed, const gchar* message);
+typedef struct _GswStatusReporterClass        GswStatusReporterClass;
 
-GswStatusReporter* gsw_status_reporter_new      (void);
-gpointer gsw_status_reporter_get_class  (GswStatusReporter *report);
-void gsw_status_reporter_set_update_callback    (GswStatusReporter *report, UpdateCallback func);
-void gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func);
+struct _GswStatusReporterClass
+{
+	GObjectClass       parent_class;
+	void (*updating)   (GswStatusReporter *reporter, gulong total, gulong completed);
+	void (*pre-update) (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message);
+};
+
+GswStatusReporter*  gsw_status_reporter_new        (void);
+gpointer            gsw_status_reporter_get_class  (GswStatusReporter *report);
+void                gsw_status_reporter_set_update_callback    (GswStatusReporter *report, UpdateCallback func);
+void                gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func);
 
 G_END_DECLS
 

@@ -41,11 +41,6 @@
 #include "gsw-modinfo.h"
 
 using namespace sword;
-using sword::VerseKey;
-using sword::SWBuf;
-using sword::TreeKeyIdx;
-using sword::InstallMgr;
-using sword::SWModule;
 
 namespace {
 	class HandleInstMgr {

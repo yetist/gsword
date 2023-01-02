@@ -46,7 +46,7 @@ static void gsw_module_search_progress(gchar now, gpointer data) {
 	g_signal_emit (module, signals[SEARCH_UPDATE], 0, now);
 }
 
-void gsw_module_dispose (GObject *object)
+static void gsw_module_dispose (GObject *object)
 {
 	GswModule* module = GSW_MODULE(object);
 	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
