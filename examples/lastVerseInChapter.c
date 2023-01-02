@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 		gsw_verse_key_set_verse(key, gsw_verse_key_get_verse_max (key));
 		gchar* text =  gsw_module_strip_text (module);
 		gchar* t = g_strstrip(text);
-		if (g_str_has_suffix (t, ".") || g_str_has_suffix (t, "。")) {
+		if (g_str_has_suffix (t, ".") || g_str_has_suffix (t, "。") || g_str_has_suffix (t, "！")) {
 			printf("%s:\n\n%s\n", gsw_verse_key_get_text(key), t);
 		}
 	}
