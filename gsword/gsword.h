@@ -23,13 +23,13 @@
 #ifndef __GSWORD_H__ 
 #define __GSWORD_H__  1
 
+#include <gsword/gsw-enum.h>
 #include <gsword/gsw-installer.h>
 #include <gsword/gsw-manager.h>
 #include <gsword/gsw-modinfo.h>
 #include <gsword/gsw-module.h>
 #include <gsword/gsw-search-hit.h>
 #include <gsword/gsw-status-reporter.h>
-#include <gsword/gsw-enum.h>
 #include <gsword/gsw-versi-mgr-system.h>
 
 #endif /* __GSWORD_H__ */
