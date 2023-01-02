@@ -38,7 +38,7 @@ typedef enum
 	MODULE_SEARCH_TYPE_LUCENE    = -4L,
 }ModuleSearchType;
 
-GswModule*   gsw_module_new                (void);
+GswModule*   gsw_module_new                (gpointer data);
 void         gsw_module_terminate_search   (GswModule *module);
 
 //const struct gSearchHit *  gsw_module_search (SWHANDLE module, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter);
@@ -59,7 +59,7 @@ const char **  gsw_module_parseKeyList (SWHANDLE hSWModule, const char *keyText)
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
 void  gsw_module_set_key_text (GswModule *module, const char *key);
 
-const gchar*  gsw_module_get_key_text (GswModule *module);
+const gchar* gsw_module_get_key_text (GswModule *module);
 
 gboolean gsw_module_has_key_children (GswModule *module);
 

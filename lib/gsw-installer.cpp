@@ -20,68 +20,94 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 
-#if 0
-class HandleInstMgr {
-public:
-	static const char **remoteSources;
-	InstallMgr *installMgr;
-	org_crosswire_sword_ModInfo *modInfo;
-	std::map<SWModule *, HandleSWModule *> moduleHandles;
+#include <iostream>
+#include <vector>
+#include <map>
 
-	MyStatusReporter statusReporter;
-	HandleInstMgr() : installMgr(0), modInfo(0) {}
-	HandleInstMgr(InstallMgr *mgr) {
-		this->installMgr = installMgr;
-		this->modInfo = 0;
-	}
+#include <swversion.h>
+#include <swmgr.h>
+#include <installmgr.h>
+#include <remotetrans.h>
+#include <versekey.h>
+#include <treekeyidx.h>
+#include <filemgr.h>
+#include <swbuf.h>
+#include <localemgr.h>
+#include <utilstr.h>
 
-	~HandleInstMgr() {
-		clearModInfo();
-		for (std::map<SWModule *, HandleSWModule *>::iterator it = moduleHandles.begin(); it != moduleHandles.end(); ++it) {
-			delete it->second;
-		}
-		delete installMgr;
-	}
+#include "gsw-installer.h"
 
-	HandleSWModule *getModuleHandle(SWModule *mod) {
-		if (!mod) return 0;
-		if (moduleHandles.find(mod) == moduleHandles.end()) {
-			moduleHandles[mod] = new HandleSWModule(mod);
-		}
-		return moduleHandles[mod];
-	}
+using sword::VerseKey;
+using sword::SWVersion;
+using sword::SWBuf;
+using sword::TreeKeyIdx;
 
-	static void clearRemoteSources() {
-		clearStringArray(&remoteSources);
-	}
+#define GETINSTMGR(handle, failReturn) HandleInstMgr *hinstmgr = (HandleInstMgr *)handle; if (!hinstmgr) return failReturn; InstallMgr *installMgr = hinstmgr->installMgr; if (!installMgr) return failReturn;
 
-	void clearModInfo() {
-		clearModInfoArray(&modInfo);
-	}
-};
+namespace {
+	class HandleInstMgr {
+		public:
+			static const char **remoteSources;
+			InstallMgr *installMgr;
+			gsw_ModInfo *modInfo;
+			std::map<SWModule *, HandleSWModule *> moduleHandles;
 
-#define GswInstaller intptr_t
+			MyStatusReporter statusReporter;
+			HandleInstMgr() : installMgr(0), modInfo(0) {}
+			HandleInstMgr(InstallMgr *mgr) {
+				this->installMgr = installMgr;
+				this->modInfo = 0;
+			}
 
-GswInstaller*     gsw_installer_new                (void);
+			~HandleInstMgr() {
+				clearModInfo();
+				for (std::map<SWModule *, HandleSWModule *>::iterator it = moduleHandles.begin(); it != moduleHandles.end(); ++it) {
+					delete it->second;
+				}
+				delete installMgr;
+			}
 
-SWHANDLE  org_crosswire_sword_InstallMgr_new (const char *baseDir, SWHANDLE statusReporter)
+			HandleSWModule *getModuleHandle(SWModule *mod) {
+				if (!mod) return 0;
+				if (moduleHandles.find(mod) == moduleHandles.end()) {
+					moduleHandles[mod] = new HandleSWModule(mod);
+				}
+				return moduleHandles[mod];
+			}
+
+			static void clearRemoteSources() {
+				clearStringArray(&remoteSources);
+			}
+
+			void clearModInfo() {
+				clearModInfoArray(&modInfo);
+			}
+	};
+	const char **HandleInstMgr::remoteSources = 0;
+}
+
+//#define GswInstaller intptr_t
+
+GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *statusReporter)
 {
-	SWBuf confPath = SWBuf(baseDir) + "/InstallMgr.conf";
-	// be sure we have at least some config file already out there
-	if (!FileMgr::existsFile(confPath.c_str())) {
-		FileMgr::createParent(confPath.c_str());
-//		remove(confPath.c_str());
-
-		SWConfig config(confPath.c_str());
+	gchar *conf_path;
+	conf_path = g_build_path(baseDir, "InstallMgr.conf", NULL);
+	if (!g_file_test(conf_path, G_FILE_TEST_EXISTS)) {
+		g_mkdir_with_parents (baseDir, 0755);
+		SWConfig config(conf_path);
 		config["General"]["PassiveFTP"] = "true";
 		config.Save();
 	}
+	g_free(conf_path);
+
 	HandleInstMgr *hinstmgr = new HandleInstMgr();
-	hinstmgr->statusReporter.init(statusReporter);
-	hinstmgr->installMgr = new InstallMgr(baseDir, &(hinstmgr->statusReporter));
-	return (SWHANDLE) hinstmgr;
+	//hinstmgr->statusReporter.init(statusReporter);
+	//hinstmgr->installMgr = new InstallMgr(baseDir, &(hinstmgr->statusReporter));
+	hinstmgr->installMgr = new InstallMgr(baseDir, statusReporter);
+	return (GswInstaller*) hinstmgr;
 }
 
+#if 0
 /*
  * Class:     org_crosswire_sword_InstallMgr
  * Method:    delete

@@ -43,8 +43,12 @@ static GswModinfo* gsw_modinfo_copy (GswModinfo *modinfo)
     return modinfo;
 }
 
-void gsw_modinfo_unref (GswModinfo *modinfo)
+void gsw_modinfo_unref (gpointer data)
 {
+	GswModinfo *modinfo;
+
+	modinfo = (GswModinfo*) data;
+
 	if (!g_atomic_int_dec_and_test (&modinfo->refcount))
 		return;
 

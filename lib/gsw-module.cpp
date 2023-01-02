@@ -23,6 +23,7 @@
 #include <versekey.h>
 #include <treekeyidx.h>
 #include <swbuf.h>
+#include <swmodule.h>
 #include <utilstr.h>
 #include "webmgr.hpp"
 #include "gsw-module.h"
@@ -34,6 +35,7 @@
 
 #define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
 
+using sword::SWModule;
 using sword::VerseKey;
 using sword::SWBuf;
 using sword::TreeKeyIdx;
@@ -123,6 +125,17 @@ namespace {
 	GList *HandleSWModule::attributes = NULL;
 	const char **HandleSWModule::parseKeyList = 0;
 	const char **HandleSWModule::keyChildren = 0;
+}
+
+GswModule* gsw_module_new (gpointer data)
+{
+	SWModule *mod;
+	GswModule* module;
+
+	mod = (SWModule*) data;
+	module = new HandleSWModule(mod);
+
+	return (GswModule*) module;
 }
 
 void  gsw_module_terminate_search (GswModule *module)

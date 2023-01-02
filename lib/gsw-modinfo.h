@@ -42,8 +42,7 @@ const gchar* gsw_modinfo_get_category    (GswModinfo *modinfo);
 const gchar* gsw_modinfo_get_language    (GswModinfo *modinfo);
 const gchar* gsw_modinfo_get_version     (GswModinfo *modinfo);
 const gchar* gsw_modinfo_get_delta       (GswModinfo *modinfo);
-void         gsw_modinfo_free            (GswModinfo *modinfo);
-void         gsw_modinfo_unref           (GswModinfo *modinfo);
+void         gsw_modinfo_unref           (gpointer data);
 
 G_END_DECLS
 

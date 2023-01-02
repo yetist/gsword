@@ -19,12 +19,28 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
+#include <iostream>
+#include <vector>
+#include <map>
+
+#include <swversion.h>
+#include <swmgr.h>
+#include <installmgr.h>
+#include <remotetrans.h>
+#include <versekey.h>
+#include <treekeyidx.h>
+#include <filemgr.h>
+#include <swbuf.h>
+#include <localemgr.h>
+#include <utilstr.h>
+#include "gsw-manager.h"
+#include "webmgr.hpp"
+#include "gsw-modinfo.h"
 
 using sword::VerseKey;
 using sword::SWVersion;
 using sword::SWBuf;
 using sword::TreeKeyIdx;
-
 
 #define GETSWMGR(handle, failReturn) HandleSWMgr *hmgr = (HandleSWMgr *)handle; if (!hmgr) return failReturn; WebMgr *mgr = hmgr->mgr; if (!mgr) return failReturn;
 
@@ -36,7 +52,7 @@ namespace {
 	class HandleSWMgr {
 		public:
 			WebMgr *mgr;
-			gsw_ModInfo *modInfo;
+			GList *modInfo;
 			std::map<SWModule *, HandleSWModule *> moduleHandles;
 			SWBuf filterBuf;
 			static const char **globalOptions;
@@ -45,11 +61,11 @@ namespace {
 
 			HandleSWMgr(WebMgr *mgr) {
 				this->mgr = mgr;
-				this->modInfo = 0;
+				this->modInfo = NULL;
 			}
 
 			void clearModInfo() {
-				clearModInfoArray(&modInfo);
+				g_list_free_full (modInfo, gsw_modinfo_unref);
 			}
 
 			~HandleSWMgr() {
@@ -82,12 +98,15 @@ namespace {
 	};
 }
 
-SWHANDLE  gsw_SWMgr_new() {
-	SWConfig *sysConf = 0;
-	return (SWHANDLE) new HandleSWMgr(new WebMgr(sysConf));
+GswManager* gsw_manager_new (void)
+{
+	SWConfig *sysConf = NULL;
+	return (GswManager*) new HandleSWMgr(new WebMgr(sysConf));
 }
 
-SWHANDLE  gsw_SWMgr_newWithPath(const char *path) {
+#if 0
+
+SWHANDLE  gsw_SWMgr_newWithPath(const gchar *path) {
 	SWBuf confPath = path;
 	if (!confPath.endsWith("/")) confPath.append('/');
 	SWBuf modsd = confPath + "mods.d";
@@ -311,3 +330,4 @@ const char *  gsw_SWMgr_translate (SWHANDLE hSWMgr, const char *text, const char
 
 	return LocaleMgr::getSystemLocaleMgr()->translate(text, localeName);
 }
+#endif

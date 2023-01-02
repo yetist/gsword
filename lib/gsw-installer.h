@@ -24,12 +24,13 @@
 #define __GSW_INSTALLER_H__  1
 
 #include <glib.h>
+#include "gsw-status-reporter.h"
 
 G_BEGIN_DECLS
 
 typedef void GswInstaller;
 
-GswInstaller* gsw_installer_new                            (const char *baseDir, SWHANDLE statusReporter);
+GswInstaller* gsw_installer_new                            (const char *baseDir, GswStatusReporter *statusReporter);
 void          gsw_installer_delete                         (GswInstaller* installer);
 void          gsw_installer_set_user_disclaimer_confirmed  (GswInstaller* installer);
 int           gsw_installer_sync_config                    (GswInstaller* installer);
