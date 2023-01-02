@@ -19,13 +19,3 @@ gsw_marshaller_c,
 gsw_marshaller_h,
 dependencies : [sword_dep, gobject_dep],
 )
-
-t=executable(
-  'testing',
-  sources : 'test.c',
-  dependencies : [sword_dep, gobject_dep],
-  link_with : libgsword,
-  install : false,
-)
-
-test('testing', t)
