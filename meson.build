@@ -24,4 +24,4 @@ top_srcdir = include_directories('.')
 top_libdir = include_directories('./gsword')
 
 subdir('gsword')
-subdir('examples2')
+subdir('examples')
