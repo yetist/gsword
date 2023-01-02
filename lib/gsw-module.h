@@ -40,8 +40,8 @@ typedef enum
 }ModuleSearchType;
 
 GswSearchHit* gsw_search_hit_new       (const char *modName, char *key, long  score);
-const gchar*   gsw_search_hit_get_name  (GswSearchHit *hit);
-gchar*         gsw_search_hit_get_key   (GswSearchHit *hit);
+const gchar*  gsw_search_hit_get_name  (GswSearchHit *hit);
+gchar*        gsw_search_hit_get_key   (GswSearchHit *hit);
 long          gsw_search_hit_get_score (GswSearchHit *hit);
 void          gsw_search_hit_free      (GswSearchHit *hit);
 
