@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gsword.h>
+#include <locale.h>
 
 void  upfunc (gulong total, gulong completed)
 {
@@ -10,6 +11,15 @@ void  upfunc (gulong total, gulong completed)
 void  prefunc (glong total, glong completed, const gchar* message)
 {
 	g_print("pre: %s, %ld, %ld\n", message, total, completed);
+}
+
+void updating   (GswStatusReporter *reporter, gulong total, gulong completed, gpointer data)
+{
+	g_print("...updating, %ld of %ld (%s)\n", completed, total, (char*) data);
+}
+void pre_update (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message, gpointer data)
+{
+	g_print("...pre update, %ld of %ld (%s) %s\n", completed, total, message, (char*) data);
 }
 
 void test_modinfo(GList *list)
@@ -34,6 +44,8 @@ int main(int argc, char **argv)
 				"\tExample: CrossWire KJV ~/library\n\n", argv[0]);
 		exit(-1);
 	}
+	g_setenv("LC_ALL", "zh_CN.utf8", TRUE);
+	setlocale (LC_ALL, "");
 
 	GswManager* manager;
 	GswInstaller* installer;
@@ -41,8 +53,8 @@ int main(int argc, char **argv)
 
 	// status reporter
 	reporter = gsw_status_reporter_new ();
-	gsw_status_reporter_set_update_callback (reporter, upfunc);
-	gsw_status_reporter_set_prestatus_callback (reporter, prefunc);
+	g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), "hi");
+	g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), "hi");
 
 	manager = gsw_manager_new_with_path(argv[3]);
 	gchar* path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);

@@ -20,19 +20,48 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 
-#include <swbuf.h>
 #include <remotetrans.h>
+#include "gsw-marshal.h"
 #include "gsw-status-reporter.h"
+#include "gsw-private.h"
 
 enum {
 	UPDATING,
 	PRE_UPDATE,
-    LAST_SIGNAL
+	LAST_SIGNAL
 };
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
 typedef struct _GswStatusReporterPrivate        GswStatusReporterPrivate;
+
+static char* str_replace(const gchar* string, const gchar* old, const gchar* newly)
+{
+	GRegex* regex;
+	char* str;
+
+	regex = g_regex_new (old, (GRegexCompileFlags)0, (GRegexMatchFlags)0, NULL);
+	str = g_regex_replace(regex, string, -1, 0, newly, (GRegexMatchFlags)0, NULL);
+	g_regex_unref (regex);
+	return str;
+}
+
+class GStatusReporter : public sword::StatusReporter {
+	public:
+		GswStatusReporter *inst;
+		GStatusReporter(GswStatusReporter *instance){
+			inst = instance;
+		}
+		virtual void update(unsigned long totalBytes, unsigned long completedBytes) {
+			g_signal_emit (inst, signals[UPDATING], 0, totalBytes, completedBytes);
+		}
+		virtual void preStatus(long totalBytes, long completedBytes, const char *message) {
+			//FIXME: use i18n.
+			gchar* msg = str_replace(message, "Downloading", "正在下载");
+			g_signal_emit (inst, signals[PRE_UPDATE], 0, totalBytes, completedBytes, msg);
+			g_free(msg);
+		}
+};
 
 struct _GswStatusReporterPrivate
 {
@@ -41,11 +70,10 @@ struct _GswStatusReporterPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GswStatusReporter, gsw_status_reporter, G_TYPE_OBJECT);
 
-
 static void gsw_status_reporter_dispose (GObject *object)
 {
 	GswStatusReporter* reporter = GSW_STATUS_REPORTER(object);
-	GswStatusReporterPrivate* priv =(GswStatusReporter*)  gsw_status_reporter_get_instance_private(reporter);
+	GswStatusReporterPrivate* priv =(GswStatusReporterPrivate*)  gsw_status_reporter_get_instance_private(reporter);
 
 	if (priv->reporter != NULL)
 	{
@@ -55,152 +83,56 @@ static void gsw_status_reporter_dispose (GObject *object)
 	G_OBJECT_CLASS (gsw_status_reporter_parent_class)->dispose (object);
 }
 
-static void gsw_status_reporter_class_init (GswStatusReporterClass *class)
+static void gsw_status_reporter_class_init (GswStatusReporterClass *klass)
 {
-    GObjectClass *gobject_class = G_OBJECT_CLASS (class);
-    //gobject_class->updating = ;
-    //gobject_class->pre-update = ;
+	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+	gobject_class->dispose = gsw_status_reporter_dispose;
+	//gobject_class->updating = ;
+	//gobject_class->pre-update = ;
 	//void (*updating)   (GswStatusReporter *reporter, gulong total, gulong completed);
 	//void (*pre-update) (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message);
 
-	// TODO:
 	signals[UPDATING] =
 		g_signal_new ("updating",
 				G_TYPE_FROM_CLASS (gobject_class),
 				G_SIGNAL_RUN_LAST,
 				G_STRUCT_OFFSET (GswStatusReporterClass, updating),
 				NULL, NULL,
-				g_cclosure_marshal_VOID__UINT,
-				G_TYPE_NONE, 1, G_TYPE_UINT);
+				gsw_marshal_VOID__ULONG_ULONG,
+				G_TYPE_NONE, 2, G_TYPE_ULONG, G_TYPE_ULONG);
+
+	signals[PRE_UPDATE] =
+		g_signal_new ("pre-update",
+				G_TYPE_FROM_CLASS (gobject_class),
+				G_SIGNAL_RUN_LAST,
+				G_STRUCT_OFFSET (GswStatusReporterClass, pre_update),
+				NULL, NULL,
+				gsw_marshal_VOID__ULONG_ULONG_STRING,
+				G_TYPE_NONE, 3, G_TYPE_ULONG, G_TYPE_ULONG, G_TYPE_STRING);
 }
 
-static void
-gsw_status_reporter_init (GswStatusReporter *status_reporter)
+static void gsw_status_reporter_init (GswStatusReporter *reporter)
 {
-    GswStatusReporterPrivate *priv;
+	GswStatusReporterPrivate *priv;
 
-    priv = GSW_STATUS_REPORTER_GET_PRIVATE (status_reporter);
+	priv = (GswStatusReporterPrivate*)  gsw_status_reporter_get_instance_private(reporter);
 	priv->reporter = NULL;
-
 }
 
 GswStatusReporter* gsw_status_reporter_new (void)
 {
 	GswStatusReporter* reporter;
 	GswStatusReporterPrivate *priv;
-    reporter = g_object_new (GSW_TYPE_STATUS_REPORTER, NULL);
-	priv = gsw_status_reporter_get_instance_private(reporter);
+	reporter = (GswStatusReporter*) g_object_new (GSW_TYPE_STATUS_REPORTER, NULL);
+	priv = (GswStatusReporterPrivate*) gsw_status_reporter_get_instance_private(reporter);
 	priv->reporter = new GStatusReporter(reporter);
 	return reporter;
 }
 
-gpointer gsw_status_reporter_get_class  (GswStatusReporter *report)
+gpointer gsw_status_reporter_get_internal (GswStatusReporter *reporter)
 {
 	GswStatusReporterPrivate *priv;
-	priv = gsw_status_reporter_get_instance_private(report);
+	priv = (GswStatusReporterPrivate*) gsw_status_reporter_get_instance_private(reporter);
 
 	return priv->reporter;
-}
-
-namespace {
-	using namespace std;
-	using namespace sword;
-	class GStatusReporter : public sword::StatusReporter {
-		public:
-			int last;
-			UpdateCallback updateFunc;
-			PreStatusCallback prestatusFunc;
-			GswStatusReporter *inst;
-			GStatusReporter(GswStatusReporter *instance):
-				last(0), updateFunc(0), prestatusFunc(0) {
-					inst = instance;
-				}
-			virtual void update(unsigned long totalBytes, unsigned long completedBytes) {
-				if (updateFunc != NULL) {
-					updateFunc(totalBytes, completedBytes);
-				} else {
-					int p = (totalBytes > 0) ? (int)(74.0 * ((double)completedBytes / (double)totalBytes)) : 0;
-					for (;last < p; ++last) {
-						if (!last) {
-							SWBuf output;
-							output.setFormatted("[ File Bytes: %ld", totalBytes);
-							while (output.size() < 75) output += " ";
-							output += "]";
-						}
-					}
-				}
-			}
-			virtual void preStatus(long totalBytes, long completedBytes, const char *message) {
-				if (prestatusFunc != NULL) {
-					prestatusFunc(totalBytes, completedBytes, message);
-				} else {
-					sword::SWBuf output;
-					output.setFormatted("[ Total Bytes: %ld; Completed Bytes: %ld", totalBytes, completedBytes);
-					while (output.size() < 75) output += " ";
-					output += "]";
-					last = 0;
-				}
-			}
-	};
-
-	class HandleReporter {
-		public:
-			GStatusReporter *reporter;
-			HandleReporter() {
-				this->reporter = new GStatusReporter();
-			}
-			~HandleReporter() {
-				delete reporter;
-			}
-	};
-};
-
-GswStatusReporter* gsw_status_reporter_new (void)
-{
-	return (GswStatusReporter*) new HandleReporter();
-}
-
-gpointer gsw_status_reporter_get_class  (GswStatusReporter *report)
-{
-	HandleReporter *h_reporter;
-	GStatusReporter *reporter;
-
-	h_reporter = (HandleReporter*) report;
-	if (!h_reporter) {
-		return NULL;
-	}
-	reporter = h_reporter->reporter;
-	return reporter;
-}
-
-void gsw_status_reporter_set_update_callback (GswStatusReporter *report, UpdateCallback func)
-{
-	HandleReporter *h_reporter;
-	GStatusReporter *reporter;
-
-	h_reporter = (HandleReporter*) report;
-	if (!h_reporter) {
-		return;
-	}
-	reporter = h_reporter->reporter;
-	if (!reporter) {
-		return;
-	}
-	reporter->updateFunc = func;
-}
-
-void gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func)
-{
-	HandleReporter *h_reporter;
-	GStatusReporter *reporter;
-
-	h_reporter = (HandleReporter*) report;
-	if (!h_reporter) {
-		return;
-	}
-	reporter = h_reporter->reporter;
-	if (!reporter) {
-		return;
-	}
-	reporter->prestatusFunc = func;
 }

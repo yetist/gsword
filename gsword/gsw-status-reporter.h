@@ -23,11 +23,12 @@
 #ifndef __GSW_STATUS_REPORTER_H__ 
 #define __GSW_STATUS_REPORTER_H__  1
 
-#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
 #define GSW_TYPE_STATUS_REPORTER              (gsw_status_reporter_get_type ())
+
 G_DECLARE_DERIVABLE_TYPE (GswStatusReporter, gsw_status_reporter, GSW, STATUS_REPORTER, GObject)
 
 typedef struct _GswStatusReporterClass        GswStatusReporterClass;
@@ -36,13 +37,11 @@ struct _GswStatusReporterClass
 {
 	GObjectClass       parent_class;
 	void (*updating)   (GswStatusReporter *reporter, gulong total, gulong completed);
-	void (*pre-update) (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message);
+	void (*pre_update) (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message);
 };
 
-GswStatusReporter*  gsw_status_reporter_new        (void);
-gpointer            gsw_status_reporter_get_class  (GswStatusReporter *report);
-void                gsw_status_reporter_set_update_callback    (GswStatusReporter *report, UpdateCallback func);
-void                gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func);
+GswStatusReporter*  gsw_status_reporter_new          (void);
+//gpointer            gsw_status_reporter_get_internal (GswStatusReporter *reporter);
 
 G_END_DECLS
 

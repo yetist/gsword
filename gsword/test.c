@@ -117,7 +117,16 @@ void test_manager(GswManager *manager)
 void test_installer(GswInstaller *installer)
 {
 	gsw_installer_sync_config (installer);
-	//	gsw_installer_refresh_remote_source (installer, const char *sourceName);
+	//gsw_installer_refresh_remote_source (installer, "CrossWare");
+}
+
+void updating   (GswStatusReporter *reporter, gulong total, gulong completed, gpointer data)
+{
+	g_print("...updating, %ld of %ld (%s)\n", completed, total, (char*) data);
+}
+void pre_update (GswStatusReporter *reporter, gulong total, gulong completed, const gchar* message, gpointer data)
+{
+	g_print("...pre update, %ld of %ld (%s) %s\n", completed, total, message, (char*) data);
 }
 
 int main(int argc, char** argv)
@@ -141,8 +150,8 @@ int main(int argc, char** argv)
 
 	// status reporter
 	reporter = gsw_status_reporter_new ();
-	gsw_status_reporter_set_update_callback (reporter, upfunc);
-	gsw_status_reporter_set_prestatus_callback (reporter, prefunc);
+	g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), "hi");
+	g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), "hi");
 
 	// installer
 	installer = gsw_installer_new("here", reporter);

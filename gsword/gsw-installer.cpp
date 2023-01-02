@@ -39,6 +39,7 @@
 #include <glib/gstdio.h>
 #include "gsw-installer.h"
 #include "gsw-modinfo.h"
+#include "gsw-private.h"
 
 using namespace sword;
 
@@ -86,7 +87,7 @@ GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *status
 	g_free(conf_path);
 
 	HandleInstMgr *hinstmgr = new HandleInstMgr();
-	StatusReporter* reporter = (StatusReporter*) gsw_status_reporter_get_class(statusReporter);
+	StatusReporter* reporter = (StatusReporter*) gsw_status_reporter_get_internal(statusReporter);
 	hinstmgr->installMgr = new InstallMgr(baseDir, reporter);
 	return (GswInstaller*) hinstmgr;
 }
