@@ -24,7 +24,6 @@
 
 #include <glib-object.h>
 #include "gsw-verse-key.h"
-#include "gsw-enum.h"
 
 G_BEGIN_DECLS
 
