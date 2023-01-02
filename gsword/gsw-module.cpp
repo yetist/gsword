@@ -26,6 +26,9 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
+static void percent(gchar, gpointer) {
+}
+
 namespace {
 	using namespace sword;
 	class HandleSWModule {
@@ -37,7 +40,7 @@ namespace {
 			PercentCallback callback;
 			void *userdata;
 			HandleSWModule(SWModule *mod) {
-				this->callback = NULL;
+				this->callback = percent;
 				this->userdata = NULL;
 				this->mod = mod;
 			}
@@ -108,7 +111,7 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 
 	sword::ListKey lscope;
 	sword::ListKey result;
-	if ((scope) && (strlen(scope)) > 0) {
+	if (scope != NULL && strlen(scope) > 0) {
 		sword::SWKey *p = mod->createKey();
 		sword::VerseKey *parser = SWDYNAMIC_CAST(VerseKey, p);
 		if (!parser) {
