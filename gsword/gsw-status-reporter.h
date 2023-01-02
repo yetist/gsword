@@ -41,7 +41,6 @@ struct _GswStatusReporterClass
 };
 
 GswStatusReporter*  gsw_status_reporter_new          (void);
-//gpointer            gsw_status_reporter_get_internal (GswStatusReporter *reporter);
 
 G_END_DECLS
 

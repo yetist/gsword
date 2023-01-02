@@ -23,13 +23,14 @@
 #ifndef __GSW_INSTALLER_H__ 
 #define __GSW_INSTALLER_H__  1
 
-#include <glib.h>
+#include <glib-object.h>
 #include "gsw-status-reporter.h"
 #include "gsw-manager.h"
 
 G_BEGIN_DECLS
 
-typedef void GswInstaller;
+#define GSW_TYPE_INSTALLER              (gsw_installer_get_type ())
+G_DECLARE_FINAL_TYPE (GswInstaller, gsw_installer, GSW, INSTALLER, GObject);
 
 GswInstaller* gsw_installer_new                            (const char *baseDir, GswStatusReporter *statusReporter);
 void          gsw_installer_delete                         (GswInstaller* installer);

@@ -41,34 +41,97 @@
 #include "gsw-modinfo.h"
 #include "gsw-private.h"
 
-using namespace sword;
+typedef struct _GswInstaller             GswInstaller;
 
-namespace {
-	class HandleInstMgr {
-		public:
-			InstallMgr *installMgr;
-			HandleInstMgr() : installMgr(0) {}
-			HandleInstMgr(InstallMgr *mgr) {
-				this->installMgr = installMgr;
-			}
+struct _GswInstaller
+{
+  GObject            object;
+  gchar             *path;
+  sword::InstallMgr *mgr;
+};
 
-			~HandleInstMgr() {
-				delete installMgr;
-			}
+enum {
+    PROP_0,
+	PROP_PATH,
+	NUM_PROPERTIES
+};
 
-	};
+static GParamSpec *installer_props[NUM_PROPERTIES] = { NULL, };
+
+G_DEFINE_TYPE (GswInstaller, gsw_installer, G_TYPE_OBJECT);
+
+static void gsw_installer_set_path(GswInstaller *installer, const gchar* path)
+{
+	installer->path = g_strdup(path);
 }
 
-GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *statusReporter)
+static void gsw_installer_set_property (GObject      *object,
+                            guint         prop_id,
+                            const GValue *value,
+                            GParamSpec   *pspec)
 {
+    GswInstaller *installer;
+    installer = GSW_INSTALLER (object);
+
+    switch (prop_id)
+	{
+		case PROP_PATH:
+			gsw_installer_set_path(installer, g_value_get_string (value));
+			break;
+		default:
+			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+			break;
+	}
+}
+
+static void gsw_installer_dispose (GObject *object)
+{
+	GswInstaller* installer = GSW_INSTALLER(object);
+	if (installer->mgr != NULL) {
+		delete installer->mgr;
+		installer->mgr = NULL;
+	}
+	if (installer->path != NULL) {
+		g_free(installer->path);
+		installer->path = NULL;
+	}
+	G_OBJECT_CLASS (gsw_installer_parent_class)->dispose (object);
+}
+
+static void gsw_installer_class_init (GswInstallerClass *klass)
+{
+    GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+	gobject_class->dispose = gsw_installer_dispose;
+	gobject_class->set_property = gsw_installer_set_property;
+	installer_props[PROP_PATH] =
+		g_param_spec_string ("path",
+				"Install path",
+				"Path to install module",
+				"",
+				G_PARAM_WRITABLE);
+	g_object_class_install_properties (gobject_class, NUM_PROPERTIES, installer_props);
+}
+
+static void gsw_installer_init (GswInstaller *installer)
+{
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
+	gchar* default_path;
+	default_path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
+	installer->path = default_path;
+	g_free(default_path);
+}
+
+static void gsw_installer_init_config(GswInstaller *installer)
+{
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
 	gchar *conf_path;
-	conf_path = g_build_filename(baseDir, "InstallMgr.conf", NULL);
-	if (!g_file_test(conf_path, G_FILE_TEST_EXISTS)) {
-		g_mkdir_with_parents (baseDir, 0755);
-		SWConfig config(conf_path);
+	conf_path = g_build_filename(installer->path, "InstallMgr.conf", NULL);
+	if (!g_file_test(installer->path, G_FILE_TEST_EXISTS)) {
+		g_mkdir_with_parents (installer->path, 0755);
+		sword::SWConfig config(conf_path);
 		config["General"]["PassiveFTP"] = "true";
 
-		InstallSource is("FTP");
+		sword::InstallSource is("FTP");
 		is.caption = "CrossWire";
 		is.source = "ftp.crosswire.org";
 		is.directory = "/pub/sword/raw";
@@ -77,7 +140,7 @@ GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *status
 		config["Sources"]["FTPSource"] = is.getConfEnt();
 		config.Save();
 
-		InstallSource is_local("DIR");
+		sword::InstallSource is_local("DIR");
 		is_local.caption = "cdrom";
 		is_local.source = "[local]";
 		is_local.directory = "/mnt/cdrom";
@@ -85,79 +148,62 @@ GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *status
 		config.Save();
 	}
 	g_free(conf_path);
-
-	HandleInstMgr *hinstmgr = new HandleInstMgr();
-	StatusReporter* reporter = (StatusReporter*) gsw_status_reporter_get_internal(statusReporter);
-	hinstmgr->installMgr = new InstallMgr(baseDir, reporter);
-	return (GswInstaller*) hinstmgr;
 }
 
-void  gsw_installer_delete (GswInstaller* installer)
+GswInstaller* gsw_installer_new (const gchar *path, GswStatusReporter *statusReporter)
 {
-	HandleInstMgr *hinstMgr = (HandleInstMgr *) installer;
-	if (hinstMgr)
-		delete hinstMgr;
+	GswInstaller *installer;
+	sword::StatusReporter *reporter;
+    installer = (GswInstaller*) g_object_new (GSW_TYPE_INSTALLER, "path", path, NULL);
+	gsw_installer_init_config(installer);
+	reporter = (sword::StatusReporter*) gsw_status_reporter_get_internal(statusReporter);
+	installer->mgr = new sword::InstallMgr(path, reporter);
+
+	return installer;
+}
+
+void gsw_installer_delete (GswInstaller* installer)
+{
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
+	g_object_unref(installer);
 }
 
 void gsw_installer_set_user_disclaimer_confirmed  (GswInstaller* installer)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return;
-
-	installMgr->setUserDisclaimerConfirmed(TRUE);
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
+	installer->mgr->setUserDisclaimerConfirmed(TRUE);
 }
 
 int gsw_installer_sync_config (GswInstaller* installer)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return -1;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return -1;
-	return installMgr->refreshRemoteSourceConfiguration();
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
+	return installer->mgr->refreshRemoteSourceConfiguration();
 }
 
 int gsw_installer_uninstall_module (GswInstaller* installer, GswManager* manager, const char *modName)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return -1;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return -1;
-
-	SWMgr *mgr;
-	mgr = (SWMgr*)manager;
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
+	sword::SWMgr *mgr;
+	mgr = (sword::SWMgr*)manager;
 	if (!mgr)
 		return -1;
 
-	SWModule *module;
-	ModMap::iterator it = mgr->Modules.find(modName);
+	sword::SWModule *module;
+	sword::ModMap::iterator it = mgr->Modules.find(modName);
 	if (it == mgr->Modules.end()) {
 		return -2;
 	}
 	module = it->second;
-	return installMgr->removeModule(mgr, module->getName());
+	return installer->mgr->removeModule(mgr, module->getName());
 }
 
 GList* gsw_installer_get_remote_sources (GswInstaller* installer)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return NULL;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return NULL;
 	GList *list = NULL;
 
-	sword::StringList vals = LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();
+	sword::StringList vals = sword::LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();
 
-	for (InstallSourceMap::iterator it = installMgr->sources.begin(); it != installMgr->sources.end(); ++it) {
+	for (sword::InstallSourceMap::iterator it = installer->mgr->sources.begin(); it != installer->mgr->sources.end(); ++it) {
 		list = g_list_append(list, (gpointer) it->second->caption.c_str());
 	}
 
@@ -166,64 +212,51 @@ GList* gsw_installer_get_remote_sources (GswInstaller* installer)
 
 int  gsw_installer_refresh_remote_source (GswInstaller* installer, const char *sourceName)
 {
-
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return -1;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return -1;
-
-	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
-	if (source == installMgr->sources.end()) {
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
+	sword::InstallSourceMap::iterator source = installer->mgr->sources.find(sourceName);
+	if (source == installer->mgr->sources.end()) {
 		return -3;
 	}
 
-	return installMgr->refreshRemoteSource(source->second);
+	return installer->mgr->refreshRemoteSource(source->second);
 }
 
 GList* gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManager* manager, const char *sourceName)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return NULL;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return NULL;
-
-	SWMgr *mgr;
-	mgr = (SWMgr*)manager;
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), NULL);
+	sword::SWMgr *mgr;
+	mgr = (sword::SWMgr*)manager;
 	if (!mgr)
 		return NULL;
 
 	GList *list = NULL;
 
-	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
+	sword::InstallSourceMap::iterator source = installer->mgr->sources.find(sourceName);
 
-	std::map<SWModule *, int> modStats = installMgr->getModuleStatus(*mgr, *source->second->getMgr());
+	std::map<sword::SWModule *, int> modStats = installer->mgr->getModuleStatus(*mgr, *source->second->getMgr());
 
-	for (std::map<SWModule *, int>::iterator it = modStats.begin(); it != modStats.end(); ++it) {
-		SWModule *module = it->first;
+	for (std::map<sword::SWModule *, int>::iterator it = modStats.begin(); it != modStats.end(); ++it) {
+		sword::SWModule *module = it->first;
 		int status = it->second;
 
-		SWBuf version = module->getConfigEntry("Version");
-		SWBuf statusString = " ";
-		if (status & InstallMgr::MODSTAT_NEW) statusString = "*";
-		if (status & InstallMgr::MODSTAT_OLDER) statusString = "-";
-		if (status & InstallMgr::MODSTAT_UPDATED) statusString = "+";
+		sword::SWBuf version = module->getConfigEntry("Version");
+		sword::SWBuf statusString = " ";
+		if (status & sword::InstallMgr::MODSTAT_NEW) statusString = "*";
+		if (status & sword::InstallMgr::MODSTAT_OLDER) statusString = "-";
+		if (status & sword::InstallMgr::MODSTAT_UPDATED) statusString = "+";
 
-		SWBuf type = module->getType();
-		SWBuf cat = module->getConfigEntry("Category");
+		sword::SWBuf type = module->getType();
+		sword::SWBuf cat = module->getConfigEntry("Category");
 		if (cat.length() > 0) type = cat;
 
 		GswModinfo* modinfo;
 		modinfo = gsw_modinfo_new (
-				g_strdup(assureValidUTF8(module->getName())),
-				g_strdup(assureValidUTF8(module->getDescription())),
-				g_strdup(assureValidUTF8(type.c_str())),
-				g_strdup(assureValidUTF8(module->getLanguage())),
-				g_strdup(assureValidUTF8(version.c_str())),
-				g_strdup(assureValidUTF8(statusString.c_str()))
+				g_strdup(sword::assureValidUTF8(module->getName())),
+				g_strdup(sword::assureValidUTF8(module->getDescription())),
+				g_strdup(sword::assureValidUTF8(type.c_str())),
+				g_strdup(sword::assureValidUTF8(module->getLanguage())),
+				g_strdup(sword::assureValidUTF8(version.c_str())),
+				g_strdup(sword::assureValidUTF8(statusString.c_str()))
 				);
 		list = g_list_append(list, modinfo);
 
@@ -233,29 +266,23 @@ GList* gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManage
 
 int gsw_installer_remote_install_module (GswInstaller* installer, GswManager* manager, const char *sourceName, const char *modName)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return -1;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return -1;
-
-	SWMgr *mgr;
-	mgr = (SWMgr*)manager;
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
+	sword::SWMgr *mgr;
+	mgr = (sword::SWMgr*)manager;
 	if (!mgr)
 		return -1;
 
-	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
+	sword::InstallSourceMap::iterator source = installer->mgr->sources.find(sourceName);
 
-	if (source == installMgr->sources.end()) {
+	if (source == installer->mgr->sources.end()) {
 		return -3;
 	}
 
-	InstallSource *is = source->second;
-	SWMgr *rmgr = is->getMgr();
-	SWModule *module;
+	sword::InstallSource *is = source->second;
+	sword::SWMgr *rmgr = is->getMgr();
+	sword::SWModule *module;
 
-	ModMap::iterator it = rmgr->Modules.find(modName);
+	sword::ModMap::iterator it = rmgr->Modules.find(modName);
 
 	if (it == rmgr->Modules.end()) {
 		return -4;
@@ -263,27 +290,21 @@ int gsw_installer_remote_install_module (GswInstaller* installer, GswManager* ma
 
 	module = it->second;
 
-	int error = installMgr->installModule(mgr, 0, module->getName(), is);
+	int error = installer->mgr->installModule(mgr, 0, module->getName(), is);
 
 	return error;
 }
 
 GswModule* gsw_installer_get_remote_module_by_name (GswInstaller* installer, const char *sourceName, const char *modName)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return NULL;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return NULL;
+	g_return_val_if_fail(GSW_IS_INSTALLER(installer), NULL);
+	sword::InstallSourceMap::iterator source = installer->mgr->sources.find(sourceName);
 
-	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
-
-	if (source == installMgr->sources.end()) {
+	if (source == installer->mgr->sources.end()) {
 		return NULL;
 	}
 
-	SWMgr *mgr = source->second->getMgr();
+	sword::SWMgr *mgr = source->second->getMgr();
 
 	sword::SWModule *module = mgr->getModule(modName);
 
@@ -292,36 +313,24 @@ GswModule* gsw_installer_get_remote_module_by_name (GswInstaller* installer, con
 	}
 
 	return  gsw_module_new(module);
-
 }
 
 void gsw_installer_terminate (GswInstaller* installer)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return;
-	installMgr->terminate();
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
+	installer->mgr->terminate();
 }
 
 
 void gsw_installer_reset_config (GswInstaller *installer, const gchar *baseDir)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return;
-
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
 	gchar *conf_path;
 	conf_path = g_build_filename(baseDir, "InstallMgr.conf", NULL);
 	if (g_file_test(conf_path, G_FILE_TEST_EXISTS)) {
 		g_remove(conf_path);
 	}
-	SWConfig config(conf_path);
+	sword::SWConfig config(conf_path);
 	config["General"]["PassiveFTP"] = "true";
 	config.Save();
 	gsw_installer_reload_config(installer);
@@ -329,11 +338,6 @@ void gsw_installer_reset_config (GswInstaller *installer, const gchar *baseDir)
 
 void gsw_installer_reload_config(GswInstaller *installer)
 {
-	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
-	if (!hinstmgr)
-		return;
-	InstallMgr *installMgr = hinstmgr->installMgr;
-	if (!installMgr)
-		return;
-	installMgr->readInstallConf();
+	g_return_if_fail(GSW_IS_INSTALLER(installer));
+	installer->mgr->readInstallConf();
 }
