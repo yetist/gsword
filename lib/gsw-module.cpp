@@ -28,12 +28,6 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
-// should clean begin
-#define SWHANDLE intptr_t
-// should clean end
-
-#define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
-
 using namespace sword;
 using sword::SWModule;
 using sword::VerseKey;
@@ -41,34 +35,6 @@ using sword::SWBuf;
 using sword::TreeKeyIdx;
 
 namespace {
-	void clearStringArray(const char ***stringArray) {
-		if (*stringArray) {
-			for (int i = 0; true; ++i) {
-				if ((*stringArray)[i]) {
-					delete [] (*stringArray)[i];
-				}
-				else break;
-			}
-			free((*stringArray));
-			(*stringArray) = 0;
-		}
-	}
-
-
-	struct pu {
-		char last;
-		SWHANDLE progressReporter;
-
-		void init(SWHANDLE pr) { progressReporter = pr; last = 0; }
-	};
-	void percentUpdate(char percent, void *userData) {
-		struct pu *p = (struct pu *)userData;
-
-		if (percent != p->last) {
-			p->last = percent;
-		}
-	}
-
 	class HandleSWModule {
 		public:
 			SWModule *mod;
@@ -77,16 +43,15 @@ namespace {
 			char *renderHeader;
 			char *rawEntry;
 			char *configEntry;
-			struct pu peeuuu;
 			// making searchHits cache static saves memory only having a single
 			// outstanding copy, but also is not threadsafe.  Remove static here
 			// and fix compiling bugs and add clearSearchHits() to d-tor to change
-			static GList *searchHits;
-			static GList *attributes;
-			static const char **parseKeyList;
-			static const char **keyChildren;
+			PercentCallback callback;
+			void *userdata;
 
 			HandleSWModule(SWModule *mod) {
+				this->callback = NULL;
+				this->userdata = NULL;
 				this->mod = mod;
 				this->renderBuf = 0;
 				this->stripBuf = 0;
@@ -102,29 +67,14 @@ namespace {
 				delete [] configEntry;
 			}
 
-			static void clearSearchHits() {
-				if (searchHits != NULL) {
-					g_list_free_full (searchHits, gsw_search_hit_unref);
-				}
+			void setPercentFunc(PercentCallback func) {
+				this->callback = func;
 			}
 
-			static void clearEntryAttributes() {
-				if (attributes != NULL) {
-					g_list_free_full (attributes, g_free);
-				}
-			}
-			static void clearParseKeyList() {
-				clearStringArray(&parseKeyList);
-			}
-			static void clearKeyChildren() {
-				clearStringArray(&keyChildren);
+			void setPercentUserdata(void *data) {
+				this->userdata = data;
 			}
 	};
-
-	GList *HandleSWModule::searchHits = NULL;
-	GList *HandleSWModule::attributes = NULL;
-	const char **HandleSWModule::parseKeyList = 0;
-	const char **HandleSWModule::keyChildren = 0;
 }
 
 GswModule* gsw_module_new (gpointer data)
@@ -154,33 +104,53 @@ void  gsw_module_terminate_search (GswModule *module)
 	mod->terminateSearch = true;
 }
 
-#if 0
-const struct gsw_SearchHit *  gsw_SWModule_search
-(SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter)
+void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, gpointer userdata)
 {
+	HandleSWModule *hmod;
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
 
-	GETSWMODULE(hSWModule, 0);
+	hmod->setPercentFunc(func);
+	hmod->setPercentUserdata(userdata);
+}
 
-	hmod->clearSearchHits();
+GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSearchType searchType, glong flags, const gchar *scope)
+//const struct gsw_SearchHit *  gsw_SWModule_search (SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
+
+//	hmod->clearSearchHits();
 
 	sword::ListKey lscope;
 	sword::ListKey result;
 
-
-	hmod->peeuuu.init(progressReporter);
+//	hmod->peeuuu.init(progressReporter);
 	if ((scope) && (strlen(scope)) > 0) {
-		sword::SWKey *p = module->createKey();
+		sword::SWKey *p = mod->createKey();
 		sword::VerseKey *parser = SWDYNAMIC_CAST(VerseKey, p);
 		if (!parser) {
 			delete p;
 			parser = new VerseKey();
 		}
-		*parser = module->getKeyText();
+		//ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *scope, bool *justCheckIfSupported, void (*percent)(char, void *), void *percentUserData)
+		*parser = mod->getKeyText();
 		lscope = parser->parseVerseList(scope, *parser, true);
-		result = module->search(searchString, searchType, flags, &lscope, 0, &percentUpdate, &(hmod->peeuuu));
+		result = mod->search(searchString, searchType, flags, &lscope, 0, hmod->callback, hmod->userdata); // &percentUpdate, &(hmod->peeuuu));
 		delete parser;
+	} else {
+		result = mod->search(searchString, searchType, flags, 0, 0, hmod->callback, hmod->userdata);
 	}
-	else	result = module->search(searchString, searchType, flags, 0, 0, &percentUpdate, &(hmod->peeuuu));
 
 	int count = 0;
 	for (result = sword::TOP; !result.popError(); result++) count++;
@@ -190,21 +160,20 @@ const struct gsw_SearchHit *  gsw_SWModule_search
 	if ((count) && (long)result.getElement()->userData)
 		result.sort();
 
-	struct gsw_SearchHit *retVal = (struct gsw_SearchHit *)calloc(count+1, sizeof(struct gsw_SearchHit));
+//	struct gsw_SearchHit *retVal = (struct gsw_SearchHit *)calloc(count+1, sizeof(struct gsw_SearchHit));
 
 	int i = 0;
 	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
-		GswSearchHit *result;
-		result = gsw_search_hit_new(module->getName(), assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
-		results = g_list_append(results, result);
+		GswSearchHit *hit;
+		hit = gsw_search_hit_new(mod->getName(), assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
+		results = g_list_append(results, hit);
 		i++;
 		if (i >= count) break;
 	}
-	hmod->searchHits = results;
+//	hmod->searchHits = results;
 	return results;
 }
-#endif
 
 gboolean gsw_module_pop_error (GswModule *module)
 {
@@ -255,7 +224,7 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 		return 0;
 	}
 
-	hmod->clearEntryAttributes();
+//	hmod->clearEntryAttributes();
 
 	mod->renderText();	// force parse
 	std::vector<SWBuf> results;
@@ -317,42 +286,37 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 		}
 	}
 
-	hmod->attributes = attributes;
+//	hmod->attributes = attributes;
 	return attributes;
 }
-#if 0
 
-const char **  gsw_SWModule_parseKeyList (SWHANDLE hSWModule, const char *keyText)
+GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 {
-
-	GETSWMODULE(hSWModule, 0);
-
-	hmod->clearParseKeyList();
-
-	sword::VerseKey *parser = dynamic_cast<VerseKey *>(module->getKey());
-	const char **retVal = 0;
+	HandleSWModule *hmod;
+	SWModule *mod;
+	GList *list = NULL;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
+	sword::VerseKey *parser = dynamic_cast<VerseKey *>(mod->getKey());
 	if (parser) {
 		sword::ListKey result;
 		result = parser->parseVerseList(keyText, *parser, true);
-		int count = 0;
 		for (result = sword::TOP; !result.popError(); result++) {
-			count++;
+			list = g_list_append(list, g_strdup(assureValidUTF8(VerseKey(result).getOSISRef())));
 		}
-		retVal = (const char **)calloc(count+1, sizeof(const char *));
-		count = 0;
-		for (result = sword::TOP; !result.popError(); result++) {
-			stdstr((char **)&(retVal[count++]), assureValidUTF8(VerseKey(result).getOSISRef()));
-		}
-	}
-	else	{
-		retVal = (const char **)calloc(2, sizeof(const char *));
-		stdstr((char **)&(retVal[0]), assureValidUTF8(keyText));
+	} else {
+		list = g_list_append(list, g_strdup(assureValidUTF8(keyText)));
 	}
 
-	hmod->parseKeyList = retVal;
-	return retVal;
+	return list;
 }
-#endif
 
 // Special values handled for VerseKey modules:
 //	[+-][book|chapter]	- [de|in]crement by chapter or book
@@ -437,69 +401,62 @@ gboolean gsw_module_has_key_children (GswModule *module)
 	return retVal;
 }
 
-#if 0
 // This method returns child nodes for a genbook,
 // but has special handling if called on a VerseKey module:
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
-const char ** gsw_SWModule_getKeyChildren (SWHANDLE hSWModule)
+GList* gsw_module_get_key_children (GswModule *module)
 {
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	hmod->clearKeyChildren();
+	GList *list = NULL;
 
-	sword::SWKey *key = module->getKey();
-	const char **retVal = 0;
-	int count = 0;
+	sword::SWKey *key = mod->getKey();
 
 	sword::VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, key);
 	if (vkey) {
-		retVal = (const char **)calloc(9, sizeof(const char *));
 		SWBuf num;
 		num.appendFormatted("%d", vkey->getTestament());
-		stdstr((char **)&(retVal[0]), num.c_str());
+		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
 		num.appendFormatted("%d", vkey->getBook());
-		stdstr((char **)&(retVal[1]), num.c_str());
+		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
 		num.appendFormatted("%d", vkey->getChapter());
-		stdstr((char **)&(retVal[2]), num.c_str());
+		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
 		num.appendFormatted("%d", vkey->getVerse());
-		stdstr((char **)&(retVal[3]), num.c_str());
+		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
 		num.appendFormatted("%d", vkey->getChapterMax());
-		stdstr((char **)&(retVal[4]), num.c_str());
+		list = g_list_append(list, (gpointer) num.c_str());
 		num = "";
 		num.appendFormatted("%d", vkey->getVerseMax());
-		stdstr((char **)&(retVal[5]), num.c_str());
-		stdstr((char **)&(retVal[6]), vkey->getBookName());
-		stdstr((char **)&(retVal[7]), vkey->getOSISRef());
+		list = g_list_append(list, (gpointer) num.c_str());
+		list = g_list_append(list, g_strdup(vkey->getBookName()));
+		list = g_list_append(list, g_strdup(vkey->getOSISRef()));
 	} else {
 		TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
 		if (tkey) {
 			if (tkey->firstChild()) {
 				do {
-					count++;
-				}
-				while (tkey->nextSibling());
-				tkey->parent();
-			}
-			retVal = (const char **)calloc(count+1, sizeof(const char *));
-			count = 0;
-			if (tkey->firstChild()) {
-				do {
-					stdstr((char **)&(retVal[count++]), assureValidUTF8(tkey->getLocalName()));
-				}
-				while (tkey->nextSibling());
+					list = g_list_append(list,  g_strdup(assureValidUTF8(tkey->getLocalName())));
+				} while (tkey->nextSibling());
 				tkey->parent();
 			}
 		}
 	}
-
-	hmod->keyChildren = retVal;
-	return retVal;
+	return list;
 }
-#endif
 
 const gchar* gsw_module_get_name (GswModule *module)
 {
@@ -536,9 +493,7 @@ const gchar* gsw_module_get_description (GswModule *module)
 
 const gchar* gsw_module_get_category (GswModule *module)
 {
-
 	static SWBuf type;
-
 	HandleSWModule *hmod;
 	SWModule *mod;
 	
@@ -674,7 +629,6 @@ const gchar* gsw_module_render_text (GswModule *module)
 // CSS styles associated with this text
 const gchar* gsw_module_get_render_header (GswModule *module)
 {
-
 	HandleSWModule *hmod;
 	SWModule *mod;
 	

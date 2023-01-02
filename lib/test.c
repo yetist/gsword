@@ -23,16 +23,35 @@
 #include <locale.h>
 #include "gsw-manager.h"
 #include "gsw-modinfo.h"
+#include "gsw-search-hit.h"
 
-int main(int argc, char** argv)
+void percent(gchar i, gpointer d)
 {
-	g_setenv("LC_ALL", "zh_CN.utf8", TRUE);
-	setlocale (LC_ALL, "");
-	GswManager* mag;
+	g_print("%d, %s\n", i, d);
+}
+
+void test_module(GswModule *module)
+{
 	GList *list, *l;
-	mag = gsw_manager_new ();
-	g_print("mag version=%s\n", gsw_manager_get_version(mag));
-	list = gsw_manager_get_modinfo_list(mag);
+	g_print("module size = %ld\n", gsw_module_get_entry_size(module));
+	gsw_module_set_percent_callback(module, percent, "ok");
+	list = gsw_module_search (module, "God", MODULE_SEARCH_TYPE_REGEX, 0, NULL);
+	for (l = list; l != NULL; l = l->next) {
+		GswSearchHit *search_hit;
+		search_hit = l->data;
+		g_print("name =%s\n", gsw_search_hit_get_name  (search_hit));
+		g_print("key =%s\n", gsw_search_hit_get_key (search_hit));
+		g_print("score =%ld\n", gsw_search_hit_get_score (search_hit));
+	}
+	//gsw_search_hit_unref(search_hit);
+}
+
+void test_manager(GswManager *manager)
+{
+	GList *list, *l;
+	g_print("manager version=%s\n", gsw_manager_get_version(manager));
+
+	list = gsw_manager_get_modinfo_list(manager);
 	for (l = list; l != NULL; l = l->next)
 	{
 		GswModinfo *info = (GswModinfo*)l->data;
@@ -42,8 +61,24 @@ int main(int argc, char** argv)
 		g_print("       :lang=%s\n", gsw_modinfo_get_language(info));
 		g_print("       :vern=%s\n", gsw_modinfo_get_version(info));
 		g_print("       :delt=%s\n", gsw_modinfo_get_delta(info));
-		// do something with l->data
 	}
-	gsw_manager_delete(mag);
+}
 
+int main(int argc, char** argv)
+{
+	g_setenv("LC_ALL", "zh_CN.utf8", TRUE);
+	setlocale (LC_ALL, "");
+
+	GswManager* manager;
+	GswModule *module;
+
+	// manager
+	manager = gsw_manager_new ();
+	test_manager(manager);
+
+	// module
+	module = gsw_manager_get_module_by_name(manager, "NETfree");
+	test_module(module);
+
+	gsw_manager_delete(manager);
 }

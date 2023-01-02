@@ -197,13 +197,15 @@ GswModule* gsw_manager_get_module_by_name (GswManager *manager, const gchar *mod
 {
 	WebMgr *mgr;
 	SWModule *mod;
+	GswModule *module;
 
 	mgr = (WebMgr *)manager;
 	if (!mgr)
 		return NULL;
 
 	mod = mgr->getModule(moduleName);
-	return (GswModule*) mod;
+	module = gsw_module_new(mod);
+	return module;
 }
 
 const gchar* gsw_manager_get_prefix_path (GswManager *manager)
