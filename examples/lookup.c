@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 		g_object_unref (manager);
 		exit(-1);
 	}
+	gsw_manager_set_default_locale(manager, "zh_CN");
 
 	gsw_module_set_key_text (module, argv[2]);
 
