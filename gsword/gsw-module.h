@@ -58,10 +58,10 @@ void         gsw_module_set_key_text            (GswModule *module, const gchar 
 const gchar* gsw_module_get_key_text            (GswModule *module);
 gboolean     gsw_module_has_key_children        (GswModule *module);
 GList*       gsw_module_get_key_children        (GswModule *module);
-const gchar* gsw_module_get_name                (GswModule *module);
+const gchar* gsw_module_get_mod_name            (GswModule *module);
 const gchar* gsw_module_get_mod_type            (GswModule *module);
-const gchar* gsw_module_get_description         (GswModule *module);
-gchar*       gsw_module_get_category            (GswModule *module);
+const gchar* gsw_module_get_mod_description     (GswModule *module);
+gchar*       gsw_module_get_mod_category        (GswModule *module);
 const gchar* gsw_module_get_key_parent          (GswModule *module);
 GswVerseKey* gsw_module_get_verse_key           (GswModule *module);
 void         gsw_module_previous                (GswModule *module);

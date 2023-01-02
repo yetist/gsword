@@ -12,15 +12,15 @@ int main(int argc, char **argv)
 
 	for (l = list; l != NULL; l=l->next) {
 		module = (GswModule*) l->data;
-		printf("%s|%s\n", gsw_module_get_name(module), gsw_module_get_mod_type(module));
+		printf("%s|%s\n", gsw_module_get_mod_name(module), gsw_module_get_mod_type(module));
 	}
 	l = list;
 	module = (GswModule*) l->data;
-	printf("\n%s:\n%s (%s)\n", gsw_module_get_key_text(module), gsw_module_render_text(module), gsw_module_get_name(module));
+	printf("\n%s:\n%s (%s)\n", gsw_module_get_key_text(module), gsw_module_render_text(module), gsw_module_get_mod_name(module));
 
 	l = l->next;
 	module = (GswModule*) l->data;
-	printf("\n%s:\n%s (%s)\n", gsw_module_get_key_text(module), gsw_module_render_text(module), gsw_module_get_name(module));
+	printf("\n%s:\n%s (%s)\n", gsw_module_get_key_text(module), gsw_module_render_text(module), gsw_module_get_mod_name(module));
 
 	return 0;
 }

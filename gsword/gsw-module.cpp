@@ -366,7 +366,7 @@ GList* gsw_module_get_key_children (GswModule *module)
 	return list;
 }
 
-const gchar* gsw_module_get_name (GswModule *module)
+const gchar* gsw_module_get_mod_name (GswModule *module)
 {
 	g_return_val_if_fail(module != NULL, NULL);
 	return module->mod->getName();
@@ -378,14 +378,14 @@ const gchar* gsw_module_get_mod_type (GswModule *module)
 	return module->mod->getType();
 }
 
-const gchar* gsw_module_get_description (GswModule *module)
+const gchar* gsw_module_get_mod_description (GswModule *module)
 {
 	g_return_val_if_fail(module != NULL, NULL);
 
 	return module->mod->getDescription();
 }
 
-gchar* gsw_module_get_category (GswModule *module)
+gchar* gsw_module_get_mod_category (GswModule *module)
 {
 	g_return_val_if_fail(module != NULL, NULL);
 	const gchar* type;
