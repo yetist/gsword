@@ -13,6 +13,8 @@ libgsword = shared_library('gsword2',
 'gsw-manager.cpp',
 'gsw-module.cpp',
 'gsw-search-hit.c',
+'gsw-installer.cpp',
+'gsw-status-reporter.cpp',
 dependencies : [sword_dep, gobject_dep],
 )
 

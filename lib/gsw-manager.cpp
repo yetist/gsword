@@ -278,7 +278,7 @@ GList* gsw_manager_get_global_options (GswManager *manager)
 
 	sword::StringList options = mgr->getGlobalOptions();
 	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		list = g_list_append(list, (gpointer)it->c_str());
+		list = g_list_append(list, g_strdup(it->c_str()));
 	}
 	return list;
 }
@@ -294,7 +294,7 @@ GList* gsw_manager_get_global_option_values (GswManager *manager, const gchar *o
 
 	sword::StringList options = mgr->getGlobalOptionValues(option);
 	for (sword::StringList::iterator it = options.begin(); it != options.end(); ++it) {
-		list = g_list_append(list, (gpointer) it->c_str());
+		list = g_list_append(list, g_strdup(it->c_str()));
 	}
 	return list;
 }
@@ -330,7 +330,7 @@ GList* gsw_manager_get_available_locales (GswManager *manager)
 
 	sword::StringList localeNames = LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();
 	for (sword::StringList::iterator it = localeNames.begin(); it != localeNames.end(); ++it) {
-		list = g_list_append(list, (gpointer) it->c_str());
+		list = g_list_append(list, g_strdup(it->c_str()));
 	}
 
 	return list;

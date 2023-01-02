@@ -37,58 +37,29 @@
 #include <utilstr.h>
 
 #include "gsw-installer.h"
+#include "gsw-modinfo.h"
 
 using namespace sword;
 using sword::VerseKey;
-using sword::SWVersion;
 using sword::SWBuf;
 using sword::TreeKeyIdx;
 using sword::InstallMgr;
 using sword::SWModule;
 
-#define GETINSTMGR(handle, failReturn) HandleInstMgr *hinstmgr = (HandleInstMgr *)handle; if (!hinstmgr) return failReturn; InstallMgr *installMgr = hinstmgr->installMgr; if (!installMgr) return failReturn;
-
 namespace {
 	class HandleInstMgr {
 		public:
-			static const char **remoteSources;
 			InstallMgr *installMgr;
-//			gsw_ModInfo *modInfo;
-//			std::map<SWModule *, HandleSWModule *> moduleHandles;
-
-//			MyStatusReporter statusReporter;
-//			HandleInstMgr() : installMgr(0), modInfo(0) {}
 			HandleInstMgr() : installMgr(0) {}
 			HandleInstMgr(InstallMgr *mgr) {
 				this->installMgr = installMgr;
-//				this->modInfo = 0;
 			}
 
 			~HandleInstMgr() {
-//				clearModInfo();
-//				for (std::map<SWModule *, HandleSWModule *>::iterator it = moduleHandles.begin(); it != moduleHandles.end(); ++it) {
-//					delete it->second;
-//				}
 				delete installMgr;
 			}
 
-//			HandleSWModule *getModuleHandle(SWModule *mod) {
-//				if (!mod) return 0;
-//				if (moduleHandles.find(mod) == moduleHandles.end()) {
-//					moduleHandles[mod] = new HandleSWModule(mod);
-//				}
-//				return moduleHandles[mod];
-//			}
-//
-//			static void clearRemoteSources() {
-//				clearStringArray(&remoteSources);
-//			}
-//
-//			void clearModInfo() {
-//				clearModInfoArray(&modInfo);
-//			}
 	};
-	const char **HandleInstMgr::remoteSources = 0;
 }
 
 GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *statusReporter)
@@ -105,8 +76,6 @@ GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *status
 
 	HandleInstMgr *hinstmgr = new HandleInstMgr();
 	StatusReporter* reporter = (StatusReporter*) gsw_status_reporter_get_class(statusReporter);
-	//hinstmgr->statusReporter.init(statusReporter);
-	//hinstmgr->installMgr = new InstallMgr(baseDir, &(hinstmgr->statusReporter));
 	hinstmgr->installMgr = new InstallMgr(baseDir, reporter);
 	return (GswInstaller*) hinstmgr;
 }
@@ -174,36 +143,24 @@ GList* gsw_installer_get_remote_sources (GswInstaller* installer)
 		return NULL;
 	GList *list = NULL;
 
-//	hinstmgr->clearRemoteSources();
 	sword::StringList vals = LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();
 
-//	const char **retVal = 0;
-//	int count = 0;
-//	for (InstallSourceMap::iterator it = installMgr->sources.begin(); it != installMgr->sources.end(); ++it) {
-//		count++;
-//	}
-//	retVal = (const char **)calloc(count+1, sizeof(const char *));
-//	count = 0;
 	for (InstallSourceMap::iterator it = installMgr->sources.begin(); it != installMgr->sources.end(); ++it) {
 		list = g_list_append(list, (gpointer) it->second->caption.c_str());
-
-//		stdstr((char **)&(retVal[count++]), it->second->caption.c_str());
 	}
 
-//	hinstmgr->remoteSources = retVal;
 	return list;
 }
-#if 0
 
-/*
- * Class:     org_crosswire_sword_InstallMgr
- * Method:    refreshRemoteSource
- * Signature: (Ljava/lang/String;)I
- */
-int  org_crosswire_sword_InstallMgr_refreshRemoteSource
-  (SWHANDLE hInstallMgr, const char *sourceName) {
+int  gsw_installer_refresh_remote_source (GswInstaller* installer, const char *sourceName)
+{
 
-	GETINSTMGR(hInstallMgr, -1);
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return -1;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return -1;
 
 	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
 	if (source == installMgr->sources.end()) {
@@ -213,36 +170,26 @@ int  org_crosswire_sword_InstallMgr_refreshRemoteSource
 	return installMgr->refreshRemoteSource(source->second);
 }
 
-/*
- * Class:     org_crosswire_sword_InstallMgr
- * Method:    getRemoteModInfoList
- * Signature: (Lorg/crosswire/android/sword/SWMgr;Ljava/lang/String;)[Lorg/crosswire/android/sword/SWMgr/ModInfo;
- */
-const struct org_crosswire_sword_ModInfo *  org_crosswire_sword_InstallMgr_getRemoteModInfoList
-  (SWHANDLE hInstallMgr, SWHANDLE hSWMgr_deltaCompareTo, const char *sourceName) {
+GList* gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManager* manager, const char *sourceName)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return NULL;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return NULL;
 
-	GETINSTMGR(hInstallMgr, 0);
-	GETSWMGR(hSWMgr_deltaCompareTo, 0);
+	SWMgr *mgr;
+	mgr = (SWMgr*)manager;
+	if (!mgr)
+		return NULL;
 
-	struct org_crosswire_sword_ModInfo *retVal = 0;
-
-	hinstmgr->clearModInfo();
+	GList *list = NULL;
 
 	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
-	if (source == installMgr->sources.end()) {
-		retVal = (struct org_crosswire_sword_ModInfo *)calloc(1, sizeof(struct org_crosswire_sword_ModInfo));
-		hinstmgr->modInfo = retVal;
-		return retVal;
-	}
 
 	std::map<SWModule *, int> modStats = installMgr->getModuleStatus(*mgr, *source->second->getMgr());
 
-	int size = 0;
-	for (std::map<SWModule *, int>::iterator it = modStats.begin(); it != modStats.end(); ++it) {
-		size++;
-	}
-	retVal = (struct org_crosswire_sword_ModInfo *)calloc(size+1, sizeof(struct org_crosswire_sword_ModInfo));
-	int i = 0;
 	for (std::map<SWModule *, int>::iterator it = modStats.begin(); it != modStats.end(); ++it) {
 		SWModule *module = it->first;
 		int status = it->second;
@@ -257,28 +204,34 @@ const struct org_crosswire_sword_ModInfo *  org_crosswire_sword_InstallMgr_getRe
 		SWBuf cat = module->getConfigEntry("Category");
 		if (cat.length() > 0) type = cat;
 
-		stdstr(&(retVal[i].name), assureValidUTF8(module->getName()));
-		stdstr(&(retVal[i].description), assureValidUTF8(module->getDescription()));
-		stdstr(&(retVal[i].category), assureValidUTF8(type.c_str()));
-		stdstr(&(retVal[i].language), assureValidUTF8(module->getLanguage()));
-		stdstr(&(retVal[i].version), assureValidUTF8(version.c_str()));
-		stdstr(&(retVal[i++].delta), assureValidUTF8(statusString.c_str()));
-		if (i >= size) break;
+		GswModinfo* modinfo;
+		modinfo = gsw_modinfo_new (
+				g_strdup(assureValidUTF8(module->getName())),
+				g_strdup(assureValidUTF8(module->getDescription())),
+				g_strdup(assureValidUTF8(type.c_str())),
+				g_strdup(assureValidUTF8(module->getLanguage())),
+				g_strdup(assureValidUTF8(version.c_str())),
+				g_strdup(assureValidUTF8(statusString.c_str()))
+				);
+		list = g_list_append(list, modinfo);
+
 	}
-	hinstmgr->modInfo = retVal;
-	return retVal;
+	return list;
 }
 
-/*
- * Class:     org_crosswire_sword_InstallMgr
- * Method:    remoteInstallModule
- * Signature: (Lorg/crosswire/android/sword/SWMgr;Ljava/lang/String;Ljava/lang/String;)I
- */
-int  org_crosswire_sword_InstallMgr_remoteInstallModule
-  (SWHANDLE hInstallMgr_from, SWHANDLE hSWMgr_to, const char *sourceName, const char *modName) {
+int gsw_installer_remote_install_module (GswInstaller* installer, GswManager* manager, const char *sourceName, const char *modName)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return -1;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return -1;
 
-	GETINSTMGR(hInstallMgr_from, -1);
-	GETSWMGR(hSWMgr_to, -1);
+	SWMgr *mgr;
+	mgr = (SWMgr*)manager;
+	if (!mgr)
+		return -1;
 
 	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
 
@@ -303,21 +256,19 @@ int  org_crosswire_sword_InstallMgr_remoteInstallModule
 	return error;
 }
 
-#define GswInstaller intptr_t
-/*
- * Class:     org_crosswire_sword_InstallMgr
- * Method:    getRemoteModuleByName
- * Signature: (Ljava/lang/String;Ljava/lang/String;)Lorg/crosswire/android/sword/SWModule;
- */
-SWHANDLE  gsw_installer_get_Remote_Module_By_Name
-  (SWHANDLE hInstallMgr, const char *sourceName, const char *modName) {
-
-	GETINSTMGR(hInstallMgr, 0);
+GswModule* gsw_installer_get_remote_module_by_name (GswInstaller* installer, const char *sourceName, const char *modName)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return NULL;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return NULL;
 
 	InstallSourceMap::iterator source = installMgr->sources.find(sourceName);
 
 	if (source == installMgr->sources.end()) {
-		return 0;
+		return NULL;
 	}
 
 	SWMgr *mgr = source->second->getMgr();
@@ -325,10 +276,9 @@ SWHANDLE  gsw_installer_get_Remote_Module_By_Name
 	sword::SWModule *module = mgr->getModule(modName);
 
 	if (!module) {
-		return 0;
+		return NULL;
 	}
 
-	return (SWHANDLE)hinstmgr->getModuleHandle(module);
+	return  gsw_module_new(module);
 
 }
-#endif
