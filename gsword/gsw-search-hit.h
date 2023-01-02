@@ -28,16 +28,12 @@
 G_BEGIN_DECLS
 
 #define GSW_TYPE_SEARCH_HIT              (gsw_search_hit_get_type ())
-#define GSW_SEARCH_HIT(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GSW_TYPE_SEARCH_HIT, GswSearchHit))
+G_DECLARE_FINAL_TYPE (GswSearchHit, gsw_search_hit, GSW, SEARCH_HIT, GObject);
 
-typedef struct _GswSearchHit             GswSearchHit;
-
-GType             gsw_search_hit_get_type  (void) G_GNUC_CONST;
-GswSearchHit*     gsw_search_hit_new       (const gchar *modName, const gchar *key, glong  score);
+GswSearchHit*     gsw_search_hit_new       (const gchar *name, const gchar *key, glong  score);
 const gchar*      gsw_search_hit_get_name  (GswSearchHit *search_hit);
 const gchar*      gsw_search_hit_get_key   (GswSearchHit *search_hit);
 glong             gsw_search_hit_get_score (GswSearchHit *search_hit);
-void              gsw_search_hit_unref     (gpointer data);
 
 G_END_DECLS
 
