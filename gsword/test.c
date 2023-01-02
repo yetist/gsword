@@ -27,11 +27,6 @@
 #include "gsw-status-reporter.h"
 #include "gsw-installer.h"
 
-void percent(gchar i, gpointer d)
-{
-	g_print("%d, %s\n", i, (gchar*) d);
-}
-
 void  upfunc (gulong total, gulong completed)
 {
 	g_print("up: %ld, %ld\n", total, completed);
@@ -42,11 +37,16 @@ void  prefunc (glong total, glong completed, const gchar* message)
 	g_print("pre: %s, %ld, %ld\n", message, total, completed);
 }
 
+void search_percent (GswModule *module, guint per, gpointer user_data)
+{
+	g_print("Searching %d%%, %s\n", per, (gchar*) user_data);
+}
+
 void test_module(GswModule *module)
 {
 	GList *list, *l;
 	g_print("module size = %ld\n", gsw_module_get_entry_size(module));
-	gsw_module_set_percent_callback(module, percent, "searching...");
+	g_signal_connect(G_OBJECT(module), "search-progress", G_CALLBACK(search_percent), "searching...");
 	list = gsw_module_search (module, "God", GSW_SEARCH_TYPE_REGEX, 0, "Rev");
 	for (l = list; l != NULL; l = l->next) {
 		GswSearchHit *search_hit;
@@ -137,6 +137,7 @@ int main(int argc, char** argv)
 	// module
 	module = gsw_manager_get_module_by_name(manager, "ChiUns");
 	test_module(module);
+
 
 	// status reporter
 	reporter = gsw_status_reporter_new ();

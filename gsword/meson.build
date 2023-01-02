@@ -18,7 +18,7 @@ dependencies : [sword_dep, gobject_dep],
 t=executable(
   'testing',
   sources : 'test.c',
-  dependencies : [sword_dep, glib_dep],
+  dependencies : [sword_dep, gobject_dep],
   link_with : libgsword,
   install : false,
 )

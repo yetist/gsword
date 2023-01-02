@@ -30,9 +30,14 @@ G_BEGIN_DECLS
 
 #define GSW_TYPE_MODULE              (gsw_module_get_type ())
 
-G_DECLARE_FINAL_TYPE (GswModule, gsw_module, GSW, MODULE, GObject)
+G_DECLARE_DERIVABLE_TYPE (GswModule, gsw_module, GSW, MODULE, GObject)
 
-typedef void (*PercentCallback) (gchar, gpointer);
+struct _GswModuleClass
+{
+  GObjectClass parent_class;
+
+  void (*search_progress) (GswModule *module, guint per);
+};
 
 typedef enum
 {
@@ -43,10 +48,8 @@ typedef enum
 	GSW_SEARCH_TYPE_LUCENE    = -4L,
 } GswSearchType;
 
-GType        gsw_module_get_type                (void) G_GNUC_CONST;
 GswModule*   gsw_module_new                     (gpointer data);
 void         gsw_module_terminate_search        (GswModule *module);
-void         gsw_module_set_percent_callback    (GswModule *module, PercentCallback func, gpointer userdata);
 GList*       gsw_module_search                  (GswModule *module, const gchar *searchString, GswSearchType searchType, glong flags, const gchar *scope);
 gboolean     gsw_module_pop_error               (GswModule *module);
 long         gsw_module_get_entry_size          (GswModule *module);

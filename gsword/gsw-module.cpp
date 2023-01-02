@@ -3,7 +3,6 @@
  * gsw-module.c: This file is part of gsword.
  *
  * Copyright (C) 2017 yetist <yetist@gmail.com>
- *
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,30 +25,37 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
-typedef struct _GswModule  GswModule;
-
-struct _GswModule
-{
-	GObject          object;
-	sword::SWModule *mod;
-	PercentCallback  callback;
-	gpointer         userdata;
+enum {
+	SEARCH_UPDATE,
+	LAST_SIGNAL
 };
 
-G_DEFINE_TYPE (GswModule, gsw_module, G_TYPE_OBJECT);
+static guint signals[LAST_SIGNAL] = { 0 };
 
-static void percent(gchar, gpointer) {
+typedef struct _GswModulePrivate GswModulePrivate;
+
+struct _GswModulePrivate
+{
+	sword::SWModule *module;
+};
+
+G_DEFINE_TYPE_WITH_PRIVATE (GswModule, gsw_module, G_TYPE_OBJECT);
+
+static void gsw_module_search_progress(gchar now, gpointer data) {
+	GswModule *module = (GswModule*) data;
+	g_signal_emit (module, signals[SEARCH_UPDATE], 0, now);
 }
 
 void gsw_module_dispose (GObject *object)
 {
 	GswModule* module = GSW_MODULE(object);
-	if (module->mod != NULL)
-	{
-		delete module->mod;
-		module->mod = NULL;
-	}
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
+	if (priv->module != NULL)
+	{
+		delete priv->module;
+		priv->module = NULL;
+	}
 	G_OBJECT_CLASS (gsw_module_parent_class)->dispose (object);
 }
 
@@ -57,56 +63,60 @@ static void gsw_module_class_init (GswModuleClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	gobject_class->dispose = gsw_module_dispose;
+	signals[SEARCH_UPDATE] =
+		g_signal_new ("search-progress",
+				G_TYPE_FROM_CLASS (gobject_class),
+				G_SIGNAL_RUN_LAST,
+				G_STRUCT_OFFSET (GswModuleClass, search_progress),
+				NULL, NULL,
+				g_cclosure_marshal_VOID__UINT,
+				G_TYPE_NONE, 1, G_TYPE_UINT);
 }
 
 static void gsw_module_init (GswModule *module)
 {
-	module->mod = NULL;
-	module->callback = percent;
-	module->userdata = NULL;
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module = NULL;
 }
 
 GswModule* gsw_module_new (gpointer data)
 {
 	GswModule *module;
+	GswModulePrivate *priv;
+
 	module = (GswModule*) g_object_new (GSW_TYPE_MODULE, NULL);
-	module->mod = (sword::SWModule*) data;
+	priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module = (sword::SWModule*) data;
 	return module;
 }
 
 void gsw_module_terminate_search (GswModule *module)
 {
-	g_return_if_fail(module != NULL);
-
-	module->mod->terminateSearch = TRUE;
-}
-
-void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, gpointer userdata)
-{
-	g_return_if_fail(module != NULL);
-	module->callback = func;
-	module->userdata = userdata;
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->terminateSearch = TRUE;
 }
 
 GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearchType searchType, glong flags, const gchar *scope)
 {
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
 	sword::ListKey lscope;
 	sword::ListKey result;
 	if (scope != NULL && strlen(scope) > 0) {
-		sword::SWKey *p = module->mod->createKey();
+		sword::SWKey *p = priv->module->createKey();
 		sword::VerseKey *parser = SWDYNAMIC_CAST(sword::VerseKey, p);
 		if (!parser) {
 			delete p;
 			parser = new sword::VerseKey();
 		}
-		*parser = module->mod->getKeyText();
+		*parser = priv->module->getKeyText();
 		lscope = parser->parseVerseList(scope, *parser, TRUE);
-		result = module->mod->search(searchString, searchType, flags, &lscope, 0, module->callback, module->userdata);
+		result = priv->module->search(searchString, searchType, flags, &lscope, 0, gsw_module_search_progress, module);
 		delete parser;
 	} else {
-		result = module->mod->search(searchString, searchType, flags, 0, 0, module->callback, module->userdata);
+		result = priv->module->search(searchString, searchType, flags, 0, 0, gsw_module_search_progress, module);
 	}
 
 	int count = 0;
@@ -121,7 +131,7 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
 		GswSearchHit *hit;
-		hit = gsw_search_hit_new(module->mod->getName(), sword::assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
+		hit = gsw_search_hit_new(priv->module->getName(), sword::assureValidUTF8(result.getShortText()), (long)result.getElement()->userData);
 		results = g_list_append(results, hit);
 		i++;
 		if (i >= count) break;
@@ -131,27 +141,28 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 
 gboolean gsw_module_pop_error (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, FALSE);
-
-	return module->mod->popError();
+	g_return_val_if_fail(GSW_IS_MODULE(module), FALSE);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->popError();
 }
 
 long gsw_module_get_entry_size (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, 0);
-
-	return module->mod->getEntrySize();
+	g_return_val_if_fail(GSW_IS_MODULE(module), 0);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->getEntrySize();
 }
 
 GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, const gchar *level2,
 		const gchar *level3, gboolean filteredBool)
 {
-	g_return_val_if_fail(module != NULL, 0);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
-	module->mod->renderText();	// force parse
+	priv->module->renderText();	// force parse
 	std::vector<sword::SWBuf> results;
 
-	sword::AttributeTypeList &entryAttribs = module->mod->getEntryAttributes();
+	sword::AttributeTypeList &entryAttribs = priv->module->getEntryAttributes();
 	sword::AttributeTypeList::iterator i1Start, i1End;
 	sword::AttributeList::iterator i2Start, i2End;
 	sword::AttributeValue::iterator i3Start, i3End;
@@ -201,7 +212,7 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 	GList *attributes = NULL;
 	for (int i = 0; i < (int)results.size(); i++) {
 		if (filteredBool) {
-			attributes = g_list_append(attributes, g_strdup(sword::assureValidUTF8(module->mod->renderText(results[i].c_str())).c_str()));
+			attributes = g_list_append(attributes, g_strdup(sword::assureValidUTF8(priv->module->renderText(results[i].c_str())).c_str()));
 		}
 		else {
 			attributes = g_list_append(attributes, g_strdup(sword::assureValidUTF8(results[i].c_str()).c_str()));
@@ -213,9 +224,11 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 
 GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 {
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+
 	GList *list = NULL;
-	sword::VerseKey *parser = dynamic_cast<sword::VerseKey *>(module->mod->getKey());
+	sword::VerseKey *parser = dynamic_cast<sword::VerseKey *>(priv->module->getKey());
 	if (parser) {
 		sword::ListKey result;
 		result = parser->parseVerseList(keyText, *parser, true);
@@ -234,11 +247,12 @@ GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 //	(e.g.	"+chapter" will increment the VerseKey 1 chapter)
 //	[=][key]		- position absolutely and don't normalize
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
-void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
+void gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 {
-	g_return_if_fail(module != NULL);
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
-	sword::SWKey *key = module->mod->getKey();
+	sword::SWKey *key = priv->module->getKey();
 	sword::VerseKey *vkey = SWDYNAMIC_CAST(sword::VerseKey, key);
 	if (vkey) {
 		if ((*keyText=='+' || *keyText=='-')) {
@@ -258,22 +272,23 @@ void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 			return;
 		}
 	}
-	module->mod->setKey(keyText);
+	priv->module->setKey(keyText);
 }
 
-const gchar*  gsw_module_get_key_text (GswModule *module)
+const gchar* gsw_module_get_key_text (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-
-	return module->mod->getKeyText();
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->getKeyText();
 }
 
 gboolean gsw_module_has_key_children (GswModule *module)
 {
+	g_return_val_if_fail(GSW_IS_MODULE(module), FALSE);
 	gboolean retVal = FALSE;
-	g_return_val_if_fail(module != NULL, FALSE);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
-	sword::SWKey *key = module->mod->getKey();
+	sword::SWKey *key = priv->module->getKey();
 
 	sword::TreeKeyIdx *tkey = SWDYNAMIC_CAST(sword::TreeKeyIdx, key);
 	if (tkey) {
@@ -287,11 +302,11 @@ gboolean gsw_module_has_key_children (GswModule *module)
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
 GList* gsw_module_get_key_children (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
 	GList *list = NULL;
-
-	sword::SWKey *key = module->mod->getKey();
+	sword::SWKey *key = priv->module->getKey();
 
 	sword::VerseKey *vkey = SWDYNAMIC_CAST(sword::VerseKey, key);
 	if (vkey) {
@@ -331,26 +346,28 @@ GList* gsw_module_get_key_children (GswModule *module)
 
 const gchar* gsw_module_get_mod_name (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-	return module->mod->getName();
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->getName();
 }
 
 const gchar* gsw_module_get_mod_type (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-	return module->mod->getType();
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->getType();
 }
 
 const gchar* gsw_module_get_mod_description (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-
-	return module->mod->getDescription();
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return priv->module->getDescription();
 }
 
 gchar* gsw_module_get_mod_category (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
 	const gchar* type;
 	gchar* category;
 
@@ -366,9 +383,10 @@ gchar* gsw_module_get_mod_category (GswModule *module)
 const gchar* gsw_module_get_key_parent  (GswModule *module)
 {
 	static sword::SWBuf retVal;
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
-	sword::SWKey *key = module->mod->getKey();
+	sword::SWKey *key = priv->module->getKey();
 
 	retVal = "";
 
@@ -383,99 +401,110 @@ const gchar* gsw_module_get_key_parent  (GswModule *module)
 
 void gsw_module_previous (GswModule *module)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->decrement();
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->decrement();
 }
 
 void gsw_module_next (GswModule *module)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->increment();
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->increment();
 }
 
 void gsw_module_begin (GswModule *module)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->setPosition(sword::TOP);
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->setPosition(sword::TOP);
 }
 
 gchar* gsw_module_strip_text (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-	return g_strdup(sword::assureValidUTF8((const char *)module->mod->stripText()));
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return g_strdup(sword::assureValidUTF8((const char *)priv->module->stripText()));
 }
 
 gchar* gsw_module_render_text (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-	return g_strdup(sword::assureValidUTF8((const char *)module->mod->renderText().c_str()));
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return g_strdup(sword::assureValidUTF8((const char *)priv->module->renderText().c_str()));
 }
 
 // CSS styles associated with this text
 gchar* gsw_module_get_render_header (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-	return g_strdup(sword::assureValidUTF8(((const char *)(module->mod->getRenderHeader() ? module->mod->getRenderHeader():""))));
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return g_strdup(sword::assureValidUTF8(((const char *)(priv->module->getRenderHeader() ? priv->module->getRenderHeader():""))));
 }
 
 gchar* gsw_module_get_raw_entry (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-
-	return g_strdup(sword::assureValidUTF8(((const char *)module->mod->getRawEntry())));
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return g_strdup(sword::assureValidUTF8(((const char *)priv->module->getRawEntry())));
 }
 
 void gsw_module_set_raw_entry (GswModule *module, const gchar *entryBuffer)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->setEntry(entryBuffer);
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->setEntry(entryBuffer);
 }
 
 gchar* gsw_module_get_config_entry (GswModule *module, const gchar *key)
 {
-	g_return_val_if_fail(module != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
 
-	if (module->mod->getConfigEntry(key) != NULL)
-		return g_strdup(sword::assureValidUTF8(module->mod->getConfigEntry(key)).c_str());
+	if (priv->module->getConfigEntry(key) != NULL)
+		return g_strdup(sword::assureValidUTF8(priv->module->getConfigEntry(key)).c_str());
 	else
 		return NULL;
 }
 
 void gsw_module_delete_search_framework (GswModule *module)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->deleteSearchFramework(); 
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->deleteSearchFramework(); 
 }
 
 gboolean gsw_module_has_search_framework (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, FALSE);
-
-	return (module->mod->hasSearchFramework() && module->mod->isSearchOptimallySupported("God", -4, 0, 0));
+	g_return_val_if_fail(GSW_IS_MODULE(module), FALSE);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return (priv->module->hasSearchFramework() && priv->module->isSearchOptimallySupported("God", -4, 0, 0));
 }
 
 GswVerseKey* gsw_module_get_verse_key (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-
-	return gsw_verse_key_new (module->mod->getKey());
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return gsw_verse_key_new (priv->module->getKey());
 }
 
 GswVerseKey* gsw_module_create_key (GswModule *module)
 {
-	g_return_val_if_fail(module != NULL, NULL);
-
-	return gsw_verse_key_new (module->mod->createKey());
+	g_return_val_if_fail(GSW_IS_MODULE(module), NULL);
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	return gsw_verse_key_new (priv->module->createKey());
 }
 
 void gsw_module_set_skip_consecutive_links (GswModule *module, gboolean val)
 {
-	g_return_if_fail(module != NULL);
-	module->mod -> setSkipConsecutiveLinks(val);
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module -> setSkipConsecutiveLinks(val);
 }
 
 void gsw_module_set_position (GswModule *module, GswPosition pos)
 {
-	g_return_if_fail(module != NULL);
-	module->mod->setPosition(sword::SW_POSITION((char) pos));
+	g_return_if_fail(GSW_IS_MODULE(module));
+	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);
+	priv->module->setPosition(sword::SW_POSITION((char) pos));
 }
