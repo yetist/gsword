@@ -27,11 +27,6 @@
 #include "gsw-status-reporter.h"
 #include "gsw-installer.h"
 
-void  upfunc (gulong total, gulong completed)
-{
-	g_print("up: %ld, %ld\n", total, completed);
-}
-
 void  prefunc (glong total, glong completed, const gchar* message)
 {
 	g_print("pre: %s, %ld, %ld\n", message, total, completed);

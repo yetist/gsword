@@ -1,6 +1,6 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsw-enum.h: This file is part of ____
+ * gsw-enum.h: This file is part of gsword.
  *
  * Copyright (C) 2017 yetist <yetist@yetibook>
  *

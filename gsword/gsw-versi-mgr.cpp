@@ -1,8 +1,8 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsw-versi-mgr-system.c: This file is part of ____
+ * gsw-versi-mgr.cpp: This file is part of gsword.
  *
- * Copyright (C) 2017 yetist <yetist@yetipc>
+ * Copyright (C) 2017 yetist <yetist@gmail.com>
  *
  * 
  * This program is free software; you can redistribute it and/or modify

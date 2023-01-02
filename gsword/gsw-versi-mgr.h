@@ -1,8 +1,8 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsw-versi-mgr-system.h: This file is part of ____
+ * gsw-versi-mgr.h: This file is part of gsword.
  *
- * Copyright (C) 2017 yetist <yetist@yetipc>
+ * Copyright (C) 2017 yetist <yetist@gmail.com>
  *
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -20,8 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 
-#ifndef __GSW_VERSI_MGR_SYSTEM_H__ 
-#define __GSW_VERSI_MGR_SYSTEM_H__  1
+#ifndef __GSW_VERSI_MGR_H__ 
+#define __GSW_VERSI_MGR_H__  1
 
 #include <glib-object.h>
 
@@ -47,4 +47,4 @@ const gchar*           gsw_versi_mgr_book_get_osis_name     (GswVersiMgrBook *bo
 
 G_END_DECLS
 
-#endif /* __GSW_VERSI_MGR_SYSTEM_H__ */
+#endif /* __GSW_VERSI_MGR_H__ */

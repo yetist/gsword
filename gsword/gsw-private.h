@@ -1,6 +1,6 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsw-status-reporter-priv.h: This file is part of ____
+ * gsw-status-reporter-priv.h: This file is part of gsword.
  *
  * Copyright (C) 2017 yetist <yetist@yetibook>
  *

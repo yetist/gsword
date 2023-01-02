@@ -1,6 +1,6 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsword.h: This file is part of ____
+ * gsword.h: This file is part of gsword.
  *
  * Copyright (C) 2017 yetist <yetist@yetibook>
  *
