@@ -43,11 +43,12 @@ void test_module(GswModule *module)
 		g_print("key =%s\n", gsw_search_hit_get_key (search_hit));
 		g_print("score =%ld\n", gsw_search_hit_get_score (search_hit));
 	}
+	g_print("render header=%s\n", gsw_module_get_render_header (module));
+	gsw_module_set_key_text(module, "jn.2.3");
 	g_print("render text=%s\n", gsw_module_render_text(module));
 	g_print("strip text =%s\n", gsw_module_strip_text (module));
-	g_print("render header=%s\n", gsw_module_get_render_header (module));
 	g_print("raw entry=%s\n",  gsw_module_get_raw_entry (module));
-//const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
+	//const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
 	//gsw_search_hit_unref(search_hit);
 }
 
