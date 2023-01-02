@@ -23,3 +23,5 @@ t=executable(
   link_with : libgsword,
   install : false,
 )
+
+test('testing', t)

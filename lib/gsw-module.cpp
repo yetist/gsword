@@ -26,8 +26,8 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
-using namespace sword;
 namespace {
+	using namespace sword;
 	class HandleSWModule {
 		public:
 			SWModule *mod;
@@ -69,7 +69,7 @@ void  gsw_module_terminate_search (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -147,7 +147,7 @@ gboolean gsw_module_pop_error (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return FALSE;
@@ -164,7 +164,7 @@ long gsw_module_get_entry_size (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return 0;
@@ -182,7 +182,7 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return 0;
@@ -260,7 +260,7 @@ GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText)
 	HandleSWModule *hmod;
 	SWModule *mod;
 	GList *list = NULL;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -292,7 +292,7 @@ void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -329,7 +329,7 @@ const gchar *  gsw_module_get_key_text (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -347,7 +347,7 @@ gboolean gsw_module_has_key_children (GswModule *module)
 	HandleSWModule *hmod;
 	SWModule *mod;
 	gboolean retVal = FALSE;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return FALSE;
@@ -373,7 +373,7 @@ GList* gsw_module_get_key_children (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -427,7 +427,7 @@ const gchar* gsw_module_get_name (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -443,7 +443,7 @@ const gchar* gsw_module_get_description (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -461,7 +461,7 @@ const gchar* gsw_module_get_category (GswModule *module)
 	static SWBuf type;
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -484,7 +484,7 @@ const gchar* gsw_module_get_key_parent  (GswModule *module)
 	static SWBuf retVal;
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -511,7 +511,7 @@ void gsw_module_previous (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -527,7 +527,7 @@ void gsw_module_next (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -543,7 +543,7 @@ void gsw_module_begin (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -560,7 +560,7 @@ const gchar* gsw_module_strip_text (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -576,7 +576,7 @@ const gchar* gsw_module_render_text (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -594,7 +594,7 @@ const gchar* gsw_module_get_render_header (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -610,7 +610,7 @@ const gchar* gsw_module_get_raw_entry (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -627,7 +627,7 @@ void gsw_module_set_raw_entry (GswModule *module, const char *entryBuffer)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -645,7 +645,7 @@ const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
 
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return NULL;
@@ -665,7 +665,7 @@ void gsw_module_delete_search_framework (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return;
@@ -682,7 +682,7 @@ gboolean gsw_module_has_search_framework (GswModule *module)
 
 	HandleSWModule *hmod;
 	SWModule *mod;
-	
+
 	hmod = (HandleSWModule *) module;
 	if (!hmod) {
 		return FALSE;

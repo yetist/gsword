@@ -34,13 +34,13 @@ struct _GswModinfo {
 
 static void _gsw_modinfo_ref (GswModinfo *modinfo)
 {
-    g_atomic_int_inc (&modinfo->refcount);
+	g_atomic_int_inc (&modinfo->refcount);
 }
 
 static GswModinfo* gsw_modinfo_copy (GswModinfo *modinfo)
 {
-    _gsw_modinfo_ref (modinfo);
-    return modinfo;
+	_gsw_modinfo_ref (modinfo);
+	return modinfo;
 }
 
 void gsw_modinfo_unref (gpointer data)
@@ -65,15 +65,15 @@ void gsw_modinfo_unref (gpointer data)
 
 GType gsw_modinfo_get_type (void)
 {
-    static GType the_type = 0;
+	static GType the_type = 0;
 
-    if (G_UNLIKELY (!the_type))
-        the_type = g_boxed_type_register_static (
-                    "GswModinfo",
-                    (GBoxedCopyFunc) gsw_modinfo_copy,
-                    (GBoxedFreeFunc) gsw_modinfo_unref);
+	if (G_UNLIKELY (!the_type))
+		the_type = g_boxed_type_register_static (
+				"GswModinfo",
+				(GBoxedCopyFunc) gsw_modinfo_copy,
+				(GBoxedFreeFunc) gsw_modinfo_unref);
 
-    return the_type;
+	return the_type;
 }
 
 GswModinfo*  gsw_modinfo_new  (const gchar* name,

@@ -31,13 +31,13 @@ struct _GswSearchHit {
 
 static void _gsw_search_hit_ref (GswSearchHit *search_hit)
 {
-    g_atomic_int_inc (&search_hit->refcount);
+	g_atomic_int_inc (&search_hit->refcount);
 }
 
 static GswSearchHit* gsw_search_hit_copy (GswSearchHit *search_hit)
 {
-    _gsw_search_hit_ref (search_hit);
-    return search_hit;
+	_gsw_search_hit_ref (search_hit);
+	return search_hit;
 }
 
 void gsw_search_hit_unref (gpointer data)
@@ -56,14 +56,14 @@ void gsw_search_hit_unref (gpointer data)
 
 GType gsw_search_hit_get_type (void)
 {
-    static GType the_type = 0;
+	static GType the_type = 0;
 
-    if (G_UNLIKELY (!the_type))
-        the_type = g_boxed_type_register_static (
-                    "GswSearchHit",
-                    (GBoxedCopyFunc) gsw_search_hit_copy,
-                    (GBoxedFreeFunc) gsw_search_hit_unref);
-    return the_type;
+	if (G_UNLIKELY (!the_type))
+		the_type = g_boxed_type_register_static (
+				"GswSearchHit",
+				(GBoxedCopyFunc) gsw_search_hit_copy,
+				(GBoxedFreeFunc) gsw_search_hit_unref);
+	return the_type;
 }
 
 

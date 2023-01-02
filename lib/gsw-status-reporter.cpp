@@ -25,8 +25,8 @@
 #include "gsw-status-reporter.h"
 
 namespace {
-using namespace std;
-using namespace sword;
+	using namespace std;
+	using namespace sword;
 	class MyStatusReporter : public StatusReporter {
 		public:
 			int last;
@@ -34,7 +34,7 @@ using namespace sword;
 			PreStatusCallback prestatusFunc;
 			MyStatusReporter() :
 				last(0), updateFunc(0), prestatusFunc(0) {
-			}
+				}
 			virtual void update(unsigned long totalBytes, unsigned long completedBytes) {
 				if (updateFunc != NULL) {
 					updateFunc(totalBytes, completedBytes);

@@ -33,8 +33,8 @@
 #include "gsw-manager.h"
 #include "gsw-modinfo.h"
 
-using namespace sword;
 namespace {
+	using namespace sword;
 	class WebMgr : public SWMgr {
 		OSISWordJS *osisWordJS;
 		ThMLWordJS *thmlWordJS;
@@ -145,7 +145,6 @@ GswManager* gsw_manager_new_with_path (const gchar *path)
 void gsw_manager_delete (GswManager *manager)
 {
 	WebMgr *mgr;
-
 	mgr = (WebMgr *)manager;
 	if (mgr)
 		delete mgr;
