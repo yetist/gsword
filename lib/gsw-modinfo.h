@@ -1,8 +1,8 @@
 /* vi: set sw=4 ts=4 wrap ai: */
 /*
- * gsw-modinfo.h: This file is part of ____
+ * gsw-modinfo.h: This file is part of gsword.
  *
- * Copyright (C) 2017 yetist <yetist@yetibook>
+ * Copyright (C) 2017 yetist <yetist@gmail.com>
  *
  * 
  * This program is free software; you can redistribute it and/or modify
