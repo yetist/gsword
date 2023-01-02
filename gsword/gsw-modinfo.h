@@ -28,11 +28,8 @@
 G_BEGIN_DECLS
 
 #define GSW_TYPE_MODINFO              (gsw_modinfo_get_type ())
-#define GSW_MODINFO(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GSW_TYPE_MODINFO, GswModinfo))
+G_DECLARE_FINAL_TYPE (GswModinfo, gsw_modinfo, GSW, MODINFO, GObject);
 
-typedef struct _GswModinfo GswModinfo;
-
-GType        gsw_modinfo_get_type   (void) G_GNUC_CONST;
 GswModinfo*  gsw_modinfo_new (const gchar* name, const gchar* description,
 		const gchar* category, const gchar* language,
 		const gchar* version, const gchar* delta);

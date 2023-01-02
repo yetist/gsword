@@ -38,14 +38,12 @@ G_DECLARE_FINAL_TYPE (GswVersiMgrBook, gsw_versi_mgr_book, GSW, VERSI_MGR_BOOK, 
 GswVersiMgr*           gsw_versi_mgr_new                    (void);
 GswVersiMgrSystem*     gsw_versi_mgr_get_system             (GswVersiMgr *gvmgr, const gchar* name);
 
-GswVersiMgrBook*       gsw_versi_mgr_book_new               (gpointer system);
-const gchar*           gsw_versi_mgr_book_get_osis_name     (GswVersiMgrBook *book);
-
-GswVersiMgrSystem*     gsw_versi_mgr_system_new             (gpointer system);
 const gchar*           gsw_versi_mgr_system_get_name        (GswVersiMgrSystem* gvmsystem);
 GswVersiMgrBook*       gsw_versi_mgr_system_get_book        (GswVersiMgrSystem* gvmsystem, gint number);
 gint                   gsw_versi_mgr_system_get_book_count  (GswVersiMgrSystem* gvmsystem);
 GArray*                gsw_versi_mgr_system_get_bmax        (GswVersiMgrSystem* gvmsystem);
+
+const gchar*           gsw_versi_mgr_book_get_osis_name     (GswVersiMgrBook *book);
 
 G_END_DECLS
 

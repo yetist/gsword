@@ -35,7 +35,7 @@ struct _GswModuleClass
 {
   GObjectClass parent_class;
 
-  void (*search_progress) (GswModule *module, guint per);
+  void (*searching) (GswModule *module, guint per);
 };
 
 typedef enum

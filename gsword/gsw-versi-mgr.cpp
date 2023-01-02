@@ -20,7 +20,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 #include <versificationmgr.h>
-#include "gsw-versi-mgr-system.h"
+#include "gsw-versi-mgr.h"
+#include "gsw-private.h"
 
 typedef struct _GswVersiMgr GswVersiMgr;
 typedef struct _GswVersiMgrSystem GswVersiMgrSystem;
@@ -142,4 +143,3 @@ GArray* gsw_versi_mgr_system_get_bmax (GswVersiMgrSystem* gvmsystem)
 	g_array_append_val (array, n[1]);
 	return array;
 }
-

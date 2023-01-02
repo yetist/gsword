@@ -27,7 +27,7 @@
 #include "gsw-private.h"
 
 enum {
-	SEARCH_UPDATE,
+	SEARCHING,
 	LAST_SIGNAL
 };
 
@@ -42,9 +42,9 @@ struct _GswModulePrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GswModule, gsw_module, G_TYPE_OBJECT);
 
-static void gsw_module_search_progress(gchar now, gpointer data) {
+static void gsw_module_searching(gchar now, gpointer data) {
 	GswModule *module = (GswModule*) data;
-	g_signal_emit (module, signals[SEARCH_UPDATE], 0, now);
+	g_signal_emit (module, signals[SEARCHING], 0, now);
 }
 
 static void gsw_module_dispose (GObject *object)
@@ -64,11 +64,11 @@ static void gsw_module_class_init (GswModuleClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	gobject_class->dispose = gsw_module_dispose;
-	signals[SEARCH_UPDATE] =
-		g_signal_new ("search-progress",
+	signals[SEARCHING] =
+		g_signal_new ("searching",
 				G_TYPE_FROM_CLASS (gobject_class),
 				G_SIGNAL_RUN_LAST,
-				G_STRUCT_OFFSET (GswModuleClass, search_progress),
+				G_STRUCT_OFFSET (GswModuleClass, searching),
 				NULL, NULL,
 				g_cclosure_marshal_VOID__UINT,
 				G_TYPE_NONE, 1, G_TYPE_UINT);
@@ -114,10 +114,10 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 		}
 		*parser = priv->module->getKeyText();
 		lscope = parser->parseVerseList(scope, *parser, TRUE);
-		result = priv->module->search(searchString, searchType, flags, &lscope, 0, gsw_module_search_progress, module);
+		result = priv->module->search(searchString, searchType, flags, &lscope, 0, gsw_module_searching, module);
 		delete parser;
 	} else {
-		result = priv->module->search(searchString, searchType, flags, 0, 0, gsw_module_search_progress, module);
+		result = priv->module->search(searchString, searchType, flags, 0, 0, gsw_module_searching, module);
 	}
 
 	int count = 0;
