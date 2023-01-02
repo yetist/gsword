@@ -25,11 +25,13 @@
 
 #include "gsw-verse-key.h"
 #include "gsw-status-reporter.h"
+#include "gsw-manager.h"
 
 G_BEGIN_DECLS
 
 GswVerseKey*  gsw_verse_key_new                (gpointer data);
 gpointer      gsw_status_reporter_get_internal (GswStatusReporter *reporter);
+gpointer      gsw_manager_get_internal (GswManager *manager);
 
 G_END_DECLS
 

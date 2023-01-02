@@ -158,5 +158,5 @@ int main(int argc, char** argv)
 	test_installer(installer);
 
 	gsw_installer_delete (installer);
-	gsw_manager_delete(manager);
+	g_object_unref(manager);
 }

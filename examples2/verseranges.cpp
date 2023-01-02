@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 			info = (GswModinfo*) l->data;
 			fprintf(stderr, "[%s]\t - %s\n", gsw_modinfo_get_name (info), gsw_modinfo_get_description (info));
 		}
-		gsw_manager_delete (manager);
+		g_object_unref (manager);
 		exit(-1);
 	}
 

@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 	test_modinfo(list);
 
 	fprintf(stdout, "Install returned: %d\n", gsw_installer_remote_install_module (installer, manager, argv[1], argv[2]));
-	gsw_manager_delete (manager);
+	g_object_unref(manager);
 	gsw_installer_delete (installer);
 
 	return 0;

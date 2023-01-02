@@ -115,10 +115,10 @@ static void gsw_installer_class_init (GswInstallerClass *klass)
 static void gsw_installer_init (GswInstaller *installer)
 {
 	g_return_if_fail(GSW_IS_INSTALLER(installer));
-	gchar* default_path;
-	default_path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
-	installer->path = default_path;
-	g_free(default_path);
+	if (installer->path != NULL) {
+		g_free(installer->path);
+	}
+	installer->path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
 }
 
 static void gsw_installer_init_config(GswInstaller *installer)
@@ -184,17 +184,16 @@ int gsw_installer_uninstall_module (GswInstaller* installer, GswManager* manager
 {
 	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
 	sword::SWMgr *mgr;
-	mgr = (sword::SWMgr*)manager;
-	if (!mgr)
+	mgr = (sword::SWMgr*) gsw_manager_get_internal(manager);
+	if (mgr == NULL)
 		return -1;
 
-	sword::SWModule *module;
-	sword::ModMap::iterator it = mgr->Modules.find(modName);
-	if (it == mgr->Modules.end()) {
+	GswModule* module;
+	module = gsw_manager_get_module_by_name (manager, modName);
+	if (module == NULL) {
 		return -2;
 	}
-	module = it->second;
-	return installer->mgr->removeModule(mgr, module->getName());
+	return installer->mgr->removeModule(mgr, gsw_module_get_mod_name(module));
 }
 
 GList* gsw_installer_get_remote_sources (GswInstaller* installer)
@@ -225,9 +224,7 @@ GList* gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManage
 {
 	g_return_val_if_fail(GSW_IS_INSTALLER(installer), NULL);
 	sword::SWMgr *mgr;
-	mgr = (sword::SWMgr*)manager;
-	if (!mgr)
-		return NULL;
+	mgr = (sword::SWMgr*)gsw_manager_get_internal (manager);
 
 	GList *list = NULL;
 
@@ -268,7 +265,7 @@ int gsw_installer_remote_install_module (GswInstaller* installer, GswManager* ma
 {
 	g_return_val_if_fail(GSW_IS_INSTALLER(installer), -1);
 	sword::SWMgr *mgr;
-	mgr = (sword::SWMgr*)manager;
+	mgr = (sword::SWMgr*) gsw_manager_get_internal (manager);
 	if (!mgr)
 		return -1;
 

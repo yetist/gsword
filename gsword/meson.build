@@ -1,6 +1,6 @@
 gnome = import('gnome')
 gsw_marshallers = gnome.genmarshal('gsw-marshal',
-    sources : 'marshal.list',
+    sources : 'gsw-marshal.list',
     prefix : 'gsw_marshal',
     )
 gsw_marshaller_c = gsw_marshallers[0]
