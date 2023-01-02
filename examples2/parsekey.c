@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include "gsword.h"
 
 int main(int argc, char **argv)
 {
+	g_setenv("LC_ALL", "zh_CN.utf8", TRUE);
+	setlocale (LC_ALL, "");
 	if (argc != 3) {
 		fprintf(stderr, "\nusage: %s <modname> <\"keyText\">\n"
 				"\tExample: %s KJV \"James 1:19-30,34\"\n\n", argv[0], argv[0]);
