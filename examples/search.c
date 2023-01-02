@@ -3,6 +3,11 @@
 
 #include <gsword.h>
 
+void search_percent (GswModule *module, guint per, gpointer user_data)
+{
+	g_print("Searching %d%%, %s\n", per, (gchar*) user_data);
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 3) {
@@ -32,7 +37,7 @@ int main(int argc, char **argv)
 
 	gsw_module_set_key_text (module, argv[2]);
 
-
+	g_signal_connect(G_OBJECT(module), "searching", G_CALLBACK(search_percent), "searching...");
 	GList *list, *l;
 	list = gsw_module_search (module, argv[2], GSW_SEARCH_TYPE_MULTIWORD, 0, NULL);
 	printf("==========================\n");

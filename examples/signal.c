@@ -14,9 +14,11 @@ void search_percent (GswModule *module, guint per, gpointer user_data)
 
 void test_module(GswModule *module)
 {
+	if (module == NULL)
+		return;
 	GList *list, *l;
 	g_print("module size = %ld\n", gsw_module_get_entry_size(module));
-	g_signal_connect(G_OBJECT(module), "search-progress", G_CALLBACK(search_percent), "searching...");
+	g_signal_connect(G_OBJECT(module), "searching", G_CALLBACK(search_percent), "searching...");
 	list = gsw_module_search (module, "God", GSW_SEARCH_TYPE_REGEX, 0, "Rev");
 	for (l = list; l != NULL; l = l->next) {
 		GswSearchHit *search_hit;
