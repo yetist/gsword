@@ -23,12 +23,16 @@
 #ifndef __GSW_MODINFO_H__ 
 #define __GSW_MODINFO_H__  1
 
-#include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
-typedef void GswModinfo;
+#define GSW_TYPE_MODINFO              (gsw_modinfo_get_type ())
+#define GSW_MODINFO(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GSW_TYPE_MODINFO, GswModinfo))
 
+typedef struct _GswModinfo GswModinfo;
+
+GType        gsw_modinfo_get_type   (void) G_GNUC_CONST;
 GswModinfo*  gsw_modinfo_new (const gchar* name, const gchar* description,
 		const gchar* category, const gchar* language,
 		const gchar* version, const gchar* delta);
@@ -39,6 +43,7 @@ const gchar* gsw_modinfo_get_language    (GswModinfo *modinfo);
 const gchar* gsw_modinfo_get_version     (GswModinfo *modinfo);
 const gchar* gsw_modinfo_get_delta       (GswModinfo *modinfo);
 void         gsw_modinfo_free            (GswModinfo *modinfo);
+void         gsw_modinfo_unref           (GswModinfo *modinfo);
 
 G_END_DECLS
 

@@ -22,8 +22,8 @@
 
 #include "gsw-modinfo.h"
 
-typedef struct _ModInfo ModInfo;
-struct _ModInfo {
+struct _GswModinfo {
+	gint   refcount;
 	gchar *name;
 	gchar *description;
 	gchar *category;
@@ -32,6 +32,46 @@ struct _ModInfo {
 	gchar *delta;
 };
 
+static void _gsw_modinfo_ref (GswModinfo *modinfo)
+{
+    g_atomic_int_inc (&modinfo->refcount);
+}
+
+static GswModinfo* gsw_modinfo_copy (GswModinfo *modinfo)
+{
+    _gsw_modinfo_ref (modinfo);
+    return modinfo;
+}
+
+void gsw_modinfo_unref (GswModinfo *modinfo)
+{
+	if (!g_atomic_int_dec_and_test (&modinfo->refcount))
+		return;
+
+	if (modinfo->name != NULL) g_free(modinfo->name);
+	if (modinfo->description != NULL) g_free(modinfo->description);
+	if (modinfo->category != NULL) g_free(modinfo->category);
+	if (modinfo->language != NULL) g_free(modinfo->language);
+	if (modinfo->version != NULL) g_free(modinfo->version);
+	if (modinfo->delta != NULL) g_free(modinfo->delta);
+
+	if (modinfo != NULL) g_free (modinfo);
+}
+
+
+GType gsw_modinfo_get_type (void)
+{
+    static GType the_type = 0;
+
+    if (G_UNLIKELY (!the_type))
+        the_type = g_boxed_type_register_static (
+                    "GswModinfo",
+                    (GBoxedCopyFunc) gsw_modinfo_copy,
+                    (GBoxedFreeFunc) gsw_modinfo_unref);
+
+    return the_type;
+}
+
 GswModinfo*  gsw_modinfo_new  (const gchar* name,
 		const gchar* description,
 		const gchar* category,
@@ -39,8 +79,8 @@ GswModinfo*  gsw_modinfo_new  (const gchar* name,
 		const gchar* version,
 		const gchar* delta)
 {
-	ModInfo *info;
-	info = g_new0(ModInfo, 1);
+	GswModinfo *info;
+	info = g_new0(GswModinfo, 1);
 	info->name        = g_strdup(name);
 	info->description = g_strdup(description);
 	info->category    = g_strdup(category);
@@ -52,67 +92,36 @@ GswModinfo*  gsw_modinfo_new  (const gchar* name,
 
 const gchar* gsw_modinfo_get_name (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-	return info->name;
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->name;
 }
 
 const gchar* gsw_modinfo_get_description (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-
-	return info->description;
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->description;
 }
 
 const gchar* gsw_modinfo_get_category    (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-
-	return info->category;
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->category;
 }
 
 const gchar* gsw_modinfo_get_language    (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-
-	return info->language;
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->language;
 }
 
 const gchar* gsw_modinfo_get_version     (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-
-	return info->version;
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->version;
 }
 
 const gchar* gsw_modinfo_get_delta       (GswModinfo *modinfo)
 {
-	ModInfo *info;
-	g_return_val_if_fail(modinfo, NULL);
-	info = (ModInfo*)modinfo;
-
-	return info->delta;
-}
-
-void gsw_modinfo_free (GswModinfo *modinfo)
-{
-	ModInfo *info;
-	info = (ModInfo*) modinfo;
-
-	if (info->name != NULL) g_free(info->name);
-	if (info->description != NULL) g_free(info->description);
-	if (info->category != NULL) g_free(info->category);
-	if (info->language != NULL) g_free(info->language);
-	if (info->version != NULL) g_free(info->version);
-	if (info->delta != NULL) g_free(info->delta);
-	g_free(info);
+	g_return_val_if_fail(modinfo != NULL, NULL);
+	return modinfo->delta;
 }
