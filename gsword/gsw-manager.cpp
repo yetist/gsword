@@ -202,8 +202,12 @@ GswModule* gsw_manager_get_module_by_name (GswManager *manager, const gchar *mod
 		return NULL;
 
 	mod = mgr->getModule(moduleName);
-	module = gsw_module_new(mod);
-	return module;
+	if (mod == NULL) {
+		return NULL;
+	} else {
+		module = gsw_module_new(mod);
+		return module;
+	}
 }
 
 const gchar* gsw_manager_get_prefix_path (GswManager *manager)
