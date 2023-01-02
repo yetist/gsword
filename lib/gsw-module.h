@@ -69,16 +69,15 @@ gboolean gsw_module_has_key_children (GswModule *module);
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
 const char **  gsw_module_getKeyChildren (SWHANDLE hSWModule);
 */
-const gchar* gsw_module_get_name        (GswModule *module);
-const gchar* gsw_module_get_description (GswModule *module);
-const gchar* gsw_module_get_category    (GswModule *module);
-const gchar* gsw_module_get_key_parent  (GswModule *module);
-void         gsw_module_previous        (GswModule *module);
-void         gsw_module_next            (GswModule *module);
-void         gsw_module_begin           (GswModule *module);
-const gchar* gsw_module_strip_text      (GswModule *module);
-const gchar* gsw_module_render_text     (GswModule *module);
-
+const gchar* gsw_module_get_name                (GswModule *module);
+const gchar* gsw_module_get_description         (GswModule *module);
+const gchar* gsw_module_get_category            (GswModule *module);
+const gchar* gsw_module_get_key_parent          (GswModule *module);
+void         gsw_module_previous                (GswModule *module);
+void         gsw_module_next                    (GswModule *module);
+void         gsw_module_begin                   (GswModule *module);
+const gchar* gsw_module_strip_text              (GswModule *module);
+const gchar* gsw_module_render_text             (GswModule *module);
 const gchar* gsw_module_get_render_header       (GswModule *module);
 const gchar* gsw_module_get_raw_entry           (GswModule *module);
 void         gsw_module_set_raw_entry           (GswModule *module, const char *entryBuffer);

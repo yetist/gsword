@@ -20,11 +20,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 #include <stdio.h>
+#include <locale.h>
 #include "gsw-manager.h"
 #include "gsw-modinfo.h"
 
 int main(int argc, char** argv)
 {
+	g_setenv("LC_ALL", "zh_CN.utf8", TRUE);
+	setlocale (LC_ALL, "");
 	GswManager* mag;
 	GList *list, *l;
 	mag = gsw_manager_new ();
@@ -34,11 +37,11 @@ int main(int argc, char** argv)
 	{
 		GswModinfo *info = (GswModinfo*)l->data;
 		g_print("modinfo:name=%s\n", gsw_modinfo_get_name(info));
-		g_print("modinfo:desc=%s\n", gsw_modinfo_get_description(info));
-		g_print("modinfo:cate=%s\n", gsw_modinfo_get_category(info));
-		g_print("modinfo:lang=%s\n", gsw_modinfo_get_language(info));
-		g_print("modinfo:vern=%s\n", gsw_modinfo_get_version(info));
-		g_print("modinfo:delt=%s\n", gsw_modinfo_get_delta(info));
+		g_print("       :desc=%s\n", gsw_modinfo_get_description(info));
+		g_print("       :cate=%s\n", gsw_modinfo_get_category(info));
+		g_print("       :lang=%s\n", gsw_modinfo_get_language(info));
+		g_print("       :vern=%s\n", gsw_modinfo_get_version(info));
+		g_print("       :delt=%s\n", gsw_modinfo_get_delta(info));
 		// do something with l->data
 	}
 	gsw_manager_delete(mag);
