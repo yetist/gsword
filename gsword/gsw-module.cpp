@@ -26,18 +26,14 @@
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
-typedef struct _GswModule             GswModule;
+typedef struct _GswModule  GswModule;
 
 struct _GswModule
 {
-  GObject          object;
-  sword::SWModule *mod;
-  PercentCallback  callback;
-  void            *userdata;
-};
-
-enum {
-    LAST_SIGNAL
+	GObject          object;
+	sword::SWModule *mod;
+	PercentCallback  callback;
+	gpointer         userdata;
 };
 
 G_DEFINE_TYPE (GswModule, gsw_module, G_TYPE_OBJECT);
@@ -57,20 +53,19 @@ void gsw_module_dispose (GObject *object)
 	G_OBJECT_CLASS (gsw_module_parent_class)->dispose (object);
 }
 
-static void
+	static void
 gsw_module_class_init (GswModuleClass *klass)
 {
-    GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
+	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	gobject_class->dispose = gsw_module_dispose;
 }
 
-static void
+	static void
 gsw_module_init (GswModule *module)
 {
 	module->mod = NULL;
-  	module->callback = percent;
-  	module->userdata = NULL;
+	module->callback = percent;
+	module->userdata = NULL;
 }
 
 GswModule* gsw_module_new (gpointer data)
@@ -81,41 +76,11 @@ GswModule* gsw_module_new (gpointer data)
 	return module;
 }
 
-#if 0
-namespace {
-	using namespace sword;
-	class HandleSWModule {
-		public:
-			SWModule *mod;
-			// making searchHits cache static saves memory only having a single
-			// outstanding copy, but also is not threadsafe.  Remove static here
-			// and fix compiling bugs and add clearSearchHits() to d-tor to change
-			PercentCallback callback;
-			void *userdata;
-			HandleSWModule(SWModule *mod) {
-				this->callback = percent;
-				this->userdata = NULL;
-				this->mod = mod;
-			}
-			~HandleSWModule() {
-			}
-
-			void setPercentFunc(PercentCallback func) {
-				this->callback = func;
-			}
-
-			void setPercentUserdata(void *data) {
-				this->userdata = data;
-			}
-	};
-}
-#endif
-
 void  gsw_module_terminate_search (GswModule *module)
 {
 	g_return_if_fail(module != NULL);
 
-	module->mod->terminateSearch = true;
+	module->mod->terminateSearch = TRUE;
 }
 
 void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, gpointer userdata)
@@ -139,7 +104,7 @@ GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearc
 			parser = new sword::VerseKey();
 		}
 		*parser = module->mod->getKeyText();
-		lscope = parser->parseVerseList(scope, *parser, true);
+		lscope = parser->parseVerseList(scope, *parser, TRUE);
 		result = module->mod->search(searchString, searchType, flags, &lscope, 0, module->callback, module->userdata);
 		delete parser;
 	} else {
@@ -289,8 +254,8 @@ void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 			}
 		}
 		else if (*keyText=='=') {
-			vkey->setIntros(true);
-			vkey->setAutoNormalize(false);
+			vkey->setIntros(TRUE);
+			vkey->setAutoNormalize(FALSE);
 			vkey->setText(keyText+1);
 			return;
 		}
