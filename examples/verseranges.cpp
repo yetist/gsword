@@ -72,36 +72,39 @@ int main(int argc, char **argv)
 	gsw_verse_key_set_upper_bound(key, key);
 	g_print("%s\n", gsw_verse_key_get_range_text(key));
 
-	g_print(">>>%s\n", gsw_verse_key_get_versification_system (key));
-#if 0
-	// -------------------------
-	// Shorter syntax using the parser and based on book names, and requires intimate knowledge of VersificationMgr
-	// You're probably better off using the above code, but this is here for completeness
-	//
-	const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(vk->getVersificationSystem());
-
-
 	// whole Bible
-	VerseKey vkBible(refSys->getBook(0)->getOSISName(), refSys->getBook(refSys->getBookCount()-1)->getOSISName(), refSys->getName());
-	cout << vkBible.getRangeText() << "\n";
+	GswVersiMgr *mm = gsw_versi_mgr_new();
+
+	GswVersiMgrSystem *refSys = gsw_versi_mgr_get_system(mm, gsw_verse_key_get_versification_system (key));
+
+	GswVersiMgrBook *book =  gsw_versi_mgr_system_get_book(refSys, 0);
+	GswVersiMgrBook *book2 =  gsw_versi_mgr_system_get_book(refSys, gsw_versi_mgr_system_get_book_count(refSys) -1);
+
+	GswVerseKey* vkey = gsw_verse_key_new_with_boundary(gsw_versi_mgr_book_get_osis_name(book),
+			gsw_versi_mgr_book_get_osis_name(book2), gsw_versi_mgr_system_get_name (refSys));
+	g_print("Whole bible: %s\n", gsw_verse_key_get_range_text(vkey));
 
 	// OT
-	VerseKey vkOT(refSys->getBook(0)->getOSISName(), refSys->getBook(refSys->getBMAX()[0]-1)->getOSISName(), refSys->getName());
-	cout << vkOT.getRangeText() << "\n";
+	GArray* array = gsw_versi_mgr_system_get_bmax (refSys);
+	GswVersiMgrBook *book3 =  gsw_versi_mgr_system_get_book(refSys, g_array_index (array, gint, 0) -1);
+	GswVerseKey* vkey1 = gsw_verse_key_new_with_boundary(gsw_versi_mgr_book_get_osis_name(book),
+			gsw_versi_mgr_book_get_osis_name(book3), gsw_versi_mgr_system_get_name (refSys));
+	g_print("OT: %s\n", gsw_verse_key_get_range_text(vkey1));
 
 	// NT
-	VerseKey vkNT(refSys->getBook(refSys->getBMAX()[0])->getOSISName(), refSys->getBook(refSys->getBookCount()-1)->getOSISName(), refSys->getName());
-	cout << vkNT.getRangeText() << "\n";
-
-	// Current Book
-	vk->setText("John 3:16");
-	VerseKey vkCurrentBook(vk->getBookName(), vk->getBookName(), refSys->getName());
-	cout << vkCurrentBook.getRangeText() << "\n";
+	GswVersiMgrBook *book4 =  gsw_versi_mgr_system_get_book(refSys, g_array_index (array, gint, 0));
+	GswVerseKey* vkey2 = gsw_verse_key_new_with_boundary(gsw_versi_mgr_book_get_osis_name(book4),
+			gsw_versi_mgr_book_get_osis_name(book2), gsw_versi_mgr_system_get_name (refSys));
+	g_print("NT: %s\n", gsw_verse_key_get_range_text(vkey2));
 
 
-	delete vk;
+	gsw_verse_key_set_text(vkey2, "John 3:16");
 
-	cout << endl;
-#endif
+	GswVerseKey* vkey4 = gsw_verse_key_new_with_boundary(
+	gsw_verse_key_get_book_name (vkey2),
+	gsw_verse_key_get_book_name (vkey2),
+			gsw_versi_mgr_system_get_name (refSys));
+	g_print("Current book: %s\n", gsw_verse_key_get_range_text(vkey4));
+
 	return 0;
 }

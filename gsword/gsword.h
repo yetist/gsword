@@ -30,5 +30,6 @@
 #include <gsword/gsw-search-hit.h>
 #include <gsword/gsw-status-reporter.h>
 #include <gsword/gsw-enum.h>
+#include <gsword/gsw-versi-mgr-system.h>
 
 #endif /* __GSWORD_H__ */

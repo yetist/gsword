@@ -196,11 +196,13 @@ GswManager* gsw_manager_new_with_path (const gchar *path)
 
 gpointer gsw_manager_get_internal (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	return manager->mgr;
 }
 
 const gchar* gsw_manager_get_version (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	// we don't actually need an SWMgr to get version
 	static sword::SWVersion v;
 	return v.currentVersion;
@@ -208,6 +210,7 @@ const gchar* gsw_manager_get_version (GswManager *manager)
 
 GList* gsw_manager_get_modules (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	GList *modlist = NULL;
 
 	for (sword::ModMap::iterator it = manager->mgr->Modules.begin(); it != manager->mgr->Modules.end(); ++it) {
@@ -220,6 +223,7 @@ GList* gsw_manager_get_modules (GswManager *manager)
 
 GList* gsw_manager_get_modinfo_list (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	sword::SWModule *module = NULL;
 	GList *milist = NULL;
 
@@ -247,6 +251,7 @@ GList* gsw_manager_get_modinfo_list (GswManager *manager)
 
 GswModule* gsw_manager_get_module_by_name (GswManager *manager, const gchar *moduleName)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	sword::SWModule *mod;
 	GswModule *module;
 
@@ -261,31 +266,37 @@ GswModule* gsw_manager_get_module_by_name (GswManager *manager, const gchar *mod
 
 const gchar* gsw_manager_get_prefix_path (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	return manager->mgr->prefixPath;
 }
 
 const gchar*  gsw_manager_get_config_path (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	return manager->mgr->configPath;
 }
 
 void  gsw_manager_set_global_option (GswManager *manager, const gchar *option, const gchar *value)
 {
+	g_return_if_fail(GSW_IS_MANAGER(manager));
 	manager->mgr->setGlobalOption(option, value);
 }
 
 const gchar*  gsw_manager_get_global_option (GswManager *manager, const gchar *option)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	return manager->mgr->getGlobalOption(option);
 }
 
 const gchar*  gsw_manager_get_global_option_tip (GswManager *manager, const gchar *option)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	return manager->mgr->getGlobalOptionTip(option);
 }
 
 const gchar*  gsw_manager_filter_text (GswManager *manager, const gchar *filterName, const gchar *text)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	sword::SWBuf filterBuf = text;
 
 	// why was this in bindings/corba/omniorb?
@@ -297,6 +308,7 @@ const gchar*  gsw_manager_filter_text (GswManager *manager, const gchar *filterN
 
 GList* gsw_manager_get_global_options (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	GList *list = NULL;
 
 	sword::StringList options = manager->mgr->getGlobalOptions();
@@ -308,6 +320,7 @@ GList* gsw_manager_get_global_options (GswManager *manager)
 
 GList* gsw_manager_get_global_option_values (GswManager *manager, const gchar *option)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	GList *list = NULL;
 
 	sword::StringList options = manager->mgr->getGlobalOptionValues(option);
@@ -319,12 +332,13 @@ GList* gsw_manager_get_global_option_values (GswManager *manager, const gchar *o
 
 void gsw_manager_set_cipherkey (GswManager *manager, const gchar *modName, const gchar *key)
 {
+	g_return_if_fail(GSW_IS_MANAGER(manager));
 	manager->mgr->setCipherKey(modName, key);
 }
 
 void gsw_manager_set_javascript (GswManager *manager, gboolean value)
 {
-	//manager->mgr->setJavascript(value);
+	g_return_if_fail(GSW_IS_MANAGER(manager));
 	manager->osisWordJS->setOptionValue((value)?"On":"Off");
 	manager->thmlWordJS->setOptionValue((value)?"On":"Off");
 	manager->gbfWordJS->setOptionValue((value)?"On":"Off");
@@ -332,6 +346,7 @@ void gsw_manager_set_javascript (GswManager *manager, gboolean value)
 
 GList* gsw_manager_get_available_locales (GswManager *manager)
 {
+	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
 	GList *list = NULL;
 
 	sword::StringList localeNames = sword::LocaleMgr::getSystemLocaleMgr()->getAvailableLocales();

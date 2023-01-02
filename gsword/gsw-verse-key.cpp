@@ -66,93 +66,92 @@ GswVerseKey* gsw_verse_key_new (gpointer data)
 	return key;
 }
 
+GswVerseKey* gsw_verse_key_new_with_boundary (const gchar* min, const gchar *max, const gchar* v11n)
+{
+	GswVerseKey *key;
+	sword::VerseKey *vkey;
+
+	key= (GswVerseKey*) g_object_new (GSW_TYPE_VERSE_KEY, NULL);
+	vkey = new sword::VerseKey(min, max, v11n);
+	key->vkey = (sword::VerseKey*) vkey;
+	return key;
+}
+
 gpointer gsw_verse_key_get_data (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, NULL);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), NULL);
 	return (gpointer) key->vkey;
 }
 
 void gsw_verse_key_set_verse (GswVerseKey *key, gint iverse)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	return key->vkey->setVerse(iverse);
 }
 
 gint gsw_verse_key_get_book (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, 0);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), 0);
 	return key->vkey->getBook();
 }
 
 gint gsw_verse_key_get_chapter (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, 0);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), 0);
 	return key->vkey->getChapter();
 }
 
 void gsw_verse_key_set_chapter (GswVerseKey *key, gint ichapter)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	key->vkey->setChapter(ichapter);
 }
 
 gint gsw_verse_key_get_verse (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, 0);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), 0);
 	return key->vkey->getVerse();
 }
 
 gint gsw_verse_key_get_verse_max (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, 0);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), 0);
 	return key->vkey->getVerseMax();
 }
 
 const gchar* gsw_verse_key_get_text (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, 0);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), NULL);
 	return key->vkey->getText();
 }
 
 void gsw_verse_key_set_text (GswVerseKey *key, const gchar* ikey)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	return key->vkey->setText(ikey);
 }
 
 gboolean gsw_verse_key_pop_error (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, FALSE);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), FALSE);
 	return key->vkey->popError();
 }
 
 void gsw_verse_key_set_auto_normalize (GswVerseKey *key, gboolean iautonorm)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	return key->vkey->setAutoNormalize(iautonorm);
 }
 
 void gsw_verse_key_set_intros (GswVerseKey *key, gboolean val)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	return key->vkey->setIntros(val);
 }
 
 void gsw_verse_key_set_lower_bound (GswVerseKey *key, GswVerseKey *akey)
 {
-	g_return_if_fail(key != NULL);
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	sword::VerseKey *vkey;
 
 	vkey = (sword::VerseKey*) gsw_verse_key_get_data(akey);
@@ -161,14 +160,13 @@ void gsw_verse_key_set_lower_bound (GswVerseKey *key, GswVerseKey *akey)
 
 void gsw_verse_key_set_position (GswVerseKey *key, GswPosition pos)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	key->vkey->setPosition(sword::SW_POSITION((char) pos));
 }
 
 void gsw_verse_key_set_upper_bound(GswVerseKey *key, GswVerseKey *akey)
 {
-	g_return_if_fail(key != NULL);
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	sword::VerseKey *vkey;
 
 	vkey = (sword::VerseKey*) gsw_verse_key_get_data(akey);
@@ -177,39 +175,42 @@ void gsw_verse_key_set_upper_bound(GswVerseKey *key, GswVerseKey *akey)
 
 void gsw_verse_key_set_testament (GswVerseKey *key, guint itestament)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	key->vkey->setTestament(itestament);
 }
 
 void gsw_verse_key_clear_bounds (GswVerseKey *key)
 {
-	g_return_if_fail(key != NULL);
-
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	return key->vkey->clearBounds();
 }
 
 const gchar* gsw_verse_key_get_range_text (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, NULL);
-
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), NULL);
 	return key->vkey->getRangeText();
 }
 
 void gsw_verse_key_prev (GswVerseKey *key)
 {
-	g_return_if_fail(key != NULL);
+	g_return_if_fail(GSW_IS_VERSE_KEY(key));
 	key->vkey->decrement(1);
 }
 
 gint gsw_verse_key_get_chapter_max (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, -1);
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), -1);
 	return key->vkey->getChapterMax();
 }
 
 const gchar* gsw_verse_key_get_versification_system (GswVerseKey *key)
 {
-	g_return_val_if_fail(key != NULL, NULL);
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), NULL);
 	return key->vkey->getVersificationSystem();
+}
+
+const gchar* gsw_verse_key_get_book_name (GswVerseKey *key)
+{
+	g_return_val_if_fail(GSW_IS_VERSE_KEY(key), NULL);
+	return key->vkey->getBookName();
 }

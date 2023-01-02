@@ -25,40 +25,33 @@
 
 #include <glib.h>
 #include "gsw-module.h"
+#include "gsw-enum.h"
 
 G_BEGIN_DECLS
 
 #define GSW_TYPE_MANAGER              (gsw_manager_get_type ())
 G_DECLARE_FINAL_TYPE (GswManager, gsw_manager, GSW, MANAGER, GObject);
 
-typedef enum {
-	GSW_MODTYPE_BIBLES,
-	GSW_MODTYPE_COMMENTARIES,
-	GSW_MODTYPE_LEXDICTS,
-	GSW_MODTYPE_GENBOOKS,
-	GSW_MODTYPE_DAILYDEVOS
-} GSWModType;
-
-GswManager*   gsw_manager_new              (void);
-GswManager*   gsw_manager_new_with_path    (const gchar *path);
-void          gsw_manager_delete           (GswManager *manager);
-const gchar*  gsw_manager_get_version      (GswManager *manager);
-GList*        gsw_manager_get_modules      (GswManager *manager);
-GList *       gsw_manager_get_modinfo_list (GswManager *manager);
-GswModule*    gsw_manager_get_module_by_name (GswManager *manager, const gchar *moduleName);
-const gchar*  gsw_manager_get_prefix_path (GswManager *manager);
-const gchar*  gsw_manager_get_config_path (GswManager *manager);
-void          gsw_manager_set_global_option (GswManager *manager, const gchar *option, const gchar *value);
-const gchar*  gsw_manager_get_global_option (GswManager *manager, const gchar *option);
-const gchar*  gsw_manager_get_global_option_tip (GswManager *manager, const gchar *option);
-const gchar*  gsw_manager_filter_text (GswManager *manager, const gchar *filterName, const gchar *text);
-GList*        gsw_manager_get_global_options (GswManager *manager);
+GswManager*   gsw_manager_new                      (void);
+GswManager*   gsw_manager_new_with_path            (const gchar *path);
+void          gsw_manager_delete                   (GswManager *manager);
+const gchar*  gsw_manager_get_version              (GswManager *manager);
+GList*        gsw_manager_get_modules              (GswManager *manager);
+GList *       gsw_manager_get_modinfo_list         (GswManager *manager);
+GswModule*    gsw_manager_get_module_by_name       (GswManager *manager, const gchar *moduleName);
+const gchar*  gsw_manager_get_prefix_path          (GswManager *manager);
+const gchar*  gsw_manager_get_config_path          (GswManager *manager);
+void          gsw_manager_set_global_option        (GswManager *manager, const gchar *option, const gchar *value);
+const gchar*  gsw_manager_get_global_option        (GswManager *manager, const gchar *option);
+const gchar*  gsw_manager_get_global_option_tip    (GswManager *manager, const gchar *option);
+const gchar*  gsw_manager_filter_text              (GswManager *manager, const gchar *filterName, const gchar *text);
+GList*        gsw_manager_get_global_options       (GswManager *manager);
 GList*        gsw_manager_get_global_option_values (GswManager *manager, const gchar *option);
-void          gsw_manager_set_cipherkey (GswManager *manager, const gchar *modName, const gchar *key);
-void          gsw_manager_set_javascript (GswManager *manager, gboolean valueBool);
-GList*        gsw_manager_get_available_locales (GswManager *manager);
-void          gsw_manager_set_default_locale (GswManager *manager, const gchar *name);
-const gchar*  gsw_manager_translate (GswManager *manager, const char *text, const gchar *localeName);
+void          gsw_manager_set_cipherkey            (GswManager *manager, const gchar *modName, const gchar *key);
+void          gsw_manager_set_javascript           (GswManager *manager, gboolean valueBool);
+GList*        gsw_manager_get_available_locales    (GswManager *manager);
+void          gsw_manager_set_default_locale       (GswManager *manager, const gchar *name);
+const gchar*  gsw_manager_translate                (GswManager *manager, const char *text, const gchar *localeName);
 
 G_END_DECLS
 

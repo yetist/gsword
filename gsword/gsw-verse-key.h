@@ -31,6 +31,7 @@ G_BEGIN_DECLS
 #define GSW_TYPE_VERSE_KEY              (gsw_verse_key_get_type ())
 G_DECLARE_FINAL_TYPE (GswVerseKey, gsw_verse_key, GSW, VERSE_KEY, GObject);
 
+GswVerseKey*     gsw_verse_key_new_with_boundary  (const gchar* min, const gchar *max, const gchar* v11n);
 gpointer         gsw_verse_key_get_data           (GswVerseKey *key);
 void             gsw_verse_key_set_verse          (GswVerseKey *key, gint iverse);
 gint             gsw_verse_key_get_verse          (GswVerseKey *key);
@@ -52,6 +53,7 @@ const gchar*     gsw_verse_key_get_range_text     (GswVerseKey *key);
 void             gsw_verse_key_prev               (GswVerseKey *key);
 gint             gsw_verse_key_get_chapter_max    (GswVerseKey *key);
 const gchar*     gsw_verse_key_get_versification_system    (GswVerseKey *key);
+const gchar*     gsw_verse_key_get_book_name      (GswVerseKey *key);
 
 G_END_DECLS
 
