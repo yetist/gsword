@@ -186,13 +186,18 @@ GswManager* gsw_manager_new_with_path (const gchar *path)
 {
 	g_print("call here, path=%s\n", path);
 	GswManager *manager;
-	sword::SWBuf confPath = path;
     manager = (GswManager*) g_object_new (GSW_TYPE_MANAGER, "path", path, NULL);
+	sword::SWBuf confPath = manager->path;
 	gsw_manager_init_config(manager);
 	manager->mgr = new WebMgr(confPath.c_str());
 	//gsw_manager_initialize(manager);
 	g_print("prefix:%s, config:%s\n", manager->mgr->prefixPath, manager->mgr->configPath);
 	return manager;
+}
+
+gpointer gsw_manager_get_internal (GswManager *manager)
+{
+	return manager->mgr;
 }
 
 #if 0
@@ -442,9 +447,4 @@ void gsw_manager_set_default_locale (GswManager *manager, const gchar *name)
 const gchar*  gsw_manager_translate (GswManager *manager, const gchar *text, const gchar *localeName)
 {
 	return sword::LocaleMgr::getSystemLocaleMgr()->translate(text, localeName);
-}
-
-gpointer      gsw_manager_get_internal (GswManager *manager)
-{
-	return manager->mgr;
 }
