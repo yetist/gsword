@@ -29,14 +29,7 @@ G_BEGIN_DECLS
 
 typedef void GswModule;
 
-typedef struct _gsw_search_hit gst_search_hit;
-
-struct _gsw_search_hit {
-	const char *modName;
-	char *key;
-	long  score;
-};
-
+typedef struct _GswSearchHit GswSearchHit;
 typedef enum
 {
 	MODULE_SEARCH_TYPE_REGEX     = 1L,
@@ -45,6 +38,12 @@ typedef enum
 	MODULE_SEARCH_TYPE_ENTRYATTR = -3L,
 	MODULE_SEARCH_TYPE_LUCENE    = -4L,
 }ModuleSearchType;
+
+GswSearchHit* gsw_search_hit_new       (const char *modName, char *key, long  score);
+const gchar*   gsw_search_hit_get_name  (GswSearchHit *hit);
+gchar*         gsw_search_hit_get_key   (GswSearchHit *hit);
+long          gsw_search_hit_get_score (GswSearchHit *hit);
+void          gsw_search_hit_free      (GswSearchHit *hit);
 
 GswModule*     gsw_module_new                (void);
 void           gsw_module_terminate_search   (GswModule *module);
@@ -57,53 +56,41 @@ long           gsw_module_get_entry_size     (GswModule *module);
 const char **  gsw_module_getEntryAttribute (SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool);
 
 const char **  gsw_module_parseKeyList (SWHANDLE hSWModule, const char *keyText);
+*/
 
 // Special values handled for VerseKey modules:
 //	[+-][book|chapter]	- [de|in]crement by chapter or book
 //	(e.g.	"+chapter" will increment the VerseKey 1 chapter)
 //	[=][key]		- position absolutely and don't normalize
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
-void  gsw_module_setKeyText (SWHANDLE hSWModule, const char *key);
+void  gsw_module_set_key_text (GswModule *module, const char *key);
 
-const char *  gsw_module_getKeyText (SWHANDLE hSWModule);
+const gchar *  gsw_module_get_key_text (GswModule *module);
 
-char  gsw_module_hasKeyChildren (SWHANDLE hSWModule);
+gboolean gsw_module_has_key_children (GswModule *module);
 
+/*
 // This method returns child nodes for a genbook,
 // but has special handling if called on a VerseKey module:
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
 const char **  gsw_module_getKeyChildren (SWHANDLE hSWModule);
+*/
+const gchar* gsw_module_get_name        (GswModule *module);
+const gchar* gsw_module_get_description (GswModule *module);
+const gchar* gsw_module_get_category    (GswModule *module);
+const gchar* gsw_module_get_key_parent  (GswModule *module);
+void         gsw_module_previous        (GswModule *module);
+void         gsw_module_next            (GswModule *module);
+void         gsw_module_begin           (GswModule *module);
+const gchar* gsw_module_strip_text      (GswModule *module);
+const gchar* gsw_module_render_text     (GswModule *module);
 
-const char *  gsw_module_getName (SWHANDLE hSWModule);
-
-const char *  gsw_module_getDescription (SWHANDLE hSWModule);
-
-const char *  gsw_module_getCategory (SWHANDLE hSWModule);
-
-const char *  gsw_module_getKeyParent (SWHANDLE hSWModule);
-
-void  gsw_module_previous (SWHANDLE hSWModule);
-
-void  gsw_module_next (SWHANDLE hSWModule);
-
-void  gsw_module_begin (SWHANDLE hSWModule);
-
-const char *  gsw_module_stripText (SWHANDLE hSWModule);
-
-const char *  gsw_module_renderText (SWHANDLE hSWModule);
-
-// CSS styles associated with this text
-const char *  gsw_module_getRenderHeader (SWHANDLE hSWModule);
-
-const char *  gsw_module_getRawEntry (SWHANDLE hSWModule);
-
-void  gsw_module_setRawEntry (SWHANDLE hSWModule, const char *entryBuffer);
-
-const char *  gsw_module_getConfigEntry (SWHANDLE hSWModule, const char *key);
-void  gsw_module_deleteSearchFramework (SWHANDLE hSWModule);
-
-char  gsw_module_hasSearchFramework (SWHANDLE hSWModule);
- */
+const gchar* gsw_module_get_render_header       (GswModule *module);
+const gchar* gsw_module_get_raw_entry           (GswModule *module);
+void         gsw_module_set_raw_entry           (GswModule *module, const char *entryBuffer);
+const gchar* gsw_module_get_config_entry        (GswModule *module, const char *key);
+void         gsw_module_delete_search_framework (GswModule *module);
+gboolean     gsw_module_has_search_framework    (GswModule *module);
 
 G_END_DECLS
 

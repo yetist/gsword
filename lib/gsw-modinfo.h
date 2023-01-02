@@ -27,9 +27,9 @@
 
 G_BEGIN_DECLS
 
-typedef _GswModinfo GswModinfo;
+typedef void GswModinfo;
 
-GswModinfo*  gsw_modinfo_new             (const gchar* name, const gchar* description,
+GswModinfo*  gsw_modinfo_new (const gchar* name, const gchar* description,
 		const gchar* category, const gchar* language,
 		const gchar* version, const gchar* delta);
 const gchar* gsw_modinfo_get_name        (GswModinfo *modinfo);

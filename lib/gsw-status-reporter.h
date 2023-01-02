@@ -23,6 +23,8 @@
 #ifndef __GSW_STATUS_REPORTER_H__ 
 #define __GSW_STATUS_REPORTER_H__  1
 
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 typedef void GswStatusReporter;

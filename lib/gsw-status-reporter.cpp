@@ -20,21 +20,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
 
+#include <swbuf.h>
+#include <remotetrans.h>
 #include "gsw-status-reporter.h"
 
 namespace {
+using namespace std;
+using namespace sword;
 	class MyStatusReporter : public StatusReporter {
 		public:
 			int last;
-			GswStatusReporter *statusReporter;
 			UpdateCallback updateFunc;
 			PreStatusCallback prestatusFunc;
 			MyStatusReporter() :
-				last(0), statusReporter(0), updateFunc(0), prestatusFunc(0) {
-			}
-			void init(GswStatusReporter* sr) {
-				statusReporter = sr;
-				last = 0;
+				last(0), updateFunc(0), prestatusFunc(0) {
 			}
 			virtual void update(unsigned long totalBytes, unsigned long completedBytes) {
 				if (updateFunc != NULL) {
@@ -63,20 +62,52 @@ namespace {
 				}
 			}
 	};
-}
 
-GswStatusReporter* gsw_status_reporter_new      (void)
+	class HandleReporter {
+		public:
+			MyStatusReporter *reporter;
+			HandleReporter() {
+				this->reporter = new MyStatusReporter();
+			}
+			~HandleReporter() {
+				delete reporter;
+			}
+	};
+};
+
+GswStatusReporter* gsw_status_reporter_new (void)
 {
-	return (GswStatusReporter) new MyStatusReporter();
+	return (GswStatusReporter*) new HandleReporter();
 }
 
-void gsw_status_reporter_set_update_callback (GswStatusReporter *report, UpdateCallback func);
+void gsw_status_reporter_set_update_callback (GswStatusReporter *report, UpdateCallback func)
 {
-#define GETSWMGR(handle, failReturn)
-	HandleSWMgr *hmgr = (HandleSWMgr *)handle;
-	if (!hmgr) return;
-	WebMgr *mgr = hmgr->mgr;
-	if (!mgr) return failReturn;
+	HandleReporter *h_reporter;
+	MyStatusReporter *reporter;
+
+	h_reporter = (HandleReporter*) report;
+	if (!h_reporter) {
+		return;
+	}
+	reporter = h_reporter->reporter;
+	if (!reporter) {
+		return;
+	}
+	reporter->updateFunc = func;
 }
 
-void gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func);
+void gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func)
+{
+	HandleReporter *h_reporter;
+	MyStatusReporter *reporter;
+
+	h_reporter = (HandleReporter*) report;
+	if (!h_reporter) {
+		return;
+	}
+	reporter = h_reporter->reporter;
+	if (!reporter) {
+		return;
+	}
+	reporter->prestatusFunc = func;
+}

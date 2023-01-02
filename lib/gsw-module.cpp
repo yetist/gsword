@@ -19,38 +19,60 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  * */
-
-#include <iostream>
-#include <vector>
-#include <map>
-
-#include <swversion.h>
-#include <swmgr.h>
-#include <installmgr.h>
-#include <remotetrans.h>
 #include <versekey.h>
 #include <treekeyidx.h>
-#include <filemgr.h>
 #include <swbuf.h>
-#include <localemgr.h>
-#include <utilstr.h>
 #include "webmgr.hpp"
+#include "gsw-module.h"
 
-extern "C" {
-#include <flatapi.h>
+// should clean begin
+#define SWHANDLE intptr_t
+// should clean end
+
+struct _GswSearchHit {
+	const gchar *modName;
+	gchar *key;
+	long  score;
+};
+
+GswSearchHit* gsw_search_hit_new (const char *modName, char *key, long  score)
+{
+	GswSearchHit *hit;
+	hit = g_new0(GswSearchHit, 1);
+	hit->modName     = modName;
+	hit->key = g_strdup(key);
+	hit->score = score;
+	return hit;
 }
 
-using sword::VerseKey;
-using sword::SWVersion;
-using sword::SWBuf;
-using sword::TreeKeyIdx;
+const char* gsw_search_hit_get_name  (GswSearchHit *hit)
+{
+	g_return_val_if_fail(hit, NULL);
+	return hit->modName;
+}
 
+char* gsw_search_hit_get_key   (GswSearchHit *hit)
+{
+	g_return_val_if_fail(hit, NULL);
+	return hit->key;
+}
 
-#define GETSWMGR(handle, failReturn) HandleSWMgr *hmgr = (HandleSWMgr *)handle; if (!hmgr) return failReturn; WebMgr *mgr = hmgr->mgr; if (!mgr) return failReturn;
+long gsw_search_hit_get_score (GswSearchHit *hit)
+{
+	g_return_val_if_fail(hit, 0);
+	return hit->score;
+}
+
+void gsw_search_hit_free      (GswSearchHit *hit)
+{
+	if (hit->key != NULL) g_free(hit->key);
+}
 
 #define GETSWMODULE(handle, failReturn) HandleSWModule *hmod = (HandleSWModule *)handle; if (!hmod) return failReturn; SWModule *module = hmod->mod; if (!module) return failReturn;
 
-#define GETINSTMGR(handle, failReturn) HandleInstMgr *hinstmgr = (HandleInstMgr *)handle; if (!hinstmgr) return failReturn; InstallMgr *installMgr = hinstmgr->installMgr; if (!installMgr) return failReturn;
+using sword::VerseKey;
+using sword::SWBuf;
+using sword::TreeKeyIdx;
 
 namespace {
 	void clearStringArray(const char ***stringArray) {
@@ -67,35 +89,11 @@ namespace {
 	}
 
 
-	void clearModInfoArray(gsw_ModInfo **modInfo) {
-		if (*modInfo) {
-			for (int i = 0; true; ++i) {
-				if ((*modInfo)[i].name) {
-					delete [] (*modInfo)[i].name;
-					delete [] (*modInfo)[i].description;
-					delete [] (*modInfo)[i].category;
-					delete [] (*modInfo)[i].language;
-					delete [] (*modInfo)[i].version;
-					delete [] (*modInfo)[i].delta;
-				}
-				else break;
-			}
-			free((*modInfo));
-			(*modInfo) = 0;
-		}
-	}
-
-
 	struct pu {
 		char last;
 		SWHANDLE progressReporter;
 
 		void init(SWHANDLE pr) { progressReporter = pr; last = 0; }
-		/*
-		   pu(JNIEnv *env, jobject pr) : env(env), progressReporter(pr), last(0) {}
-		   JNIEnv *env;
-		   jobject progressReporter;
-		   */
 	};
 	void percentUpdate(char percent, void *userData) {
 		struct pu *p = (struct pu *)userData;
@@ -166,42 +164,7 @@ namespace {
 	const char **HandleSWModule::entryAttributes = 0;
 	const char **HandleSWModule::parseKeyList = 0;
 	const char **HandleSWModule::keyChildren = 0;
-
-	const char **HandleSWMgr::globalOptions = 0;
-	const char **HandleSWMgr::globalOptionValues = 0;
-	const char **HandleSWMgr::availableLocales = 0;
-
-	const char **HandleInstMgr::remoteSources = 0;
-
-	class InitStatics {
-		public:
-			InitStatics() {
-				// these are redundant with the static declarations above, but ??? doesn't hurt
-				HandleSWModule::searchHits = 0;
-				HandleSWModule::entryAttributes = 0;
-				HandleSWModule::parseKeyList = 0;
-				HandleSWModule::keyChildren = 0;
-
-				HandleSWMgr::globalOptions = 0;
-				HandleSWMgr::globalOptionValues = 0;
-				HandleSWMgr::availableLocales = 0;
-
-				HandleInstMgr::remoteSources = 0;
-			}
-			~InitStatics() {
-				HandleSWModule::clearSearchHits();
-				HandleSWModule::clearEntryAttributes();
-				HandleSWModule::clearParseKeyList();
-				HandleSWModule::clearKeyChildren();
-
-				HandleSWMgr::clearGlobalOptions();
-				HandleSWMgr::clearGlobalOptionValues();
-
-				HandleInstMgr::clearRemoteSources();
-			}
-	} _initStatics;
 }
-
 
 
 
@@ -221,13 +184,10 @@ void  gsw_module_terminate_search (GswModule *module)
 	mod->terminateSearch = true;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    search
- * Signature: (Ljava/lang/String;IJLjava/lang/String;Lorg/crosswire/android/sword/SWModule/SearchProgressReporter;)[Lorg/crosswire/android/sword/SWModule/SearchHit;
- */
+#if 0
 const struct gsw_SearchHit *  gsw_SWModule_search
-(SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter) {
+(SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter)
+{
 
 	GETSWMODULE(hSWModule, 0);
 
@@ -274,6 +234,7 @@ const struct gsw_SearchHit *  gsw_SWModule_search
 	hmod->searchHits = retVal;
 	return retVal;
 }
+#endif
 
 gboolean gsw_module_pop_error (GswModule *module)
 {
@@ -292,26 +253,28 @@ gboolean gsw_module_pop_error (GswModule *module)
 	return mod->popError();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getEntrySize
- * Signature: ()J
- */
-long gsw_SWModule_getEntrySize (SWHANDLE hSWModule)
+long gsw_module_get_entry_size (GswModule *module)
 {
 
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return 0;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return 0;
+	}
 
-	return module->getEntrySize();
+	return mod->getEntrySize();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getEntryAttribute
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)[Ljava/lang/String;
- */
+#if 0
 const char **  gsw_SWModule_getEntryAttribute
-(SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool) {
+(SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool)
+{
 
 	GETSWMODULE(hSWModule, 0);
 
@@ -382,7 +345,8 @@ const char **  gsw_SWModule_getEntryAttribute
 }
 
 const char **  gsw_SWModule_parseKeyList
-(SWHANDLE hSWModule, const char *keyText) {
+(SWHANDLE hSWModule, const char *keyText)
+{
 
 	GETSWMODULE(hSWModule, 0);
 
@@ -411,23 +375,28 @@ const char **  gsw_SWModule_parseKeyList
 	hmod->parseKeyList = retVal;
 	return retVal;
 }
+#endif
 
-/*
- * Class:     gsw_SWModule
- * Method:    setKeyText
- * Signature: (Ljava/lang/String;)V
- */
 // Special values handled for VerseKey modules:
 //	[+-][book|chapter]	- [de|in]crement by chapter or book
 //	(e.g.	"+chapter" will increment the VerseKey 1 chapter)
 //	[=][key]		- position absolutely and don't normalize
 //	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
-void  gsw_SWModule_setKeyText
-(SWHANDLE hSWModule, const char *keyText) {
+void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
 
-	GETSWMODULE(hSWModule, );
-
-	sword::SWKey *key = module->getKey();
+	sword::SWKey *key = mod->getKey();
 	sword::VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, key);
 	if (vkey) {
 		if ((*keyText=='+' || *keyText=='-')) {
@@ -447,55 +416,56 @@ void  gsw_SWModule_setKeyText
 			return;
 		}
 	}
-
-	module->setKey(keyText);
+	mod->setKey(keyText);
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getKeyText
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getKeyText
-(SWHANDLE hSWModule) {
+const gchar *  gsw_module_get_key_text (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	return module->getKeyText();
+	return mod->getKeyText();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    hasKeyChildren
- * Signature: ()Z
- */
-char  gsw_SWModule_hasKeyChildren
-(SWHANDLE hSWModule) {
+gboolean gsw_module_has_key_children (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	gboolean retVal = FALSE;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return FALSE;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return FALSE;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	sword::SWKey *key = module->getKey();
-	char retVal = 0;
+	sword::SWKey *key = mod->getKey();
 
 	TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
 	if (tkey) {
-		retVal = tkey->hasChildren()?1:0;
+		retVal = tkey->hasChildren() ? TRUE : FALSE;
 	}
 	return retVal;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getKeyChildren
- * Signature: ()[Ljava/lang/String;
- */
-
+#if 0
 // This method returns child nodes for a genbook,
 // but has special handling if called on a VerseKey module:
 //  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
-const char **  gsw_SWModule_getKeyChildren
-(SWHANDLE hSWModule) {
-
+const char ** gsw_SWModule_getKeyChildren (SWHANDLE hSWModule)
+{
 	GETSWMODULE(hSWModule, 0);
 
 	hmod->clearKeyChildren();
@@ -527,8 +497,7 @@ const char **  gsw_SWModule_getKeyChildren
 		stdstr((char **)&(retVal[5]), num.c_str());
 		stdstr((char **)&(retVal[6]), vkey->getBookName());
 		stdstr((char **)&(retVal[7]), vkey->getOSISRef());
-	}
-	else {
+	} else {
 		TreeKeyIdx *tkey = SWDYNAMIC_CAST(TreeKeyIdx, key);
 		if (tkey) {
 			if (tkey->firstChild()) {
@@ -553,66 +522,82 @@ const char **  gsw_SWModule_getKeyChildren
 	hmod->keyChildren = retVal;
 	return retVal;
 }
+#endif
 
-/*
- * Class:     gsw_SWModule
- * Method:    getName
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getName
-(SWHANDLE hSWModule) {
-
-	GETSWMODULE(hSWModule, 0);
-
-	return module->getName();
+const gchar* gsw_module_get_name (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
+	return mod->getName();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getDescription
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getDescription
-(SWHANDLE hSWModule) {
+const gchar* gsw_module_get_description (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	return module->getDescription();
+	return mod->getDescription();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getCategory
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getCategory
-(SWHANDLE hSWModule) {
+const gchar* gsw_module_get_category (GswModule *module)
+{
 
 	static SWBuf type;
 
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	type = module->getType();
-	SWBuf cat = module->getConfigEntry("Category");
+	type = mod->getType();
+	SWBuf cat = mod->getConfigEntry("Category");
 	if (cat.length() > 0)
 		type = cat;
 
 	return type.c_str();
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getKeyParent
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getKeyParent
-(SWHANDLE hSWModule) {
-
+const gchar* gsw_module_get_key_parent  (GswModule *module)
+{
 	static SWBuf retVal;
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	sword::SWKey *key = module->getKey();
+	sword::SWKey *key = mod->getKey();
 
 	retVal = "";
 
@@ -625,161 +610,197 @@ const char *  gsw_SWModule_getKeyParent
 	return assureValidUTF8(retVal.c_str());
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    previous
- * Signature: ()V
- */
-void  gsw_SWModule_previous
-(SWHANDLE hSWModule) {
+void gsw_module_previous (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod->decrement();
+}
 
-	GETSWMODULE(hSWModule, );
+void gsw_module_next (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod->increment();
+}
 
-	module->decrement();
+void gsw_module_begin (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod->setPosition(sword::TOP);
 }
 
 
-/*
- * Class:     gsw_SWModule
- * Method:    next
- * Signature: ()V
- */
-void  gsw_SWModule_next
-(SWHANDLE hSWModule) {
-
-	GETSWMODULE(hSWModule, );
-
-	module->increment();
-}
-
-
-/*
- * Class:     gsw_SWModule
- * Method:    begin
- * Signature: ()V
- */
-void  gsw_SWModule_begin
-(SWHANDLE hSWModule) {
-
-	GETSWMODULE(hSWModule, );
-
-	module->setPosition(sword::TOP);
-}
-
-
-/*
- * Class:     gsw_SWModule
- * Method:    getStripText
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_stripText
-(SWHANDLE hSWModule) {
-
-	GETSWMODULE(hSWModule, 0);
-
-	stdstr(&(hmod->stripBuf), assureValidUTF8((const char *)module->stripText()));
-
+const gchar* gsw_module_strip_text (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
+	stdstr(&(hmod->stripBuf), assureValidUTF8((const char *)mod->stripText()));
 	return hmod->stripBuf;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getRenderText
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_renderText
-(SWHANDLE hSWModule) {
+const gchar* gsw_module_render_text (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	stdstr(&(hmod->renderBuf), assureValidUTF8((const char *)module->renderText().c_str()));
-
+	stdstr(&(hmod->renderBuf), assureValidUTF8((const char *)mod->renderText().c_str()));
 	return hmod->renderBuf;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getRenderHeader
- * Signature: ()Ljava/lang/String;
- */
 // CSS styles associated with this text
-const char *  gsw_SWModule_getRenderHeader
-(SWHANDLE hSWModule) {
+const gchar* gsw_module_get_render_header (GswModule *module)
+{
 
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	stdstr(&(hmod->renderHeader), assureValidUTF8(((const char *)(module->getRenderHeader() ? module->getRenderHeader():""))));
+	stdstr(&(hmod->renderHeader), assureValidUTF8(((const char *)(mod->getRenderHeader() ? mod->getRenderHeader():""))));
 
 	return hmod->renderHeader;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    getRawEntry
- * Signature: ()Ljava/lang/String;
- */
-const char *  gsw_SWModule_getRawEntry
-(SWHANDLE hSWModule) {
+const gchar* gsw_module_get_raw_entry (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	stdstr(&(hmod->rawEntry), assureValidUTF8(((const char *)module->getRawEntry())));
-
+	stdstr(&(hmod->rawEntry), assureValidUTF8(((const char *)mod->getRawEntry())));
 	return hmod->rawEntry;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    setRawEntry
- * Signature: (Ljava/lang/String;)V
- */
-void  gsw_SWModule_setRawEntry
-(SWHANDLE hSWModule, const char *entryBuffer) {
-
-	GETSWMODULE(hSWModule, );
-
-	module->setEntry(entryBuffer);
+void gsw_module_set_raw_entry (GswModule *module, const char *entryBuffer)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
+	mod->setEntry(entryBuffer);
 }
 
 
-/*
- * Class:     gsw_SWModule
- * Method:    getConfigEntry
- * Signature: (Ljava/lang/String;)Ljava/lang/String;
- */
-const char *  gsw_SWModule_getConfigEntry
-(SWHANDLE hSWModule, const char *key) {
+const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
+{
 
-	GETSWMODULE(hSWModule, 0);
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return NULL;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return NULL;
+	}
 
-	stdstr(&(hmod->configEntry), (module->getConfigEntry(key) ? assureValidUTF8(module->getConfigEntry(key)).c_str() : 0));
+	stdstr(&(hmod->configEntry), (mod->getConfigEntry(key) ? assureValidUTF8(mod->getConfigEntry(key)).c_str() : 0));
 
 	return hmod->configEntry;
 }
 
-/*
- * Class:     gsw_SWModule
- * Method:    deleteSearchFramework
- * Signature: ()V
- */
-void  gsw_SWModule_deleteSearchFramework
-(SWHANDLE hSWModule) {
+void gsw_module_delete_search_framework (GswModule *module)
+{
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return;
+	}
 
-	GETSWMODULE(hSWModule, );
-
-	module->deleteSearchFramework(); 
+	mod->deleteSearchFramework(); 
 }
 
+gboolean gsw_module_has_search_framework (GswModule *module)
+{
 
-/*
- * Class:     gsw_SWModule
- * Method:    hasSearchFramework
- * Signature: ()Z
- */
-char  gsw_SWModule_hasSearchFramework
-(SWHANDLE hSWModule) {
+	HandleSWModule *hmod;
+	SWModule *mod;
+	
+	hmod = (HandleSWModule *) module;
+	if (!hmod) {
+		return FALSE;
+	}
+	mod = hmod->mod;
+	if (!mod) {
+		return FALSE;
+	}
 
-	GETSWMODULE(hSWModule, 0);
-
-	return (module->hasSearchFramework() && module->isSearchOptimallySupported("God", -4, 0, 0));
+	return (mod->hasSearchFramework() && mod->isSearchOptimallySupported("God", -4, 0, 0));
 }
