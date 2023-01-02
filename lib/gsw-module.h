@@ -3,7 +3,6 @@
  * gsw-module.h: This file is part of ____
  *
  * Copyright (C) 2017 yetist <yetist@yetipc>
- *
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,38 +30,28 @@ typedef void GswModule;
 
 typedef enum
 {
-	MODULE_SEARCH_TYPE_REGEX     = 1L,
-	MODULE_SEARCH_TYPE_PHRASE    = -1L,
-	MODULE_SEARCH_TYPE_MULTIWORD = -2L,
-	MODULE_SEARCH_TYPE_ENTRYATTR = -3L,
-	MODULE_SEARCH_TYPE_LUCENE    = -4L,
-}ModuleSearchType;
+	GSW_SEARCH_TYPE_REGEX     = 1L,
+	GSW_SEARCH_TYPE_PHRASE    = -1L,
+	GSW_SEARCH_TYPE_MULTIWORD = -2L,
+	GSW_SEARCH_TYPE_ENTRYATTR = -3L,
+	GSW_SEARCH_TYPE_LUCENE    = -4L,
+} GswSearchType;
 
-typedef void  (*PercentCallback) (gchar, gpointer);
+typedef void (*PercentCallback) (gchar, gpointer);
 
-GswModule*   gsw_module_new                (gpointer data);
-void         gsw_module_terminate_search   (GswModule *module);
-void         gsw_module_set_percent_callback (GswModule *module, PercentCallback func, gpointer userdata);
-GList*       gsw_module_search (GswModule *module, const char *searchString, ModuleSearchType searchType, glong flags, const gchar *scope);
-gboolean     gsw_module_pop_error          (GswModule *module);
-long         gsw_module_get_entry_size     (GswModule *module);
-GList*       gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, const gchar *level2,
+GswModule*   gsw_module_new                     (gpointer data);
+void         gsw_module_terminate_search        (GswModule *module);
+void         gsw_module_set_percent_callback    (GswModule *module, PercentCallback func, gpointer userdata);
+GList*       gsw_module_search                  (GswModule *module, const gchar *searchString, GswSearchType searchType, glong flags, const gchar *scope);
+gboolean     gsw_module_pop_error               (GswModule *module);
+long         gsw_module_get_entry_size          (GswModule *module);
+GList*       gsw_module_get_entry_attributes    (GswModule *module, const gchar *level1, const gchar *level2,
 		const gchar *level3, gboolean filteredBool);
-GList* gsw_module_parse_key_list (GswModule *module, const gchar *keyText);
-
-// Special values handled for VerseKey modules:
-//	[+-][book|chapter]	- [de|in]crement by chapter or book
-//	(e.g.	"+chapter" will increment the VerseKey 1 chapter)
-//	[=][key]		- position absolutely and don't normalize
-//	(e.g.	"jn.1.0" for John Chapter 1 intro; "jn.0.0" For Book of John Intro)
-void         gsw_module_set_key_text (GswModule *module, const char *key);
-const gchar* gsw_module_get_key_text (GswModule *module);
-gboolean     gsw_module_has_key_children (GswModule *module);
-
-// This method returns child nodes for a genbook,
-// but has special handling if called on a VerseKey module:
-//  [0..7] [testament, book, chapter, verse, chapterMax, verseMax, bookName, osisRef]
-GList*       gsw_module_get_key_children (GswModule *module);
+GList*       gsw_module_parse_key_list          (GswModule *module, const gchar *keyText);
+void         gsw_module_set_key_text            (GswModule *module, const gchar *key);
+const gchar* gsw_module_get_key_text            (GswModule *module);
+gboolean     gsw_module_has_key_children        (GswModule *module);
+GList*       gsw_module_get_key_children        (GswModule *module);
 const gchar* gsw_module_get_name                (GswModule *module);
 const gchar* gsw_module_get_description         (GswModule *module);
 const gchar* gsw_module_get_category            (GswModule *module);
@@ -74,8 +63,8 @@ const gchar* gsw_module_strip_text              (GswModule *module);
 const gchar* gsw_module_render_text             (GswModule *module);
 const gchar* gsw_module_get_render_header       (GswModule *module);
 const gchar* gsw_module_get_raw_entry           (GswModule *module);
-void         gsw_module_set_raw_entry           (GswModule *module, const char *entryBuffer);
-const gchar* gsw_module_get_config_entry        (GswModule *module, const char *key);
+void         gsw_module_set_raw_entry           (GswModule *module, const gchar *entryBuffer);
+const gchar* gsw_module_get_config_entry        (GswModule *module, const gchar *key);
 void         gsw_module_delete_search_framework (GswModule *module);
 gboolean     gsw_module_has_search_framework    (GswModule *module);
 

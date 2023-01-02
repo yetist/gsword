@@ -34,8 +34,6 @@
 #include "gsw-modinfo.h"
 
 using namespace sword;
-using sword::SWMgr;
-using sword::SWModule;
 namespace {
 	class WebMgr : public SWMgr {
 		OSISWordJS *osisWordJS;
@@ -47,7 +45,7 @@ namespace {
 		SWModule *defaultHebParse;
 
 		public:
-		WebMgr(const char *path) : SWMgr(path, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
+		WebMgr(const gchar *path) : SWMgr(path, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
 		WebMgr(SWConfig *sysConf) : SWMgr(0, sysConf, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
 		void init() {
 			defaultGreekLex   = 0;
@@ -128,21 +126,20 @@ GswManager* gsw_manager_new (void)
 
 GswManager* gsw_manager_new_with_path (const gchar *path)
 {
-	g_autofree gchar* modsd;
-	g_autofree gchar* confpath;
-
-	modsd = g_build_path(path, "mods.d", NULL);
+	GswManager *manager;
+	g_autofree gchar* modsd = g_build_path(path, "mods.d", NULL);
+	g_autofree gchar* confpath = g_build_path(modsd, "globals.conf", NULL);
 
 	// be sure we have at least some config file already out there
 	if (!g_file_test(modsd, G_FILE_TEST_EXISTS)) {
 		g_mkdir_with_parents (modsd, 0755);
-		confpath = g_build_path(modsd, "globals.conf", NULL);
 		SWConfig config(confpath);
 		config["Globals"]["HiAndroid"] = "weeee";
 		config.Save();
 	}
 
-	return (GswManager*) new WebMgr(confpath);
+	manager = new WebMgr(confpath);
+	return manager;
 }
 
 void gsw_manager_delete (GswManager *manager)
@@ -346,7 +343,7 @@ void gsw_manager_set_default_locale (GswManager *manager, const gchar *name)
 	LocaleMgr::getSystemLocaleMgr()->setDefaultLocaleName(name);
 }
 
-const gchar*  gsw_manager_translate (GswManager *manager, const char *text, const gchar *localeName)
+const gchar*  gsw_manager_translate (GswManager *manager, const gchar *text, const gchar *localeName)
 {
 	return LocaleMgr::getSystemLocaleMgr()->translate(text, localeName);
 }

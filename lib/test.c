@@ -27,7 +27,7 @@
 
 void percent(gchar i, gpointer d)
 {
-	g_print("%d, %s\n", i, d);
+	g_print("%d, %s\n", i, (gchar*) d);
 }
 
 void test_module(GswModule *module)
@@ -35,7 +35,7 @@ void test_module(GswModule *module)
 	GList *list, *l;
 	g_print("module size = %ld\n", gsw_module_get_entry_size(module));
 	gsw_module_set_percent_callback(module, percent, "ok");
-	list = gsw_module_search (module, "God", MODULE_SEARCH_TYPE_REGEX, 0, NULL);
+	list = gsw_module_search (module, "God", GSW_SEARCH_TYPE_REGEX, 0, "Rev");
 	for (l = list; l != NULL; l = l->next) {
 		GswSearchHit *search_hit;
 		search_hit = l->data;
@@ -43,6 +43,11 @@ void test_module(GswModule *module)
 		g_print("key =%s\n", gsw_search_hit_get_key (search_hit));
 		g_print("score =%ld\n", gsw_search_hit_get_score (search_hit));
 	}
+	g_print("render text=%s\n", gsw_module_render_text(module));
+	g_print("strip text =%s\n", gsw_module_strip_text (module));
+	g_print("render header=%s\n", gsw_module_get_render_header (module));
+	g_print("raw entry=%s\n",  gsw_module_get_raw_entry (module));
+//const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
 	//gsw_search_hit_unref(search_hit);
 }
 

@@ -22,49 +22,26 @@
 #include <vector>
 #include <versekey.h>
 #include <treekeyidx.h>
-#include <swbuf.h>
 #include <swmodule.h>
-#include <utilstr.h>
 #include "gsw-module.h"
 #include "gsw-search-hit.h"
 
 using namespace sword;
-using sword::SWModule;
-using sword::VerseKey;
-using sword::SWBuf;
-using sword::TreeKeyIdx;
-
 namespace {
 	class HandleSWModule {
 		public:
 			SWModule *mod;
-			char *renderBuf;
-			char *stripBuf;
-			char *renderHeader;
-			char *rawEntry;
-			char *configEntry;
 			// making searchHits cache static saves memory only having a single
 			// outstanding copy, but also is not threadsafe.  Remove static here
 			// and fix compiling bugs and add clearSearchHits() to d-tor to change
 			PercentCallback callback;
 			void *userdata;
-
 			HandleSWModule(SWModule *mod) {
 				this->callback = NULL;
 				this->userdata = NULL;
 				this->mod = mod;
-				this->renderBuf = 0;
-				this->stripBuf = 0;
-				this->renderHeader = 0;
-				this->rawEntry = 0;
-				this->configEntry = 0;
 			}
 			~HandleSWModule() {
-				delete [] renderBuf;
-				delete [] stripBuf;
-				delete [] renderHeader;
-				delete [] rawEntry;
-				delete [] configEntry;
 			}
 
 			void setPercentFunc(PercentCallback func) {
@@ -116,8 +93,7 @@ void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, g
 	hmod->setPercentUserdata(userdata);
 }
 
-GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSearchType searchType, glong flags, const gchar *scope)
-//const struct gsw_SearchHit *  gsw_SWModule_search (SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter)
+GList* gsw_module_search (GswModule *module, const char *searchString, GswSearchType searchType, glong flags, const gchar *scope)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
@@ -130,12 +106,8 @@ GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSea
 		return NULL;
 	}
 
-//	hmod->clearSearchHits();
-
 	sword::ListKey lscope;
 	sword::ListKey result;
-
-//	hmod->peeuuu.init(progressReporter);
 	if ((scope) && (strlen(scope)) > 0) {
 		sword::SWKey *p = mod->createKey();
 		sword::VerseKey *parser = SWDYNAMIC_CAST(VerseKey, p);
@@ -143,10 +115,9 @@ GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSea
 			delete p;
 			parser = new VerseKey();
 		}
-		//ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *scope, bool *justCheckIfSupported, void (*percent)(char, void *), void *percentUserData)
 		*parser = mod->getKeyText();
 		lscope = parser->parseVerseList(scope, *parser, true);
-		result = mod->search(searchString, searchType, flags, &lscope, 0, hmod->callback, hmod->userdata); // &percentUpdate, &(hmod->peeuuu));
+		result = mod->search(searchString, searchType, flags, &lscope, 0, hmod->callback, hmod->userdata);
 		delete parser;
 	} else {
 		result = mod->search(searchString, searchType, flags, 0, 0, hmod->callback, hmod->userdata);
@@ -160,8 +131,6 @@ GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSea
 	if ((count) && (long)result.getElement()->userData)
 		result.sort();
 
-//	struct gsw_SearchHit *retVal = (struct gsw_SearchHit *)calloc(count+1, sizeof(struct gsw_SearchHit));
-
 	int i = 0;
 	GList *results = NULL;
 	for (result = sword::TOP; !result.popError(); result++) {
@@ -171,7 +140,6 @@ GList* gsw_module_search (GswModule *module, const char *searchString, ModuleSea
 		i++;
 		if (i >= count) break;
 	}
-//	hmod->searchHits = results;
 	return results;
 }
 
@@ -223,8 +191,6 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 	if (!mod) {
 		return 0;
 	}
-
-//	hmod->clearEntryAttributes();
 
 	mod->renderText();	// force parse
 	std::vector<SWBuf> results;
@@ -286,7 +252,6 @@ GList* gsw_module_get_entry_attributes (GswModule *module, const gchar *level1, 
 		}
 	}
 
-//	hmod->attributes = attributes;
 	return attributes;
 }
 
@@ -604,8 +569,7 @@ const gchar* gsw_module_strip_text (GswModule *module)
 	if (!mod) {
 		return NULL;
 	}
-	stdstr(&(hmod->stripBuf), assureValidUTF8((const char *)mod->stripText()));
-	return hmod->stripBuf;
+	return g_strdup(assureValidUTF8((const char *)mod->stripText()));
 }
 
 const gchar* gsw_module_render_text (GswModule *module)
@@ -622,8 +586,7 @@ const gchar* gsw_module_render_text (GswModule *module)
 		return NULL;
 	}
 
-	stdstr(&(hmod->renderBuf), assureValidUTF8((const char *)mod->renderText().c_str()));
-	return hmod->renderBuf;
+	return g_strdup(assureValidUTF8((const char *)mod->renderText().c_str()));
 }
 
 // CSS styles associated with this text
@@ -640,10 +603,7 @@ const gchar* gsw_module_get_render_header (GswModule *module)
 	if (!mod) {
 		return NULL;
 	}
-
-	stdstr(&(hmod->renderHeader), assureValidUTF8(((const char *)(mod->getRenderHeader() ? mod->getRenderHeader():""))));
-
-	return hmod->renderHeader;
+	return g_strdup(assureValidUTF8(((const char *)(mod->getRenderHeader() ? mod->getRenderHeader():""))));
 }
 
 const gchar* gsw_module_get_raw_entry (GswModule *module)
@@ -660,8 +620,7 @@ const gchar* gsw_module_get_raw_entry (GswModule *module)
 		return NULL;
 	}
 
-	stdstr(&(hmod->rawEntry), assureValidUTF8(((const char *)mod->getRawEntry())));
-	return hmod->rawEntry;
+	return g_strdup(assureValidUTF8(((const char *)mod->getRawEntry())));
 }
 
 void gsw_module_set_raw_entry (GswModule *module, const char *entryBuffer)
@@ -696,9 +655,10 @@ const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
 		return NULL;
 	}
 
-	stdstr(&(hmod->configEntry), (mod->getConfigEntry(key) ? assureValidUTF8(mod->getConfigEntry(key)).c_str() : 0));
-
-	return hmod->configEntry;
+	if (mod->getConfigEntry(key) != NULL)
+		return g_strdup(assureValidUTF8(mod->getConfigEntry(key)).c_str());
+	else
+		return NULL;
 }
 
 void gsw_module_delete_search_framework (GswModule *module)
@@ -714,7 +674,6 @@ void gsw_module_delete_search_framework (GswModule *module)
 	if (!mod) {
 		return;
 	}
-
 	mod->deleteSearchFramework(); 
 }
 
