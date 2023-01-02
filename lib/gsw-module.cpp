@@ -93,7 +93,7 @@ void gsw_module_set_percent_callback (GswModule *module, PercentCallback func, g
 	hmod->setPercentUserdata(userdata);
 }
 
-GList* gsw_module_search (GswModule *module, const char *searchString, GswSearchType searchType, glong flags, const gchar *scope)
+GList* gsw_module_search (GswModule *module, const gchar *searchString, GswSearchType searchType, glong flags, const gchar *scope)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
@@ -325,7 +325,7 @@ void  gsw_module_set_key_text (GswModule *module, const gchar *keyText)
 	mod->setKey(keyText);
 }
 
-const gchar *  gsw_module_get_key_text (GswModule *module)
+const gchar*  gsw_module_get_key_text (GswModule *module)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
@@ -623,7 +623,7 @@ const gchar* gsw_module_get_raw_entry (GswModule *module)
 	return g_strdup(assureValidUTF8(((const char *)mod->getRawEntry())));
 }
 
-void gsw_module_set_raw_entry (GswModule *module, const char *entryBuffer)
+void gsw_module_set_raw_entry (GswModule *module, const gchar *entryBuffer)
 {
 	HandleSWModule *hmod;
 	SWModule *mod;
@@ -640,7 +640,7 @@ void gsw_module_set_raw_entry (GswModule *module, const char *entryBuffer)
 }
 
 
-const gchar* gsw_module_get_config_entry (GswModule *module, const char *key)
+const gchar* gsw_module_get_config_entry (GswModule *module, const gchar *key)
 {
 
 	HandleSWModule *hmod;
