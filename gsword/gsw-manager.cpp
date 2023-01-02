@@ -29,7 +29,6 @@
 #include <osiswordjs.h>
 #include <thmlwordjs.h>
 #include <gbfwordjs.h>
-#include "webmgr.hpp"
 
 #include "gsw-manager.h"
 #include "gsw-modinfo.h"
@@ -41,7 +40,10 @@ struct _GswManager
 {
   GObject       object;
   gchar*        path;
-  WebMgr* mgr;
+  sword::SWMgr* mgr;
+  sword::OSISWordJS *osisWordJS;
+  sword::ThMLWordJS *thmlWordJS;
+  sword::GBFWordJS *gbfWordJS;
 };
 
 enum {
@@ -89,18 +91,18 @@ static void gsw_manager_dispose (GObject *object)
 		g_free(manager->path);
 		manager->path = NULL;
 	}
-//	if (manager->osisWordJS != NULL) {
-//		delete manager->osisWordJS;
-//		manager->osisWordJS = NULL;
-//	}
-//	if (manager->thmlWordJS != NULL) {
-//		delete manager->thmlWordJS;
-//		manager->thmlWordJS = NULL;
-//	}
-//	if (manager->gbfWordJS != NULL) {
-//		delete manager->gbfWordJS;
-//		manager->gbfWordJS = NULL;
-//	}
+	if (manager->osisWordJS != NULL) {
+		delete manager->osisWordJS;
+		manager->osisWordJS = NULL;
+	}
+	if (manager->thmlWordJS != NULL) {
+		delete manager->thmlWordJS;
+		manager->thmlWordJS = NULL;
+	}
+	if (manager->gbfWordJS != NULL) {
+		delete manager->gbfWordJS;
+		manager->gbfWordJS = NULL;
+	}
 	G_OBJECT_CLASS (gsw_manager_parent_class)->dispose (object);
 }
 
@@ -124,9 +126,9 @@ static void gsw_manager_init (GswManager *manager)
 	if (manager->path != NULL) {
 		g_free(manager->path);
 	}
-//	manager->osisWordJS = NULL;
-//	manager->thmlWordJS = NULL;
-//	manager->gbfWordJS = NULL;
+	manager->osisWordJS = NULL;
+	manager->thmlWordJS = NULL;
+	manager->gbfWordJS = NULL;
 	manager->path = g_build_filename(g_get_home_dir(), ".sword", NULL);
 }
 
@@ -152,24 +154,24 @@ static void gsw_manager_initialize (GswManager *manager)
 	g_return_if_fail(GSW_IS_MANAGER(manager));
 	//gsw_manager_init_config(manager);
 
-//	sword::SWModule *defaultGreekLex = NULL;
-//	sword::SWModule *defaultHebLex = NULL;
-//	sword::SWModule *defaultGreekParse = NULL;
-//	sword::SWModule *defaultHebParse = NULL;
+	sword::SWModule *defaultGreekLex = NULL;
+	sword::SWModule *defaultHebLex = NULL;
+	sword::SWModule *defaultGreekParse = NULL;
+	sword::SWModule *defaultHebParse = NULL;
 
-//	manager->osisWordJS = new sword::OSISWordJS();
-//	manager->thmlWordJS = new sword::ThMLWordJS();
-//	manager->gbfWordJS = new  sword::GBFWordJS();
-//	manager->mgr->Load();
-//	manager->osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-//	manager->thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-//	manager->gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-//
-//	manager->osisWordJS->setMgr(manager->mgr);
-//	manager->thmlWordJS->setMgr(manager->mgr);
-//	manager->gbfWordJS->setMgr(manager->mgr);
-//
-//	manager->mgr->setGlobalOption("Textual Variants", "Primary Reading");
+	manager->osisWordJS = new sword::OSISWordJS();
+	manager->thmlWordJS = new sword::ThMLWordJS();
+	manager->gbfWordJS = new  sword::GBFWordJS();
+	manager->mgr->Load();
+	manager->osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+	manager->thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+	manager->gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+
+	manager->osisWordJS->setMgr(manager->mgr);
+	manager->thmlWordJS->setMgr(manager->mgr);
+	manager->gbfWordJS->setMgr(manager->mgr);
+
+	manager->mgr->setGlobalOption("Textual Variants", "Primary Reading");
 }
 
 GswManager* gsw_manager_new (void)
@@ -177,21 +179,18 @@ GswManager* gsw_manager_new (void)
 	GswManager *manager;
 	sword::SWConfig *sysConf = NULL;
     manager = (GswManager*) g_object_new (GSW_TYPE_MANAGER, NULL);
-	manager->mgr = new WebMgr(sysConf);
-	//gsw_manager_initialize(manager);
+	manager->mgr = new sword::SWMgr(sysConf);
+	gsw_manager_initialize(manager);
 	return manager;
 }
 
 GswManager* gsw_manager_new_with_path (const gchar *path)
 {
-	g_print("call here, path=%s\n", path);
 	GswManager *manager;
     manager = (GswManager*) g_object_new (GSW_TYPE_MANAGER, "path", path, NULL);
-	sword::SWBuf confPath = manager->path;
 	gsw_manager_init_config(manager);
-	manager->mgr = new WebMgr(confPath.c_str());
-	//gsw_manager_initialize(manager);
-	g_print("prefix:%s, config:%s\n", manager->mgr->prefixPath, manager->mgr->configPath);
+	manager->mgr = new sword::SWMgr(path);
+	gsw_manager_initialize(manager);
 	return manager;
 }
 
@@ -199,101 +198,6 @@ gpointer gsw_manager_get_internal (GswManager *manager)
 {
 	return manager->mgr;
 }
-
-#if 0
-namespace {
-	using namespace sword;
-	class WebMgr : public SWMgr {
-		OSISWordJS *osisWordJS;
-		ThMLWordJS *thmlWordJS;
-		GBFWordJS *gbfWordJS;
-		SWModule *defaultGreekLex;
-		SWModule *defaultHebLex;
-		SWModule *defaultGreekParse;
-		SWModule *defaultHebParse;
-
-		public:
-		WebMgr(const gchar *path) : SWMgr(path, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
-		WebMgr(SWConfig *sysConf) : SWMgr(0, sysConf, false, new MarkupFilterMgr(FMT_WEBIF)) { init(); }
-		void init() {
-			defaultGreekLex   = 0;
-			defaultHebLex     = 0;
-			defaultGreekParse = 0;
-			defaultHebParse   = 0;
-
-			osisWordJS = new OSISWordJS();
-			thmlWordJS = new ThMLWordJS();
-			gbfWordJS = new GBFWordJS();
-			Load();
-			osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-			thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-			gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-			osisWordJS->setMgr(this);
-			thmlWordJS->setMgr(this);
-			gbfWordJS->setMgr(this);
-			setGlobalOption("Textual Variants", "Primary Reading");
-		}
-
-		~WebMgr() {
-			delete osisWordJS;
-			delete thmlWordJS;
-			delete gbfWordJS;
-		}
-
-		void AddGlobalOptions(SWModule *module, ConfigEntMap &section, ConfigEntMap::iterator start, ConfigEntMap::iterator end) {
-
-			// ThML word stuff needs to process before strongs strip
-			if (module->getMarkup() == FMT_THML) {
-				module->addOptionFilter(thmlWordJS);
-			}
-
-			if (module->getMarkup() == FMT_GBF) {
-				module->addOptionFilter(gbfWordJS);
-			}
-
-			// add other module filters
-			SWMgr::AddGlobalOptions(module, section, start, end);
-
-			// add our special filters
-			if (module->getConfig().has("Feature", "GreekDef")) {
-				defaultGreekLex = module;
-			}
-			if (module->getConfig().has("Feature", "HebrewDef")) {
-				defaultHebLex = module;
-			}
-			if (module->getConfig().has("Feature", "GreekParse")) {
-				defaultGreekParse = module;
-			}
-			if (module->getConfig().has("Feature", "HebrewParse")) {
-				defaultHebParse = module;
-			}
-			if (module->getConfig().has("GlobalOptionFilter", "ThMLVariants")) {
-				OptionFilterMap::iterator it = optionFilters.find("ThMLVariants");
-				if (it != optionFilters.end()) {
-					module->addOptionFilter((*it).second);	// add filter to module and option as a valid option
-				}
-			}
-
-			if (module->getMarkup() == FMT_OSIS) {
-				module->addOptionFilter(osisWordJS);
-			}
-		}
-		void setJavascript(bool val) {
-			osisWordJS->setOptionValue((val)?"On":"Off");
-			thmlWordJS->setOptionValue((val)?"On":"Off");
-			gbfWordJS->setOptionValue((val)?"On":"Off");
-		}
-	};
-}
-
-void gsw_manager_delete (GswManager *manager)
-{
-	WebMgr *mgr;
-	mgr = (WebMgr *)manager;
-	if (mgr)
-		delete mgr;
-}
-#endif
 
 const gchar* gsw_manager_get_version (GswManager *manager)
 {
@@ -420,10 +324,10 @@ void gsw_manager_set_cipherkey (GswManager *manager, const gchar *modName, const
 
 void gsw_manager_set_javascript (GswManager *manager, gboolean value)
 {
-	manager->mgr->setJavascript(value);
-	//osisWordJS->setOptionValue((value)?"On":"Off");
-	//manager->thmlWordJS->setOptionValue((value)?"On":"Off");
-	//manager->gbfWordJS->setOptionValue((value)?"On":"Off");
+	//manager->mgr->setJavascript(value);
+	manager->osisWordJS->setOptionValue((value)?"On":"Off");
+	manager->thmlWordJS->setOptionValue((value)?"On":"Off");
+	manager->gbfWordJS->setOptionValue((value)?"On":"Off");
 }
 
 GList* gsw_manager_get_available_locales (GswManager *manager)
