@@ -15,7 +15,7 @@ foreach src : all_sources
   exe = executable(p[0]+'2', 
       sources: src,
       dependencies : [sword_dep, gobject_dep],
-      link_with : [lib_flat, libgsword],
+      link_with : [libgsword],
       include_directories : [
 	top_srcdir,
 	top_libdir,

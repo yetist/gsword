@@ -6,12 +6,6 @@ gsw_marshallers = gnome.genmarshal('gsw-marshal',
 gsw_marshaller_c = gsw_marshallers[0]
 gsw_marshaller_h = gsw_marshallers[1]
 
-lib_flat= shared_library('flatapi',
-'flatapi.cpp',
-'flatapi.h',
-dependencies : sword_dep
-)
-
 libgsword = shared_library('gsword',
 'gsw-modinfo.c',
 'gsw-manager.cpp',
