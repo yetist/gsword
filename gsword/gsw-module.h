@@ -29,9 +29,10 @@
 G_BEGIN_DECLS
 
 #define GSW_TYPE_MODULE              (gsw_module_get_type ())
+
 G_DECLARE_FINAL_TYPE (GswModule, gsw_module, GSW, MODULE, GObject)
 
-//typedef void GswModule;
+typedef void (*PercentCallback) (gchar, gpointer);
 
 typedef enum
 {
@@ -42,9 +43,7 @@ typedef enum
 	GSW_SEARCH_TYPE_LUCENE    = -4L,
 } GswSearchType;
 
-typedef void (*PercentCallback) (gchar, gpointer);
-
-GType        gsw_module_get_type           (void) G_GNUC_CONST;
+GType        gsw_module_get_type                (void) G_GNUC_CONST;
 GswModule*   gsw_module_new                     (gpointer data);
 void         gsw_module_terminate_search        (GswModule *module);
 void         gsw_module_set_percent_callback    (GswModule *module, PercentCallback func, gpointer userdata);
