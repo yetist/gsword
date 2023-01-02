@@ -6,3 +6,7 @@
 1913	2007	0	lib/libgsword.so	e55dab8884f6e1ca
 0	1914	0	lib/gsword@sha/flatapi.cpp.o	68fe727d808c903b
 1914	1985	0	lib/libgsword.so	e55dab8884f6e1ca
+23	7860	0	lib/gsword@sha/flatapi.cpp.o	68fe727d808c903b
+7860	8374	0	lib/libgsword.so	e55dab8884f6e1ca
+0	5147	0	lib/gsword@sha/flatapi.cpp.o	68fe727d808c903b
+5147	5451	0	lib/libgsword.so	e55dab8884f6e1ca

@@ -60,6 +60,7 @@ struct gsw_SearchHit {
 #undef gsw_SWModule_SEARCHTYPE_LUCENE
 #define gsw_SWModule_SEARCHTYPE_LUCENE -4L
 
+// ====================== SWModule ======================
 /*
  * Class:     gsw_SWModule
  * Method:    terminateSearch
@@ -149,6 +150,8 @@ void  gsw_SWModule_deleteSearchFramework
 char  gsw_SWModule_hasSearchFramework
   (SWHANDLE hSWModule);
 
+// ====================== SWMgr ======================
+
 SWHANDLE  gsw_SWMgr_new ();
 
 
@@ -207,6 +210,7 @@ const char *  gsw_SWMgr_translate
 
 
 
+// ====================== InstallMgr ======================
 
 //
 // InstallMgr methods

@@ -23,13 +23,11 @@
 #ifndef __GSW_MODULE_H__ 
 #define __GSW_MODULE_H__  1
 
-#include <glib-object.h>
+#include <glib.h>
 
 G_BEGIN_DECLS
 
-
-#define GSW_TYPE_MODULE              (gsw_module_get_type ())
-G_DECLARE_FINAL_TYPE (GswModule, gsw_module, GSW, MODULE, GObject);
+typedef void GswModule;
 
 typedef struct _gsw_search_hit gst_search_hit;
 
@@ -39,14 +37,22 @@ struct _gsw_search_hit {
 	long  score;
 };
 
-GswModule*     gsw_module_new                (void);
-/*
- 
-void  gsw_module_terminate_search (SWHANDLE hSWModule);
+typedef enum
+{
+	MODULE_SEARCH_TYPE_REGEX     = 1L,
+	MODULE_SEARCH_TYPE_PHRASE    = -1L,
+	MODULE_SEARCH_TYPE_MULTIWORD = -2L,
+	MODULE_SEARCH_TYPE_ENTRYATTR = -3L,
+	MODULE_SEARCH_TYPE_LUCENE    = -4L,
+}ModuleSearchType;
 
-const struct gSearchHit *  gsw_module_search (SWHANDLE hSWModule, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter);
-char  gsw_module_pop_error (SWHANDLE hSWModule);
-long  gsw_module_get_entry_size (SWHANDLE hSWModule);
+GswModule*     gsw_module_new                (void);
+void           gsw_module_terminate_search   (GswModule *module);
+
+//const struct gSearchHit *  gsw_module_search (SWHANDLE module, const char *searchString, int searchType, long flags, const char *scope, SWHANDLE progressReporter);
+gboolean       gsw_module_pop_error          (GswModule *module);
+long           gsw_module_get_entry_size     (GswModule *module);
+/*
 
 const char **  gsw_module_getEntryAttribute (SWHANDLE hSWModule, const char *level1, const char *level2, const char *level3, char filteredBool);
 
