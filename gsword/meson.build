@@ -11,6 +11,7 @@ libgsword = shared_library('gsword',
 'gsw-search-hit.c',
 'gsw-installer.cpp',
 'gsw-status-reporter.cpp',
+'gsw-verse-key.cpp',
 dependencies : [sword_dep, gobject_dep],
 )
 

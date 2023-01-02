@@ -30,8 +30,8 @@ using namespace sword;
 using namespace std;
 
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
         const char *modName = "HunKar";
         SWMgr library;
         SWModule *book = library.getModule(modName);

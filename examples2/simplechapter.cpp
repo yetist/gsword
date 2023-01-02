@@ -30,7 +30,13 @@ using namespace sword;
 using namespace std;
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
+	if (argc != 3) {
+		fprintf(stderr, "\nusage: %s <modname> <\"VerseKey\">\n"
+				"\tExample: %s KJV \"Jn.3.16\"\n\n", argv[0], argv[0]);
+		exit(-1);
+	}
 
 	SWMgr library;
 	SWModule *kjv = library.getModule((argc > 1)?argv[1]:"KJV");

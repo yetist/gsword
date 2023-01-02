@@ -30,8 +30,8 @@ using namespace sword;
 using namespace std;
 
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
         const char *modName = "RusCARS";
         const char *keyTextRegular = "1Sam1.20";
         const char *keyTextNeedsNormalization = "1Sam1.200";
@@ -43,7 +43,6 @@ int main(int argc, char **argv) {
                 cerr << "Can't find module: " << modName << endl;
                 return -1;
         }
-
 
 	// get two VerseKey objects for a module
         VerseKey *verse = ((VerseKey *)book->createKey());
