@@ -53,15 +53,13 @@ void gsw_module_dispose (GObject *object)
 	G_OBJECT_CLASS (gsw_module_parent_class)->dispose (object);
 }
 
-	static void
-gsw_module_class_init (GswModuleClass *klass)
+static void gsw_module_class_init (GswModuleClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	gobject_class->dispose = gsw_module_dispose;
 }
 
-	static void
-gsw_module_init (GswModule *module)
+static void gsw_module_init (GswModule *module)
 {
 	module->mod = NULL;
 	module->callback = percent;
@@ -76,7 +74,7 @@ GswModule* gsw_module_new (gpointer data)
 	return module;
 }
 
-void  gsw_module_terminate_search (GswModule *module)
+void gsw_module_terminate_search (GswModule *module)
 {
 	g_return_if_fail(module != NULL);
 
