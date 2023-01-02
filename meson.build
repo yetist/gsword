@@ -16,4 +16,12 @@ conf.set_quoted('GETTEXT_PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE_NAME', meson.project_name())
 
+sword_dep = dependency('sword')
+glib_dep = dependency('glib-2.0')
+gobject_dep = dependency('gobject-2.0')
+
+top_srcdir = include_directories('.')
+top_libdir = include_directories('./lib')
+
 subdir('lib')
+subdir('examples')

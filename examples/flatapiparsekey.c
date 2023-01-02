@@ -22,8 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <flatapi.h>
+#include "flatapi.h"
 
 int main(int argc, char **argv) {
 	if (argc != 3) {

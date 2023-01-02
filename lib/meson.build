@@ -1,14 +1,10 @@
-sword_dep = dependency('sword')
-glib_dep = dependency('glib-2.0')
-gobject_dep = dependency('gobject-2.0')
-
-gsword_lib = shared_library('gsword',
+lib_flat= shared_library('flatapi',
 'flatapi.cpp',
 'flatapi.h',
 dependencies : sword_dep
 )
 
-libgsword = shared_library('gsword2',
+libgsword = shared_library('gsword',
 'gsw-modinfo.c',
 'gsw-manager.cpp',
 'gsw-module.cpp',
