@@ -28,7 +28,8 @@
 
 G_BEGIN_DECLS
 
-typedef void GswManager;
+#define GSW_TYPE_MANAGER              (gsw_manager_get_type ())
+G_DECLARE_FINAL_TYPE (GswManager, gsw_manager, GSW, MANAGER, GObject);
 
 GswManager*   gsw_manager_new              (void);
 GswManager*   gsw_manager_new_with_path    (const gchar *path);

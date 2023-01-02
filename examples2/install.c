@@ -53,8 +53,8 @@ int main(int argc, char **argv)
 
 	// status reporter
 	reporter = gsw_status_reporter_new ();
-	g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), "hi");
-	g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), "hi");
+	//g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), "hi");
+	//g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), "hi");
 
 	manager = gsw_manager_new_with_path(argv[3]);
 	gchar* path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
@@ -65,10 +65,10 @@ int main(int argc, char **argv)
 	gsw_installer_refresh_remote_source (installer, "CrossWire");
 
         GList *list = gsw_installer_get_remote_modinfo_list (installer, manager, "CrossWire");
-	test_modinfo(list);
+	//test_modinfo(list);
 
 	fprintf(stdout, "Install returned: %d\n", gsw_installer_remote_install_module (installer, manager, argv[1], argv[2]));
-	gsw_manager_delete (manager);
+	g_object_unref(manager);
 	gsw_installer_delete (installer);
 
 	return 0;

@@ -115,10 +115,10 @@ static void gsw_installer_class_init (GswInstallerClass *klass)
 static void gsw_installer_init (GswInstaller *installer)
 {
 	g_return_if_fail(GSW_IS_INSTALLER(installer));
-	gchar* default_path;
-	default_path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
-	installer->path = default_path;
-	g_free(default_path);
+	if (installer->path != NULL) {
+		g_free(installer->path);
+	}
+	installer->path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
 }
 
 static void gsw_installer_init_config(GswInstaller *installer)
