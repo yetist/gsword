@@ -21,7 +21,8 @@ glib_dep = dependency('glib-2.0')
 gobject_dep = dependency('gobject-2.0')
 
 top_srcdir = include_directories('.')
-top_libdir = include_directories('./lib')
+top_libdir = include_directories('./gsword')
 
 subdir('gsword')
 subdir('examples')
+subdir('examples2')

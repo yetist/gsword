@@ -1,100 +1,26 @@
-executable(
-    'ciphercng',
-    sources : 'ciphercng.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
+all_sources = ['ciphercng.cpp',
+'flatapiinstallmgr.cpp',
+'flatapilookup.c',
+'flatapiparsekey.c',
+'flatapisearch.c',
+'lastVerseInChapter.cpp',
+'simplechapter.cpp',
+'swmgrex.cpp',
+'versenorm.cpp',
+'verseposition.cpp',
+'verseranges.cpp' ]
 
-executable(
-    'flatapiinstallmgr',
-    sources : 'flatapiinstallmgr.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    include_directories : [
-	    top_srcdir,
-	    top_libdir,
-	    ],
-    install : false,
-    )
-
-executable(
-    'flatapilookup',
-    sources : 'flatapilookup.c',
-    dependencies : [sword_dep],
-    include_directories : [
-	    top_srcdir,
-	    top_libdir,
-	    ],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'flatapiparsekey',
-    sources : 'flatapiparsekey.c',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    include_directories : [
-	    top_srcdir,
-	    top_libdir,
-	    ],
-    install : false,
-    )
-
-executable(
-    'flatapisearch',
-    sources : 'flatapisearch.c',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'lastVerseInChapter',
-    sources : 'lastVerseInChapter.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-
-executable(
-    'simplechapter',
-    sources : 'simplechapter.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'swmgrex',
-    sources : 'swmgrex.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'versenorm',
-    sources : 'versenorm.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'verseposition',
-    sources : 'verseposition.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
-
-executable(
-    'verseranges',
-    sources : 'verseranges.cpp',
-    dependencies : [sword_dep],
-    link_with : lib_flat,
-    install : false,
-    )
+foreach src : all_sources
+  p = src.split('.')
+  exe = executable(p[0], 
+      sources: src,
+      dependencies : [sword_dep],
+      link_with : lib_flat,
+      include_directories : [
+	top_srcdir,
+	top_libdir,
+	],
+      install : false,
+      )
+  test(p[0], exe)
+endforeach

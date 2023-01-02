@@ -65,7 +65,7 @@ namespace {
 GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *statusReporter)
 {
 	gchar *conf_path;
-	conf_path = g_build_path(baseDir, "InstallMgr.conf", NULL);
+	conf_path = g_build_filename(baseDir, "InstallMgr.conf", NULL);
 	if (!g_file_test(conf_path, G_FILE_TEST_EXISTS)) {
 		g_mkdir_with_parents (baseDir, 0755);
 		SWConfig config(conf_path);

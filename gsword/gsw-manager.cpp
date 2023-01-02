@@ -127,18 +127,20 @@ GswManager* gsw_manager_new (void)
 GswManager* gsw_manager_new_with_path (const gchar *path)
 {
 	GswManager *manager;
-	g_autofree gchar* modsd = g_build_path(path, "mods.d", NULL);
-	g_autofree gchar* confpath = g_build_path(modsd, "globals.conf", NULL);
+	SWBuf confPath = path;
+
+	g_autofree gchar* modsd = g_build_filename(path, "mods.d", NULL);
+	g_autofree gchar* confpath = g_build_filename(modsd, "globals.conf", NULL);
 
 	// be sure we have at least some config file already out there
-	if (!g_file_test(modsd, G_FILE_TEST_EXISTS)) {
+	if (!g_file_test(modsd, G_FILE_TEST_IS_DIR)) {
 		g_mkdir_with_parents (modsd, 0755);
 		SWConfig config(confpath);
 		config["Globals"]["HiAndroid"] = "weeee";
 		config.Save();
 	}
 
-	manager = new WebMgr(confpath);
+	manager = new WebMgr(confPath.c_str());
 	return manager;
 }
 

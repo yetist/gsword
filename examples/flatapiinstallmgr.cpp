@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
 	SWHANDLE mgr = org_crosswire_sword_SWMgr_newWithPath(argv[3]);
 
-	SWHANDLE instMgr = org_crosswire_sword_InstallMgr_new("/home/scribe/.sword/InstallMgr", 0);
+	SWHANDLE instMgr = org_crosswire_sword_InstallMgr_new("/home/yetist/.sword/InstallMgr", 0);
 
 	org_crosswire_sword_InstallMgr_setUserDisclaimerConfirmed(instMgr);
 
