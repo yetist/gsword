@@ -33,6 +33,7 @@ typedef void  (*UpdateCallback) (gulong total, gulong completed);
 typedef void  (*PreStatusCallback) (glong total, glong completed, const gchar* message);
 
 GswStatusReporter* gsw_status_reporter_new      (void);
+gpointer gsw_status_reporter_get_class  (GswStatusReporter *report);
 void gsw_status_reporter_set_update_callback    (GswStatusReporter *report, UpdateCallback func);
 void gsw_status_reporter_set_prestatus_callback (GswStatusReporter *report, PreStatusCallback func);
 

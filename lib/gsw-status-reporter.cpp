@@ -80,6 +80,19 @@ GswStatusReporter* gsw_status_reporter_new (void)
 	return (GswStatusReporter*) new HandleReporter();
 }
 
+gpointer gsw_status_reporter_get_class  (GswStatusReporter *report)
+{
+	HandleReporter *h_reporter;
+	MyStatusReporter *reporter;
+
+	h_reporter = (HandleReporter*) report;
+	if (!h_reporter) {
+		return NULL;
+	}
+	reporter = h_reporter->reporter;
+	return reporter;
+}
+
 void gsw_status_reporter_set_update_callback (GswStatusReporter *report, UpdateCallback func)
 {
 	HandleReporter *h_reporter;

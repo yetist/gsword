@@ -25,6 +25,7 @@
 
 #include <glib.h>
 #include "gsw-status-reporter.h"
+#include "gsw-manager.h"
 
 G_BEGIN_DECLS
 
@@ -35,13 +36,16 @@ void          gsw_installer_delete                         (GswInstaller* instal
 void          gsw_installer_set_user_disclaimer_confirmed  (GswInstaller* installer);
 int           gsw_installer_sync_config                    (GswInstaller* installer);
 int           gsw_installer_uninstall_module               (GswInstaller* installer, GswManager* manager, const char *modName);
-const char ** gsw_installer_get_remote_sources             (GswInstaller* installer);
+
+
+GList* gsw_installer_get_remote_sources             (GswInstaller* installer);
+
+/*
 int           gsw_installer_refresh_remote_source          (GswInstaller* installer, const char *sourceName);
 int           gsw_installer_remote_install_module          (GswInstaller* installer, GswManager* manager, const char *sourceName, const char *modName);
 GswModule*    gsw_installer_get_remote_module_by_name      (GswInstaller* installer, const char *sourceName, const char *modName);
-const struct  gsw_modinfo *  gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManager* manager, const char *sourceName);
+const struct  gsw_modinfo * gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManager* manager, const char *sourceName);
 
-/*
 SWHANDLE  gsw_installer_new (const char *baseDir, SWHANDLE statusReporter);
 void  gsw_installer_setUserDisclaimerConfirmed (SWHANDLE hInstallMgr);
 int   gsw_installer_syncConfig (SWHANDLE hInstallMgr);
