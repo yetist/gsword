@@ -64,12 +64,9 @@ void test_module(GswModule *module)
 	//gsw_search_hit_unref(search_hit);
 }
 
-void test_manager(GswManager *manager)
+void test_modinfo(GList *list)
 {
-	GList *list, *l;
-	g_print("manager version=%s\n", gsw_manager_get_version(manager));
-
-	list = gsw_manager_get_modinfo_list(manager);
+	GList *l;
 	for (l = list; l != NULL; l = l->next)
 	{
 		GswModinfo *info = (GswModinfo*)l->data;
@@ -80,6 +77,15 @@ void test_manager(GswManager *manager)
 		g_print("       :vern=%s\n", gsw_modinfo_get_version(info));
 		g_print("       :delt=%s\n", gsw_modinfo_get_delta(info));
 	}
+}
+
+void test_manager(GswManager *manager)
+{
+	GList *list, *l;
+	g_print("manager version=%s\n", gsw_manager_get_version(manager));
+
+	list = gsw_manager_get_modinfo_list(manager);
+	test_modinfo(list);
 	GList *list2, *l2;
 
 	gsw_manager_set_default_locale (manager, "zh_Hans"); // "zh_CN");

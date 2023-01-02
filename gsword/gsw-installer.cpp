@@ -36,6 +36,7 @@
 #include <localemgr.h>
 #include <utilstr.h>
 
+#include <glib/gstdio.h>
 #include "gsw-installer.h"
 #include "gsw-modinfo.h"
 
@@ -70,6 +71,21 @@ GswInstaller* gsw_installer_new (const gchar *baseDir, GswStatusReporter *status
 		g_mkdir_with_parents (baseDir, 0755);
 		SWConfig config(conf_path);
 		config["General"]["PassiveFTP"] = "true";
+
+		InstallSource is("FTP");
+		is.caption = "CrossWire";
+		is.source = "ftp.crosswire.org";
+		is.directory = "/pub/sword/raw";
+
+		config["General"]["PassiveFTP"] = "true";
+		config["Sources"]["FTPSource"] = is.getConfEnt();
+		config.Save();
+
+		InstallSource is_local("DIR");
+		is_local.caption = "cdrom";
+		is_local.source = "[local]";
+		is_local.directory = "/mnt/cdrom";
+		config["Sources"]["DIRSource"] = is_local.getConfEnt();
 		config.Save();
 	}
 	g_free(conf_path);
@@ -281,4 +297,47 @@ GswModule* gsw_installer_get_remote_module_by_name (GswInstaller* installer, con
 
 	return  gsw_module_new(module);
 
+}
+
+void gsw_installer_terminate (GswInstaller* installer)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return;
+	installMgr->terminate();
+}
+
+
+void gsw_installer_reset_config (GswInstaller *installer, const gchar *baseDir)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return;
+
+	gchar *conf_path;
+	conf_path = g_build_filename(baseDir, "InstallMgr.conf", NULL);
+	if (g_file_test(conf_path, G_FILE_TEST_EXISTS)) {
+		g_remove(conf_path);
+	}
+	SWConfig config(conf_path);
+	config["General"]["PassiveFTP"] = "true";
+	config.Save();
+	gsw_installer_reload_config(installer);
+}
+
+void gsw_installer_reload_config(GswInstaller *installer)
+{
+	HandleInstMgr *hinstmgr = (HandleInstMgr *) installer;
+	if (!hinstmgr)
+		return;
+	InstallMgr *installMgr = hinstmgr->installMgr;
+	if (!installMgr)
+		return;
+	installMgr->readInstallConf();
 }

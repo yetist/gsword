@@ -41,6 +41,9 @@ int           gsw_installer_refresh_remote_source          (GswInstaller* instal
 GList*        gsw_installer_get_remote_modinfo_list        (GswInstaller* installer, GswManager* manager, const char *sourceName);
 int           gsw_installer_remote_install_module          (GswInstaller* installer, GswManager* manager, const char *sourceName, const char *modName);
 GswModule*    gsw_installer_get_remote_module_by_name      (GswInstaller* installer, const char *sourceName, const char *modName);
+void          gsw_installer_terminate                      (GswInstaller* installer);
+void          gsw_installer_reset_config                   (GswInstaller *installer, const gchar *baseDir);
+void          gsw_installer_reload_config                  (GswInstaller *installer);
 
 G_END_DECLS
 
