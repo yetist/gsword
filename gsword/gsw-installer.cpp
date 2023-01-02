@@ -225,9 +225,7 @@ GList* gsw_installer_get_remote_modinfo_list (GswInstaller* installer, GswManage
 {
 	g_return_val_if_fail(GSW_IS_INSTALLER(installer), NULL);
 	sword::SWMgr *mgr;
-	mgr = (sword::SWMgr*)manager;
-	if (!mgr)
-		return NULL;
+	mgr = (sword::SWMgr*)gsw_manager_get_internal (manager);
 
 	GList *list = NULL;
 

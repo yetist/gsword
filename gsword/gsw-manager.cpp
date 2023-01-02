@@ -29,9 +29,11 @@
 #include <osiswordjs.h>
 #include <thmlwordjs.h>
 #include <gbfwordjs.h>
+#include "webmgr.hpp"
 
 #include "gsw-manager.h"
 #include "gsw-modinfo.h"
+#include "gsw-private.h"
 
 typedef struct _GswManager   GswManager;
 
@@ -39,10 +41,7 @@ struct _GswManager
 {
   GObject       object;
   gchar*        path;
-  sword::SWMgr* mgr;
-  sword::OSISWordJS *osisWordJS;
-  sword::ThMLWordJS *thmlWordJS;
-  sword::GBFWordJS *gbfWordJS;
+  WebMgr* mgr;
 };
 
 enum {
@@ -90,18 +89,18 @@ static void gsw_manager_dispose (GObject *object)
 		g_free(manager->path);
 		manager->path = NULL;
 	}
-	if (manager->osisWordJS != NULL) {
-		delete manager->osisWordJS;
-		manager->osisWordJS = NULL;
-	}
-	if (manager->thmlWordJS != NULL) {
-		delete manager->thmlWordJS;
-		manager->thmlWordJS = NULL;
-	}
-	if (manager->gbfWordJS != NULL) {
-		delete manager->gbfWordJS;
-		manager->gbfWordJS = NULL;
-	}
+//	if (manager->osisWordJS != NULL) {
+//		delete manager->osisWordJS;
+//		manager->osisWordJS = NULL;
+//	}
+//	if (manager->thmlWordJS != NULL) {
+//		delete manager->thmlWordJS;
+//		manager->thmlWordJS = NULL;
+//	}
+//	if (manager->gbfWordJS != NULL) {
+//		delete manager->gbfWordJS;
+//		manager->gbfWordJS = NULL;
+//	}
 	G_OBJECT_CLASS (gsw_manager_parent_class)->dispose (object);
 }
 
@@ -125,15 +124,15 @@ static void gsw_manager_init (GswManager *manager)
 	if (manager->path != NULL) {
 		g_free(manager->path);
 	}
-	manager->osisWordJS = NULL;
-	manager->thmlWordJS = NULL;
-	manager->gbfWordJS = NULL;
+//	manager->osisWordJS = NULL;
+//	manager->thmlWordJS = NULL;
+//	manager->gbfWordJS = NULL;
 	manager->path = g_build_filename(g_get_home_dir(), ".sword", NULL);
 }
 
-static gchar* gsw_manager_init_config (GswManager *manager)
+static void gsw_manager_init_config (GswManager *manager)
 {
-	g_return_val_if_fail(GSW_IS_MANAGER(manager), NULL);
+	g_return_if_fail(GSW_IS_MANAGER(manager));
 	gchar* modsd = g_build_filename(manager->path, "mods.d", NULL);
 	gchar* confpath = g_build_filename(modsd, "globals.conf", NULL);
 
@@ -144,7 +143,8 @@ static gchar* gsw_manager_init_config (GswManager *manager)
 		config["Globals"]["HiAndroid"] = "weeee";
 		config.Save();
 	}
-	return confpath;
+	g_free(modsd);
+	g_free(confpath);
 }
 
 static void gsw_manager_initialize (GswManager *manager)
@@ -152,24 +152,24 @@ static void gsw_manager_initialize (GswManager *manager)
 	g_return_if_fail(GSW_IS_MANAGER(manager));
 	//gsw_manager_init_config(manager);
 
-	sword::SWModule *defaultGreekLex = NULL;
-	sword::SWModule *defaultHebLex = NULL;
-	sword::SWModule *defaultGreekParse = NULL;
-	sword::SWModule *defaultHebParse = NULL;
+//	sword::SWModule *defaultGreekLex = NULL;
+//	sword::SWModule *defaultHebLex = NULL;
+//	sword::SWModule *defaultGreekParse = NULL;
+//	sword::SWModule *defaultHebParse = NULL;
 
-	manager->osisWordJS = new sword::OSISWordJS();
-	manager->thmlWordJS = new sword::ThMLWordJS();
-	manager->gbfWordJS = new  sword::GBFWordJS();
-	manager->mgr->Load();
-	manager->osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-	manager->thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-	manager->gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
-
-	manager->osisWordJS->setMgr(manager->mgr);
-	manager->thmlWordJS->setMgr(manager->mgr);
-	manager->gbfWordJS->setMgr(manager->mgr);
-
-	manager->mgr->setGlobalOption("Textual Variants", "Primary Reading");
+//	manager->osisWordJS = new sword::OSISWordJS();
+//	manager->thmlWordJS = new sword::ThMLWordJS();
+//	manager->gbfWordJS = new  sword::GBFWordJS();
+//	manager->mgr->Load();
+//	manager->osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+//	manager->thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+//	manager->gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
+//
+//	manager->osisWordJS->setMgr(manager->mgr);
+//	manager->thmlWordJS->setMgr(manager->mgr);
+//	manager->gbfWordJS->setMgr(manager->mgr);
+//
+//	manager->mgr->setGlobalOption("Textual Variants", "Primary Reading");
 }
 
 GswManager* gsw_manager_new (void)
@@ -177,8 +177,8 @@ GswManager* gsw_manager_new (void)
 	GswManager *manager;
 	sword::SWConfig *sysConf = NULL;
     manager = (GswManager*) g_object_new (GSW_TYPE_MANAGER, NULL);
-	manager->mgr = new sword::SWMgr(0, (sword::SWConfig*) sysConf, FALSE, new sword::MarkupFilterMgr(sword::FMT_WEBIF));
-	gsw_manager_initialize(manager);
+	manager->mgr = new WebMgr(sysConf);
+	//gsw_manager_initialize(manager);
 	return manager;
 }
 
@@ -188,8 +188,8 @@ GswManager* gsw_manager_new_with_path (const gchar *path)
 	GswManager *manager;
 	sword::SWBuf confPath = path;
     manager = (GswManager*) g_object_new (GSW_TYPE_MANAGER, "path", path, NULL);
-	const char* cfg = gsw_manager_init_config(manager);
-	manager->mgr = new sword::SWMgr(confPath.c_str(), (bool)FALSE, new sword::MarkupFilterMgr(sword::FMT_WEBIF));
+	gsw_manager_init_config(manager);
+	manager->mgr = new WebMgr(confPath.c_str());
 	//gsw_manager_initialize(manager);
 	g_print("prefix:%s, config:%s\n", manager->mgr->prefixPath, manager->mgr->configPath);
 	return manager;
@@ -415,9 +415,10 @@ void gsw_manager_set_cipherkey (GswManager *manager, const gchar *modName, const
 
 void gsw_manager_set_javascript (GswManager *manager, gboolean value)
 {
-	manager->osisWordJS->setOptionValue((value)?"On":"Off");
-	manager->thmlWordJS->setOptionValue((value)?"On":"Off");
-	manager->gbfWordJS->setOptionValue((value)?"On":"Off");
+	manager->mgr->setJavascript(value);
+	//osisWordJS->setOptionValue((value)?"On":"Off");
+	//manager->thmlWordJS->setOptionValue((value)?"On":"Off");
+	//manager->gbfWordJS->setOptionValue((value)?"On":"Off");
 }
 
 GList* gsw_manager_get_available_locales (GswManager *manager)
@@ -441,4 +442,9 @@ void gsw_manager_set_default_locale (GswManager *manager, const gchar *name)
 const gchar*  gsw_manager_translate (GswManager *manager, const gchar *text, const gchar *localeName)
 {
 	return sword::LocaleMgr::getSystemLocaleMgr()->translate(text, localeName);
+}
+
+gpointer      gsw_manager_get_internal (GswManager *manager)
+{
+	return manager->mgr;
 }
