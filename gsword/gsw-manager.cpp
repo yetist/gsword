@@ -143,7 +143,7 @@ static void gsw_manager_init_config (GswManager *manager)
 		g_mkdir_with_parents (modsd, 0755);
 		sword::SWConfig config(confpath);
 		config["Globals"]["HiAndroid"] = "weeee";
-		config.Save();
+		config.save();
 	}
 	g_free(modsd);
 	g_free(confpath);
@@ -161,7 +161,7 @@ static void gsw_manager_initialize (GswManager *manager)
 	manager->osisWordJS = new sword::OSISWordJS();
 	manager->thmlWordJS = new sword::ThMLWordJS();
 	manager->gbfWordJS = new  sword::GBFWordJS();
-	manager->mgr->Load();
+	manager->mgr->load();
 	manager->osisWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
 	manager->thmlWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
 	manager->gbfWordJS->setDefaultModules(defaultGreekLex, defaultHebLex, defaultGreekParse, defaultHebParse);
