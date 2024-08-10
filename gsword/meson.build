@@ -38,44 +38,46 @@ install_headers(
   subdir: 'gsword',
 )
 
+pkg = import('pkgconfig')
+pkg.generate(
+  name: 'gsword',
+  version: meson.project_version(),
+  description: 'sword gobject binding',
+  filebase: 'gsword',
+  requires: ['gobject-2.0', 'sword'],
+  libraries: '-lgsword',
+  subdirs: 'gsword',
+)
+
 libgsword = shared_library('gsword',
   source_c,
   gsw_marshaller_c,
   gsw_marshaller_h,
   dependencies : [sword_dep, gobject_dep],
+  include_directories: top_srcdir,
   install:true,
 )
 
-pkg.generate(
-  name: 'gsword',
-  version: meson.project_version(),
-  description: 'gobject sword library',
-  requires_private: 'gobject-2.0',
-  filebase: 'gsword',
-  libraries: '-lgsword',
-  subdirs: 'gsword',
-)
-
-#if get_option('introspection')
-#  liblunar_date_gir = gnome.generate_gir(liblunar_date,
-#    sources: [source_h, source_c, source_enum.get(1)],
-#    nsversion : api_version,
-#    namespace : 'LunarDate',
-#    symbol_prefix : 'lunar',
-#    identifier_prefix : 'Lunar',
-#    link_with: liblunar_date,
-#    includes : ['GObject-2.0'],
-#    install : true,
-#    install_dir_gir: girdir,
-#    install_dir_typelib: typelibdir,
-#    extra_args: [ '--c-include=lunar-date/lunar-date.h' ],
-#    )
-#  if get_option('vapi')
-#    lunar_date_vapi = gnome.generate_vapi('lunar-date-' + api_version,
-#      sources: liblunar_date_gir.get(0),
-#      packages: 'gio-2.0',
-#      install: true,
-#      install_dir: vapidir,
-#      )
-#  endif
-#endif
+if get_option('introspection')
+  gsword_gir = gnome.generate_gir(libgsword,
+    sources: [source_h, source_c, gsw_marshaller_h],
+    nsversion : api_version,
+    namespace : 'GSword',
+    symbol_prefix : 'gsw',
+    identifier_prefix : 'Gsw',
+    link_with: libgsword,
+    includes : ['GObject-2.0'],
+    install : true,
+    install_dir_gir: girdir,
+    install_dir_typelib: typelibdir,
+    extra_args: ['--c-include=gsword/gsword.h' ],
+    )
+  if get_option('vapi')
+    gsword_vapi = gnome.generate_vapi('gsword',
+      sources: gsword_gir.get(0),
+      packages: 'gio-2.0',
+      install: true,
+      install_dir: vapidir,
+      )
+  endif
+endif

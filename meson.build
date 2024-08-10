@@ -18,6 +18,7 @@ conf.set_quoted('PACKAGE_NAME', meson.project_name())
 
 sword_dep = dependency('sword')
 gobject_dep = dependency('gobject-2.0')
+api_version = '1'
 
 # Setup various paths that subdirectory meson.build files need
 package_subdir = get_option('package_subdir')
@@ -33,16 +34,11 @@ endif
 top_srcdir = include_directories('.')
 top_libdir = include_directories('./gsword')
 
+# Compiler & Project arguments
+add_project_arguments([
+  '-DHAVE_CONFIG_H',
+  '-I' + meson.build_root(),
+  ], language: 'c')
+
 subdir('gsword')
 subdir('examples')
-
-pkg = import('pkgconfig')
-pkg.generate(
-  name: 'gsword',
-  version: meson.project_version(),
-  description: 'sword Gobject binding',
-  filebase: 'gsword',
-  requires: ['gobject-2.0', 'sword'],
-  libraries: '-lgsword',
-  subdirs: 'gsword',
-)
