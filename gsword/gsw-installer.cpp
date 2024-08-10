@@ -138,14 +138,14 @@ static void gsw_installer_init_config(GswInstaller *installer)
 
 		config["General"]["PassiveFTP"] = "true";
 		config["Sources"]["FTPSource"] = is.getConfEnt();
-		config.Save();
+		config.save();
 
 		sword::InstallSource is_local("DIR");
 		is_local.caption = "cdrom";
 		is_local.source = "[local]";
 		is_local.directory = "/mnt/cdrom";
 		config["Sources"]["DIRSource"] = is_local.getConfEnt();
-		config.Save();
+		config.save();
 	}
 	g_free(conf_path);
 }
@@ -329,7 +329,7 @@ void gsw_installer_reset_config (GswInstaller *installer, const gchar *baseDir)
 	}
 	sword::SWConfig config(conf_path);
 	config["General"]["PassiveFTP"] = "true";
-	config.Save();
+	config.save();
 	gsw_installer_reload_config(installer);
 }
 
