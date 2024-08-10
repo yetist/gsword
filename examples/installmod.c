@@ -53,8 +53,8 @@ int main(int argc, char **argv)
 
 	// status reporter
 	reporter = gsw_status_reporter_new ();
-	g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), "hi");
-	g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), "hi");
+	g_signal_connect(G_OBJECT(reporter), "updating", G_CALLBACK(updating), argv[2]);
+	g_signal_connect(G_OBJECT(reporter), "pre-update", G_CALLBACK(pre_update), argv[2]);
 
 	manager = gsw_manager_new_with_path(argv[3]);
 	gchar* path = g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);

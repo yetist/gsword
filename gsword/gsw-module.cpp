@@ -359,7 +359,7 @@ const gchar* gsw_module_get_mod_type_str (GswModule *module)
 	return priv->module->getType();
 }
 
-GSWModType gsw_module_get_mod_type (GswModule *module)
+GswModType gsw_module_get_mod_type (GswModule *module)
 {
 	g_return_val_if_fail(GSW_IS_MODULE(module), GSW_MODTYPE_UNKNOWN);
 	GswModulePrivate *priv = (GswModulePrivate *) gsw_module_get_instance_private(module);

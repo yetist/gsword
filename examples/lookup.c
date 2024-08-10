@@ -28,16 +28,19 @@ int main(int argc, char **argv)
 		g_object_unref (manager);
 		exit(-1);
 	}
-	gsw_manager_set_default_locale(manager, "zh_CN");
+	//gsw_manager_set_default_locale(manager, "zh_CN");
 
 	gsw_module_set_key_text (module, argv[2]);
 
 	// we render before we print keyText so our keyText snaps to the closest entry 
-	//const char *renderText = org_crosswire_sword_SWModule_renderText(module);
+	const char *renderText = gsw_module_render_text (module);
 	//const char *renderText = org_crosswire_sword_SWModule_getRenderHeader(module);
-	const gchar* renderText = gsw_module_get_raw_entry (module);
+	//const gchar* renderText = gsw_module_get_raw_entry (module);
 	printf("==Render=Entry============\n");
 	printf("%s\n", gsw_module_get_key_text (module));
+	printf("%s\n", gsw_module_get_render_header (module));
+	printf("%s\n", gsw_module_get_raw_entry (module));
+	printf("%s\n", gsw_module_strip_text (module));
 	printf("%s\n", renderText);
 	printf("==========================\n");
 
