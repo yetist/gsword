@@ -557,8 +557,12 @@ gsw_install_manager_download_to_file(GswTransport *transport, const gchar *url,
                          cancellable, &local_error);
     g_object_unref(file);
     if (out == NULL) {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
-                    "Cannot create %s: %s", dest, local_error->message);
+        if (g_error_matches(local_error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CANCELLED,
+                        "Transfer cancelled");
+        else
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot create %s: %s", dest, local_error->message);
         g_error_free(local_error);
         return FALSE;
     }
@@ -880,15 +884,31 @@ gsw_install_manager_refresh_remote_source(GswInstallManager *self,
                                   gsw_install_source_get_uid(source), NULL);
 
     if (g_file_test(final_root, G_FILE_TEST_EXISTS)) {
-        if (!gsw_dir_remove_recursive(final_root, error))
+        gchar *backup = g_strdup_printf("%s.old-%08x", final_root,
+                                        (guint)g_random_int());
+        if (g_rename(final_root, backup) != 0) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot move old source aside: %s", g_strerror(errno));
+            g_free(backup);
             goto fail;
-    }
-
-    if (g_rename(staging, final_root) != 0) {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
-                    "Cannot move refreshed source into place: %s",
-                    g_strerror(errno));
-        goto fail;
+        }
+        if (g_rename(staging, final_root) != 0) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot move refreshed source into place: %s",
+                        g_strerror(errno));
+            g_rename(backup, final_root);
+            g_free(backup);
+            goto fail;
+        }
+        gsw_dir_remove_recursive(backup, NULL);
+        g_free(backup);
+    } else {
+        if (g_rename(staging, final_root) != 0) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot move refreshed source into place: %s",
+                        g_strerror(errno));
+            goto fail;
+        }
     }
     g_free(staging);
     staging = NULL;

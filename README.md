@@ -20,6 +20,20 @@ M0–M4 已实现并通过单元/集成测试：
 - RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
 - RawLD/RawLD4/zLD、RawGenBook、LZSS/ZIP/BZIP2/XZ、基础文本剥离
 
+## 快速开始
+
+```sh
+meson setup build
+meson compile -C build
+meson test -C build
+
+# 列出本地模块
+./build/examples/gsword-list-modules ~/.sword
+
+# 读取经文
+./build/examples/gsword-lookup ~/.sword KJV "John 3:16"
+```
+
 M5（GI、异步 API、加密模块、完整渲染过滤器）尚未完成。
 
 ## 文档

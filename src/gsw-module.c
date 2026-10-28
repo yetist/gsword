@@ -196,7 +196,7 @@ gsw_module_set_key(GswModule *self, GswKey *key, GError **error)
     priv = gsw_module_priv(self);
     if (!gsw_key_set_text(priv->key, gsw_key_get_text(key))) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
-                    "Key is outside the module's versification");
+                    "Key is outside the module's bounds");
         return FALSE;
     }
     g_clear_pointer(&priv->raw, g_bytes_unref);
@@ -214,7 +214,7 @@ gsw_module_set_key_text(GswModule *self, const gchar *text, GError **error)
     priv = gsw_module_priv(self);
     if (!gsw_key_set_text(priv->key, text)) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
-                    "Key '%s' is outside the module's versification",
+                    "Key '%s' is outside the module's bounds",
                     text != NULL ? text : "");
         return FALSE;
     }
