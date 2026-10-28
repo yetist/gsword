@@ -87,6 +87,62 @@ gsw_str_parse_u64(const gchar *s, guint64 fallback)
     return value;
 }
 
+
+gchar *
+gsw_utf8_strup(const gchar *s)
+{
+    return s != NULL ? g_utf8_strup(s, -1) : g_strdup("");
+}
+
+/* SWORD SWLD::strongsPad: pad a numeric Strong's key to five digits. */
+gchar *
+gsw_strongs_pad(const gchar *key)
+{
+    const gchar *p;
+    const gchar *prefix_end;
+    const gchar *digits_end;
+    const gchar *suffix;
+    GString *result;
+    gsize digits;
+    gint pad;
+    gint i;
+
+    if (key == NULL || *key == '\0')
+        return g_strdup("");
+
+    p = key;
+    if (*p == 'G' || *p == 'H' || *p == 'g' || *p == 'h') {
+        prefix_end = p + 1;
+    } else {
+        prefix_end = p;
+    }
+
+    digits_end = prefix_end;
+    while (g_ascii_isdigit(*digits_end))
+        digits_end++;
+
+    suffix = digits_end;
+    if (*suffix != '\0' && g_ascii_isalpha(*suffix))
+        suffix++;
+    if (*suffix != '\0')
+        return g_strdup(key);
+
+    digits = (gsize)(digits_end - prefix_end);
+    if (digits == 0 || digits >= 5)
+        return g_strdup(key);
+
+    result = g_string_new(NULL);
+    if (prefix_end != p)
+        g_string_append_c(result, *p);
+    pad = 5 - (gint)digits;
+    for (i = 0; i < pad; i++)
+        g_string_append_c(result, '0');
+    g_string_append_len(result, prefix_end, (gssize)digits);
+    if (*digits_end != '\0')
+        g_string_append_c(result, *digits_end);
+    return g_string_free(result, FALSE);
+}
+
 gboolean
 gsw_path_is_safe_relative(const gchar *path)
 {
