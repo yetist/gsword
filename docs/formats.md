@@ -370,6 +370,7 @@ NT 同理前缀为 `nt`。
 - 本项目已实现 Sapphire 解密：读取时先解密 `.zz` 数据，再按 `CompressType` 解压。
 - 加密发生在压缩之后（写入时先压缩再加密；读取时先解密再解压）。
 - 若 `CipherKey` 缺失，读取返回 `GSW_ERROR_CIPHERED`；安装/列出元数据不受影响。
+- RawVerse/RawLD/RawGenBook 的加密发生在条目数据本身：读取时对条目字节执行 Sapphire 解密；zLD 对 `.zdt` 压缩块解密后再解压。
 
 ---
 
