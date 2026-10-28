@@ -59,6 +59,11 @@ gboolean   gsw_transport_get(GswTransport *self, const gchar *url,
                              GError **error);
 GBytes    *gsw_transport_get_bytes(GswTransport *self, const gchar *url,
                                    GCancellable *cancellable, GError **error);
+/**
+ * gsw_transport_list_dir:
+ *
+ * Returns: (transfer container) (element-type GswDirEntry): result
+ */
 GPtrArray *gsw_transport_list_dir(GswTransport *self, const gchar *url,
                                   GCancellable *cancellable, GError **error);
 

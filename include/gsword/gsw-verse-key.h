@@ -18,7 +18,17 @@ typedef GswKey GswVerseKey;
 
 GType        gsw_verse_key_get_type(void);
 
+/**
+ * gsw_verse_key_new:
+ *
+ * Returns: (transfer full): result
+ */
 GswVerseKey *gsw_verse_key_new(const gchar *text, const gchar *versification);
+/**
+ * gsw_verse_key_new_with_bounds:
+ *
+ * Returns: (transfer full): result
+ */
 GswVerseKey *gsw_verse_key_new_with_bounds(const gchar *lower,
                                            const gchar *upper,
                                            const gchar *versification);

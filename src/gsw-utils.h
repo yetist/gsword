@@ -46,8 +46,6 @@ const gchar   *gsw_module_type_to_string(GswModuleType type);
 GswModuleType  gsw_module_type_default_for_driver(GswDriver driver);
 
 GswSourceType  gsw_source_type_from_string(const gchar *name);
-const gchar   *gsw_source_type_to_string(GswSourceType type);
-const gchar   *gsw_source_type_to_scheme(GswSourceType type);
 
 G_END_DECLS
 

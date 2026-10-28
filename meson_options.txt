@@ -3,6 +3,6 @@ option('bzip2', type: 'feature', value: 'auto',
 option('lzma', type: 'feature', value: 'auto',
   description: 'Enable XZ compressed module support')
 option('introspection', type: 'boolean', value: false,
-  description: 'Generate GObject Introspection data (not implemented yet)')
+  description: 'Generate GObject Introspection data (GIR/typelib)')
 option('tests', type: 'boolean', value: true,
   description: 'Build tests')

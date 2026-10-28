@@ -1,4 +1,5 @@
 tests = []
+python3 = find_program('python3')
 
 if get_option('tests')
   test_config = executable('test-config', 'test-config.c',
@@ -42,9 +43,23 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('status', test_status)
 
+  test_async = executable('test-async', 'test-async.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('async', test_async)
+
+  if get_option('introspection')
+    test('introspection', python3,
+      args: [files('test-introspection.py')],
+      env: [
+        'GI_TYPELIB_PATH=' + meson.project_build_root(),
+        'LD_LIBRARY_PATH=' + meson.project_build_root(),
+      ],
+      depends: gir,
+      timeout: 60)
+  endif
+
   test_install_http = executable('test-install-http', 'test-install-http.c',
     dependencies: [gsword_dep, glib_dep])
-  python3 = find_program('python3')
   test('install-http', python3,
     args: [files('run-http-install-test.py'), test_install_http],
     timeout: 120)
