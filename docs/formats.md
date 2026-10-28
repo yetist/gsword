@@ -578,6 +578,17 @@ key + "\r\n" + block(u32) + entry(u32)
 
 ---
 
+### 9.6 RawFiles
+
+- 索引和 `ot`/`nt` 文件布局与 `RawVerse` 相同（6 字节索引）。
+- `ot`/`nt` 中每个条目保存的是**文件名**，实际内容位于 `<data-dir>/<filename>`。
+- 读取时先按索引取文件名，再读取对应文件。
+
+### 9.7 HREFCom
+
+- 索引和 `ot`/`nt` 文件布局与 `RawVerse` 相同。
+- 条目内容是相对 URL/路径；模块配置的 `Prefix` 会拼在条目前面返回。
+
 ## 10. LZSS 位流
 
 SWORD 的 LZSS 参数：
