@@ -1,0 +1,76 @@
+# libsword 实现里程碑
+
+> 与 `docs/design.md` 第 13 节对应。每完成一个里程碑形成一次可构建、可测试的提交。
+
+## M0 设计与工程骨架
+
+- [x] 阅读上游 SWORD 1.9 关键源码
+- [x] 完成 `docs/design.md`、`docs/formats.md`、`docs/upstream-analysis.md`
+- [x] 初始化 Git 仓库与 `.gitignore`
+- [x] Meson 工程可配置、可编译
+- [x] 公共头文件骨架 + `pkg-config` 文件
+- [x] 示例程序可链接
+
+验收：`meson setup build && meson compile -C build` 成功，安装产物包含 `libgsword.so`、头文件、`gsword.pc`。
+
+## M1 配置与元数据
+
+- [x] `GswConfig`：读取、保存、重复键、augment
+- [x] `GswModuleInfo`：从 conf section 构造不可变元数据
+- [x] `GswManager`：本地库发现、`mods.d/*.conf` 合并、模块列表
+- [x] `GswManager`：按路径/配置文件构造，空库可用
+- [x] 版本比较、路径安全、通用工具
+- [x] 单元测试：配置、版本、路径、模块元数据
+
+验收：能列出 `~/.sword` 中的模块名称、类型、驱动、版本，不打开模块数据文件；空目录也可构造 manager。
+
+## M2 网络与安装
+
+- [x] `GswStatusReporter`：`pre-status` / `progress` 信号、主上下文派发
+- [x] `GswTransport`：libcurl HTTP/HTTPS/FTP、超时、取消、TLS 校验
+- [x] 目录列表：HTTP autoindex、FTP MLSD/LIST 回退
+- [x] `mods.d.tar.gz` 安全解包
+- [x] `GswInstallSource`：`InstallMgr.conf` 格式解析/序列化
+- [x] `GswInstallManager`：加载/保存配置、刷新源、列远端模块
+- [x] `GswInstallManager`：安装、卸载、版本状态
+- [x] 进度与取消
+- [x] 集成测试：本地 HTTP 仓库，安装后校验文件与元数据
+
+验收：从本地 HTTP fixture 仓库刷新源、列出模块、安装到临时 prefix、卸载；取消后无残留（取消路径已有实现，后续补充专门测试）。
+
+## M3 经文键与文本模块
+
+- [ ] `GswKey` boxed 基类
+- [ ] `GswVerseKey`：解析、规范化、边界、偏移
+- [ ] `GswVersificationMgr`：KJV 表 + 生成其他系统
+- [ ] `RawText` / `RawText4` / `RawCom` / `RawCom4`
+- [ ] LZSS / ZIP 解码
+- [ ] `zText` / `zText4` / `zCom` / `zCom4`
+- [ ] 编码转换（UTF-8/Latin-1/UTF-16）
+- [ ] 与上游/golden 输出对比
+
+验收：读取 KJV、ChiUns2 指定经文，键规范化与条目文本正确。
+
+## M4 字典、通用书与文本处理
+
+- [ ] `RawLD` / `RawLD4` / `zLD`
+- [ ] `EntriesBlock`
+- [ ] BZIP2 / XZ（可选依赖）
+- [ ] `GswStrKey`
+- [ ] `RawGenBook` / TreeKeyIdx / `GswTreeKey`
+- [ ] 基础 OSIS/ThML/GBF 纯文本剥离
+- [ ] 字典与通用书测试
+
+验收：读取 Strong's 字典、GerAugustinus 通用书、中文模块。
+
+## M5 打磨与扩展
+
+- [ ] GIR/typelib
+- [ ] 异步 API（GTask）
+- [ ] 文档与示例完善
+- [ ] Sapphire 解密（可选）
+- [ ] 更多 versification / 本地化书名
+- [ ] 渲染过滤器（Strong's、脚注等）
+- [ ] 性能与缓存优化
+
+验收：GI 绑定可用；示例覆盖读取、安装、进度、取消。
