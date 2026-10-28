@@ -841,6 +841,8 @@ gsw_verse_key_get_book_name(GswVerseKey *self)
     gint global;
 
     g_return_val_if_fail(self != NULL, NULL);
+    if (self->testament == 0)
+        return "[ Module Heading ]";
     if (self->book == 0)
         return self->testament == 2 ? "[ Testament 2 Heading ]"
                                     : "[ Testament 1 Heading ]";
