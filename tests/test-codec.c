@@ -2,6 +2,12 @@
 #include <gsword/gsw-error.h>
 #include <string.h>
 #include <zlib.h>
+#ifdef HAVE_BZIP2
+#include <bzlib.h>
+#endif
+#ifdef HAVE_LZMA
+#include <lzma.h>
+#endif
 
 static void
 check_lzss(const gchar *hex, const gchar *expected)
@@ -64,6 +70,66 @@ test_zip(void)
     g_free(compressed);
 }
 
+
+static void
+test_bzip2(void)
+{
+#ifdef HAVE_BZIP2
+    const gchar *input = "bzip2 round trip: hello hello hello";
+    unsigned int comp_len = (unsigned int)(strlen(input) + 600);
+    gchar *compressed = g_malloc(comp_len);
+    GError *error = NULL;
+    GBytes *out = NULL;
+    gsize len = 0;
+    const gchar *data;
+
+    g_assert_cmpint(BZ2_bzBuffToBuffCompress(compressed, &comp_len,
+                                             (char *)input,
+                                             (unsigned int)strlen(input),
+                                             9, 0, 30), ==, BZ_OK);
+    g_assert_true(gsw_decompress(GSW_COMPRESSION_BZIP2, compressed, comp_len,
+                                 0, &out, &error));
+    g_assert_no_error(error);
+    data = g_bytes_get_data(out, &len);
+    g_assert_cmpuint(len, ==, strlen(input));
+    g_assert_cmpmem(data, len, input, strlen(input));
+    g_bytes_unref(out);
+    g_free(compressed);
+#else
+    g_test_skip("BZIP2 support not compiled in");
+#endif
+}
+
+static void
+test_xz(void)
+{
+#ifdef HAVE_LZMA
+    const gchar *input = "xz round trip: hello hello hello";
+    gsize bound = lzma_stream_buffer_bound(strlen(input));
+    guint8 *compressed = g_malloc(bound);
+    gsize comp_len = 0;
+    GError *error = NULL;
+    GBytes *out = NULL;
+    gsize len = 0;
+    const gchar *data;
+
+    g_assert_cmpint(lzma_easy_buffer_encode(6, LZMA_CHECK_CRC64, NULL,
+                                            (const uint8_t *)input,
+                                            strlen(input), compressed,
+                                            &comp_len, bound), ==, LZMA_OK);
+    g_assert_true(gsw_decompress(GSW_COMPRESSION_XZ, (const gchar *)compressed,
+                                 comp_len, strlen(input), &out, &error));
+    g_assert_no_error(error);
+    data = g_bytes_get_data(out, &len);
+    g_assert_cmpuint(len, ==, strlen(input));
+    g_assert_cmpmem(data, len, input, strlen(input));
+    g_bytes_unref(out);
+    g_free(compressed);
+#else
+    g_test_skip("XZ support not compiled in");
+#endif
+}
+
 static void
 test_invalid(void)
 {
@@ -83,6 +149,8 @@ main(int argc, char **argv)
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/codec/lzss", test_lzss);
     g_test_add_func("/codec/zip", test_zip);
+    g_test_add_func("/codec/bzip2", test_bzip2);
+    g_test_add_func("/codec/xz", test_xz);
     g_test_add_func("/codec/invalid", test_invalid);
     return g_test_run();
 }
