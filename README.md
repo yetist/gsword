@@ -11,7 +11,16 @@
 
 ## 当前状态
 
-设计阶段。实现尚未开始。
+M0–M4 已实现并通过单元/集成测试：
+
+- Meson 工程、GObject 公共 API、`pkg-config`
+- 本地模块发现、`mods.d` 配置解析、模块元数据
+- HTTP/HTTPS/FTP 传输、进度/取消、`mods.d.tar.gz` 安全解包、安装/卸载
+- `GswVerseKey` + 全部上游 versification 系统
+- RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
+- RawLD/RawLD4/zLD、RawGenBook、LZSS/ZIP/BZIP2/XZ、基础文本剥离
+
+M5（GI、异步 API、加密模块、完整渲染过滤器）尚未完成。
 
 ## 文档
 

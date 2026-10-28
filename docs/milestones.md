@@ -40,26 +40,27 @@
 
 ## M3 经文键与文本模块
 
-- [ ] `GswKey` boxed 基类
-- [ ] `GswVerseKey`：解析、规范化、边界、偏移
-- [ ] `GswVersificationMgr`：KJV 表 + 生成其他系统
-- [ ] `RawText` / `RawText4` / `RawCom` / `RawCom4`
-- [ ] LZSS / ZIP 解码
-- [ ] `zText` / `zText4` / `zCom` / `zCom4`
-- [ ] 编码转换（UTF-8/Latin-1/UTF-16）
-- [ ] 与上游/golden 输出对比
+- [x] `GswKey` boxed 基类
+- [x] `GswVerseKey`：解析、规范化、边界、偏移
+- [x] `GswVersificationMgr`：KJV + 上游 canon_* 生成的全部常用系统
+- [x] `RawText` / `RawText4` / `RawCom` / `RawCom4`
+- [x] LZSS / ZIP 解码（BZIP2/XZ 可选实现）
+- [x] `zText` / `zText4` / `zCom` / `zCom4`
+- [x] 编码转换（UTF-8/Latin-1/UTF-16；SCSU 报不支持）
+- [x] 与真实 KJV、ChiUns（NRSV）模块的人工对比
 
 验收：读取 KJV、ChiUns2 指定经文，键规范化与条目文本正确。
 
 ## M4 字典、通用书与文本处理
 
-- [ ] `RawLD` / `RawLD4` / `zLD`
-- [ ] `EntriesBlock`
-- [ ] BZIP2 / XZ（可选依赖）
-- [ ] `GswStrKey`
-- [ ] `RawGenBook` / TreeKeyIdx / `GswTreeKey`
-- [ ] 基础 OSIS/ThML/GBF 纯文本剥离
-- [ ] 字典与通用书测试
+- [x] `RawLD` / `RawLD4`
+- [x] `zLD`
+- [x] `EntriesBlock`
+- [x] BZIP2 / XZ（可选依赖）
+- [x] `GswStrKey`
+- [x] `RawGenBook` / TreeKeyIdx / `GswTreeKey`
+- [x] 基础 OSIS/ThML/GBF 纯文本剥离
+- [x] 字典、zLD、通用书合成测试；真实 RawLD4/RawGenBook 人工验证
 
 验收：读取 Strong's 字典、GerAugustinus 通用书、中文模块。
 

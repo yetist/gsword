@@ -10,6 +10,7 @@
 #include <glib-object.h>
 #include <gsword/gsw-config.h>
 #include <gsword/gsw-module-info.h>
+#include <gsword/gsw-module.h>
 #include <gsword/gsw-version.h>
 
 G_BEGIN_DECLS
@@ -39,6 +40,7 @@ GPtrArray     *gsw_manager_get_module_infos(GswManager *self);
 GswModuleInfo *gsw_manager_lookup_module_info(GswManager *self, const gchar *name);
 gboolean       gsw_manager_has_module(GswManager *self, const gchar *name);
 
+GswModule     *gsw_manager_get_module(GswManager *self, const gchar *name);
 GswConfig     *gsw_manager_get_config(GswManager *self);
 const gchar   *gsw_manager_get_config_file_for_module(GswManager *self,
                                                       const gchar *name);

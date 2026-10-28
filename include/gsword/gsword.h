@@ -11,7 +11,13 @@
 #include <gsword/gsw-error.h>
 #include <gsword/gsw-enums.h>
 #include <gsword/gsw-config.h>
+#include <gsword/gsw-key.h>
+#include <gsword/gsw-verse-key.h>
+#include <gsword/gsw-str-key.h>
+#include <gsword/gsw-tree-key.h>
+#include <gsword/gsw-versification.h>
 #include <gsword/gsw-module-info.h>
+#include <gsword/gsw-module.h>
 #include <gsword/gsw-manager.h>
 #include <gsword/gsw-status-reporter.h>
 #include <gsword/gsw-transport.h>

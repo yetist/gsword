@@ -25,6 +25,18 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep, zlib_dep])
   test('tar', test_tar)
 
+  test_verse_key = executable('test-verse-key', 'test-verse-key.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('verse-key', test_verse_key)
+
+  test_reader = executable('test-reader', 'test-reader.c',
+    dependencies: [gsword_dep, glib_dep, zlib_dep])
+  test('reader', test_reader)
+
+  test_codec = executable('test-codec', 'test-codec.c',
+    dependencies: [gsword_dep, glib_dep, zlib_dep])
+  test('codec', test_codec)
+
   test_install_http = executable('test-install-http', 'test-install-http.c',
     dependencies: [gsword_dep, glib_dep])
   python3 = find_program('python3')

@@ -5,6 +5,7 @@
 #include <gsword/gsw-manager.h>
 #include <gsword/gsw-error.h>
 #include "gsw-utils.h"
+#include "gsw-module-internal.h"
 
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -21,6 +22,7 @@ typedef struct {
     GswConfig *config;
     GHashTable *infos;        /* name -> GswModuleInfo* */
     GHashTable *config_files; /* name -> gchar* */
+    GHashTable *modules;      /* name -> GswModule* */
     GPtrArray *info_order;    /* GswModuleInfo* pointers */
     GPtrArray *augment_paths; /* gchar* */
     gboolean config_is_dir;
@@ -36,6 +38,7 @@ gsw_manager_clear(GswManager *self)
 
     g_hash_table_remove_all(priv->infos);
     g_hash_table_remove_all(priv->config_files);
+    g_hash_table_remove_all(priv->modules);
     g_ptr_array_set_size(priv->info_order, 0);
     g_clear_object(&priv->config);
     priv->config = gsw_config_new();
@@ -52,6 +55,7 @@ gsw_manager_finalize(GObject *object)
     g_clear_object(&priv->config);
     g_clear_pointer(&priv->infos, g_hash_table_unref);
     g_clear_pointer(&priv->config_files, g_hash_table_unref);
+    g_clear_pointer(&priv->modules, g_hash_table_unref);
     g_clear_pointer(&priv->info_order, g_ptr_array_unref);
     g_clear_pointer(&priv->augment_paths, g_ptr_array_unref);
 
@@ -73,6 +77,8 @@ gsw_manager_init(GswManager *self)
     priv->infos = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
                                         g_object_unref);
     priv->config_files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
+                                          g_object_unref);
     priv->info_order = g_ptr_array_new();
     priv->augment_paths = g_ptr_array_new_with_free_func(g_free);
 }
@@ -614,6 +620,33 @@ gboolean
 gsw_manager_has_module(GswManager *self, const gchar *name)
 {
     return gsw_manager_lookup_module_info(self, name) != NULL;
+}
+
+GswModule *
+gsw_manager_get_module(GswManager *self, const gchar *name)
+{
+    GswManagerPrivate *priv;
+    GswModule *module;
+    GswModuleInfo *info;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
+    g_return_val_if_fail(name != NULL, NULL);
+
+    priv = gsw_manager_get_instance_private(self);
+    module = g_hash_table_lookup(priv->modules, name);
+    if (module != NULL)
+        return module;
+
+    info = g_hash_table_lookup(priv->infos, name);
+    if (info == NULL)
+        return NULL;
+
+    module = gsw_module_new_from_info(info);
+    if (module == NULL)
+        return NULL;
+
+    g_hash_table_insert(priv->modules, g_strdup(name), module);
+    return module;
 }
 
 GswConfig *

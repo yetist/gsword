@@ -17,6 +17,8 @@ gchar   *gsw_str_remove_trailing_slashes(const gchar *s);
 gboolean gsw_str_ends_with_ci(const gchar *s, const gchar *suffix);
 gboolean gsw_str_is_true(const gchar *s);
 guint64  gsw_str_parse_u64(const gchar *s, guint64 fallback);
+gchar   *gsw_strongs_pad(const gchar *key);
+gchar   *gsw_utf8_strup(const gchar *s);
 
 gboolean gsw_path_is_safe_relative(const gchar *path);
 gchar   *gsw_path_join_under(const gchar *root, const gchar *relative,
