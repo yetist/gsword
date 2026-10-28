@@ -40,5 +40,7 @@ GswModuleBackend *gsw_zverse_backend_new(GswModuleInfo *info);
 GswModuleBackend *gsw_rawstr_backend_new(GswModuleInfo *info);
 GswModuleBackend *gsw_rawgenbook_backend_new(GswModuleInfo *info);
 GswModuleBackend *gsw_zstr_backend_new(GswModuleInfo *info);
+GswModuleBackend *gsw_rawfiles_backend_new(GswModuleInfo *info);
+GswModuleBackend *gsw_hrefcom_backend_new(GswModuleInfo *info);
 
 #endif /* __GSW_MODULE_BACKEND_H__ */

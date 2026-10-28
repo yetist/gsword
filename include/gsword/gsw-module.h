@@ -85,6 +85,14 @@ gboolean       gsw_module_has_entry(GswModule *self);
 gsize          gsw_module_get_entry_size(GswModule *self);
 gboolean       gsw_module_is_writable(GswModule *self);
 
+/**
+ * gsw_module_search:
+ *
+ * Returns: (transfer full) (array zero-terminated=1) (element-type utf8): matching key texts
+ */
+gchar        **gsw_module_search(GswModule *self, const gchar *text,
+                                 GswSearchType type, GError **error);
+
 G_END_DECLS
 
 #endif /* __GSW_MODULE_H__ */

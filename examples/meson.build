@@ -45,3 +45,7 @@ executable('gsword-render-options', 'render-options.c',
 executable('gsword-locale', 'locale.c',
   dependencies: gsword_dep,
   install: false)
+
+executable('gsword-search', 'search.c',
+  dependencies: gsword_dep,
+  install: false)

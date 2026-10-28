@@ -52,6 +52,7 @@ gsword_sources = files(
   'src/gsw-locale.c',
   'src/gsw-tree-key.c',
   'src/gsw-codec.c',
+  'src/gsw-encoding.c',
   'src/gsw-cipher.c',
   'src/gsw-module-backend.c',
   'src/gsw-backend-utils.c',
@@ -59,6 +60,8 @@ gsword_sources = files(
   'src/gsw-rawstr.c',
   'src/gsw-zstr.c',
   'src/gsw-rawgenbook.c',
+  'src/gsw-rawfiles.c',
+  'src/gsw-hrefcom.c',
   'src/gsw-zverse.c',
   'src/gsw-module.c',
 )

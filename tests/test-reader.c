@@ -24,6 +24,8 @@ append_le16(GByteArray *array, guint16 value)
     g_byte_array_append(array, bytes, 2);
 }
 
+static GByteArray *empty_index(void);
+
 static void
 write_bytes(const gchar *path, const guint8 *data, gsize len)
 {
@@ -276,6 +278,51 @@ make_ztext_encrypted_module(const gchar *prefix)
 }
 
 static void
+make_scsu_module(const gchar *prefix)
+{
+    gchar *dir = g_build_filename(prefix, "modules", "texts", "rawtext",
+                                  "tinyscsu", NULL);
+    gchar *path;
+    const guint8 entry[] = {
+        0x0f, 0x79, 0x5e, 0x72, 0x31, 0x4e, 0x16, 0x4e, 0xba
+    };
+    GByteArray *idx;
+
+    g_mkdir_with_parents(dir, 0755);
+    path = g_build_filename(dir, "ot", NULL);
+    write_bytes(path, entry, sizeof(entry));
+    g_free(path);
+    path = g_build_filename(dir, "nt", NULL);
+    write_bytes(path, (const guint8 *)"", 0);
+    g_free(path);
+
+    idx = empty_index();
+    g_byte_array_set_size(idx, 4 * 6);
+    append_le32(idx, 0);
+    append_le16(idx, (guint16)sizeof(entry));
+    path = g_build_filename(dir, "ot.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+
+    idx = empty_index();
+    path = g_build_filename(dir, "nt.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+    g_free(dir);
+
+    write_conf(prefix, "tiny-scsu.conf",
+        "[TinySCSU]\n"
+        "Description=SCSU test\n"
+        "DataPath=./modules/texts/rawtext/tinyscsu/\n"
+        "ModDrv=RawText\n"
+        "Encoding=SCSU\n"
+        "Version=1.0\n"
+        "Versification=KJV\n");
+}
+
+static void
 make_rawld_module(const gchar *prefix)
 {
     gchar *dir = g_build_filename(prefix, "modules", "lexdict", "rawld",
@@ -408,6 +455,107 @@ make_zld_module(const gchar *prefix)
         "Version=1.0\n");
 }
 
+static GByteArray *
+empty_index(void)
+{
+    GByteArray *array = g_byte_array_new();
+    guint i;
+    for (i = 0; i < 5; i++) {
+        append_le32(array, 0);
+        append_le16(array, 0);
+    }
+    return array;
+}
+
+static void
+make_rawfiles_module(const gchar *prefix)
+{
+    gchar *dir = g_build_filename(prefix, "modules", "comments", "rawfiles",
+                                  "tinyrf", NULL);
+    gchar *path;
+    const gchar *index_entry = "entry1.txt";
+    const gchar *content = "RawFiles content";
+    GByteArray *idx;
+
+    g_mkdir_with_parents(dir, 0755);
+    path = g_build_filename(dir, "ot", NULL);
+    write_text(path, index_entry);
+    g_free(path);
+    path = g_build_filename(dir, "nt", NULL);
+    write_text(path, "");
+    g_free(path);
+    path = g_build_filename(dir, "entry1.txt", NULL);
+    write_text(path, content);
+    g_free(path);
+
+    idx = empty_index();
+    g_byte_array_set_size(idx, 4 * 6);
+    append_le32(idx, 0);
+    append_le16(idx, (guint16)strlen(index_entry));
+    path = g_build_filename(dir, "ot.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+
+    idx = empty_index();
+    path = g_build_filename(dir, "nt.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+    g_free(dir);
+
+    write_conf(prefix, "tiny-rf.conf",
+        "[TinyRawFiles]\n"
+        "Description=RawFiles test\n"
+        "DataPath=./modules/comments/rawfiles/tinyrf/\n"
+        "ModDrv=RawFiles\n"
+        "Encoding=UTF-8\n"
+        "Version=1.0\n");
+}
+
+static void
+make_hrefcom_module(const gchar *prefix)
+{
+    gchar *dir = g_build_filename(prefix, "modules", "comments", "hrefcom",
+                                  "tinyhref", NULL);
+    gchar *path;
+    const gchar *entry = "entry.html";
+    GByteArray *idx;
+
+    g_mkdir_with_parents(dir, 0755);
+    path = g_build_filename(dir, "ot", NULL);
+    write_text(path, entry);
+    g_free(path);
+    path = g_build_filename(dir, "nt", NULL);
+    write_text(path, "");
+    g_free(path);
+
+    idx = empty_index();
+    g_byte_array_set_size(idx, 4 * 6);
+    append_le32(idx, 0);
+    append_le16(idx, (guint16)strlen(entry));
+    path = g_build_filename(dir, "ot.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+
+    idx = empty_index();
+    path = g_build_filename(dir, "nt.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+    g_byte_array_unref(idx);
+    g_free(dir);
+
+    write_conf(prefix, "tiny-href.conf",
+        "[TinyHref]\n"
+        "Description=HREFCom test\n"
+        "DataPath=./modules/comments/hrefcom/tinyhref/\n"
+        "ModDrv=HREFCom\n"
+        "Prefix=file:///base/\n"
+        "Encoding=UTF-8\n"
+        "Version=1.0\n");
+}
+
 static guint32
 append_tree_node(GByteArray *dat, gint parent, gint next, gint first,
                  const gchar *name, const gchar *user_data, guint16 user_size)
@@ -504,6 +652,9 @@ run_reader_test(void)
     make_rawld_module(prefix);
     make_zld_module(prefix);
     make_genbook_module(prefix);
+    make_rawfiles_module(prefix);
+    make_hrefcom_module(prefix);
+    make_scsu_module(prefix);
 
     manager = gsw_manager_new_for_path(prefix, &error);
     g_assert_no_error(error);
@@ -514,6 +665,9 @@ run_reader_test(void)
     g_assert_true(gsw_manager_has_module(manager, "TinyDict"));
     g_assert_true(gsw_manager_has_module(manager, "TinyZDict"));
     g_assert_true(gsw_manager_has_module(manager, "TinyGenBook"));
+    g_assert_true(gsw_manager_has_module(manager, "TinyRawFiles"));
+    g_assert_true(gsw_manager_has_module(manager, "TinyHref"));
+    g_assert_true(gsw_manager_has_module(manager, "TinySCSU"));
 
     module = gsw_manager_get_module(manager, "TinyRaw");
     g_assert_nonnull(module);
@@ -600,6 +754,32 @@ run_reader_test(void)
     text = gsw_module_get_text(module, &error);
     g_assert_no_error(error);
     g_assert_cmpstr(text, ==, "Content 2");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyRawFiles");
+    g_assert_nonnull(module);
+    g_assert_true(gsw_module_is_supported(module));
+    g_assert_true(gsw_module_set_key_text(module, "Gen 1:1", &error));
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "RawFiles content");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyHref");
+    g_assert_nonnull(module);
+    g_assert_true(gsw_module_is_supported(module));
+    g_assert_true(gsw_module_set_key_text(module, "Gen 1:1", &error));
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "file:///base/entry.html");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinySCSU");
+    g_assert_nonnull(module);
+    g_assert_true(gsw_module_set_key_text(module, "Gen 1:1", &error));
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "神爱世人");
     g_free(text);
 
     g_object_unref(manager);
