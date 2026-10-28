@@ -6,3 +6,5 @@ option('introspection', type: 'boolean', value: false,
   description: 'Generate GObject Introspection data (GIR/typelib)')
 option('tests', type: 'boolean', value: true,
   description: 'Build tests')
+option('gtk_doc', type: 'boolean', value: false,
+  description: 'Build gtk-doc API reference')

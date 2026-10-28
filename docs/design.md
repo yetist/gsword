@@ -1348,7 +1348,7 @@ zlib_dep = dependency('zlib')
 - `-Dlzma=auto|enabled|disabled`
 - `-Dintrospection=true|false`
 - `-Dtests=true|false`
-- `-Ddocs=true|false`
+- `-Dgtk_doc=true|false`（gtk-doc API reference）
 
 ### 11.2 安装产物
 
@@ -1357,6 +1357,12 @@ zlib_dep = dependency('zlib')
 - `gsword.pc`
 - 可选：`Gsword-0.1.gir`、`Gsword-0.1.typelib`
 - 可选：示例程序 `gsword-lookup`、`gsword-install`
+
+### 11.2.1 gtk-doc
+
+- `docs/reference/`：`gsword-docs.xml`、`gsword-overview.xml`、`gsword-sections.txt`、`gsword.types`。
+- `-Dgtk_doc=true` 启用，`meson compile -C build docs` 构建。
+- 安装到 `share/gtk-doc/html/gsword`。
 
 ### 11.3 GI 注解
 
