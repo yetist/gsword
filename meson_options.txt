@@ -1,0 +1,8 @@
+option('bzip2', type: 'feature', value: 'auto',
+  description: 'Enable BZIP2 compressed module support')
+option('lzma', type: 'feature', value: 'auto',
+  description: 'Enable XZ compressed module support')
+option('introspection', type: 'boolean', value: false,
+  description: 'Generate GObject Introspection data (not implemented yet)')
+option('tests', type: 'boolean', value: true,
+  description: 'Build tests')
