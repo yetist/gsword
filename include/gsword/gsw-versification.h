@@ -30,7 +30,17 @@ void              gsw_book_unref(GswBook *self);
 G_DECLARE_FINAL_TYPE(GswVersificationMgr, gsw_versification_mgr, GSW,
                      VERSIFICATION_MGR, GObject)
 
+/**
+ * gsw_versification_mgr_get_default:
+ *
+ * Returns: (transfer none): result
+ */
 GswVersificationMgr *gsw_versification_mgr_get_default(void);
+/**
+ * gsw_versification_mgr_get_systems:
+ *
+ * Returns: (transfer container) (element-type GswVersification): result
+ */
 GPtrArray           *gsw_versification_mgr_get_systems(GswVersificationMgr *self);
 GswVersification    *gsw_versification_mgr_get_system(GswVersificationMgr *self,
                                                       const gchar *name);

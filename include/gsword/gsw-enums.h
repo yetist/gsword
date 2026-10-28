@@ -100,6 +100,9 @@ GType gsw_direction_get_type(void);
 GType gsw_markup_get_type(void);
 GType gsw_position_get_type(void);
 
+const gchar *gsw_source_type_to_string(GswSourceType type);
+const gchar *gsw_source_type_to_scheme(GswSourceType type);
+
 G_END_DECLS
 
 #endif /* __GSW_ENUMS_H__ */

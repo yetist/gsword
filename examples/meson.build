@@ -5,3 +5,35 @@ executable('gsword-list-modules', 'list-modules.c',
 executable('gsword-lookup', 'lookup.c',
   dependencies: gsword_dep,
   install: false)
+
+executable('gsword-module-info', 'module-info.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-install-module', 'install-module.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-install-sources', 'install-sources.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-async-install', 'async-install.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-dict-lookup', 'dict-lookup.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-genbook-walk', 'genbook-walk.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-chapter', 'chapter.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-parse-key', 'parse-key.c',
+  dependencies: gsword_dep,
+  install: false)

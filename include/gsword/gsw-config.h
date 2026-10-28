@@ -18,6 +18,11 @@ G_DECLARE_FINAL_TYPE(GswConfig, gsw_config, GSW, CONFIG, GObject)
 GswConfig *gsw_config_new(void);
 GswConfig *gsw_config_new_from_file(const gchar *path, GError **error);
 GswConfig *gsw_config_new_from_data(const gchar *data, gssize len, GError **error);
+/**
+ * gsw_config_copy:
+ *
+ * Returns: (transfer full): result
+ */
 GswConfig *gsw_config_copy(GswConfig *self);
 
 gboolean gsw_config_load(GswConfig *self, const gchar *path, GError **error);
@@ -26,12 +31,27 @@ gboolean gsw_config_save(GswConfig *self, const gchar *path, GError **error);
 const gchar *gsw_config_get_path(GswConfig *self);
 
 gboolean     gsw_config_has_section(GswConfig *self, const gchar *section);
+/**
+ * gsw_config_get_sections:
+ *
+ * Returns: (transfer full) (array zero-terminated=1): result
+ */
 gchar      **gsw_config_get_sections(GswConfig *self);
 gboolean     gsw_config_remove_section(GswConfig *self, const gchar *section);
 
 gboolean     gsw_config_has_key(GswConfig *self, const gchar *section, const gchar *key);
 const gchar *gsw_config_get(GswConfig *self, const gchar *section, const gchar *key);
+/**
+ * gsw_config_get_all:
+ *
+ * Returns: (transfer full) (array zero-terminated=1): result
+ */
 gchar      **gsw_config_get_all(GswConfig *self, const gchar *section, const gchar *key);
+/**
+ * gsw_config_get_keys:
+ *
+ * Returns: (transfer full) (array zero-terminated=1): result
+ */
 gchar      **gsw_config_get_keys(GswConfig *self, const gchar *section);
 
 gboolean     gsw_config_set(GswConfig *self, const gchar *section,

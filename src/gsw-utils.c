@@ -708,26 +708,3 @@ gsw_source_type_from_string(const gchar *name)
     return GSW_SOURCE_FTP;
 }
 
-const gchar *
-gsw_source_type_to_string(GswSourceType type)
-{
-    switch (type) {
-    case GSW_SOURCE_HTTP:  return "HTTP";
-    case GSW_SOURCE_HTTPS: return "HTTPS";
-    case GSW_SOURCE_SFTP:  return "SFTP";
-    case GSW_SOURCE_FTP:
-    default:               return "FTP";
-    }
-}
-
-const gchar *
-gsw_source_type_to_scheme(GswSourceType type)
-{
-    switch (type) {
-    case GSW_SOURCE_HTTP:  return "http";
-    case GSW_SOURCE_HTTPS: return "https";
-    case GSW_SOURCE_SFTP:  return "sftp";
-    case GSW_SOURCE_FTP:
-    default:               return "ftp";
-    }
-}

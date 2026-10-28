@@ -33,14 +33,29 @@ const gchar *gsw_manager_get_config_path(GswManager *self);
  * gsw_manager_get_module_infos:
  * @self: a #GswManager
  *
- * Returns: (transfer full) (element-type GswModuleInfo): a new array of
+ * Returns: (transfer container) (element-type GswModuleInfo): a new array of
  *   referenced module metadata objects. Free with g_ptr_array_unref().
  */
 GPtrArray     *gsw_manager_get_module_infos(GswManager *self);
+/**
+ * gsw_manager_lookup_module_info:
+ *
+ * Returns: (transfer none): result
+ */
 GswModuleInfo *gsw_manager_lookup_module_info(GswManager *self, const gchar *name);
 gboolean       gsw_manager_has_module(GswManager *self, const gchar *name);
 
+/**
+ * gsw_manager_get_module:
+ *
+ * Returns: (transfer none): result
+ */
 GswModule     *gsw_manager_get_module(GswManager *self, const gchar *name);
+/**
+ * gsw_manager_get_config:
+ *
+ * Returns: (transfer none): result
+ */
 GswConfig     *gsw_manager_get_config(GswManager *self);
 const gchar   *gsw_manager_get_config_file_for_module(GswManager *self,
                                                       const gchar *name);

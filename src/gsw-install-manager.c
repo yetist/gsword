@@ -33,6 +33,8 @@ typedef struct {
     gboolean verify_peer;
     gboolean disclaimer_confirmed;
     guint timeout_msec;
+    GMutex lock;        /* serializes async operations */
+    GMutex cancel_lock; /* protects the cancellable pointer */
 } GswInstallManagerPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswInstallManager, gsw_install_manager, G_TYPE_OBJECT)
@@ -58,6 +60,8 @@ gsw_install_manager_finalize(GObject *object)
     g_clear_object(&priv->cancellable);
     g_free(priv->default_user);
     g_free(priv->default_password);
+    g_mutex_clear(&priv->lock);
+    g_mutex_clear(&priv->cancel_lock);
 
     G_OBJECT_CLASS(gsw_install_manager_parent_class)->finalize(object);
 }
@@ -85,6 +89,8 @@ gsw_install_manager_init(GswInstallManager *self)
     priv->verify_peer = TRUE;
     priv->disclaimer_confirmed = FALSE;
     priv->timeout_msec = GSW_DEFAULT_TIMEOUT;
+    g_mutex_init(&priv->lock);
+    g_mutex_init(&priv->cancel_lock);
 }
 
 static void
@@ -1431,4 +1437,241 @@ gsw_install_manager_refresh_remote_source_configuration(GswInstallManager *self,
     g_object_unref(config);
 
     return gsw_install_manager_save_config(self, error);
+}
+
+
+/* ------------------------------------------------------------------------- */
+/* Async API                                                                 */
+/* ------------------------------------------------------------------------- */
+
+typedef enum {
+    GSW_TASK_REFRESH_SOURCE,
+    GSW_TASK_REFRESH_CONFIG,
+    GSW_TASK_INSTALL,
+    GSW_TASK_REMOVE
+} GswTaskKind;
+
+typedef struct {
+    GswInstallManager *self;
+    GswInstallSource *source;
+    GswManager *destination;
+    gchar *module_name;
+    GswTaskKind kind;
+} GswInstallTaskData;
+
+static void
+gsw_install_task_data_free(gpointer data)
+{
+    GswInstallTaskData *task = data;
+
+    g_clear_object(&task->self);
+    g_clear_object(&task->source);
+    g_clear_object(&task->destination);
+    g_free(task->module_name);
+    g_free(task);
+}
+
+static void
+gsw_install_task_return(GTask *task, gboolean ok, GError *error)
+{
+    if (ok) {
+        g_task_return_boolean(task, TRUE);
+        return;
+    }
+
+    if (error == NULL) {
+        g_set_error(&error, GSW_ERROR, GSW_ERROR_CANCELLED,
+                    "Operation cancelled");
+    }
+    g_task_return_error(task, error);
+}
+
+static void
+gsw_install_manager_task_thread(GTask *task, gpointer source_object,
+                                gpointer task_data, GCancellable *cancellable)
+{
+    GswInstallTaskData *data = task_data;
+    GswInstallManagerPrivate *priv = gsw_install_manager_priv(data->self);
+    GError *error = NULL;
+    GCancellable *old_cancellable;
+    gboolean ok = FALSE;
+
+    (void)source_object;
+
+    g_mutex_lock(&priv->lock);
+    g_mutex_lock(&priv->cancel_lock);
+    old_cancellable = priv->cancellable;
+    if (cancellable != NULL)
+        priv->cancellable = cancellable;
+    g_mutex_unlock(&priv->cancel_lock);
+
+    switch (data->kind) {
+    case GSW_TASK_REFRESH_SOURCE:
+        ok = gsw_install_manager_refresh_remote_source(data->self,
+                                                       data->source, &error);
+        break;
+    case GSW_TASK_REFRESH_CONFIG:
+        ok = gsw_install_manager_refresh_remote_source_configuration(data->self,
+                                                                     &error);
+        break;
+    case GSW_TASK_INSTALL:
+        ok = gsw_install_manager_install_module(data->self, data->destination,
+                                                data->source,
+                                                data->module_name, &error);
+        break;
+    case GSW_TASK_REMOVE:
+        ok = gsw_install_manager_remove_module(data->self, data->destination,
+                                               data->module_name, &error);
+        break;
+    }
+
+    g_mutex_lock(&priv->cancel_lock);
+    priv->cancellable = old_cancellable;
+    g_mutex_unlock(&priv->cancel_lock);
+    g_mutex_unlock(&priv->lock);
+
+    gsw_install_task_return(task, ok, error);
+}
+
+static GswInstallTaskData *
+gsw_install_task_data_new(GswInstallManager *self, GswTaskKind kind,
+                          GswInstallSource *source, GswManager *destination,
+                          const gchar *module_name)
+{
+    GswInstallTaskData *data = g_new0(GswInstallTaskData, 1);
+
+    data->self = g_object_ref(self);
+    data->kind = kind;
+    if (source != NULL)
+        data->source = g_object_ref(source);
+    if (destination != NULL)
+        data->destination = g_object_ref(destination);
+    data->module_name = g_strdup(module_name);
+    return data;
+}
+
+void
+gsw_install_manager_cancel(GswInstallManager *self)
+{
+    GswInstallManagerPrivate *priv;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    priv = gsw_install_manager_priv(self);
+    g_mutex_lock(&priv->cancel_lock);
+    if (priv->cancellable != NULL)
+        g_cancellable_cancel(priv->cancellable);
+    g_mutex_unlock(&priv->cancel_lock);
+}
+
+void
+gsw_install_manager_refresh_remote_source_configuration_async(
+    GswInstallManager *self, GCancellable *cancellable,
+    GAsyncReadyCallback callback, gpointer user_data)
+{
+    GTask *task;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    task = g_task_new(self, cancellable, callback, user_data);
+    g_task_set_task_data(task,
+        gsw_install_task_data_new(self, GSW_TASK_REFRESH_CONFIG, NULL, NULL, NULL),
+        gsw_install_task_data_free);
+    g_task_run_in_thread(task, gsw_install_manager_task_thread);
+    g_object_unref(task);
+}
+
+gboolean
+gsw_install_manager_refresh_remote_source_configuration_finish(
+    GswInstallManager *self, GAsyncResult *result, GError **error)
+{
+    (void)self;
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+void
+gsw_install_manager_refresh_remote_source_async(
+    GswInstallManager *self, GswInstallSource *source,
+    GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
+{
+    GTask *task;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    g_return_if_fail(GSW_IS_INSTALL_SOURCE(source));
+    task = g_task_new(self, cancellable, callback, user_data);
+    g_task_set_task_data(task,
+        gsw_install_task_data_new(self, GSW_TASK_REFRESH_SOURCE, source, NULL, NULL),
+        gsw_install_task_data_free);
+    g_task_run_in_thread(task, gsw_install_manager_task_thread);
+    g_object_unref(task);
+}
+
+gboolean
+gsw_install_manager_refresh_remote_source_finish(
+    GswInstallManager *self, GAsyncResult *result, GError **error)
+{
+    (void)self;
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+void
+gsw_install_manager_install_module_async(GswInstallManager *self,
+                                         GswManager *destination,
+                                         GswInstallSource *source,
+                                         const gchar *module_name,
+                                         GCancellable *cancellable,
+                                         GAsyncReadyCallback callback,
+                                         gpointer user_data)
+{
+    GTask *task;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    g_return_if_fail(GSW_IS_MANAGER(destination));
+    g_return_if_fail(GSW_IS_INSTALL_SOURCE(source));
+    g_return_if_fail(module_name != NULL);
+
+    task = g_task_new(self, cancellable, callback, user_data);
+    g_task_set_task_data(task,
+        gsw_install_task_data_new(self, GSW_TASK_INSTALL, source, destination,
+                                  module_name),
+        gsw_install_task_data_free);
+    g_task_run_in_thread(task, gsw_install_manager_task_thread);
+    g_object_unref(task);
+}
+
+gboolean
+gsw_install_manager_install_module_finish(GswInstallManager *self,
+                                          GAsyncResult *result, GError **error)
+{
+    (void)self;
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+void
+gsw_install_manager_remove_module_async(GswInstallManager *self,
+                                        GswManager *destination,
+                                        const gchar *module_name,
+                                        GCancellable *cancellable,
+                                        GAsyncReadyCallback callback,
+                                        gpointer user_data)
+{
+    GTask *task;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    g_return_if_fail(GSW_IS_MANAGER(destination));
+    g_return_if_fail(module_name != NULL);
+
+    task = g_task_new(self, cancellable, callback, user_data);
+    g_task_set_task_data(task,
+        gsw_install_task_data_new(self, GSW_TASK_REMOVE, NULL, destination,
+                                  module_name),
+        gsw_install_task_data_free);
+    g_task_run_in_thread(task, gsw_install_manager_task_thread);
+    g_object_unref(task);
+}
+
+gboolean
+gsw_install_manager_remove_module_finish(GswInstallManager *self,
+                                         GAsyncResult *result, GError **error)
+{
+    (void)self;
+    return g_task_propagate_boolean(G_TASK(result), error);
 }

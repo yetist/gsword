@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.3（M0–M4 已实现）
+- 状态：设计草案 v0.4（M0–M5 部分实现）
 - 日期：2026-10-28
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -858,6 +858,14 @@ gboolean gsw_install_manager_remove_module(GswInstallManager *self,
                                            const gchar *module_name,
                                            GError **error);
 
+/* GTask 异步变体；finish 返回布尔结果。 */
+void     gsw_install_manager_refresh_remote_source_async(...);
+gboolean gsw_install_manager_refresh_remote_source_finish(...);
+void     gsw_install_manager_install_module_async(...);
+gboolean gsw_install_manager_install_module_finish(...);
+void     gsw_install_manager_remove_module_async(...);
+gboolean gsw_install_manager_remove_module_finish(...);
+
 guint gsw_install_manager_get_module_status(GswManager *local,
                                             GswModuleInfo *remote);
 ```
@@ -1316,6 +1324,20 @@ zlib_dep = dependency('zlib')
 - 可选：示例程序 `gsword-lookup`、`gsword-install`
 
 ### 11.3 GI 注解
+
+安装/生成 GIR：
+
+```meson
+gir = gnome.generate_gir(gsword_lib,
+  sources: gsword_sources + gsword_headers,
+  namespace: 'Gsw', nsversion: '0.1',
+  identifier_prefix: 'Gsw', symbol_prefix: 'gsw_',
+  includes: ['GObject-2.0', 'Gio-2.0'],
+  install: true)
+```
+
+使用 `-Dintrospection=true` 启用；GIR 安装在 `share/gir-1.0`，typelib 安装在 `lib/girepository-1.0`。
+
 
 示例：
 

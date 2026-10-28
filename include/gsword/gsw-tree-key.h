@@ -17,6 +17,11 @@ typedef GswKey GswTreeKey;
 #define GSW_TYPE_TREE_KEY (gsw_tree_key_get_type())
 
 GType        gsw_tree_key_get_type(void);
+/**
+ * gsw_tree_key_new:
+ *
+ * Returns: (transfer full): result
+ */
 GswTreeKey  *gsw_tree_key_new(const gchar *base_path);
 
 const gchar *gsw_tree_key_get_text(GswTreeKey *self);

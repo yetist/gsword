@@ -32,9 +32,28 @@ meson test -C build
 
 # 读取经文
 ./build/examples/gsword-lookup ~/.sword KJV "John 3:16"
+
+# 模块信息、章节、字典、通用书
+./build/examples/gsword-module-info ~/.sword KJV
+./build/examples/gsword-chapter ~/.sword KJV "John 3"
+./build/examples/gsword-dict-lookup ~/.sword StrongsGreek G26
+./build/examples/gsword-genbook-walk ~/.sword BookChapter 1
+
+# 安装（需要预先配置 InstallMgr.conf）
+./build/examples/gsword-install-sources ~/.sword/InstallMgr
+./build/examples/gsword-install-module ~/.sword ~/.sword/InstallMgr CrossWire KJV
+./build/examples/gsword-async-install ~/.sword ~/.sword/InstallMgr CrossWire KJV
 ```
 
-M5（GI、异步 API、加密模块、完整渲染过滤器）尚未完成。
+生成 GObject Introspection 数据：
+
+```sh
+meson setup build-gir -Dintrospection=true
+meson compile -C build-gir
+meson test -C build-gir introspection
+```
+
+M5 已部分完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 API、更多示例。加密模块、完整渲染过滤器、本地化书名和更强的缓存仍待后续实现。
 
 ## 文档
 

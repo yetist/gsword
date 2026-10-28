@@ -48,7 +48,17 @@ gboolean       gsw_module_info_is_ciphered(GswModuleInfo *self);
 gboolean       gsw_module_info_is_supported(GswModuleInfo *self);
 
 const gchar   *gsw_module_info_get_value(GswModuleInfo *self, const gchar *key);
+/**
+ * gsw_module_info_get_keys:
+ *
+ * Returns: (transfer full) (array zero-terminated=1): result
+ */
 gchar        **gsw_module_info_get_keys(GswModuleInfo *self);
+/**
+ * gsw_module_info_get_values:
+ *
+ * Returns: (transfer full) (array zero-terminated=1): result
+ */
 gchar        **gsw_module_info_get_values(GswModuleInfo *self, const gchar *key);
 
 G_END_DECLS

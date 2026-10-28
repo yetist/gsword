@@ -17,6 +17,11 @@ typedef GswKey GswStrKey;
 #define GSW_TYPE_STR_KEY (gsw_str_key_get_type())
 
 GType       gsw_str_key_get_type(void);
+/**
+ * gsw_str_key_new:
+ *
+ * Returns: (transfer full): result
+ */
 GswStrKey  *gsw_str_key_new(const gchar *text);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GswStrKey, gsw_key_unref)

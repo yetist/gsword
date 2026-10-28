@@ -77,7 +77,7 @@ gsword_dep = declare_dependency(
   dependencies: deps,
 )
 
-install_headers(
+gsword_headers = files(
   'include/gsword/gsword.h',
   'include/gsword/gsw-version.h',
   'include/gsword/gsw-error.h',
@@ -95,8 +95,13 @@ install_headers(
   'include/gsword/gsw-transport.h',
   'include/gsword/gsw-install-source.h',
   'include/gsword/gsw-install-manager.h',
+)
+
+install_headers(
+  gsword_headers,
   subdir: 'gsword',
 )
+
 
 pkg = import('pkgconfig')
 pkg.generate(
@@ -107,6 +112,24 @@ pkg.generate(
   subdirs: 'gsword',
   requires: ['glib-2.0', 'gobject-2.0', 'gio-2.0'],
 )
+
+
+gnome = import('gnome')
+gir = []
+if get_option('introspection')
+  gir_dep = dependency('gobject-introspection-1.0')
+  gir = gnome.generate_gir(
+    gsword_lib,
+    sources: gsword_sources + gsword_headers,
+    namespace: 'Gsw',
+    nsversion: '0.1',
+    identifier_prefix: 'Gsw',
+    symbol_prefix: 'gsw_',
+    includes: ['GObject-2.0', 'Gio-2.0'],
+    install: true,
+    extra_args: ['--c-include=gsword/gsword.h'],
+  )
+endif
 
 subdir('tests')
 subdir('examples')
