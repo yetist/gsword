@@ -50,9 +50,31 @@ const gchar   *gsw_module_peek_raw(GswModule *self, GError **error);
 /**
  * gsw_module_get_text:
  *
- * Returns: (transfer full): result
+ * Returns: (transfer full): plain text
  */
 gchar         *gsw_module_get_text(GswModule *self, GError **error);
+/**
+ * gsw_module_get_render_text:
+ *
+ * Returns: (transfer full): rendered text
+ */
+gchar         *gsw_module_get_render_text(GswModule *self, GError **error);
+
+gboolean       gsw_module_set_option(GswModule *self, const gchar *name,
+                                     const gchar *value);
+const gchar   *gsw_module_get_option(GswModule *self, const gchar *name);
+/**
+ * gsw_module_get_options:
+ *
+ * Returns: (transfer container) (element-type utf8): option names
+ */
+GPtrArray     *gsw_module_get_options(GswModule *self);
+/**
+ * gsw_module_get_option_values:
+ *
+ * Returns: (transfer container) (element-type utf8): allowed values
+ */
+GPtrArray     *gsw_module_get_option_values(GswModule *self, const gchar *name);
 
 gboolean       gsw_module_next(GswModule *self, gint steps, GError **error);
 gboolean       gsw_module_prev(GswModule *self, gint steps, GError **error);

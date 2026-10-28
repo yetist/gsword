@@ -12,6 +12,7 @@
 #include <gsword/gsw-enums.h>
 #include <gsword/gsw-config.h>
 #include <gsword/gsw-key.h>
+#include <gsword/gsw-locale.h>
 #include <gsword/gsw-verse-key.h>
 #include <gsword/gsw-str-key.h>
 #include <gsword/gsw-tree-key.h>

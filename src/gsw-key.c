@@ -5,6 +5,7 @@
 #include <gsword/gsw-key.h>
 #include <gsword/gsw-verse-key.h>
 #include <gsword/gsw-str-key.h>
+#include <gsword/gsw-locale.h>
 #include <gsword/gsw-versification.h>
 #include "gsw-key-internal.h"
 #include "gsw-key-private.h"
@@ -147,6 +148,13 @@ gsw_key_clone(GswKey *self)
     return copy;
 }
 
+static const gchar *
+gsw_key_book_name(GswBook *book)
+{
+    const gchar *name = gsw_book_get_name(book);
+    return gsw_locale_mgr_translate(gsw_locale_mgr_get_default(), name, NULL);
+}
+
 static gint
 gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
 {
@@ -159,6 +167,13 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
 
     if (token == NULL || *token == '\0')
         return -1;
+
+    {
+        const gchar *reverse = gsw_locale_mgr_reverse(
+            gsw_locale_mgr_get_default(), token, NULL);
+        if (g_strcmp0(reverse, token) != 0)
+            return gsw_key_lookup_book(v11n, reverse);
+    }
 
     upper = g_ascii_strup(token, -1);
     normalized = g_strdup(upper);
@@ -194,6 +209,9 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
         if (g_strcmp0(normalized, osis_upper) == 0 ||
             g_strcmp0(normalized, abbrev_upper) == 0 ||
             g_strcmp0(normalized, name_upper) == 0) {
+            match = TRUE;
+            match_len = (gint)strlen(normalized);
+        } else if (g_strcmp0(normalized, gsw_key_book_name(book)) == 0) {
             match = TRUE;
             match_len = (gint)strlen(normalized);
         } else if (g_str_has_prefix(abbrev_upper, normalized) ||
@@ -264,7 +282,7 @@ gsw_verse_key_freshtext(GswKey *self)
         global = (self->testament == 2 ? bmax0 : 0) + self->book - 1;
         book = gsw_versification_get_book(self->v11n, global);
         if (book != NULL)
-            g_string_append(text, gsw_book_get_name(book));
+            g_string_append(text, gsw_key_book_name(book));
         else
             g_string_append_printf(text, "Book %d", self->book);
     }
@@ -849,7 +867,7 @@ gsw_verse_key_get_book_name(GswVerseKey *self)
 
     global = gsw_key_global_book(self);
     book = gsw_versification_get_book(self->v11n, global);
-    return book != NULL ? gsw_book_get_name(book) : "";
+    return book != NULL ? gsw_key_book_name(book) : "";
 }
 
 gboolean

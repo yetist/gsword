@@ -47,6 +47,18 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('async', test_async)
 
+  test_cipher = executable('test-cipher', 'test-cipher.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('cipher', test_cipher)
+
+  test_render = executable('test-render', 'test-render.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('render', test_render)
+
+  test_locale = executable('test-locale', 'test-locale.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('locale', test_locale)
+
   if get_option('introspection')
     test('introspection', python3,
       args: [files('test-introspection.py')],
@@ -60,7 +72,11 @@ if get_option('tests')
 
   test_install_http = executable('test-install-http', 'test-install-http.c',
     dependencies: [gsword_dep, glib_dep])
+  test_install_http_async = executable('test-install-http-async',
+    'test-install-http-async.c',
+    dependencies: [gsword_dep, glib_dep])
   test('install-http', python3,
-    args: [files('run-http-install-test.py'), test_install_http],
+    args: [files('run-http-install-test.py'), test_install_http,
+           test_install_http_async],
     timeout: 120)
 endif

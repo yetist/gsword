@@ -6,6 +6,7 @@
 #include "gsw-codec.h"
 #include "gsw-data.h"
 #include "gsw-key-internal.h"
+#include "gsw-cipher.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -23,7 +24,9 @@ typedef struct {
     FILE *index[2];
     FILE *text[2];
     FILE *comp[2];
-    GswZCache cache[2];
+    GswZCache cache[2][4];
+    guint next[2];
+    gchar *cipher_key;
 } GswZVerseData;
 
 static gchar
@@ -86,12 +89,18 @@ fail:
 static gboolean
 gsw_zverse_open(GswModuleBackend *backend, GError **error)
 {
+    GswZVerseData *data = backend->data;
+
     if (backend->opened)
         return TRUE;
     if (gsw_module_info_is_ciphered(backend->info)) {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
-                    "Module is encrypted");
-        return FALSE;
+        const gchar *key = gsw_module_info_get_value(backend->info, "CipherKey");
+        if (key == NULL || *key == '\0') {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                        "Module is encrypted but no CipherKey is configured");
+            return FALSE;
+        }
+        data->cipher_key = g_strdup(key);
     }
     if (!gsw_zverse_open_one(backend, 1, error))
         return FALSE;
@@ -108,32 +117,47 @@ gsw_zverse_close(GswModuleBackend *backend)
     gint i;
 
     for (i = 0; i < 2; i++) {
+        guint j;
+
         if (data->index[i]) fclose(data->index[i]);
         if (data->text[i]) fclose(data->text[i]);
         if (data->comp[i]) fclose(data->comp[i]);
         data->index[i] = data->text[i] = data->comp[i] = NULL;
-        g_clear_pointer(&data->cache[i].data, g_bytes_unref);
-        data->cache[i].block = -1;
+        for (j = 0; j < 4; j++) {
+            g_clear_pointer(&data->cache[i][j].data, g_bytes_unref);
+            data->cache[i][j].block = -1;
+        }
+        data->next[i] = 0;
     }
+    g_free(data->cipher_key);
+    data->cipher_key = NULL;
     backend->opened = FALSE;
 }
 
 static gboolean
 gsw_zverse_load_block(GswModuleBackend *backend, gint testament,
-                      guint32 block, GError **error)
+                      guint32 block, GBytes **out, GError **error)
 {
     GswZVerseData *data = backend->data;
     gint i = testament - 1;
+    guint j;
+    guint slot;
     guint8 record[12];
     guint32 comp_offset, comp_size, uncomp_size;
     gchar *compressed;
     GBytes *uncompressed = NULL;
 
-    if (data->cache[i].block == (gint64)block && data->cache[i].data != NULL)
-        return TRUE;
+    for (j = 0; j < 4; j++) {
+        if (data->cache[i][j].block == (gint64)block &&
+            data->cache[i][j].data != NULL) {
+            *out = data->cache[i][j].data;
+            return TRUE;
+        }
+    }
 
-    g_clear_pointer(&data->cache[i].data, g_bytes_unref);
-    data->cache[i].block = -1;
+    slot = data->next[i]++ % 4;
+    g_clear_pointer(&data->cache[i][slot].data, g_bytes_unref);
+    data->cache[i][slot].block = -1;
 
     if (!gsw_file_read_at(data->index[i], (gint64)block * 12, record, 12, error))
         return FALSE;
@@ -154,6 +178,25 @@ gsw_zverse_load_block(GswModuleBackend *backend, gint testament,
         return FALSE;
     }
 
+    if (data->cipher_key != NULL) {
+        GBytes *decrypted = NULL;
+        gsize decrypted_len = 0;
+        const gchar *decrypted_data;
+
+        if (!gsw_cipher_decrypt(data->cipher_key, compressed, comp_size,
+                                &decrypted, error)) {
+            g_free(compressed);
+            return FALSE;
+        }
+        decrypted_data = g_bytes_get_data(decrypted, &decrypted_len);
+        g_free(compressed);
+        compressed = g_malloc(decrypted_len + 1);
+        memcpy(compressed, decrypted_data, decrypted_len);
+        compressed[decrypted_len] = '\0';
+        comp_size = (guint32)decrypted_len;
+        g_bytes_unref(decrypted);
+    }
+
     if (!gsw_decompress(data->compression, compressed, comp_size,
                         uncomp_size, &uncompressed, error)) {
         g_free(compressed);
@@ -161,8 +204,9 @@ gsw_zverse_load_block(GswModuleBackend *backend, gint testament,
     }
     g_free(compressed);
 
-    data->cache[i].block = block;
-    data->cache[i].data = uncompressed;
+    data->cache[i][slot].block = block;
+    data->cache[i][slot].data = uncompressed;
+    *out = uncompressed;
     return TRUE;
 }
 
@@ -207,11 +251,11 @@ gsw_zverse_find(GswModuleBackend *backend, GswKey *key,
 static GBytes *
 gsw_zverse_read(GswModuleBackend *backend, GswKey *key, GError **error)
 {
-    GswZVerseData *data = backend->data;
     gint testament = gsw_verse_key_get_testament((GswVerseKey *)key);
     guint32 block, start, size;
     gsize len;
     const guint8 *data_ptr;
+    GBytes *block_data = NULL;
 
     if (!gsw_zverse_find(backend, key, &block, &start, &size, error))
         return NULL;
@@ -223,10 +267,10 @@ gsw_zverse_read(GswModuleBackend *backend, GswKey *key, GError **error)
     else
         testament = 1;
 
-    if (!gsw_zverse_load_block(backend, testament, block, error))
+    if (!gsw_zverse_load_block(backend, testament, block, &block_data, error))
         return NULL;
 
-    data_ptr = g_bytes_get_data(data->cache[testament - 1].data, &len);
+    data_ptr = g_bytes_get_data(block_data, &len);
     if ((gsize)start + size > len) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
                     "Verse entry exceeds decompressed block");
@@ -307,8 +351,12 @@ gsw_zverse_backend_new(GswModuleInfo *info)
     data->letter = gsw_zverse_letter(info);
     data->compression = gsw_compression_from_string(
         gsw_module_info_get_value(info, "CompressType"));
-    for (i = 0; i < 2; i++)
-        data->cache[i].block = -1;
+    for (i = 0; i < 2; i++) {
+        guint j;
+        for (j = 0; j < 4; j++)
+            data->cache[i][j].block = -1;
+        data->next[i] = 0;
+    }
 
     backend->info = g_object_ref(info);
     backend->ops = &ops;
