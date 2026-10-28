@@ -1,4 +1,5 @@
 #include <gsword/gsword.h>
+#include "gsw-cipher.h"
 #include "gsw-utils.h"
 #include <glib/gstdio.h>
 #include <string.h>
@@ -189,6 +190,87 @@ make_ztext_module(const gchar *prefix)
         "Encoding=UTF-8\n"
         "BlockType=BOOK\n"
         "CompressType=ZIP\n"
+        "Version=1.0\n"
+        "Versification=KJV\n");
+}
+
+static void
+make_ztext_encrypted_module(const gchar *prefix)
+{
+    gchar *dir = g_build_filename(prefix, "modules", "texts", "ztext",
+                                  "tinyze", NULL);
+    gchar *path;
+    const gchar *entry = "ENCRYPTED Gen 1:1";
+    gsize entry_len = strlen(entry);
+    uLongf comp_len = compressBound((uLong)entry_len);
+    gchar *compressed = g_malloc(comp_len);
+    GByteArray *verse_idx = g_byte_array_new();
+    GByteArray *block_idx = g_byte_array_new();
+    GBytes *encrypted = NULL;
+    const gchar *encrypted_data;
+    gsize encrypted_len = 0;
+    GError *error = NULL;
+    guint32 i;
+
+    g_assert_cmpint(compress2((Bytef *)compressed, &comp_len,
+                              (const Bytef *)entry, (uLong)entry_len, 9),
+                    ==, Z_OK);
+    g_assert_true(gsw_cipher_encrypt("aaaa-bbbb-cccc-dddd-eeee",
+                                     compressed, comp_len, &encrypted, &error));
+    g_assert_no_error(error);
+    encrypted_data = g_bytes_get_data(encrypted, &encrypted_len);
+
+    g_mkdir_with_parents(dir, 0755);
+    for (i = 0; i < 5; i++) {
+        if (i == 4) {
+            append_le32(verse_idx, 0);
+            append_le32(verse_idx, 0);
+            append_le16(verse_idx, (guint16)entry_len);
+        } else {
+            append_le32(verse_idx, 0);
+            append_le32(verse_idx, 0);
+            append_le16(verse_idx, 0);
+        }
+    }
+    append_le32(block_idx, 0);
+    append_le32(block_idx, (guint32)encrypted_len);
+    append_le32(block_idx, (guint32)entry_len);
+
+    path = g_build_filename(dir, "ot.bzv", NULL);
+    write_bytes(path, verse_idx->data, verse_idx->len);
+    g_free(path);
+    path = g_build_filename(dir, "ot.bzs", NULL);
+    write_bytes(path, block_idx->data, block_idx->len);
+    g_free(path);
+    path = g_build_filename(dir, "ot.bzz", NULL);
+    write_bytes(path, (const guint8 *)encrypted_data, encrypted_len);
+    g_free(path);
+
+    path = g_build_filename(dir, "nt.bzv", NULL);
+    write_bytes(path, verse_idx->data, verse_idx->len);
+    g_free(path);
+    path = g_build_filename(dir, "nt.bzs", NULL);
+    write_bytes(path, block_idx->data, block_idx->len);
+    g_free(path);
+    path = g_build_filename(dir, "nt.bzz", NULL);
+    write_bytes(path, (const guint8 *)encrypted_data, encrypted_len);
+    g_free(path);
+
+    g_byte_array_unref(verse_idx);
+    g_byte_array_unref(block_idx);
+    g_bytes_unref(encrypted);
+    g_free(compressed);
+    g_free(dir);
+
+    write_conf(prefix, "tiny-ze.conf",
+        "[TinyZE]\n"
+        "Description=Tiny encrypted zText\n"
+        "DataPath=./modules/texts/ztext/tinyze/\n"
+        "ModDrv=zText\n"
+        "Encoding=UTF-8\n"
+        "BlockType=BOOK\n"
+        "CompressType=ZIP\n"
+        "CipherKey=aaaa-bbbb-cccc-dddd-eeee\n"
         "Version=1.0\n"
         "Versification=KJV\n");
 }
@@ -418,6 +500,7 @@ run_reader_test(void)
 
     make_raw_module(prefix);
     make_ztext_module(prefix);
+    make_ztext_encrypted_module(prefix);
     make_rawld_module(prefix);
     make_zld_module(prefix);
     make_genbook_module(prefix);
@@ -427,6 +510,7 @@ run_reader_test(void)
     g_assert_nonnull(manager);
     g_assert_true(gsw_manager_has_module(manager, "TinyRaw"));
     g_assert_true(gsw_manager_has_module(manager, "TinyZ"));
+    g_assert_true(gsw_manager_has_module(manager, "TinyZE"));
     g_assert_true(gsw_manager_has_module(manager, "TinyDict"));
     g_assert_true(gsw_manager_has_module(manager, "TinyZDict"));
     g_assert_true(gsw_manager_has_module(manager, "TinyGenBook"));
@@ -464,6 +548,15 @@ run_reader_test(void)
     text = gsw_module_get_text(module, &error);
     g_assert_no_error(error);
     g_assert_cmpstr(text, ==, "ZIP OT Gen 1:2");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyZE");
+    g_assert_nonnull(module);
+    g_assert_true(gsw_module_is_supported(module));
+    g_assert_true(gsw_module_set_key_text(module, "Gen 1:1", &error));
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "ENCRYPTED Gen 1:1");
     g_free(text);
 
     module = gsw_manager_get_module(manager, "TinyDict");

@@ -367,8 +367,9 @@ NT 同理前缀为 `nt`。
 ### 6.6 加密
 
 - 若 conf 有非空 `CipherKey`，`.zz` 数据在压缩前/解压后经过 `rawZFilter`（SWORD `SWCipher`，Sapphire）。
-- v1 不解密：读取返回 `GSW_ERROR_CIPHERED`，但允许安装/列出元数据。
-- 后续实现时注意：加密发生在压缩之后（写入时先压缩再加密；读取时先解密再解压）。
+- 本项目已实现 Sapphire 解密：读取时先解密 `.zz` 数据，再按 `CompressType` 解压。
+- 加密发生在压缩之后（写入时先压缩再加密；读取时先解密再解压）。
+- 若 `CipherKey` 缺失，读取返回 `GSW_ERROR_CIPHERED`；安装/列出元数据不受影响。
 
 ---
 
@@ -747,7 +748,7 @@ Caption|host|directory|user|password|uid
 | RawGenBook | 是 | 否 | TreeKey |
 | RawFiles | 否 | 否 | 后续 |
 | HREFCom | 否 | 否 | 后续 |
-| Sapphire 加密 | 否（报错） | 否 | 后续 |
+| Sapphire 加密 | 是 | 否 | zText/zCom/zLD/RawText/RawCom/RawLD/RawGenBook |
 | SCSU 编码 | 否（报错） | 否 | 后续 |
 
 ---

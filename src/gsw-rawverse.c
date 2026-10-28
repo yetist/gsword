@@ -5,6 +5,7 @@
 #include "gsw-module-backend.h"
 #include "gsw-data.h"
 #include "gsw-key-internal.h"
+#include "gsw-cipher.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@ typedef struct {
     FILE *nt;
     FILE *ot_vss;
     FILE *nt_vss;
+    gchar *cipher_key;
 } GswRawVerseData;
 
 static gboolean
@@ -49,6 +51,16 @@ gsw_rawverse_open(GswModuleBackend *backend, GError **error)
 
 #undef OPEN_OR_FAIL
 
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        const gchar *key = gsw_module_info_get_value(backend->info, "CipherKey");
+        if (key == NULL || *key == '\0') {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                        "RawVerse module is encrypted but no CipherKey is configured");
+            goto fail;
+        }
+        data->cipher_key = g_strdup(key);
+    }
+
     backend->opened = TRUE;
     return TRUE;
 
@@ -71,6 +83,8 @@ gsw_rawverse_close(GswModuleBackend *backend)
     if (data->ot_vss) fclose(data->ot_vss);
     if (data->nt_vss) fclose(data->nt_vss);
     data->ot = data->nt = data->ot_vss = data->nt_vss = NULL;
+    g_free(data->cipher_key);
+    data->cipher_key = NULL;
     backend->opened = FALSE;
 }
 
@@ -139,6 +153,25 @@ gsw_rawverse_read(GswModuleBackend *backend, GswKey *key, GError **error)
         return NULL;
     }
     buffer[size] = '\0';
+    if (data->cipher_key != NULL) {
+        GBytes *decrypted = NULL;
+        const gchar *decrypted_data;
+        gsize decrypted_len = 0;
+        gchar *out;
+
+        if (!gsw_cipher_decrypt(data->cipher_key, (const gchar *)buffer, size,
+                                &decrypted, error)) {
+            g_free(buffer);
+            return NULL;
+        }
+        decrypted_data = g_bytes_get_data(decrypted, &decrypted_len);
+        out = g_malloc(decrypted_len + 1);
+        memcpy(out, decrypted_data, decrypted_len);
+        out[decrypted_len] = '\0';
+        g_bytes_unref(decrypted);
+        g_free(buffer);
+        return g_bytes_new_take(out, decrypted_len);
+    }
     return g_bytes_new_take(buffer, size);
 }
 

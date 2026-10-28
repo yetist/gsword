@@ -70,9 +70,9 @@
 - [x] 异步 API（GTask：刷新源、安装、卸载）
 - [x] 文档与示例完善（模块信息、安装、异步安装、字典、通用书、章节、键解析）
 - [x] 全部上游 versification 系统（canon_* 生成）
-- [ ] 本地化书名/缩写（目前为英文/OSIS 与内置缩写）
-- [ ] Sapphire 解密（可选）
-- [ ] 完整渲染过滤器（Strong's、脚注、标题、red letter 等）
-- [ ] 性能与缓存优化（当前单块缓存）
+- [x] 本地化书名/缩写（`GswLocaleMgr`，支持 SWORD `locales.d`）
+- [x] Sapphire 解密（zText/zCom/zLD/RawText/RawCom/RawLD/RawGenBook）
+- [x] 基础渲染选项（Strong's、脚注、标题、red letter、morphology；OSIS/ThML/GBF）
+- [x] zVerse 4 块缓存 + zLD 单块缓存
 
-验收：GI 绑定可用；示例覆盖读取、安装、进度、取消、异步；M5 剩余项作为后续增强。
+验收：GI 绑定可用；示例覆盖读取、安装、进度、取消、异步、渲染选项、本地化；加密模块可读。

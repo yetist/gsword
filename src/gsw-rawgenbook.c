@@ -6,6 +6,7 @@
 #include "gsw-backend-utils.h"
 #include "gsw-data.h"
 #include "gsw-key-private.h"
+#include "gsw-cipher.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@
 
 typedef struct {
     FILE *bdt;
+    gchar *cipher_key;
 } GswRawGenBookData;
 
 static gboolean
@@ -37,6 +39,15 @@ gsw_rawgenbook_open(GswModuleBackend *backend, GError **error)
         return FALSE;
     }
     g_free(path);
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        const gchar *key = gsw_module_info_get_value(backend->info, "CipherKey");
+        if (key == NULL || *key == '\0') {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                        "General book is encrypted but no CipherKey is configured");
+            return FALSE;
+        }
+        data->cipher_key = g_strdup(key);
+    }
     backend->opened = TRUE;
     return TRUE;
 }
@@ -48,6 +59,8 @@ gsw_rawgenbook_close(GswModuleBackend *backend)
 
     if (data->bdt) fclose(data->bdt);
     data->bdt = NULL;
+    g_free(data->cipher_key);
+    data->cipher_key = NULL;
     backend->opened = FALSE;
 }
 
@@ -83,6 +96,25 @@ gsw_rawgenbook_read(GswModuleBackend *backend, GswKey *key, GError **error)
         return NULL;
     }
     buffer[size] = '\0';
+    if (data->cipher_key != NULL) {
+        GBytes *decrypted = NULL;
+        const gchar *decrypted_data;
+        gsize decrypted_len = 0;
+        gchar *out;
+
+        if (!gsw_cipher_decrypt(data->cipher_key, (const gchar *)buffer, size,
+                                &decrypted, error)) {
+            g_free(buffer);
+            return NULL;
+        }
+        decrypted_data = g_bytes_get_data(decrypted, &decrypted_len);
+        out = g_malloc(decrypted_len + 1);
+        memcpy(out, decrypted_data, decrypted_len);
+        out[decrypted_len] = '\0';
+        g_bytes_unref(decrypted);
+        g_free(buffer);
+        return g_bytes_new_take(out, decrypted_len);
+    }
     return g_bytes_new_take(buffer, size);
 }
 

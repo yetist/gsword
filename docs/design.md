@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.4（M0–M5 部分实现）
+- 状态：设计草案 v0.5（M0–M5 已实现）
 - 日期：2026-10-28
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -44,7 +44,7 @@
 - 写入/编辑模块（`setEntry`、`linkEntry`、`deleteEntry`）。
 - 搜索框架（Lucene、正则搜索等）。
 - 完整渲染过滤器（Strong's、脚注、red letter、headings 等所有 OSIS/ThML/GBF 选项）。
-- 模块加密/解密（Sapphire、`CipherKey`）；v1 检测到加密模块时返回明确错误。
+- 模块加密/解密已作为 M5 功能实现（Sapphire、`CipherKey`）。
 - 所有本地化书名、界面翻译。
 - SFTP、HTTP 代理认证 UI、断点续传（可后续增加）。
 - `RawFiles`、`HREFCom`、`VerseTreeKey` 等冷门驱动。
@@ -578,7 +578,7 @@ const gchar   *gsw_module_get_key_text(GswModule *self);
 GBytes        *gsw_module_read_raw(GswModule *self, GError **error);   /* transfer full */
 const gchar   *gsw_module_peek_raw(GswModule *self, GError **error);   /* 借出，直到下次调用 */
 gchar         *gsw_module_get_text(GswModule *self, GError **error);   /* 纯文本，transfer full */
-gchar         *gsw_module_get_render_text(GswModule *self, GError **error); /* v1 可为空实现 */
+gchar         *gsw_module_get_render_text(GswModule *self, GError **error);
 
 gboolean       gsw_module_next(GswModule *self, gint steps, GError **error);
 gboolean       gsw_module_prev(GswModule *self, gint steps, GError **error);
@@ -704,6 +704,22 @@ gint              gsw_book_get_verse_max(GswBook *self, gint chapter);
 ```
 
 `GswVersification` 与 `GswBook` 为不可变 boxed，由 `GswVersificationMgr` 拥有；返回 transfer none。第一版内置 KJV，并从 `canon_*.h` 生成其余常用系统（Leningrad、MT、KJVA、NRSV、Synodal、Vulg、German、Luther、Catholic、LXX、Orthodox 等）。
+
+### 5.7.1 `GswLocaleMgr`
+
+```c
+GswLocaleMgr *gsw_locale_mgr_get_default(void);
+gboolean      gsw_locale_mgr_load_file(GswLocaleMgr *self, const gchar *path,
+                                       GError **error);
+guint         gsw_locale_mgr_load_directory(GswLocaleMgr *self,
+                                            const gchar *path, GError **error);
+const gchar  *gsw_locale_mgr_get_default_locale(GswLocaleMgr *self);
+void          gsw_locale_mgr_set_default_locale(GswLocaleMgr *self, const gchar *name);
+const gchar  *gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
+                                       const gchar *locale);
+```
+
+加载 SWORD `locales.d/*.conf` 的 `[Text]` 映射；`GswVerseKey` 的书名、缩写解析和显示会使用默认 locale。
 
 ### 5.8 `GswStatusReporter`
 
@@ -982,8 +998,8 @@ get_remote_module_infos(source)
 install_module(destination, source, name)
   1. 校验 disclaimer、source 已刷新、目标库可写
   2. 从 source shadow 找到 GswModuleInfo + conf 文件
-  3. 若 info.is_ciphered 且无密钥：
-       返回 GSW_ERROR_CIPHERED（或按策略要求 UI 提供 CipherKey）
+  3. 若 info.is_ciphered 且无 CipherKey：
+       返回 GSW_ERROR_CIPHERED；有密钥时安装照常，读取时执行 Sapphire 解密
   4. 解析 AbsoluteDataPath / DataPath / File= 列表
   5. 计算需要下载的相对目录或文件集合
   6. 在目标 prefix 下创建临时目录 <prefix>/.gsw-tmp-XXXX
@@ -1169,6 +1185,11 @@ struct _GswModuleBackendClass {
 
 `zCom` 与 `zText` 的区别只在语义/类型，存储格式相同；`GswModuleInfo` 的 `Type` 决定 `GswModuleType`。
 
+### 8.2.1 加密与渲染选项
+
+- 加密：`CipherKey` 存在时，对 zVerse 压缩块、zLD 块、RawVerse/RawLD/RawGenBook 条目执行 Sapphire 解密。
+- 渲染：`gsw_module_set_option()` 支持 `Strong's Numbers`、`Footnotes`、`Headings`、`Red Letter Words`、`Morphology`、`Variants`、`Glosses`；`gsw_module_get_render_text()` 返回选项处理后的纯文本。
+
 ### 8.3 编码与文本
 
 - 内部统一 UTF-8。
@@ -1187,7 +1208,7 @@ struct _GswModuleBackendClass {
 ### 8.4 不支持项的处理
 
 - 未知驱动：`GswModuleInfo::is_supported = FALSE`；`GswModule` 可创建但读取报 `GSW_ERROR_UNSUPPORTED`。
-- 加密：`CipherKey` 存在时标记 `is_ciphered`；v1 读取报 `GSW_ERROR_CIPHERED`。
+- 加密：`CipherKey` 存在时标记 `is_ciphered`；有密钥时执行 Sapphire 解密，无密钥时报 `GSW_ERROR_CIPHERED`。
 - 缺失数据文件：读取报 `GSW_ERROR_NOT_FOUND`，不崩溃。
 - 格式损坏：报 `GSW_ERROR_INVALID_DATA`，附带文件偏移（便于诊断）。
 
@@ -1471,7 +1492,7 @@ gir = gnome.generate_gir(gsword_lib,
 | versification 表庞大/易错 | 经文偏移错误 | 从 `canon_*.h` 生成；用上游 `refsystest` 对照 |
 | FTP 目录列表格式差异 | 刷新失败 | 优先 mods.d.tar.gz；MLSD + LIST 回退；测试多种服务器 |
 | HTTP 目录列表脆弱 | 刷新失败 | 优先 tar.gz；解析器容错；记录错误 |
-| 加密模块 | 无法读取 | 明确错误；M5 可选实现 |
+| 加密模块 | 缺密钥时无法读取 | 已实现 Sapphire 解密；缺密钥时明确报错 |
 | 过滤器范围蔓延 | 工期 | v1 只做基础 strip；渲染过滤器后置 |
 | 安全漏洞（路径/解包） | 严重 | 专门工具函数 + 测试 + fuzz |
 | 旧 gsword 命名冲突 | 安装冲突 | 评审库名/包名；必要时 `gsword-2` |
@@ -1486,7 +1507,7 @@ gir = gnome.generate_gir(gsword_lib,
 ### 14.3 仍待确认的细节
 
 1. **最低平台**：GLib 2.66、libcurl 7.68 是否满足目标发行版？
-2. **加密模块**：v1 只“检测并报错”，还是需要支持 Sapphire 解密？（设计默认只报错。）
+2. **加密模块**：已实现 Sapphire 解密；缺密钥时报 `GSW_ERROR_CIPHERED`。
 3. **渲染**：v1 的 `get_text` 只做基础去标签是否足够，还是必须支持 Strong's/脚注等选项？（设计默认基础去标签。）
 4. **安装冲突策略**：升级时是否保留旧文件备份（设计默认直接覆盖，失败清理临时目录）。
 
@@ -1502,7 +1523,7 @@ gir = gnome.generate_gir(gsword_lib,
 | `SWMgr::createModule` | `gsw_module_backend_new` | 驱动映射 |
 | `SWModule::setKey` | `gsw_module_set_key` | 返回 GError |
 | `SWModule::getRawEntry` | `gsw_module_read_raw` | GBytes |
-| `SWModule::renderText` | `gsw_module_get_text`（v1 基础） | 后续过滤器 |
+| `SWModule::renderText` | `gsw_module_get_render_text` | 支持基础选项过滤 |
 | `SWConfig` | `GswConfig` | GObject |
 | `VerseKey` | `GswVerseKey` | boxed |
 | `StrKey` | `GswStrKey` | boxed |

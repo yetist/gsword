@@ -37,3 +37,11 @@ executable('gsword-chapter', 'chapter.c',
 executable('gsword-parse-key', 'parse-key.c',
   dependencies: gsword_dep,
   install: false)
+
+executable('gsword-render-options', 'render-options.c',
+  dependencies: gsword_dep,
+  install: false)
+
+executable('gsword-locale', 'locale.c',
+  dependencies: gsword_dep,
+  install: false)

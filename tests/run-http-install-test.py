@@ -48,11 +48,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("usage: run-http-install-test.py <test-binary>", file=sys.stderr)
+    if len(sys.argv) not in (2, 3):
+        print("usage: run-http-install-test.py <sync-binary> [async-binary]",
+              file=sys.stderr)
         return 2
 
-    binary = sys.argv[1]
+    sync_binary = sys.argv[1]
+    async_binary = sys.argv[2] if len(sys.argv) == 3 else None
     base = tempfile.mkdtemp(prefix="gsword-http-")
     try:
         repo = build_repo(base)
@@ -68,13 +70,28 @@ def main():
             thread.start()
             try:
                 result = subprocess.run(
-                    [binary, private, dest, f"127.0.0.1:{port}", "/"],
+                    [sync_binary, private, dest, f"127.0.0.1:{port}", "/"],
                     text=True,
                 )
+                if result.returncode != 0:
+                    return result.returncode
+
+                if async_binary is not None:
+                    private2 = os.path.join(base, "private-async")
+                    dest2 = os.path.join(base, "dest-async")
+                    os.makedirs(private2)
+                    os.makedirs(dest2)
+                    result = subprocess.run(
+                        [async_binary, private2, dest2,
+                         f"127.0.0.1:{port}", "/"],
+                        text=True,
+                    )
+                    if result.returncode != 0:
+                        return result.returncode
             finally:
                 httpd.shutdown()
                 thread.join(timeout=5)
-        return result.returncode
+        return 0
     finally:
         shutil.rmtree(base, ignore_errors=True)
 

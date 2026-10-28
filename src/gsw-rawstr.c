@@ -6,6 +6,7 @@
 #include "gsw-backend-utils.h"
 #include "gsw-data.h"
 #include "gsw-utils.h"
+#include "gsw-cipher.h"
 #include <gsword/gsw-str-key.h>
 
 #include <errno.h>
@@ -18,6 +19,7 @@ typedef struct {
     gboolean strongs_padding;
     FILE *idx;
     FILE *dat;
+    gchar *cipher_key;
 } GswRawStrData;
 
 typedef struct {
@@ -207,6 +209,15 @@ gsw_rawstr_open(GswModuleBackend *backend, GError **error)
                     "Cannot open dictionary data files");
         return FALSE;
     }
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        const gchar *key = gsw_module_info_get_value(backend->info, "CipherKey");
+        if (key == NULL || *key == '\0') {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                        "Dictionary is encrypted but no CipherKey is configured");
+            return FALSE;
+        }
+        data->cipher_key = g_strdup(key);
+    }
     backend->opened = TRUE;
     return TRUE;
 }
@@ -219,6 +230,8 @@ gsw_rawstr_close(GswModuleBackend *backend)
     if (data->idx) fclose(data->idx);
     if (data->dat) fclose(data->dat);
     data->idx = data->dat = NULL;
+    g_free(data->cipher_key);
+    data->cipher_key = NULL;
     backend->opened = FALSE;
 }
 
@@ -229,6 +242,9 @@ gsw_rawstr_read(GswModuleBackend *backend, GswKey *key, GError **error)
     GswRawStrEntry entry;
     guint8 *buffer;
     gsize pos = 0;
+    gsize value_size;
+    const guint8 *value_ptr;
+    GBytes *decrypted_value = NULL;
     const gchar *key_text;
 
     if (!gsw_rawstr_open(backend, error))
@@ -256,13 +272,30 @@ gsw_rawstr_read(GswModuleBackend *backend, GswKey *key, GError **error)
     if (pos < entry.size)
         pos++;
 
-    if (entry.size > pos && !strncmp((const gchar *)buffer + pos, "@LINK ", 6)) {
-        gchar *target = g_strndup((const gchar *)buffer + pos + 6,
-                                  entry.size - pos - 6);
+    value_size = entry.size > pos ? entry.size - pos : 0;
+    value_ptr = buffer + pos;
+    if (data->cipher_key != NULL && value_size > 0) {
+        const gchar *decrypted_data;
+        gsize decrypted_len = 0;
+
+        if (!gsw_cipher_decrypt(data->cipher_key, (const gchar *)value_ptr,
+                                value_size, &decrypted_value, error)) {
+            g_free(buffer);
+            gsw_rawstr_entry_clear(&entry);
+            return NULL;
+        }
+        decrypted_data = g_bytes_get_data(decrypted_value, &decrypted_len);
+        value_ptr = (const guint8 *)decrypted_data;
+        value_size = decrypted_len;
+    }
+
+    if (value_size >= 6 && !strncmp((const gchar *)value_ptr, "@LINK ", 6)) {
+        gchar *target = g_strndup((const gchar *)value_ptr + 6, value_size - 6);
         gchar *newline = strpbrk(target, "\r\n");
         if (newline != NULL)
             *newline = '\0';
         g_free(buffer);
+        g_clear_pointer(&decrypted_value, g_bytes_unref);
         gsw_rawstr_entry_clear(&entry);
         {
             GswKey *link_key = gsw_str_key_new(target);
@@ -274,11 +307,11 @@ gsw_rawstr_read(GswModuleBackend *backend, GswKey *key, GError **error)
     }
 
     {
-        gsize value_size = entry.size > pos ? entry.size - pos : 0;
         guint8 *value = g_malloc(value_size + 1);
-        memcpy(value, buffer + pos, value_size);
+        memcpy(value, value_ptr, value_size);
         value[value_size] = 0;
         g_free(buffer);
+        g_clear_pointer(&decrypted_value, g_bytes_unref);
         gsw_rawstr_entry_clear(&entry);
         return g_bytes_new_take(value, value_size);
     }

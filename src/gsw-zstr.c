@@ -5,6 +5,7 @@
 #include "gsw-module-backend.h"
 #include "gsw-backend-utils.h"
 #include "gsw-codec.h"
+#include "gsw-cipher.h"
 #include "gsw-data.h"
 #include "gsw-utils.h"
 #include <gsword/gsw-str-key.h>
@@ -27,6 +28,7 @@ typedef struct {
     FILE *zdx;
     FILE *zdt;
     GswZStrCache cache;
+    gchar *cipher_key;
 } GswZStrData;
 
 typedef struct {
@@ -200,6 +202,24 @@ gsw_zstr_load_block(GswZStrData *data, guint32 block, GError **error)
         g_free(compressed);
         return FALSE;
     }
+    if (data->cipher_key != NULL) {
+        GBytes *decrypted = NULL;
+        gsize decrypted_len = 0;
+        const gchar *decrypted_data;
+
+        if (!gsw_cipher_decrypt(data->cipher_key, compressed, size,
+                                &decrypted, error)) {
+            g_free(compressed);
+            return FALSE;
+        }
+        decrypted_data = g_bytes_get_data(decrypted, &decrypted_len);
+        g_free(compressed);
+        compressed = g_malloc(decrypted_len + 1);
+        memcpy(compressed, decrypted_data, decrypted_len);
+        compressed[decrypted_len] = '\0';
+        size = (guint32)decrypted_len;
+        g_bytes_unref(decrypted);
+    }
     if (!gsw_decompress(data->compression, compressed, size, 0, &out, error)) {
         g_free(compressed);
         return FALSE;
@@ -281,6 +301,15 @@ gsw_zstr_open(GswModuleBackend *backend, GError **error)
                     "Cannot open zLD data files");
         return FALSE;
     }
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        const gchar *key = gsw_module_info_get_value(backend->info, "CipherKey");
+        if (key == NULL || *key == '\0') {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                        "zLD module is encrypted but no CipherKey is configured");
+            return FALSE;
+        }
+        data->cipher_key = g_strdup(key);
+    }
     backend->opened = TRUE;
     return TRUE;
 }
@@ -297,6 +326,8 @@ gsw_zstr_close(GswModuleBackend *backend)
     data->idx = data->dat = data->zdx = data->zdt = NULL;
     g_clear_pointer(&data->cache.data, g_bytes_unref);
     data->cache.block = -1;
+    g_free(data->cipher_key);
+    data->cipher_key = NULL;
     backend->opened = FALSE;
 }
 
