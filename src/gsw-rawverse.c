@@ -117,6 +117,11 @@ gsw_rawverse_find(GswModuleBackend *backend, GswKey *key,
     }
 
     offset = (gint64)index * (gint64)rec_size;
+    if (offset + (gint64)rec_size > gsw_file_size(idx)) {
+        *start = 0;
+        *size = 0;
+        return TRUE;
+    }
     if (!gsw_file_read_at(idx, offset, record, rec_size, error))
         return FALSE;
 

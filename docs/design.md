@@ -42,12 +42,12 @@
 以下功能不在第一版承诺范围内，但架构应预留：
 
 - 写入/编辑模块（`setEntry`、`linkEntry`、`deleteEntry`）。
-- 搜索框架（Lucene、正则搜索等）。
+- 完整 Lucene/索引搜索框架；当前提供基础 phrase/multiword/regex 搜索。
 - 完整渲染过滤器（Strong's、脚注、red letter、headings 等所有 OSIS/ThML/GBF 选项）。
 - 模块加密/解密已作为 M5 功能实现（Sapphire、`CipherKey`）。
 - 所有本地化书名、界面翻译。
 - SFTP、HTTP 代理认证 UI、断点续传（可后续增加）。
-- `RawFiles`、`HREFCom`、`VerseTreeKey` 等冷门驱动。
+- `VerseTreeKey` 等冷门驱动。
 - 与旧 `gsword` 0.1.x 的源代码/ABI 兼容。
 
 ### 1.3 基本假设
@@ -435,6 +435,12 @@ typedef enum {
   GSW_POSITION_TOP,
   GSW_POSITION_BOTTOM
 } GswPosition;
+
+typedef enum {
+  GSW_SEARCH_PHRASE,
+  GSW_SEARCH_MULTIWORD,
+  GSW_SEARCH_REGEX
+} GswSearchType;
 ```
 
 ### 5.2 `GswConfig`
@@ -587,6 +593,14 @@ gboolean       gsw_module_set_position(GswModule *self, GswPosition pos, GError 
 gboolean       gsw_module_has_entry(GswModule *self);
 gsize          gsw_module_get_entry_size(GswModule *self);
 gboolean       gsw_module_is_writable(GswModule *self);
+
+/**
+ * gsw_module_search:
+ * Returns: (transfer full) (array zero-terminated=1) (element-type utf8):
+ *   matching key texts
+ */
+gchar **gsw_module_search(GswModule *self, const gchar *text,
+                          GswSearchType type, GError **error);
 ```
 
 错误语义：
@@ -1180,8 +1194,8 @@ struct _GswModuleBackendClass {
 | `RawLD4` | StrKey | RawStr 8B | 字典 4B |
 | `zLD` | StrKey | ZStr | 压缩字典 |
 | `RawGenBook` | TreeKey | RawGenBook | 通用书 |
-| `RawFiles` | TreeKey/StrKey | 暂不支持 | 文件型 |
-| `HREFCom` | StrKey | 暂不支持 | 注释 |
+| `RawFiles` | VerseKey | 已支持 | 每条目一个文件 |
+| `HREFCom` | VerseKey | 已支持 | Prefix + 条目 URL |
 
 `zCom` 与 `zText` 的区别只在语义/类型，存储格式相同；`GswModuleInfo` 的 `Type` 决定 `GswModuleType`。
 
@@ -1197,7 +1211,7 @@ struct _GswModuleBackendClass {
   - `UTF-8`：原样。
   - `Latin-1`/空：`g_convert`。
   - `UTF-16`：`g_convert`。
-  - `SCSU`：v1 返回 `GSW_ERROR_UNSUPPORTED`（可后续实现）。
+  - `SCSU`：内置 SCSU -> UTF-8 解码。
 - 原始条目中的 `\0`：按字节读取，不依赖 `strlen`；返回 `GBytes` 保证二进制安全。
 - `get_text`：
   - 去除 XML/HTML 标签（OSIS/ThML/GBF/HTML）。
@@ -1476,7 +1490,7 @@ gir = gnome.generate_gir(gsword_lib,
 
 - GIR/typelib、文档、示例。
 - 异步包装（GTask）。
-- 可选：Sapphire 解密、更多 versification、渲染过滤器、搜索。
+- 已实现：Sapphire 解密、渲染选项、搜索、SCSU、RawFiles/HREFCom。
 - 性能优化（块缓存、目录扫描）。
 
 ---

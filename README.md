@@ -18,8 +18,10 @@ M0–M5 已实现并通过单元/集成测试：
 - HTTP/HTTPS/FTP 传输、进度/取消、`mods.d.tar.gz` 安全解包、安装/卸载
 - `GswVerseKey` + 全部上游 versification 系统
 - RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
-- RawLD/RawLD4/zLD、RawGenBook、LZSS/ZIP/BZIP2/XZ、Sapphire 解密
+- RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
+- LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
 - 基础渲染选项、本地化书名、4 块 zVerse 缓存、GI 与异步 API
+- 基础搜索 API（phrase/multiword/regex）
 
 ## 快速开始
 
@@ -41,6 +43,8 @@ meson test -C build
 ./build/examples/gsword-genbook-walk ~/.sword BookChapter 1
 ./build/examples/gsword-render-options ~/.sword KJV "John 3:16" "Strong's Numbers=On"
 ./build/examples/gsword-locale ~/.sword zh_CN KJV "John 3:16"
+./build/examples/gsword-search ~/.sword KJV "God so loved" phrase
+./build/examples/gsword-search ~/.sword KJV "God.*world" regex
 
 # 安装（需要预先配置 InstallMgr.conf）
 ./build/examples/gsword-install-sources ~/.sword/InstallMgr
@@ -56,7 +60,7 @@ meson compile -C build-gir
 meson test -C build-gir introspection
 ```
 
-M5 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、`locales.d` 本地化书名、zVerse 多块缓存，以及更多示例。
+M5/M6 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、`locales.d` 本地化书名、zVerse 多块缓存，以及更多示例。
 
 ## 文档
 

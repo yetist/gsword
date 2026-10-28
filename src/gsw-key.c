@@ -709,7 +709,6 @@ gsw_verse_key_set_index(GswVerseKey *self, glong index)
     self->chapter = chapter;
     self->verse = verse;
     self->valid = TRUE;
-    gsw_key_normalize(self);
     gsw_verse_key_freshtext(self);
 }
 
@@ -727,7 +726,34 @@ gsw_key_next(GswKey *self, gint steps)
     index = gsw_verse_key_get_index(self);
     if (index < 0)
         return FALSE;
-    gsw_verse_key_set_index(self, index + steps);
+
+    index += steps;
+    if (index < 0) {
+        self->valid = FALSE;
+        return FALSE;
+    }
+
+    if (!self->intros) {
+        /* Skip module/testament/book/chapter heading entries. */
+        while (index >= 0) {
+            gsw_verse_key_set_index(self, index);
+            if (!self->valid)
+                return FALSE;
+            if (self->testament == 0 || self->book == 0 ||
+                self->chapter == 0 || self->verse == 0) {
+                index += steps > 0 ? 1 : -1;
+                continue;
+            }
+            break;
+        }
+        if (index < 0) {
+            self->valid = FALSE;
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    gsw_verse_key_set_index(self, index);
     return self->valid;
 }
 

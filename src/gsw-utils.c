@@ -625,6 +625,8 @@ gsw_driver_is_supported(GswDriver driver)
     case GSW_DRIVER_RAW_LD4:
     case GSW_DRIVER_Z_LD:
     case GSW_DRIVER_RAW_GENBOOK:
+    case GSW_DRIVER_RAW_FILES:
+    case GSW_DRIVER_HREF_COM:
         return TRUE;
     default:
         return FALSE;
@@ -684,6 +686,9 @@ gsw_module_type_default_for_driver(GswDriver driver)
         return GSW_MODULE_TYPE_LEXDICTS;
     case GSW_DRIVER_RAW_GENBOOK:
         return GSW_MODULE_TYPE_GENBOOKS;
+    case GSW_DRIVER_RAW_FILES:
+    case GSW_DRIVER_HREF_COM:
+        return GSW_MODULE_TYPE_COMMENTARIES;
     case GSW_DRIVER_RAW_TEXT:
     case GSW_DRIVER_RAW_TEXT4:
     case GSW_DRIVER_Z_TEXT:

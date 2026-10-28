@@ -76,3 +76,12 @@
 - [x] zVerse 4 块缓存 + zLD 单块缓存
 
 验收：GI 绑定可用；示例覆盖读取、安装、进度、取消、异步、渲染选项、本地化；加密模块可读。
+
+## M6 增强扩展
+
+- [x] SCSU -> UTF-8 解码
+- [x] `RawFiles` 驱动
+- [x] `HREFCom` 驱动
+- [x] 基础搜索 API（phrase/multiword/regex）
+- [x] `gsword-search` 示例与搜索测试
+- [x] 搜索结果恢复当前键、跳过标题条目、索引越界安全处理

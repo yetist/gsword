@@ -59,6 +59,14 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('locale', test_locale)
 
+  test_encoding = executable('test-encoding', 'test-encoding.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('encoding', test_encoding)
+
+  test_search = executable('test-search', 'test-search.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('search', test_search)
+
   if get_option('introspection')
     test('introspection', python3,
       args: [files('test-introspection.py')],

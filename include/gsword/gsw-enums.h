@@ -84,6 +84,12 @@ typedef enum {
     GSW_POSITION_BOTTOM
 } GswPosition;
 
+typedef enum {
+    GSW_SEARCH_PHRASE,
+    GSW_SEARCH_MULTIWORD,
+    GSW_SEARCH_REGEX
+} GswSearchType;
+
 #define GSW_TYPE_MODULE_TYPE (gsw_module_type_get_type())
 #define GSW_TYPE_DRIVER (gsw_driver_get_type())
 #define GSW_TYPE_SOURCE_TYPE (gsw_source_type_get_type())
@@ -91,6 +97,7 @@ typedef enum {
 #define GSW_TYPE_DIRECTION (gsw_direction_get_type())
 #define GSW_TYPE_MARKUP (gsw_markup_get_type())
 #define GSW_TYPE_POSITION (gsw_position_get_type())
+#define GSW_TYPE_SEARCH_TYPE (gsw_search_type_get_type())
 
 GType gsw_module_type_get_type(void);
 GType gsw_driver_get_type(void);
@@ -99,6 +106,7 @@ GType gsw_encoding_get_type(void);
 GType gsw_direction_get_type(void);
 GType gsw_markup_get_type(void);
 GType gsw_position_get_type(void);
+GType gsw_search_type_get_type(void);
 
 const gchar *gsw_source_type_to_string(GswSourceType type);
 const gchar *gsw_source_type_to_scheme(GswSourceType type);

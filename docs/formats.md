@@ -747,10 +747,10 @@ Caption|host|directory|user|password|uid
 | RawLD / RawLD4 | 是 | 否 | 字典 |
 | zLD | 是 | 否 | EntriesBlock |
 | RawGenBook | 是 | 否 | TreeKey |
-| RawFiles | 否 | 否 | 后续 |
-| HREFCom | 否 | 否 | 后续 |
+| RawFiles | 是 | 否 | 每条目一个文件 |
+| HREFCom | 是 | 否 | Prefix + 条目 URL |
 | Sapphire 加密 | 是 | 否 | zText/zCom/zLD/RawText/RawCom/RawLD/RawGenBook |
-| SCSU 编码 | 否（报错） | 否 | 后续 |
+| SCSU 编码 | 是 | 否 | SCSU -> UTF-8 |
 
 ---
 

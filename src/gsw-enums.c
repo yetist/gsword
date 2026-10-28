@@ -87,6 +87,13 @@ static const GEnumValue position_values[] = {
     { 0, NULL, NULL }
 };
 
+static const GEnumValue search_type_values[] = {
+    { GSW_SEARCH_PHRASE,    "GSW_SEARCH_PHRASE",    "phrase" },
+    { GSW_SEARCH_MULTIWORD, "GSW_SEARCH_MULTIWORD", "multiword" },
+    { GSW_SEARCH_REGEX,     "GSW_SEARCH_REGEX",     "regex" },
+    { 0, NULL, NULL }
+};
+
 GSW_DEFINE_ENUM_TYPE(gsw_module_type_get_type, "GswModuleType", module_type_values)
 GSW_DEFINE_ENUM_TYPE(gsw_driver_get_type, "GswDriver", driver_values)
 GSW_DEFINE_ENUM_TYPE(gsw_source_type_get_type, "GswSourceType", source_type_values)
@@ -94,6 +101,7 @@ GSW_DEFINE_ENUM_TYPE(gsw_encoding_get_type, "GswEncoding", encoding_values)
 GSW_DEFINE_ENUM_TYPE(gsw_direction_get_type, "GswDirection", direction_values)
 GSW_DEFINE_ENUM_TYPE(gsw_markup_get_type, "GswMarkup", markup_values)
 GSW_DEFINE_ENUM_TYPE(gsw_position_get_type, "GswPosition", position_values)
+GSW_DEFINE_ENUM_TYPE(gsw_search_type_get_type, "GswSearchType", search_type_values)
 
 const gchar *
 gsw_source_type_to_string(GswSourceType type)

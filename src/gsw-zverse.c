@@ -238,6 +238,13 @@ gsw_zverse_find(GswModuleBackend *backend, GswKey *key,
         return FALSE;
     }
 
+    if ((gint64)index * (gint64)rec_size + (gint64)rec_size >
+        gsw_file_size(data->comp[i])) {
+        *block = 0;
+        *start = 0;
+        *size = 0;
+        return TRUE;
+    }
     if (!gsw_file_read_at(data->comp[i], (gint64)index * (gint64)rec_size,
                           record, rec_size, error))
         return FALSE;

@@ -31,6 +31,10 @@ gsw_module_backend_new(GswModuleInfo *info, GError **error)
         return gsw_zstr_backend_new(info);
     case GSW_DRIVER_RAW_GENBOOK:
         return gsw_rawgenbook_backend_new(info);
+    case GSW_DRIVER_RAW_FILES:
+        return gsw_rawfiles_backend_new(info);
+    case GSW_DRIVER_HREF_COM:
+        return gsw_hrefcom_backend_new(info);
     default:
         g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
                     "Module driver %s is not supported",
