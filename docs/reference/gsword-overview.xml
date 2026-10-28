@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<chapter id="gsword-overview">
+  <title>Overview</title>
+
+  <para>
+    gsword is a C/GObject implementation of the SWORD module library. It is
+    organized around a module library manager, immutable module metadata, and
+    lazily opened module readers.
+  </para>
+
+  <sect1 id="gsword-basic-usage">
+    <title>Basic usage</title>
+    <para>
+      Open a module library, look up a module, set a key, and read text:
+    </para>
+    <programlisting language="C"><![CDATA[
+GError *error = NULL;
+GswManager *manager = gsw_manager_new_for_path("~/.sword", &error);
+GswModule *module = gsw_manager_get_module(manager, "KJV");
+
+gsw_module_set_key_text(module, "John 3:16", &error);
+gchar *text = gsw_module_get_text(module, &error);
+g_print("%s\n", text);
+]]></programlisting>
+  </sect1>
+
+  <sect1 id="gsword-installation">
+    <title>Installing modules</title>
+    <para>
+      <literal>GswInstallManager</literal> reads <filename>InstallMgr.conf</filename>,
+      refreshes remote sources, reports progress through
+      <literal>GswStatusReporter</literal>, and installs modules atomically.
+      Synchronous and GTask-based asynchronous APIs are available.
+    </para>
+  </sect1>
+
+  <sect1 id="gsword-drivers">
+    <title>Supported drivers</title>
+    <para>
+      Readers are provided for RawText, zText, RawCom, zCom, RawLD, zLD,
+      RawGenBook, RawFiles, and HREFCom. Compression support includes LZSS,
+      zlib, bzip2, and xz. Encrypted modules use SWORD-compatible Sapphire
+      decryption.
+    </para>
+  </sect1>
+
+  <sect1 id="gsword-search">
+    <title>Searching</title>
+    <para>
+      <function>gsw_module_search()</function> provides phrase, multiword, and
+      regular-expression searches over a module and returns matching key texts.
+    </para>
+  </sect1>
+
+  <sect1 id="gsword-introspection">
+    <title>GObject Introspection</title>
+    <para>
+      Configure with <literal>-Dintrospection=true</literal> to generate
+      <filename>Gsw-0.1.gir</filename> and <filename>Gsw-0.1.typelib</filename>
+      for Python, JavaScript, and other GObject binding consumers.
+    </para>
+  </sect1>
+</chapter>

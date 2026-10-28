@@ -52,6 +52,14 @@ meson test -C build
 ./build/examples/gsword-async-install ~/.sword ~/.sword/InstallMgr CrossWire KJV
 ```
 
+生成 gtk-doc API 文档：
+
+```sh
+meson setup build-doc -Dgtk_doc=true
+meson compile -C build-doc docs
+# 输出：build-doc/docs/reference/html/index.html
+```
+
 生成 GObject Introspection 数据：
 
 ```sh
@@ -75,7 +83,7 @@ M5/M6 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 A
 - GLib / GObject / GIO（>= 2.66）
 - libcurl（>= 7.68）
 - zlib
-- 可选：libbz2、liblzma
+- 可选：libbz2、liblzma、gtk-doc（API 文档）
 - Meson / Ninja
 
 ## 许可证

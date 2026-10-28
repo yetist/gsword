@@ -137,5 +137,9 @@ if get_option('introspection')
   )
 endif
 
+if get_option('gtk_doc')
+  subdir('docs/reference')
+endif
+
 subdir('tests')
 subdir('examples')
