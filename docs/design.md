@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.2（核心决策已确认）
+- 状态：设计草案 v0.3（M0–M4 已实现）
 - 日期：2026-10-28
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -483,6 +483,7 @@ G_DECLARE_FINAL_TYPE(GswModuleInfo, gsw_module_info, GSW, MODULE_INFO, GObject)
 GswModuleInfo *gsw_module_info_new_from_config(const gchar *name,
                                                GswConfig *config,
                                                const gchar *config_file,
+                                               const gchar *prefix_path,
                                                GError **error);
 
 const gchar   *gsw_module_info_get_name(GswModuleInfo *self);

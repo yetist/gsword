@@ -33,6 +33,24 @@ main(int argc, char **argv)
     }
     gsw_install_manager_add_source(installer, source);
 
+    /* Cancellation must not leave a refreshed source behind. */
+    {
+        GCancellable *cancellable = g_cancellable_new();
+        g_cancellable_cancel(cancellable);
+        gsw_install_manager_set_cancellable(installer, cancellable);
+        if (gsw_install_manager_refresh_remote_source(installer, source, &error)) {
+            g_printerr("cancelled refresh unexpectedly succeeded\n");
+            return 1;
+        }
+        if (!g_error_matches(error, GSW_ERROR, GSW_ERROR_CANCELLED)) {
+            g_printerr("expected cancellation, got: %s\n", error->message);
+            return 1;
+        }
+        g_clear_error(&error);
+        gsw_install_manager_set_cancellable(installer, NULL);
+        g_object_unref(cancellable);
+    }
+
     if (!gsw_install_manager_refresh_remote_source(installer, source, &error)) {
         g_printerr("refresh: %s\n", error->message);
         return 1;
