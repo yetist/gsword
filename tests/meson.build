@@ -34,8 +34,13 @@ if get_option('tests')
   test('reader', test_reader)
 
   test_codec = executable('test-codec', 'test-codec.c',
-    dependencies: [gsword_dep, glib_dep, zlib_dep])
+    dependencies: [gsword_dep, glib_dep, zlib_dep],
+    c_args: extra_c_args)
   test('codec', test_codec)
+
+  test_status = executable('test-status', 'test-status.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('status', test_status)
 
   test_install_http = executable('test-install-http', 'test-install-http.c',
     dependencies: [gsword_dep, glib_dep])
