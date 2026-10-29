@@ -8,6 +8,8 @@
 - `lib/`：`libgsword` 库实现
 - `include/gsword/`：`libgsword` 公共 API
 - `src/`：`gsword` GTK4 桌面应用
+- `data/locales.d/`：libgsword 自有 locale 数据
+- `tools/`：locale 导入、校验和 v11n 生成工具
 - `examples/`：库示例和 GTK4 前端原型
 - `tests/`：库测试
 - `docs/app-design.md`：`gsword` 应用功能与界面设计

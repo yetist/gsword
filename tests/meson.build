@@ -87,6 +87,10 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('search', test_search)
 
+  test('locales', python3,
+    args: [files('../tools/validate-locales.py')],
+    timeout: 60)
+
   if get_option('introspection')
     test('introspection', python3,
       args: [files('test-introspection.py')],

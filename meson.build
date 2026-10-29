@@ -158,5 +158,6 @@ if get_option('docs')
   subdir('docs/reference')
 endif
 
+subdir('data')
 subdir('tests')
 subdir('examples')
