@@ -3,6 +3,7 @@
  */
 
 #include "gsw-module-backend.h"
+#include "gsw-cache.h"
 #include "gsw-codec.h"
 #include "gsw-data.h"
 #include "gsw-key-internal.h"
@@ -12,10 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct {
-    gint64 block;
-    GBytes *data;
-} GswZCache;
+#define GSW_ZVERSE_CACHE_SIZE 16
 
 typedef struct {
     gboolean is4;
@@ -24,8 +22,7 @@ typedef struct {
     FILE *index[2];
     FILE *text[2];
     FILE *comp[2];
-    GswZCache cache[2][4];
-    guint next[2];
+    GswBlockCache *cache[2];
     gchar *cipher_key;
 } GswZVerseData;
 
@@ -117,17 +114,11 @@ gsw_zverse_close(GswModuleBackend *backend)
     gint i;
 
     for (i = 0; i < 2; i++) {
-        guint j;
-
         if (data->index[i]) fclose(data->index[i]);
         if (data->text[i]) fclose(data->text[i]);
         if (data->comp[i]) fclose(data->comp[i]);
         data->index[i] = data->text[i] = data->comp[i] = NULL;
-        for (j = 0; j < 4; j++) {
-            g_clear_pointer(&data->cache[i][j].data, g_bytes_unref);
-            data->cache[i][j].block = -1;
-        }
-        data->next[i] = 0;
+        gsw_block_cache_clear(data->cache[i]);
     }
     g_free(data->cipher_key);
     data->cipher_key = NULL;
@@ -140,24 +131,18 @@ gsw_zverse_load_block(GswModuleBackend *backend, gint testament,
 {
     GswZVerseData *data = backend->data;
     gint i = testament - 1;
-    guint j;
-    guint slot;
+    guint64 cache_key = ((guint64)testament << 32) | block;
+    GBytes *cached;
     guint8 record[12];
     guint32 comp_offset, comp_size, uncomp_size;
     gchar *compressed;
     GBytes *uncompressed = NULL;
 
-    for (j = 0; j < 4; j++) {
-        if (data->cache[i][j].block == (gint64)block &&
-            data->cache[i][j].data != NULL) {
-            *out = data->cache[i][j].data;
-            return TRUE;
-        }
+    cached = gsw_block_cache_lookup(data->cache[i], cache_key);
+    if (cached != NULL) {
+        *out = cached;
+        return TRUE;
     }
-
-    slot = data->next[i]++ % 4;
-    g_clear_pointer(&data->cache[i][slot].data, g_bytes_unref);
-    data->cache[i][slot].block = -1;
 
     if (!gsw_file_read_at(data->index[i], (gint64)block * 12, record, 12, error))
         return FALSE;
@@ -204,9 +189,8 @@ gsw_zverse_load_block(GswModuleBackend *backend, gint testament,
     }
     g_free(compressed);
 
-    data->cache[i][slot].block = block;
-    data->cache[i][slot].data = uncompressed;
-    *out = uncompressed;
+    gsw_block_cache_insert(data->cache[i], cache_key, uncompressed);
+    *out = gsw_block_cache_lookup(data->cache[i], cache_key);
     return TRUE;
 }
 
@@ -342,6 +326,8 @@ gsw_zverse_free(GswModuleBackend *backend)
     GswZVerseData *data = backend->data;
 
     gsw_zverse_close(backend);
+    gsw_block_cache_free(data->cache[0]);
+    gsw_block_cache_free(data->cache[1]);
     g_free(data);
     backend->data = NULL;
 }
@@ -370,12 +356,8 @@ gsw_zverse_backend_new(GswModuleInfo *info)
     data->letter = gsw_zverse_letter(info);
     data->compression = gsw_compression_from_string(
         gsw_module_info_get_value(info, "CompressType"));
-    for (i = 0; i < 2; i++) {
-        guint j;
-        for (j = 0; j < 4; j++)
-            data->cache[i][j].block = -1;
-        data->next[i] = 0;
-    }
+    for (i = 0; i < 2; i++)
+        data->cache[i] = gsw_block_cache_new(GSW_ZVERSE_CACHE_SIZE);
 
     backend->info = g_object_ref(info);
     backend->ops = &ops;

@@ -4,6 +4,7 @@
 
 #include "gsw-module-backend.h"
 #include "gsw-backend-utils.h"
+#include "gsw-cache.h"
 #include "gsw-codec.h"
 #include "gsw-cipher.h"
 #include "gsw-data.h"
@@ -14,10 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct {
-    gint64 block;
-    GBytes *data;
-} GswZStrCache;
+#define GSW_ZSTR_CACHE_SIZE 16
 
 typedef struct {
     gboolean case_sensitive;
@@ -27,7 +25,7 @@ typedef struct {
     FILE *dat;
     FILE *zdx;
     FILE *zdt;
-    GswZStrCache cache;
+    GswBlockCache *cache;
     gchar *cipher_key;
 } GswZStrData;
 
@@ -174,18 +172,20 @@ gsw_zstr_find(GswZStrData *data, const gchar *key, GswZStrEntry *entry,
 }
 
 static gboolean
-gsw_zstr_load_block(GswZStrData *data, guint32 block, GError **error)
+gsw_zstr_load_block(GswZStrData *data, guint32 block, GBytes **out,
+                    GError **error)
 {
     guint8 record[8];
     guint32 offset, size;
     gchar *compressed;
-    GBytes *out = NULL;
+    GBytes *result = NULL;
+    GBytes *cached;
 
-    if (data->cache.block == (gint64)block && data->cache.data != NULL)
+    cached = gsw_block_cache_lookup(data->cache, block);
+    if (cached != NULL) {
+        *out = cached;
         return TRUE;
-
-    g_clear_pointer(&data->cache.data, g_bytes_unref);
-    data->cache.block = -1;
+    }
 
     if (!gsw_file_read_at(data->zdx, (gint64)block * 8, record, 8, error))
         return FALSE;
@@ -220,14 +220,14 @@ gsw_zstr_load_block(GswZStrData *data, guint32 block, GError **error)
         size = (guint32)decrypted_len;
         g_bytes_unref(decrypted);
     }
-    if (!gsw_decompress(data->compression, compressed, size, 0, &out, error)) {
+    if (!gsw_decompress(data->compression, compressed, size, 0, &result, error)) {
         g_free(compressed);
         return FALSE;
     }
     g_free(compressed);
 
-    data->cache.block = block;
-    data->cache.data = out;
+    gsw_block_cache_insert(data->cache, block, result);
+    *out = gsw_block_cache_lookup(data->cache, block);
     return TRUE;
 }
 
@@ -238,11 +238,12 @@ gsw_zstr_get_entry(GswZStrData *data, guint32 block, guint32 index,
     gsize len;
     const guint8 *raw;
     guint32 count, offset, size;
+    GBytes *block_data = NULL;
 
-    if (!gsw_zstr_load_block(data, block, error))
+    if (!gsw_zstr_load_block(data, block, &block_data, error))
         return NULL;
 
-    raw = g_bytes_get_data(data->cache.data, &len);
+    raw = g_bytes_get_data(block_data, &len);
     if (len < 4) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
                     "zLD block is too short");
@@ -324,8 +325,7 @@ gsw_zstr_close(GswModuleBackend *backend)
     if (data->zdx) fclose(data->zdx);
     if (data->zdt) fclose(data->zdt);
     data->idx = data->dat = data->zdx = data->zdt = NULL;
-    g_clear_pointer(&data->cache.data, g_bytes_unref);
-    data->cache.block = -1;
+    gsw_block_cache_clear(data->cache);
     g_free(data->cipher_key);
     data->cipher_key = NULL;
     backend->opened = FALSE;
@@ -436,6 +436,7 @@ gsw_zstr_free(GswModuleBackend *backend)
     GswZStrData *data = backend->data;
 
     gsw_zstr_close(backend);
+    gsw_block_cache_free(data->cache);
     g_free(data);
     backend->data = NULL;
 }
@@ -466,7 +467,7 @@ gsw_zstr_backend_new(GswModuleInfo *info)
     }
     data->compression = gsw_compression_from_string(
         gsw_module_info_get_value(info, "CompressType"));
-    data->cache.block = -1;
+    data->cache = gsw_block_cache_new(GSW_ZSTR_CACHE_SIZE);
     backend->info = g_object_ref(info);
     backend->ops = &ops;
     backend->data = data;

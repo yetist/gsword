@@ -39,6 +39,7 @@ gsword_sources = files(
   'src/gsw-enums.c',
   'src/gsw-utils.c',
   'src/gsw-lock.c',
+  'src/gsw-cache.c',
   'src/gsw-options.c',
   'src/gsw-render.c',
   'src/gsw-search.c',
