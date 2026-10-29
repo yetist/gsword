@@ -177,15 +177,20 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
         return -1;
 
     {
-        const gchar *osis = gsw_locale_mgr_translate_abbreviation(
+        GPtrArray *candidates = gsw_locale_mgr_get_book_candidates(
             gsw_locale_mgr_get_default(), token, NULL);
+        guint i;
 
-        if (osis != NULL) {
-            gint index = gsw_versification_get_book_number_by_osis(v11n, osis);
+        for (i = 0; i < candidates->len; i++) {
+            gint index = gsw_versification_get_book_number_by_osis(
+                v11n, g_ptr_array_index(candidates, i));
 
-            if (index >= 0)
+            if (index >= 0) {
+                g_ptr_array_unref(candidates);
                 return index;
+            }
         }
+        g_ptr_array_unref(candidates);
     }
 
     {
