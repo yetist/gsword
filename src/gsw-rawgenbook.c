@@ -193,6 +193,11 @@ gsw_rawgenbook_write_entry(GswModuleBackend *backend, GswKey *key,
         g_free(base);
         return FALSE;
     }
+    if (!gsw_tree_key_recover_locked(key, error)) {
+        gsw_file_unlock(lock_fd);
+        g_free(base);
+        return FALSE;
+    }
     path = g_strconcat(base, ".bdt", NULL);
     g_free(base);
     if (g_stat(path, &st) != 0) {
@@ -262,6 +267,10 @@ gsw_rawgenbook_delete_entry(GswModuleBackend *backend, GswKey *key,
     g_free(lock_path);
     if (lock_fd < 0)
         return FALSE;
+    if (!gsw_tree_key_recover_locked(key, error)) {
+        gsw_file_unlock(lock_fd);
+        return FALSE;
+    }
 
     ok = gsw_tree_key_set_user_data(key, empty, 8);
     gsw_file_unlock(lock_fd);

@@ -23,6 +23,9 @@ typedef struct {
     gint user_size;
 } GswTreeNode;
 
+static gint tree_lock(GswKey *self, GError **error);
+gboolean gsw_tree_key_recover_locked(GswKey *self, GError **error);
+
 static gboolean
 gsw_tree_read_node(const gchar *base, glong offset, GswTreeNode *node,
                    GError **error)
@@ -214,6 +217,22 @@ tree_map_offset(GArray *remap, gint offset)
 }
 
 static gboolean
+tree_restore_backups(const gchar *dat_path, const gchar *idx_path,
+                     const gchar *dat_bak, const gchar *idx_bak)
+{
+    gboolean dat_ok = TRUE;
+    gboolean idx_ok = TRUE;
+
+    if (g_file_test(dat_bak, G_FILE_TEST_EXISTS))
+        dat_ok = g_rename(dat_bak, dat_path) == 0;
+    if (g_file_test(idx_bak, G_FILE_TEST_EXISTS))
+        idx_ok = g_rename(idx_bak, idx_path) == 0;
+    return dat_ok && idx_ok &&
+           g_file_test(dat_path, G_FILE_TEST_EXISTS) &&
+           g_file_test(idx_path, G_FILE_TEST_EXISTS);
+}
+
+static gboolean
 tree_write_nodes(GswKey *self, GPtrArray *nodes, GArray *remap,
                  GError **error)
 {
@@ -224,10 +243,9 @@ tree_write_nodes(GswKey *self, GPtrArray *nodes, GArray *remap,
     gchar *idx_path = g_strconcat(self->tree_path, ".idx", NULL);
     gchar *dat_new = g_strconcat(self->tree_path, ".dat.new", NULL);
     gchar *idx_new = g_strconcat(self->tree_path, ".idx.new", NULL);
-    gchar *old_dat = NULL;
-    gchar *old_idx = NULL;
-    gsize old_dat_len = 0;
-    gsize old_idx_len = 0;
+    gchar *dat_bak = g_strconcat(self->tree_path, ".dat.bak", NULL);
+    gchar *idx_bak = g_strconcat(self->tree_path, ".idx.bak", NULL);
+    gchar *txn_path = g_strconcat(self->tree_path, ".txn", NULL);
     guint i;
     gboolean ok = FALSE;
 
@@ -252,43 +270,163 @@ tree_write_nodes(GswKey *self, GPtrArray *nodes, GArray *remap,
         tree_append_u32(idx, offset);
     }
 
-    if (!g_file_get_contents(dat_path, &old_dat, &old_dat_len, NULL) ||
-        !g_file_get_contents(idx_path, &old_idx, &old_idx_len, NULL))
-        goto out;
     if (!g_file_set_contents(dat_new, (const gchar *)dat->data,
                              (gssize)dat->len, error) ||
         !g_file_set_contents(idx_new, (const gchar *)idx->data,
                              (gssize)idx->len, error))
         goto out;
 
+    if (!g_file_set_contents(txn_path, "gsword-tree-txn-1\n", -1, error)) {
+        g_unlink(txn_path);
+        goto out;
+    }
+
+    if (g_rename(dat_path, dat_bak) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot back up %s: %s", dat_path, g_strerror(errno));
+        if (tree_restore_backups(dat_path, idx_path, dat_bak, idx_bak))
+            g_unlink(txn_path);
+        goto out;
+    }
+    if (g_rename(idx_path, idx_bak) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot back up %s: %s", idx_path, g_strerror(errno));
+        if (tree_restore_backups(dat_path, idx_path, dat_bak, idx_bak))
+            g_unlink(txn_path);
+        goto out;
+    }
     if (g_rename(dat_new, dat_path) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
                     "Cannot replace %s: %s", dat_path, g_strerror(errno));
+        if (tree_restore_backups(dat_path, idx_path, dat_bak, idx_bak))
+            g_unlink(txn_path);
         goto out;
     }
     if (g_rename(idx_new, idx_path) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
                     "Cannot replace %s: %s", idx_path, g_strerror(errno));
-        g_file_set_contents(dat_path, old_dat, (gssize)old_dat_len, NULL);
+        if (tree_restore_backups(dat_path, idx_path, dat_bak, idx_bak))
+            g_unlink(txn_path);
         goto out;
     }
 
+    g_unlink(txn_path);
+    g_unlink(dat_bak);
+    g_unlink(idx_bak);
     ok = TRUE;
 
 out:
-    if (!ok) {
+    if (!g_file_test(txn_path, G_FILE_TEST_EXISTS)) {
         g_unlink(dat_new);
         g_unlink(idx_new);
     }
-    g_free(old_dat);
-    g_free(old_idx);
     g_free(dat_path);
     g_free(idx_path);
     g_free(dat_new);
     g_free(idx_new);
+    g_free(dat_bak);
+    g_free(idx_bak);
+    g_free(txn_path);
     g_byte_array_unref(dat);
     g_byte_array_unref(idx);
     g_array_unref(dat_offsets);
+    return ok;
+}
+
+gboolean
+gsw_tree_key_recover_locked(GswKey *self, GError **error)
+{
+    gchar *dat_path = g_strconcat(self->tree_path, ".dat", NULL);
+    gchar *idx_path = g_strconcat(self->tree_path, ".idx", NULL);
+    gchar *dat_new = g_strconcat(self->tree_path, ".dat.new", NULL);
+    gchar *idx_new = g_strconcat(self->tree_path, ".idx.new", NULL);
+    gchar *dat_bak = g_strconcat(self->tree_path, ".dat.bak", NULL);
+    gchar *idx_bak = g_strconcat(self->tree_path, ".idx.bak", NULL);
+    gchar *txn_path = g_strconcat(self->tree_path, ".txn", NULL);
+    gboolean ok = TRUE;
+
+    if (g_file_test(txn_path, G_FILE_TEST_EXISTS)) {
+        gboolean dat_new_exists = g_file_test(dat_new, G_FILE_TEST_EXISTS);
+        gboolean idx_new_exists = g_file_test(idx_new, G_FILE_TEST_EXISTS);
+
+        if (dat_new_exists && idx_new_exists) {
+            if (g_rename(dat_new, dat_path) != 0 ||
+                g_rename(idx_new, idx_path) != 0) {
+                g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                            "Cannot recover general book transaction: %s",
+                            g_strerror(errno));
+                ok = FALSE;
+                goto out;
+            }
+        } else if (dat_new_exists || idx_new_exists) {
+            if (g_file_test(dat_bak, G_FILE_TEST_EXISTS) ||
+                g_file_test(idx_bak, G_FILE_TEST_EXISTS)) {
+                if (!tree_restore_backups(dat_path, idx_path,
+                                          dat_bak, idx_bak)) {
+                    g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                                "Cannot recover general book transaction");
+                    ok = FALSE;
+                    goto out;
+                }
+            } else {
+                if (dat_new_exists &&
+                    g_rename(dat_new, dat_path) != 0) {
+                    g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                                "Cannot recover %s: %s", dat_path,
+                                g_strerror(errno));
+                    ok = FALSE;
+                    goto out;
+                }
+                if (idx_new_exists &&
+                    g_rename(idx_new, idx_path) != 0) {
+                    g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                                "Cannot recover %s: %s", idx_path,
+                                g_strerror(errno));
+                    ok = FALSE;
+                    goto out;
+                }
+            }
+        }
+
+        if (!g_file_test(dat_path, G_FILE_TEST_EXISTS) ||
+            !g_file_test(idx_path, G_FILE_TEST_EXISTS)) {
+            if (!tree_restore_backups(dat_path, idx_path, dat_bak, idx_bak)) {
+                g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                            "Cannot recover general book transaction");
+                ok = FALSE;
+                goto out;
+            }
+        }
+        g_unlink(txn_path);
+        g_unlink(dat_bak);
+        g_unlink(idx_bak);
+        g_unlink(dat_new);
+        g_unlink(idx_new);
+    } else {
+        g_unlink(dat_new);
+        g_unlink(idx_new);
+        if (!g_file_test(dat_path, G_FILE_TEST_EXISTS)) {
+            if (g_file_test(dat_bak, G_FILE_TEST_EXISTS))
+                g_rename(dat_bak, dat_path);
+        } else {
+            g_unlink(dat_bak);
+        }
+        if (!g_file_test(idx_path, G_FILE_TEST_EXISTS)) {
+            if (g_file_test(idx_bak, G_FILE_TEST_EXISTS))
+                g_rename(idx_bak, idx_path);
+        } else {
+            g_unlink(idx_bak);
+        }
+    }
+
+out:
+    g_free(dat_path);
+    g_free(idx_path);
+    g_free(dat_new);
+    g_free(idx_new);
+    g_free(dat_bak);
+    g_free(idx_bak);
+    g_free(txn_path);
     return ok;
 }
 
@@ -359,17 +497,32 @@ gsw_tree_key_new(const gchar *base_path)
 {
     GswKey *self;
     GError *error = NULL;
+    gint lock_fd;
 
     g_return_val_if_fail(base_path != NULL, NULL);
 
     self = gsw_key_alloc_internal(GSW_KEY_KIND_TREE);
     self->tree_path = g_strdup(base_path);
     self->tree_offset = 0;
-    if (!gsw_tree_key_load(self, 0, &error)) {
-        g_clear_error(&error);
-        self->valid = FALSE;
+    lock_fd = tree_lock(self, &error);
+    if (lock_fd >= 0) {
+        if (!gsw_tree_key_recover_locked(self, &error))
+            g_clear_error(&error);
+        if (!gsw_tree_key_load(self, 0, &error)) {
+            g_clear_error(&error);
+            self->valid = FALSE;
+        } else {
+            self->valid = TRUE;
+        }
+        gsw_file_unlock(lock_fd);
     } else {
-        self->valid = TRUE;
+        g_clear_error(&error);
+        if (!gsw_tree_key_load(self, 0, &error)) {
+            g_clear_error(&error);
+            self->valid = FALSE;
+        } else {
+            self->valid = TRUE;
+        }
     }
     gsw_tree_key_update_text(self);
     return (GswTreeKey *)self;
@@ -621,6 +774,8 @@ tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
     lock_fd = tree_lock(self, error);
     if (lock_fd < 0)
         return FALSE;
+    if (!gsw_tree_key_recover_locked(self, error))
+        goto out;
     if (!tree_load_nodes(self, &nodes, error))
         goto out;
 
@@ -714,6 +869,8 @@ gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
     lock_fd = tree_lock((GswKey *)self, error);
     if (lock_fd < 0)
         return FALSE;
+    if (!gsw_tree_key_recover_locked((GswKey *)self, error))
+        goto out;
     if (!tree_load_nodes((GswKey *)self, &nodes, error))
         goto out;
 
@@ -785,6 +942,8 @@ gsw_tree_key_remove_node(GswTreeKey *self, GError **error)
     lock_fd = tree_lock((GswKey *)self, error);
     if (lock_fd < 0)
         return FALSE;
+    if (!gsw_tree_key_recover_locked((GswKey *)self, error))
+        goto out;
     if (!tree_load_nodes((GswKey *)self, &nodes, error))
         goto out;
 
@@ -856,6 +1015,17 @@ out:
 gboolean
 gsw_tree_key_set_position(GswKey *self, GswPosition pos)
 {
+    GError *error = NULL;
+    gint lock_fd = tree_lock(self, &error);
+
+    if (lock_fd >= 0) {
+        if (!gsw_tree_key_recover_locked(self, &error))
+            g_clear_error(&error);
+        gsw_file_unlock(lock_fd);
+    } else {
+        g_clear_error(&error);
+    }
+
     if (pos == GSW_POSITION_TOP)
         return gsw_tree_key_load(self, 0, NULL);
 
