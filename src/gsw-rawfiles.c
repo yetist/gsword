@@ -6,6 +6,7 @@
 #include "gsw-backend-utils.h"
 #include "gsw-data.h"
 #include "gsw-key-internal.h"
+#include "gsw-lock.h"
 #include "gsw-utils.h"
 
 #include <errno.h>
@@ -245,10 +246,12 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
     GswRawFilesData *data = backend->data;
     gchar *table_path = NULL;
     gchar *index_path = NULL;
+    gchar *lock_path = NULL;
     gchar *name = NULL;
     gchar *path = NULL;
     gchar *parent = NULL;
     FILE *idx = NULL;
+    gint lock_fd = -1;
     guint8 record[6];
     guint32 start = 0;
     guint16 size = 0;
@@ -267,6 +270,10 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
 
     index = gsw_verse_key_get_testament_index((GswVerseKey *)key);
     rawfiles_index_paths(data, key, &table_path, &index_path);
+    lock_path = g_strconcat(index_path, ".lock", NULL);
+    lock_fd = gsw_file_lock(lock_path, error);
+    if (lock_fd < 0)
+        goto out;
     idx = fopen(index_path, "r+b");
     if (idx == NULL) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
@@ -375,16 +382,20 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
     }
 
     if (new_entry &&
-        !rawfiles_write_record(idx, index, start, size, error))
+        !rawfiles_write_record(idx, index, start, size, error)) {
+        g_unlink(path);
         goto out;
+    }
 
     ok = TRUE;
 
 out:
     if (idx != NULL)
         fclose(idx);
+    gsw_file_unlock(lock_fd);
     g_free(table_path);
     g_free(index_path);
+    g_free(lock_path);
     g_free(name);
     g_free(path);
     g_free(parent);
@@ -402,13 +413,16 @@ gsw_rawfiles_delete_entry(GswModuleBackend *backend, GswKey *key,
     GswRawFilesData *data = backend->data;
     gchar *table_path = NULL;
     gchar *index_path = NULL;
+    gchar *lock_path = NULL;
     gchar *name = NULL;
     gchar *path = NULL;
     FILE *idx = NULL;
     FILE *table;
+    gint lock_fd = -1;
     guint8 record[6];
     guint32 start;
     guint16 size;
+    guint16 old_size;
     glong index;
     gboolean ok = FALSE;
 
@@ -417,6 +431,10 @@ gsw_rawfiles_delete_entry(GswModuleBackend *backend, GswKey *key,
 
     index = gsw_verse_key_get_testament_index((GswVerseKey *)key);
     rawfiles_index_paths(data, key, &table_path, &index_path);
+    lock_path = g_strconcat(index_path, ".lock", NULL);
+    lock_fd = gsw_file_lock(lock_path, error);
+    if (lock_fd < 0)
+        goto out;
     idx = fopen(index_path, "r+b");
     if (idx == NULL) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
@@ -432,6 +450,7 @@ gsw_rawfiles_delete_entry(GswModuleBackend *backend, GswKey *key,
     }
     start = gsw_le32(record);
     size = gsw_le16(record + 4);
+    old_size = size;
     if (size == 0) {
         ok = TRUE;
         goto out;
@@ -452,21 +471,26 @@ gsw_rawfiles_delete_entry(GswModuleBackend *backend, GswKey *key,
     path = gsw_path_join_under(data->data_dir, name, error);
     if (path == NULL)
         goto out;
+    if (!rawfiles_write_record(idx, index, 0, 0, error)) {
+        rawfiles_write_record(idx, index, start, old_size, NULL);
+        goto out;
+    }
     if (g_unlink(path) != 0 && errno != ENOENT) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
                     "Cannot delete RawFiles entry %s: %s", path,
                     g_strerror(errno));
+        rawfiles_write_record(idx, index, start, old_size, NULL);
         goto out;
     }
-    if (!rawfiles_write_record(idx, index, 0, 0, error))
-        goto out;
     ok = TRUE;
 
 out:
     if (idx != NULL)
         fclose(idx);
+    gsw_file_unlock(lock_fd);
     g_free(table_path);
     g_free(index_path);
+    g_free(lock_path);
     g_free(name);
     g_free(path);
     if (ok) {

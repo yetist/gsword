@@ -7,6 +7,7 @@
 #include "gsw-data.h"
 #include "gsw-key-private.h"
 #include "gsw-cipher.h"
+#include "gsw-lock.h"
 
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -164,6 +165,8 @@ gsw_rawgenbook_write_entry(GswModuleBackend *backend, GswKey *key,
 {
     gchar *base;
     gchar *path;
+    gchar *lock_path;
+    gint lock_fd = -1;
     GStatBuf st;
     FILE *out;
     guint8 user_data[8];
@@ -183,14 +186,20 @@ gsw_rawgenbook_write_entry(GswModuleBackend *backend, GswKey *key,
     }
 
     base = gsw_module_data_base(backend->info);
+    lock_path = g_strconcat(base, ".lock", NULL);
+    lock_fd = gsw_file_lock(lock_path, error);
+    g_free(lock_path);
+    if (lock_fd < 0) {
+        g_free(base);
+        return FALSE;
+    }
     path = g_strconcat(base, ".bdt", NULL);
     g_free(base);
     if (g_stat(path, &st) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
                     "Cannot stat general book data %s: %s", path,
                     g_strerror(errno));
-        g_free(path);
-        return FALSE;
+        goto out;
     }
     user_data[0] = (guint8)(st.st_size & 0xff);
     user_data[1] = (guint8)((st.st_size >> 8) & 0xff);
@@ -231,6 +240,7 @@ gsw_rawgenbook_write_entry(GswModuleBackend *backend, GswKey *key,
     ok = TRUE;
 
 out:
+    gsw_file_unlock(lock_fd);
     g_free(path);
     return ok;
 }
@@ -240,9 +250,22 @@ gsw_rawgenbook_delete_entry(GswModuleBackend *backend, GswKey *key,
                             GError **error)
 {
     const guint8 empty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    gchar *base;
+    gchar *lock_path;
+    gint lock_fd;
+    gboolean ok;
 
-    (void)backend;
-    if (!gsw_tree_key_set_user_data(key, empty, 8)) {
+    base = gsw_module_data_base(backend->info);
+    lock_path = g_strconcat(base, ".lock", NULL);
+    g_free(base);
+    lock_fd = gsw_file_lock(lock_path, error);
+    g_free(lock_path);
+    if (lock_fd < 0)
+        return FALSE;
+
+    ok = gsw_tree_key_set_user_data(key, empty, 8);
+    gsw_file_unlock(lock_fd);
+    if (!ok) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
                     "Cannot clear general book entry");
         return FALSE;

@@ -93,8 +93,8 @@ M5–M12 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTas
 `locales.d` 本地化书名、zVerse 多块缓存、独立模块实例、BOTTOM 导航、
 testament 识别、HTML 渲染片段、EntryAttributes、全局渲染选项、经文范围/OSIS、
 TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、可取消/可限定范围
-的多模块搜索、RawFiles/RawGenBook 条目写入、RawGenBook 创建和树结构编辑，
-以及更多示例。
+的多模块搜索、RawFiles/RawGenBook 条目写入、RawGenBook 创建、树结构编辑、
+跨进程文件锁和写失败回滚，以及更多示例。
 
 ## 文档
 
