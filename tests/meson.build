@@ -22,6 +22,10 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('install-source', test_install_source)
 
+  test_local_install = executable('test-local-install', 'test-local-install.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('local-install', test_local_install)
+
   test_tar = executable('test-tar', 'test-tar.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep])
   test('tar', test_tar)

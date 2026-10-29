@@ -710,6 +710,8 @@ gsw_source_type_from_string(const gchar *name)
         return GSW_SOURCE_HTTPS;
     if (g_ascii_strcasecmp(name, "SFTP") == 0)
         return GSW_SOURCE_SFTP;
+    if (g_ascii_strcasecmp(name, "DIR") == 0)
+        return GSW_SOURCE_DIR;
     return GSW_SOURCE_FTP;
 }
 

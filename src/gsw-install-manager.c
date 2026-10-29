@@ -199,6 +199,8 @@ gsw_install_manager_load_config_internal(GswInstallManager *self, GError **error
             type = GSW_SOURCE_HTTP;
         else if (g_ascii_strcasecmp(key, "SFTPSource") == 0)
             type = GSW_SOURCE_SFTP;
+        else if (g_ascii_strcasecmp(key, "DIRSource") == 0)
+            type = GSW_SOURCE_DIR;
         else
             continue;
 
@@ -835,10 +837,24 @@ gsw_install_manager_refresh_remote_source(GswInstallManager *self,
     g_return_val_if_fail(GSW_IS_INSTALL_MANAGER(self), FALSE);
     g_return_val_if_fail(GSW_IS_INSTALL_SOURCE(source), FALSE);
 
+    priv = gsw_install_manager_priv(self);
+    if (gsw_install_source_get_source_type(source) == GSW_SOURCE_DIR) {
+        const gchar *path = gsw_install_source_get_host(source);
+
+        g_hash_table_remove(priv->shadows,
+                            gsw_install_source_get_uid(source));
+        if (path == NULL || !g_file_test(path, G_FILE_TEST_IS_DIR)) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
+                        "Local source directory does not exist: %s",
+                        path != NULL ? path : "");
+            return FALSE;
+        }
+        return TRUE;
+    }
+
     if (!gsw_install_manager_check_disclaimer(self, error))
         return FALSE;
 
-    priv = gsw_install_manager_priv(self);
     transport = gsw_install_manager_create_transport(self, source, error);
     if (transport == NULL)
         return FALSE;
@@ -948,11 +964,15 @@ gsw_install_manager_get_shadow(GswInstallManager *self,
     if (manager != NULL)
         return manager;
 
-    root = g_build_filename(priv->private_path, uid, NULL);
-    if (!g_file_test(root, G_FILE_TEST_IS_DIR)) {
+    if (gsw_install_source_get_source_type(source) == GSW_SOURCE_DIR) {
+        root = g_strdup(gsw_install_source_get_host(source));
+    } else {
+        root = g_build_filename(priv->private_path, uid, NULL);
+    }
+    if (root == NULL || !g_file_test(root, G_FILE_TEST_IS_DIR)) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
-                    "Remote source has not been refreshed: %s",
-                    gsw_install_source_get_caption(source));
+                    "Source directory is not available: %s",
+                    root != NULL ? root : "");
         g_free(root);
         return NULL;
     }
@@ -1028,6 +1048,8 @@ gsw_install_manager_install_module(GswInstallManager *self,
     GswInstallManagerPrivate *priv;
     GswModuleInfo *info;
     GswTransport *transport = NULL;
+    const gchar *source_root;
+    gboolean is_dir;
     gchar *staging = NULL;
     gchar **files = NULL;
     gboolean ok = FALSE;
@@ -1037,35 +1059,31 @@ gsw_install_manager_install_module(GswInstallManager *self,
     g_return_val_if_fail(GSW_IS_INSTALL_SOURCE(source), FALSE);
     g_return_val_if_fail(module_name != NULL, FALSE);
 
-    if (!gsw_install_manager_check_disclaimer(self, error))
+    priv = gsw_install_manager_priv(self);
+    is_dir = gsw_install_source_get_source_type(source) == GSW_SOURCE_DIR;
+    if (!is_dir && !gsw_install_manager_check_disclaimer(self, error))
         return FALSE;
 
-    priv = gsw_install_manager_priv(self);
     info = gsw_install_manager_lookup_remote_module_info(self, source, module_name, error);
     if (info == NULL)
         return FALSE;
 
-    if (gsw_module_info_is_ciphered(info)) {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
-                    "Module [%s] is encrypted and cannot be installed by this version",
-                    module_name);
-        return FALSE;
+    if (!is_dir) {
+        transport = gsw_install_manager_create_transport(self, source, error);
+        if (transport == NULL)
+            return FALSE;
     }
-
-    transport = gsw_install_manager_create_transport(self, source, error);
-    if (transport == NULL)
-        return FALSE;
 
     staging = gsw_path_make_temp_dir(gsw_manager_get_prefix_path(destination),
                                      ".gsw-install", error);
     if (staging == NULL)
         goto out;
 
+    source_root = gsw_install_source_get_host(source);
     files = gsw_module_info_get_values(info, "File");
     if (files != NULL) {
         guint i;
         for (i = 0; files[i] != NULL; i++) {
-            gchar *url;
             gchar *dest;
             gchar *local_rel;
 
@@ -1075,31 +1093,46 @@ gsw_install_manager_install_module(GswInstallManager *self,
                 goto out;
             }
 
-            url = gsw_install_manager_source_url(source, files[i]);
             local_rel = g_strdup(files[i]);
             while (g_str_has_prefix(local_rel, "./"))
                 memmove(local_rel, local_rel + 2, strlen(local_rel + 2) + 1);
             dest = gsw_path_join_under(staging, local_rel, error);
             g_free(local_rel);
-            if (dest == NULL) {
-                g_free(url);
+            if (dest == NULL)
                 goto out;
-            }
 
             if (priv->reporter != NULL)
                 gsw_status_reporter_emit_pre_status(priv->reporter, 0, 0, files[i]);
-            if (!gsw_install_manager_download_to_file(transport, url, dest,
-                                                      priv->cancellable, error)) {
+
+            if (is_dir) {
+                gchar *src = gsw_path_join_under(source_root, files[i],
+                                                 error);
+                gchar *parent = g_path_get_dirname(dest);
+                gboolean copied = FALSE;
+
+                if (src != NULL && gsw_mkdir_with_parents(parent, error))
+                    copied = gsw_file_copy(src, dest, error);
+                g_free(src);
+                g_free(parent);
+                g_free(dest);
+                if (!copied)
+                    goto out;
+            } else {
+                gchar *url = gsw_install_manager_source_url(source, files[i]);
+
+                if (!gsw_install_manager_download_to_file(transport, url, dest,
+                                                          priv->cancellable,
+                                                          error)) {
+                    g_free(url);
+                    g_free(dest);
+                    goto out;
+                }
                 g_free(url);
                 g_free(dest);
-                goto out;
             }
-            g_free(url);
-            g_free(dest);
         }
     } else {
         const gchar *relative_dir = gsw_module_info_get_relative_data_dir(info);
-        gchar *remote_dir;
         gchar *local_dir;
 
         if (relative_dir == NULL || *relative_dir == '\0') {
@@ -1108,21 +1141,34 @@ gsw_install_manager_install_module(GswInstallManager *self,
             goto out;
         }
 
-        remote_dir = gsw_install_manager_source_url(source, relative_dir);
         local_dir = gsw_path_join_under(staging, relative_dir, error);
-        if (local_dir == NULL) {
-            g_free(remote_dir);
+        if (local_dir == NULL)
             goto out;
-        }
 
-        if (!gsw_install_manager_download_dir(self, source, transport,
-                                              remote_dir, local_dir, 0,
-                                              priv->cancellable, error)) {
+        if (is_dir) {
+            gchar *source_dir = gsw_path_join_under(source_root, relative_dir,
+                                                    error);
+
+            if (source_dir == NULL ||
+                !gsw_dir_copy_recursive(source_dir, local_dir, error)) {
+                g_free(source_dir);
+                g_free(local_dir);
+                goto out;
+            }
+            g_free(source_dir);
+        } else {
+            gchar *remote_dir = gsw_install_manager_source_url(source,
+                                                               relative_dir);
+
+            if (!gsw_install_manager_download_dir(self, source, transport,
+                                                  remote_dir, local_dir, 0,
+                                                  priv->cancellable, error)) {
+                g_free(remote_dir);
+                g_free(local_dir);
+                goto out;
+            }
             g_free(remote_dir);
-            g_free(local_dir);
-            goto out;
         }
-        g_free(remote_dir);
         g_free(local_dir);
     }
 
@@ -1169,7 +1215,37 @@ out:
         gsw_dir_remove_recursive(staging, NULL);
         g_free(staging);
     }
-    g_object_unref(transport);
+    g_clear_object(&transport);
+    return ok;
+}
+
+gboolean
+gsw_install_manager_install_module_from_directory(
+    GswInstallManager *self, GswManager *destination, const gchar *directory,
+    const gchar *module_name, GError **error)
+{
+    GswInstallSource *source;
+    gchar *uid;
+    gboolean ok;
+
+    g_return_val_if_fail(GSW_IS_INSTALL_MANAGER(self), FALSE);
+    g_return_val_if_fail(GSW_IS_MANAGER(destination), FALSE);
+    g_return_val_if_fail(directory != NULL && *directory != '\0', FALSE);
+    g_return_val_if_fail(module_name != NULL, FALSE);
+
+    uid = g_strdup_printf("local-%08x", g_str_hash(directory));
+    source = gsw_install_source_new(GSW_SOURCE_DIR, "Local", directory,
+                                    "", NULL, NULL, uid);
+    g_free(uid);
+    if (source == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CONFIG,
+                    "Invalid local module directory: %s", directory);
+        return FALSE;
+    }
+
+    ok = gsw_install_manager_install_module(self, destination, source,
+                                            module_name, error);
+    g_object_unref(source);
     return ok;
 }
 

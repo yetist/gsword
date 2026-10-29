@@ -163,14 +163,23 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 
 目标：补齐 Xiphos 模块管理器的后端能力。
 
-- [ ] `GswSourceType` 增加 `DIR`，支持本地目录安装源
-- [ ] 增加本地目录/本地归档安装 API
-- [ ] 增加运行期 CipherKey 设置与保存 API
-- [ ] 允许安装 locked 模块，读取时再提示密钥
-- [ ] 增加模块配置更新 API，并支持保存后刷新 manager
-- [ ] 增加全局 render options 的持久化入口
+- [x] `GswSourceType` 增加 `DIR`，支持本地目录安装源
+- [x] 增加本地目录安装 API
+      （`gsw_install_manager_install_module_from_directory()`）
+- [x] 增加运行期 CipherKey 设置与保存 API
+      （`gsw_manager_set_module_cipher_key()`）
+- [x] 允许安装 locked 模块，读取时再提示密钥
+- [x] 增加模块配置更新 API，并支持保存后刷新 manager
+      （`gsw_manager_set_module_config_value()`）
+- [x] 增加全局 render options 的持久化入口
+      （`gsw_manager_load_render_options()`、
+      `gsw_manager_save_render_options()`）
+- [x] 增加 DIR 源、本地安装、加密模块和选项持久化测试
 
 验收：可从本地目录安装模块，可安装并解锁加密模块，修改配置后可重新加载。
+
+说明：本地目录安装已完成；本地压缩归档安装暂未加入，留待后续与 zip/tar 归档
+处理一起完善。
 
 ## M11 搜索 2.0
 

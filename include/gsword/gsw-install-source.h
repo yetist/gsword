@@ -16,8 +16,9 @@ G_BEGIN_DECLS
 /**
  * GswInstallSource:
  *
- * A remote SWORD installation source: its protocol, caption, host, module
- * directory, optional credentials, and local shadow-directory UID.
+ * A local or remote SWORD installation source: its protocol, caption, host or
+ * local path, module directory, optional credentials, and local
+ * shadow-directory UID.
  */
 #define GSW_TYPE_INSTALL_SOURCE (gsw_install_source_get_type())
 G_DECLARE_FINAL_TYPE(GswInstallSource, gsw_install_source, GSW,

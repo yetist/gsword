@@ -30,6 +30,19 @@ test_source_config(void)
     g_free(value);
     g_object_unref(source);
 
+    source = gsw_install_source_new_from_config(
+        GSW_SOURCE_DIR, "Local|/tmp/sword-library||||local-dir", &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(source);
+    g_assert_cmpint(gsw_install_source_get_source_type(source), ==,
+                    GSW_SOURCE_DIR);
+    g_assert_cmpstr(gsw_install_source_get_host(source), ==,
+                    "/tmp/sword-library");
+    value = gsw_install_source_to_config(source);
+    g_assert_cmpstr(value, ==, "Local|/tmp/sword-library||||local-dir");
+    g_free(value);
+    g_object_unref(source);
+
     source = gsw_install_source_new_from_config(GSW_SOURCE_FTP,
                                                 "bad", &error);
     g_assert_null(source);
@@ -93,6 +106,12 @@ test_manager_config(void)
     g_assert_nonnull(source);
     g_assert_true(gsw_install_manager_add_source(manager, source));
     g_object_unref(source);
+
+    source = gsw_install_source_new(GSW_SOURCE_DIR, "Local",
+                                    "/tmp/sword-library", "", "", "", "uid4");
+    g_assert_nonnull(source);
+    g_assert_true(gsw_install_manager_add_source(manager, source));
+    g_object_unref(source);
     g_assert_true(gsw_install_manager_save_config(manager, &error));
     g_assert_no_error(error);
     g_object_unref(manager);
@@ -101,8 +120,12 @@ test_manager_config(void)
     g_assert_no_error(error);
     g_assert_nonnull(manager);
     g_assert_nonnull(gsw_install_manager_lookup_source(manager, "Added"));
+    source = gsw_install_manager_lookup_source(manager, "Local");
+    g_assert_nonnull(source);
+    g_assert_cmpint(gsw_install_source_get_source_type(source), ==,
+                    GSW_SOURCE_DIR);
     sources = gsw_install_manager_get_sources(manager);
-    g_assert_cmpuint(sources->len, ==, 3);
+    g_assert_cmpuint(sources->len, ==, 4);
     g_ptr_array_unref(sources);
     g_object_unref(manager);
 
