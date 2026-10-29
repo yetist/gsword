@@ -7,6 +7,7 @@
 #include <gsword/gsw-error.h>
 #include "gsw-key-private.h"
 #include "gsw-data.h"
+#include "gsw-lock.h"
 
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -590,6 +591,16 @@ gsw_tree_key_previous_sibling(GswTreeKey *self)
     return FALSE;
 }
 
+static gint
+tree_lock(GswKey *self, GError **error)
+{
+    gchar *path = g_strconcat(self->tree_path, ".lock", NULL);
+    gint fd = gsw_file_lock(path, error);
+
+    g_free(path);
+    return fd;
+}
+
 static gboolean
 tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
                  GError **error)
@@ -599,6 +610,7 @@ tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
     GswTreeNode *node;
     glong current_index;
     glong new_offset;
+    gint lock_fd;
     gboolean ok = FALSE;
 
     if (*name == '\0') {
@@ -606,8 +618,11 @@ tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
                     "Tree node name must not be empty");
         return FALSE;
     }
-    if (!tree_load_nodes(self, &nodes, error))
+    lock_fd = tree_lock(self, error);
+    if (lock_fd < 0)
         return FALSE;
+    if (!tree_load_nodes(self, &nodes, error))
+        goto out;
 
     current_index = self->tree_offset / 4;
     if (self->tree_offset < 0 || self->tree_offset % 4 != 0 ||
@@ -660,6 +675,7 @@ tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
 
 out:
     tree_nodes_free(nodes);
+    gsw_file_unlock(lock_fd);
     return ok;
 }
 
@@ -685,6 +701,7 @@ gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
     GPtrArray *nodes = NULL;
     GswTreeNode *node;
     glong index;
+    gint lock_fd;
     gboolean ok = FALSE;
 
     g_return_val_if_fail(self != NULL, FALSE);
@@ -694,8 +711,11 @@ gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
                     "Tree node name must not be empty");
         return FALSE;
     }
-    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+    lock_fd = tree_lock((GswKey *)self, error);
+    if (lock_fd < 0)
         return FALSE;
+    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+        goto out;
 
     index = self->tree_offset / 4;
     if (self->tree_offset < 0 || self->tree_offset % 4 != 0 ||
@@ -717,6 +737,7 @@ gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
 
 out:
     tree_nodes_free(nodes);
+    gsw_file_unlock(lock_fd);
     return ok;
 }
 
@@ -751,6 +772,7 @@ gsw_tree_key_remove_node(GswTreeKey *self, GError **error)
     gboolean *marked = NULL;
     glong current_index;
     glong new_parent = 0;
+    gint lock_fd;
     guint i;
     gboolean ok = FALSE;
 
@@ -760,8 +782,11 @@ gsw_tree_key_remove_node(GswTreeKey *self, GError **error)
                     "The root node cannot be removed");
         return FALSE;
     }
-    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+    lock_fd = tree_lock((GswKey *)self, error);
+    if (lock_fd < 0)
         return FALSE;
+    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+        goto out;
 
     current_index = self->tree_offset / 4;
     if ((guint)current_index >= nodes->len) {
@@ -824,6 +849,7 @@ out:
         g_array_unref(remap);
     g_free(marked);
     tree_nodes_free(nodes);
+    gsw_file_unlock(lock_fd);
     return ok;
 }
 

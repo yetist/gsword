@@ -217,7 +217,9 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [x] RawFiles / Personal Commentary 写入
 - [x] `gsw_module_is_writable()` 返回真实值
 - [x] 内容文件/树结构使用临时文件替换
-- [ ] 完整事务回滚和跨进程文件锁
+- [x] 跨进程文件锁（RawFiles 索引、RawGenBook 数据/树）
+- [x] I/O 失败回滚（恢复旧索引记录或旧树文件）
+- [ ] 进程崩溃后自动恢复跨文件提交间隙
 
 ### M12b RawGenBook 编辑
 
@@ -228,8 +230,9 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [x] 创建模块配置文件和初始根节点
 - [x] 树编辑即时写入，无需额外 `save()`
 
-当前状态：M12a 内容写入和 M12b 基础树结构编辑已完成；完整事务回滚和文件锁
-仍需在后续加固。树编辑当前会重写 `.idx`/`.dat` 并保留旧文件直到成功替换。
+当前状态：M12a 内容写入和 M12b 树结构编辑已完成，写入路径使用跨进程
+`flock()` 锁；树编辑会重写 `.idx`/`.dat`，先写临时文件并在失败时恢复旧文件。
+进程在两次文件替换之间崩溃时仍可能留下待恢复状态，自动恢复将在后续加固。
 
 验收：可创建并编辑个人笔记和祷告列表，编辑结果可被上游 SWORD 读取，写入失败不破坏原模块。
 
