@@ -856,6 +856,119 @@ gsw_manager_set_module_cipher_key(GswManager *self, const gchar *name,
                                                key, error);
 }
 
+gboolean
+gsw_manager_create_genbook(GswManager *self, const gchar *name,
+                           const gchar *description, GError **error)
+{
+    GswManagerPrivate *priv;
+    gchar *data_dir;
+    gchar *base;
+    gchar *path;
+    gchar *mods_dir;
+    gchar *config_path;
+    GByteArray *dat;
+    GByteArray *idx;
+    GswConfig *config;
+    gboolean ok = FALSE;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), FALSE);
+    g_return_val_if_fail(name != NULL && *name != '\0', FALSE);
+
+    if (strchr(name, '/') != NULL || strchr(name, '\\') != NULL ||
+        g_str_has_prefix(name, ".") || strstr(name, "..") != NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "Invalid general book name: %s", name);
+        return FALSE;
+    }
+    if (gsw_manager_has_module(self, name)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CONFIG,
+                    "Module [%s] already exists", name);
+        return FALSE;
+    }
+
+    priv = gsw_manager_get_instance_private(self);
+    if (priv->prefix_path == NULL || *priv->prefix_path == '\0') {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CONFIG,
+                    "Module library prefix is not available");
+        return FALSE;
+    }
+
+    data_dir = g_build_filename(priv->prefix_path, "modules", "genbook",
+                                "rawgenbook", name, NULL);
+    base = g_build_filename(data_dir, name, NULL);
+    if (!gsw_mkdir_with_parents(data_dir, error))
+        goto out;
+
+    dat = g_byte_array_new();
+    idx = g_byte_array_new();
+    {
+        guint8 neg[4] = { 0xff, 0xff, 0xff, 0xff };
+        guint8 size[2] = { 0, 0 };
+        guint8 name_end = 0;
+
+        g_byte_array_append(dat, neg, 4);
+        g_byte_array_append(dat, neg, 4);
+        g_byte_array_append(dat, neg, 4);
+        g_byte_array_append(dat, &name_end, 1);
+        g_byte_array_append(dat, size, 2);
+        g_byte_array_append(idx, (const guint8[]){ 0, 0, 0, 0 }, 4);
+    }
+
+    path = g_strconcat(base, ".bdt", NULL);
+    if (!g_file_set_contents(path, "", 0, error))
+        goto out_free_arrays;
+    g_free(path);
+    path = g_strconcat(base, ".dat", NULL);
+    if (!g_file_set_contents(path, (const gchar *)dat->data,
+                             (gssize)dat->len, error))
+        goto out_free_arrays;
+    g_free(path);
+    path = g_strconcat(base, ".idx", NULL);
+    if (!g_file_set_contents(path, (const gchar *)idx->data,
+                             (gssize)idx->len, error))
+        goto out_free_arrays;
+    g_free(path);
+
+    mods_dir = g_build_filename(priv->prefix_path, "mods.d", NULL);
+    if (!gsw_mkdir_with_parents(mods_dir, error)) {
+        g_free(mods_dir);
+        goto out_free_arrays;
+    }
+    {
+        gchar *base_name = g_build_filename(mods_dir, name, NULL);
+
+        config_path = g_strconcat(base_name, ".conf", NULL);
+        g_free(base_name);
+    }
+    g_free(mods_dir);
+
+    config = gsw_config_new();
+    gsw_config_set(config, name, "Description",
+                   description != NULL ? description : name);
+    {
+        gchar *data_path = g_strdup_printf(
+            "./modules/genbook/rawgenbook/%s/", name);
+        gsw_config_set(config, name, "DataPath", data_path);
+        g_free(data_path);
+    }
+    gsw_config_set(config, name, "ModDrv", "RawGenBook");
+    gsw_config_set(config, name, "Encoding", "UTF-8");
+    gsw_config_set(config, name, "Version", "1.0");
+    ok = gsw_config_save(config, config_path, error);
+    g_object_unref(config);
+    g_free(config_path);
+
+out_free_arrays:
+    g_byte_array_unref(dat);
+    g_byte_array_unref(idx);
+    if (ok)
+        ok = gsw_manager_reload(self, error);
+out:
+    g_free(data_dir);
+    g_free(base);
+    return ok;
+}
+
 GswConfig *
 gsw_manager_get_config(GswManager *self)
 {

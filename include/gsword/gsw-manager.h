@@ -156,6 +156,21 @@ GswModule     *gsw_manager_get_module(GswManager *self, const gchar *name);
  */
 GswModule     *gsw_manager_create_module(GswManager *self, const gchar *name);
 /**
+ * gsw_manager_create_genbook:
+ * @self: a #GswManager
+ * @name: new module name
+ * @description: module description
+ * @error: return location for a #GError, or %NULL
+ *
+ * Creates an empty RawGenBook module and its configuration file, then reloads
+ * the module library. The new module has an empty root node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_manager_create_genbook(GswManager *self, const gchar *name,
+                                          const gchar *description,
+                                          GError **error);
+/**
  * gsw_manager_set_option:
  * @self: a #GswManager
  * @name: render option name

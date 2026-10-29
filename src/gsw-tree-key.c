@@ -9,6 +9,7 @@
 #include "gsw-data.h"
 
 #include <errno.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -124,6 +125,170 @@ gsw_tree_node_clear(GswTreeNode *node)
     g_free(node->name);
     g_free(node->user_data);
     memset(node, 0, sizeof(*node));
+}
+
+static void
+tree_append_u32(GByteArray *array, guint32 value)
+{
+    guint8 bytes[4] = {
+        (guint8)(value & 0xff), (guint8)((value >> 8) & 0xff),
+        (guint8)((value >> 16) & 0xff), (guint8)((value >> 24) & 0xff)
+    };
+
+    g_byte_array_append(array, bytes, 4);
+}
+
+static void
+tree_append_u16(GByteArray *array, guint16 value)
+{
+    guint8 bytes[2] = { (guint8)(value & 0xff), (guint8)(value >> 8) };
+
+    g_byte_array_append(array, bytes, 2);
+}
+
+static void
+tree_nodes_free(GPtrArray *nodes)
+{
+    guint i;
+
+    if (nodes == NULL)
+        return;
+    for (i = 0; i < nodes->len; i++) {
+        GswTreeNode *node = g_ptr_array_index(nodes, i);
+
+        gsw_tree_node_clear(node);
+        g_free(node);
+    }
+    g_ptr_array_unref(nodes);
+}
+
+static gboolean
+tree_load_nodes(GswKey *self, GPtrArray **out, GError **error)
+{
+    gchar *idx_path;
+    GStatBuf st;
+    GPtrArray *nodes;
+    glong count;
+    glong i;
+
+    *out = NULL;
+    idx_path = g_strconcat(self->tree_path, ".idx", NULL);
+    if (g_stat(idx_path, &st) != 0 || st.st_size <= 0 ||
+        st.st_size % 4 != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "Invalid general book index %s", idx_path);
+        g_free(idx_path);
+        return FALSE;
+    }
+    g_free(idx_path);
+    count = (glong)(st.st_size / 4);
+    nodes = g_ptr_array_new();
+
+    for (i = 0; i < count; i++) {
+        GswTreeNode *node = g_new0(GswTreeNode, 1);
+
+        if (!gsw_tree_read_node(self->tree_path, i * 4, node, error)) {
+            gsw_tree_node_clear(node);
+            g_free(node);
+            tree_nodes_free(nodes);
+            return FALSE;
+        }
+        g_ptr_array_add(nodes, node);
+    }
+
+    *out = nodes;
+    return TRUE;
+}
+
+static gint
+tree_map_offset(GArray *remap, gint offset)
+{
+    if (offset < 0)
+        return -1;
+    if (remap == NULL)
+        return offset;
+    if ((guint)(offset / 4) >= remap->len)
+        return -1;
+    return g_array_index(remap, gint, offset / 4);
+}
+
+static gboolean
+tree_write_nodes(GswKey *self, GPtrArray *nodes, GArray *remap,
+                 GError **error)
+{
+    GByteArray *dat = g_byte_array_new();
+    GByteArray *idx = g_byte_array_new();
+    GArray *dat_offsets = g_array_new(FALSE, FALSE, sizeof(guint32));
+    gchar *dat_path = g_strconcat(self->tree_path, ".dat", NULL);
+    gchar *idx_path = g_strconcat(self->tree_path, ".idx", NULL);
+    gchar *dat_new = g_strconcat(self->tree_path, ".dat.new", NULL);
+    gchar *idx_new = g_strconcat(self->tree_path, ".idx.new", NULL);
+    gchar *old_dat = NULL;
+    gchar *old_idx = NULL;
+    gsize old_dat_len = 0;
+    gsize old_idx_len = 0;
+    guint i;
+    gboolean ok = FALSE;
+
+    for (i = 0; i < nodes->len; i++) {
+        GswTreeNode *node = g_ptr_array_index(nodes, i);
+        guint32 dat_offset = (guint32)dat->len;
+
+        tree_append_u32(dat, (guint32)tree_map_offset(remap, node->parent));
+        tree_append_u32(dat, (guint32)tree_map_offset(remap, node->next));
+        tree_append_u32(dat, (guint32)tree_map_offset(remap, node->first_child));
+        g_byte_array_append(dat, (const guint8 *)node->name,
+                            (guint)strlen(node->name) + 1);
+        tree_append_u16(dat, (guint16)node->user_size);
+        if (node->user_size > 0)
+            g_byte_array_append(dat, (const guint8 *)node->user_data,
+                                (guint)node->user_size);
+        g_array_append_val(dat_offsets, dat_offset);
+    }
+    for (i = 0; i < dat_offsets->len; i++) {
+        guint32 offset = g_array_index(dat_offsets, guint32, i);
+
+        tree_append_u32(idx, offset);
+    }
+
+    if (!g_file_get_contents(dat_path, &old_dat, &old_dat_len, NULL) ||
+        !g_file_get_contents(idx_path, &old_idx, &old_idx_len, NULL))
+        goto out;
+    if (!g_file_set_contents(dat_new, (const gchar *)dat->data,
+                             (gssize)dat->len, error) ||
+        !g_file_set_contents(idx_new, (const gchar *)idx->data,
+                             (gssize)idx->len, error))
+        goto out;
+
+    if (g_rename(dat_new, dat_path) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot replace %s: %s", dat_path, g_strerror(errno));
+        goto out;
+    }
+    if (g_rename(idx_new, idx_path) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot replace %s: %s", idx_path, g_strerror(errno));
+        g_file_set_contents(dat_path, old_dat, (gssize)old_dat_len, NULL);
+        goto out;
+    }
+
+    ok = TRUE;
+
+out:
+    if (!ok) {
+        g_unlink(dat_new);
+        g_unlink(idx_new);
+    }
+    g_free(old_dat);
+    g_free(old_idx);
+    g_free(dat_path);
+    g_free(idx_path);
+    g_free(dat_new);
+    g_free(idx_new);
+    g_byte_array_unref(dat);
+    g_byte_array_unref(idx);
+    g_array_unref(dat_offsets);
+    return ok;
 }
 
 static gboolean
@@ -423,6 +588,243 @@ gsw_tree_key_previous_sibling(GswTreeKey *self)
 
     gsw_tree_node_clear(&parent);
     return FALSE;
+}
+
+static gboolean
+tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
+                 GError **error)
+{
+    GPtrArray *nodes = NULL;
+    GswTreeNode *current;
+    GswTreeNode *node;
+    glong current_index;
+    glong new_offset;
+    gboolean ok = FALSE;
+
+    if (*name == '\0') {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "Tree node name must not be empty");
+        return FALSE;
+    }
+    if (!tree_load_nodes(self, &nodes, error))
+        return FALSE;
+
+    current_index = self->tree_offset / 4;
+    if (self->tree_offset < 0 || self->tree_offset % 4 != 0 ||
+        (guint)current_index >= nodes->len) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Current tree node is invalid");
+        goto out;
+    }
+    current = g_ptr_array_index(nodes, current_index);
+    if (sibling && current->parent < 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "The root node cannot have a sibling");
+        goto out;
+    }
+
+    new_offset = (glong)nodes->len * 4;
+    node = g_new0(GswTreeNode, 1);
+    node->parent = sibling ? current->parent : self->tree_offset;
+    node->next = sibling ? current->next : -1;
+    node->first_child = -1;
+    node->name = g_strdup(name);
+    node->user_size = 8;
+    node->user_data = g_malloc0(8);
+
+    if (sibling) {
+        current->next = (gint)new_offset;
+    } else if (current->first_child < 0) {
+        current->first_child = (gint)new_offset;
+    } else {
+        GswTreeNode *last;
+        gint child = current->first_child;
+
+        while (child >= 0) {
+            last = g_ptr_array_index(nodes, child / 4);
+            if (last->next < 0)
+                break;
+            child = last->next;
+        }
+        last->next = (gint)new_offset;
+    }
+
+    g_ptr_array_add(nodes, node);
+    if (!tree_write_nodes(self, nodes, NULL, error))
+        goto out;
+    if (!gsw_tree_key_load(self, new_offset, error))
+        goto out;
+    self->valid = TRUE;
+    gsw_tree_key_update_text(self);
+    ok = TRUE;
+
+out:
+    tree_nodes_free(nodes);
+    return ok;
+}
+
+gboolean
+gsw_tree_key_append_child(GswTreeKey *self, const gchar *name, GError **error)
+{
+    g_return_val_if_fail(self != NULL, FALSE);
+    g_return_val_if_fail(name != NULL, FALSE);
+    return tree_append_node((GswKey *)self, name, FALSE, error);
+}
+
+gboolean
+gsw_tree_key_append_sibling(GswTreeKey *self, const gchar *name, GError **error)
+{
+    g_return_val_if_fail(self != NULL, FALSE);
+    g_return_val_if_fail(name != NULL, FALSE);
+    return tree_append_node((GswKey *)self, name, TRUE, error);
+}
+
+gboolean
+gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
+{
+    GPtrArray *nodes = NULL;
+    GswTreeNode *node;
+    glong index;
+    gboolean ok = FALSE;
+
+    g_return_val_if_fail(self != NULL, FALSE);
+    g_return_val_if_fail(name != NULL, FALSE);
+    if (*name == '\0') {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "Tree node name must not be empty");
+        return FALSE;
+    }
+    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+        return FALSE;
+
+    index = self->tree_offset / 4;
+    if (self->tree_offset < 0 || self->tree_offset % 4 != 0 ||
+        (guint)index >= nodes->len) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Current tree node is invalid");
+        goto out;
+    }
+    node = g_ptr_array_index(nodes, index);
+    g_free(node->name);
+    node->name = g_strdup(name);
+    if (!tree_write_nodes((GswKey *)self, nodes, NULL, error))
+        goto out;
+    if (!gsw_tree_key_load((GswKey *)self, self->tree_offset, error))
+        goto out;
+    self->valid = TRUE;
+    gsw_tree_key_update_text((GswKey *)self);
+    ok = TRUE;
+
+out:
+    tree_nodes_free(nodes);
+    return ok;
+}
+
+static void
+tree_mark_subtree(GPtrArray *nodes, gboolean *mark, gint offset)
+{
+    GswTreeNode *node;
+    gint child;
+
+    if (offset < 0 || offset % 4 != 0 || (guint)(offset / 4) >= nodes->len ||
+        mark[offset / 4])
+        return;
+    mark[offset / 4] = TRUE;
+    node = g_ptr_array_index(nodes, offset / 4);
+    child = node->first_child;
+    while (child >= 0) {
+        GswTreeNode *child_node = g_ptr_array_index(nodes, child / 4);
+
+        tree_mark_subtree(nodes, mark, child);
+        child = child_node->next;
+    }
+}
+
+gboolean
+gsw_tree_key_remove_node(GswTreeKey *self, GError **error)
+{
+    GPtrArray *nodes = NULL;
+    GPtrArray *kept = NULL;
+    GArray *remap = NULL;
+    GswTreeNode *current;
+    GswTreeNode *parent;
+    gboolean *marked = NULL;
+    glong current_index;
+    glong new_parent = 0;
+    guint i;
+    gboolean ok = FALSE;
+
+    g_return_val_if_fail(self != NULL, FALSE);
+    if (self->tree_offset <= 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "The root node cannot be removed");
+        return FALSE;
+    }
+    if (!tree_load_nodes((GswKey *)self, &nodes, error))
+        return FALSE;
+
+    current_index = self->tree_offset / 4;
+    if ((guint)current_index >= nodes->len) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Current tree node is invalid");
+        goto out;
+    }
+    current = g_ptr_array_index(nodes, current_index);
+    marked = g_new0(gboolean, nodes->len);
+    tree_mark_subtree(nodes, marked, self->tree_offset);
+
+    if (current->parent >= 0) {
+        parent = g_ptr_array_index(nodes, current->parent / 4);
+        if (parent->first_child == self->tree_offset) {
+            parent->first_child = current->next;
+        } else {
+            gint child = parent->first_child;
+
+            while (child >= 0) {
+                GswTreeNode *node = g_ptr_array_index(nodes, child / 4);
+
+                if (node->next == self->tree_offset) {
+                    node->next = current->next;
+                    break;
+                }
+                child = node->next;
+            }
+        }
+    }
+
+    kept = g_ptr_array_new();
+    remap = g_array_new(FALSE, FALSE, sizeof(gint));
+    {
+        gint missing = -1;
+
+        for (i = 0; i < nodes->len; i++)
+            g_array_append_val(remap, missing);
+    }
+    for (i = 0; i < nodes->len; i++) {
+        if (marked[i])
+            continue;
+        g_array_index(remap, gint, i) = (gint)(kept->len * 4);
+        g_ptr_array_add(kept, g_ptr_array_index(nodes, i));
+    }
+
+    if (!tree_write_nodes((GswKey *)self, kept, remap, error))
+        goto out;
+    if (current->parent >= 0)
+        new_parent = g_array_index(remap, gint, current->parent / 4);
+    if (!gsw_tree_key_load((GswKey *)self, new_parent, error))
+        goto out;
+    self->valid = TRUE;
+    gsw_tree_key_update_text((GswKey *)self);
+    ok = TRUE;
+
+out:
+    if (kept != NULL)
+        g_ptr_array_free(kept, TRUE);
+    if (remap != NULL)
+        g_array_unref(remap);
+    g_free(marked);
+    tree_nodes_free(nodes);
+    return ok;
 }
 
 gboolean

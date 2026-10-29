@@ -141,6 +141,53 @@ const gchar *gsw_tree_key_get_local_name(GswTreeKey *self);
  * Returns: %TRUE on success, %FALSE otherwise
  */
 gboolean     gsw_tree_key_previous_sibling(GswTreeKey *self);
+/**
+ * gsw_tree_key_append_child:
+ * @self: a #GswTreeKey
+ * @name: local name for the new node
+ * @error: return location for a #GError, or %NULL
+ *
+ * Appends a child node to the current node and positions the key on it.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_append_child(GswTreeKey *self, const gchar *name,
+                                       GError **error);
+/**
+ * gsw_tree_key_append_sibling:
+ * @self: a #GswTreeKey
+ * @name: local name for the new node
+ * @error: return location for a #GError, or %NULL
+ *
+ * Inserts a sibling after the current node and positions the key on it.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_append_sibling(GswTreeKey *self, const gchar *name,
+                                         GError **error);
+/**
+ * gsw_tree_key_set_local_name:
+ * @self: a #GswTreeKey
+ * @name: new local name
+ * @error: return location for a #GError, or %NULL
+ *
+ * Renames the current node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name,
+                                         GError **error);
+/**
+ * gsw_tree_key_remove_node:
+ * @self: a #GswTreeKey
+ * @error: return location for a #GError, or %NULL
+ *
+ * Removes the current node and its descendants, then positions the key on the
+ * parent node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_remove_node(GswTreeKey *self, GError **error);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GswTreeKey, gsw_key_unref)
 
