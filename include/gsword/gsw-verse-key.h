@@ -33,6 +33,36 @@ typedef GswKey GswVerseKey;
 GType        gsw_verse_key_get_type(void);
 
 /**
+ * gsw_verse_key_get_global_book_number:
+ * @self: a #GswVerseKey
+ *
+ * Gets the zero-based global book number across both testaments.
+ *
+ * Returns: the global book number, or -1 for headings or invalid keys
+ */
+gint         gsw_verse_key_get_global_book_number(GswVerseKey *self);
+/**
+ * gsw_verse_key_get_osis_ref:
+ * @self: a #GswVerseKey
+ *
+ * Gets the OSIS reference for @self, for example `John.3.16`.
+ *
+ * Returns: (transfer full): the OSIS reference, or %NULL for headings or
+ *   invalid keys
+ */
+gchar       *gsw_verse_key_get_osis_ref(GswVerseKey *self);
+/**
+ * gsw_verse_key_get_short_text:
+ * @self: a #GswVerseKey
+ *
+ * Gets a short display form using the preferred book abbreviation.
+ *
+ * Returns: (transfer full): the short reference, or %NULL for headings or
+ *   invalid keys
+ */
+gchar       *gsw_verse_key_get_short_text(GswVerseKey *self);
+
+/**
  * gsw_verse_key_new:
  * @text: key text
  * @versification: versification system name, or %NULL for the default
@@ -241,6 +271,24 @@ void         gsw_verse_key_set_lower_bound(GswVerseKey *self, GswVerseKey *bound
  * Sets the upper bound of the key.
  */
 void         gsw_verse_key_set_upper_bound(GswVerseKey *self, GswVerseKey *bound);
+/**
+ * gsw_verse_key_get_lower_bound:
+ * @self: a #GswVerseKey
+ *
+ * Gets the lower bound as a new key.
+ *
+ * Returns: (transfer full): the lower bound, or %NULL if no lower bound is set
+ */
+GswVerseKey *gsw_verse_key_get_lower_bound(GswVerseKey *self);
+/**
+ * gsw_verse_key_get_upper_bound:
+ * @self: a #GswVerseKey
+ *
+ * Gets the upper bound as a new key.
+ *
+ * Returns: (transfer full): the upper bound, or %NULL if no upper bound is set
+ */
+GswVerseKey *gsw_verse_key_get_upper_bound(GswVerseKey *self);
 /**
  * gsw_verse_key_clear_bounds:
  * @self: a #GswVerseKey

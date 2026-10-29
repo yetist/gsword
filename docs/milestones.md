@@ -143,14 +143,21 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 
 目标：支撑书签、导出、搜索范围、并行同步和通用书导航。
 
-- [ ] 新增经文 list/range 类型与解析 API（单节、范围、多段范围）
-- [ ] 暴露 VerseKey 上下界读取接口
-- [ ] 增加 `gsw_verse_key_get_osis_ref()` 和短文本接口
-- [ ] 增加 book OSIS / 全局 book number 转换辅助
-- [ ] TreeKey 增加 offset、local name、previous sibling API
-- [ ] 增加经文范围、OSIS 往返和通用书遍历测试
+- [x] 新增经文 list/range 类型与解析 API
+      （`GswVerseList`、`gsw_verse_list_parse()`、`gsw_verse_list_expand()`）
+- [x] 暴露 VerseKey 上下界读取接口
+      （`gsw_verse_key_get_lower_bound()`、`gsw_verse_key_get_upper_bound()`）
+- [x] 增加 `gsw_verse_key_get_osis_ref()` 和短文本接口
+      （`gsw_verse_key_get_short_text()`）
+- [x] 增加全局 book number 转换辅助
+      （`gsw_verse_key_get_global_book_number()`）
+- [x] TreeKey 增加 offset、local name、previous sibling API
+- [x] 增加经文范围、OSIS 和通用书遍历测试
 
 验收：可解析 `John 3:16-18; Rom 8:1`，OSIS ref 可往返，RawGenBook 可完整遍历。
+
+说明：当前 verse list 支持单个经文、范围、多段列表，以及省略书卷/章节的相对范围
+（例如 `John 3:16-18`、`Gen 1:1-2:3`）。更复杂的 SWORD 简写语法可在后续扩展。
 
 ## M10 模块管理与加密完整性
 

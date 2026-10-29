@@ -104,6 +104,43 @@ gboolean     gsw_tree_key_has_children(GswTreeKey *self);
  * Returns: the depth of the current node
  */
 gint         gsw_tree_key_get_level(GswTreeKey *self);
+/**
+ * gsw_tree_key_get_offset:
+ * @self: a #GswTreeKey
+ *
+ * Gets the current node offset from the book's index file.
+ *
+ * Returns: the node offset, or 0 for the root or an invalid key
+ */
+glong        gsw_tree_key_get_offset(GswTreeKey *self);
+/**
+ * gsw_tree_key_set_offset:
+ * @self: a #GswTreeKey
+ * @offset: node offset from the book's index file
+ *
+ * Positions the key at a node offset.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_set_offset(GswTreeKey *self, glong offset);
+/**
+ * gsw_tree_key_get_local_name:
+ * @self: a #GswTreeKey
+ *
+ * Gets the local name of the current node, without its parent path.
+ *
+ * Returns: (transfer none): the local node name
+ */
+const gchar *gsw_tree_key_get_local_name(GswTreeKey *self);
+/**
+ * gsw_tree_key_previous_sibling:
+ * @self: a #GswTreeKey
+ *
+ * Moves to the previous sibling node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean     gsw_tree_key_previous_sibling(GswTreeKey *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GswTreeKey, gsw_key_unref)
 

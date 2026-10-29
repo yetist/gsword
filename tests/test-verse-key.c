@@ -1,6 +1,8 @@
 #include <gsword/gsword.h>
 #include "gsw-key-internal.h"
 
+#include <string.h>
+
 static void
 check_key(const gchar *text, gint testament, gint book, gint chapter,
           gint verse, glong index)
@@ -36,6 +38,20 @@ test_parse(void)
     g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "Matthew");
     g_assert_cmpint(gsw_verse_key_get_chapter_max(key), ==, 28);
     g_assert_cmpint(gsw_verse_key_get_verse_max(key), ==, 25);
+    g_assert_cmpint(gsw_verse_key_get_global_book_number(key), ==, 39);
+    {
+        gchar *osis = gsw_verse_key_get_osis_ref(key);
+        gchar *short_text = gsw_verse_key_get_short_text(key);
+
+        g_assert_cmpstr(osis, ==, "Matt.1.1");
+        g_assert_nonnull(strstr(short_text, "1:1"));
+        g_free(osis);
+        g_free(short_text);
+    }
+    gsw_key_unref(key);
+
+    key = gsw_verse_key_new("Gen 1:1", "KJV");
+    g_assert_cmpint(gsw_verse_key_get_global_book_number(key), ==, 0);
     gsw_key_unref(key);
 
     key = gsw_verse_key_new("Gen 1:200", "KJV");

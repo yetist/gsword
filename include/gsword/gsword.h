@@ -14,6 +14,7 @@
 #include <gsword/gsw-key.h>
 #include <gsword/gsw-locale.h>
 #include <gsword/gsw-verse-key.h>
+#include <gsword/gsw-verse-list.h>
 #include <gsword/gsw-str-key.h>
 #include <gsword/gsw-tree-key.h>
 #include <gsword/gsw-versification.h>

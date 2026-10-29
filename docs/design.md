@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.7（M0–M8 已实现）
+- 状态：设计草案 v0.8（M0–M9 已实现）
 - 日期：2026-10-29
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -1511,11 +1511,12 @@ gnome.generate_vapi('gsword',
 - 已实现：Sapphire 解密、渲染选项、搜索、SCSU、RawFiles/HREFCom。
 - 性能优化（块缓存、目录扫描）。
 
-### M6/M7/M8：文档、搜索扩展与前端基础
+### M6/M7/M8/M9：文档、搜索扩展与前端基础
 
 - M6：gi-docgen、Vala API、搜索基础能力。
 - M7：独立模块实例、`GswKeyKind`、BOTTOM 导航、testament 识别。
 - M8：HTML 片段渲染、EntryAttributes、全局/模块 render options。
+- M9：`GswVerseList` 经文范围、OSIS ref、TreeKey offset/local name。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---

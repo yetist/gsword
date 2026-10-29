@@ -358,6 +358,73 @@ gsw_tree_key_get_level(GswKey *self)
     return level;
 }
 
+glong
+gsw_tree_key_get_offset(GswTreeKey *self)
+{
+    return self != NULL ? self->tree_offset : 0;
+}
+
+gboolean
+gsw_tree_key_set_offset(GswTreeKey *self, glong offset)
+{
+    GError *error = NULL;
+
+    g_return_val_if_fail(self != NULL, FALSE);
+    if (offset < 0 || !gsw_tree_key_load((GswKey *)self, offset, &error)) {
+        g_clear_error(&error);
+        return FALSE;
+    }
+    self->valid = TRUE;
+    gsw_tree_key_update_text((GswKey *)self);
+    return TRUE;
+}
+
+const gchar *
+gsw_tree_key_get_local_name(GswTreeKey *self)
+{
+    g_return_val_if_fail(self != NULL, NULL);
+    return self->tree_name != NULL ? self->tree_name : "";
+}
+
+gboolean
+gsw_tree_key_previous_sibling(GswTreeKey *self)
+{
+    GswTreeNode parent;
+    gint child;
+    gint previous = -1;
+
+    g_return_val_if_fail(self != NULL, FALSE);
+    if (self->tree_parent < 0 || self->tree_offset <= 0)
+        return FALSE;
+
+    if (!gsw_tree_read_node(self->tree_path, self->tree_parent, &parent, NULL))
+        return FALSE;
+
+    child = parent.first_child;
+    while (child >= 0) {
+        GswTreeNode node;
+
+        if (child == self->tree_offset) {
+            gsw_tree_node_clear(&parent);
+            if (previous < 0)
+                return FALSE;
+            if (!gsw_tree_key_load((GswKey *)self, previous, NULL))
+                return FALSE;
+            gsw_tree_key_update_text((GswKey *)self);
+            return TRUE;
+        }
+
+        if (!gsw_tree_read_node(self->tree_path, child, &node, NULL))
+            break;
+        previous = child;
+        child = node.next;
+        gsw_tree_node_clear(&node);
+    }
+
+    gsw_tree_node_clear(&parent);
+    return FALSE;
+}
+
 gboolean
 gsw_tree_key_set_position(GswKey *self, GswPosition pos)
 {
