@@ -52,16 +52,26 @@ Later entries override earlier entries with the same locale ID.
 
 ## Regenerating
 
-The initial files are generated from SWORD 1.9.0 locale data:
+The initial files were bootstrapped from SWORD 1.9.0 locale data. These checked-in
+files are the authoritative runtime data and may be maintained by hand.
+
+To create a missing baseline file:
 
 ```sh
 python3 tools/import-sword-locales.py
+```
+
+The importer skips files that already exist. Use `--force` only when you
+intentionally want to replace manual changes with the generated baseline.
+
+Always validate after editing:
+
+```sh
 python3 tools/validate-locales.py
 ```
 
-Generated files are checked in so normal builds do not need the SWORD source
-tree. Edit the importer or the generated files deliberately; do not depend on
-files under `/usr/share/sword` at runtime.
+Normal builds do not need the SWORD source tree, and the runtime never reads
+files under `/usr/share/sword`.
 
 ## Licensing and attribution
 

@@ -105,7 +105,8 @@ const gchar  *gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
 /**
  * gsw_locale_mgr_translate_abbreviation:
  * @self: a #GswLocaleMgr
- * @abbreviation: localized book abbreviation from `[Book Abbrevs]`
+ * @abbreviation: localized book abbreviation from `[Book OSIS].Abbrev` or
+ *   `[Book OSIS].Aliases`
  * @locale: locale name, or %NULL for the default locale
  *
  * Looks up a localized book abbreviation and returns its OSIS book name.
@@ -140,7 +141,7 @@ GPtrArray    *gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self,
  * @abbreviation: preferred OSIS abbreviation, for example `Gen`
  * @locale: locale name, or %NULL for the default locale
  *
- * Looks up a localized preferred abbreviation from `[Pref Abbrevs]`.
+ * Looks up the localized preferred abbreviation from `[Book OSIS].Abbrev`.
  *
  * Returns: (transfer none) (nullable): the localized abbreviation, or %NULL
  *   if no preferred abbreviation is available
