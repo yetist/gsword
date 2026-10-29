@@ -122,7 +122,7 @@ pkg.generate(
 
 gnome = import('gnome')
 gir = []
-if get_option('introspection')
+if get_option('introspection') or get_option('docs')
   gir_dep = dependency('gobject-introspection-1.0')
   gir = gnome.generate_gir(
     gsword_lib,
@@ -132,12 +132,12 @@ if get_option('introspection')
     identifier_prefix: 'Gsw',
     symbol_prefix: 'gsw_',
     includes: ['GObject-2.0', 'Gio-2.0'],
-    install: true,
+    install: get_option('introspection'),
     extra_args: ['--c-include=gsword/gsword.h'],
   )
 endif
 
-if get_option('gtk_doc')
+if get_option('docs')
   subdir('docs/reference')
 endif
 

@@ -1,24 +1,24 @@
-gtkdoc = dependency('gtk-doc', required: true)
+gidocgen = find_program('gi-docgen', required: true)
 
-gsword_doc = gnome.gtkdoc('gsword',
-  main_xml: 'gsword-docs.xml',
-  src_dir: [
-    meson.project_source_root() / 'include' / 'gsword',
+gsword_doc = custom_target('gsword-doc',
+  input: [
+    gir[0],
+    files('Gsw.toml'),
+    files('overview.md'),
   ],
-  dependencies: [gsword_dep, glib_dep, gobject_dep, gio_dep],
-  gobject_typesfile: 'gsword.types',
-  content_files: [
-    'gsword-overview.xml',
-  ],
-  scan_args: [
-    '--deprecated-guards=GSW_DISABLE_DEPRECATED',
-  ],
-  mkdb_args: [
-    '--xml-mode',
-    '--output-format=xml',
+  output: 'gsword',
+  command: [
+    gidocgen, 'generate',
+    '--quiet',
+    '--config', '@INPUT1@',
+    '--content-dir', meson.current_source_dir(),
+    '--output-dir', '@OUTDIR@/gsword',
+    '--no-namespace-dir',
+    '@INPUT0@',
   ],
   install: true,
-  install_dir: 'gsword',
+  install_dir: get_option('datadir') / 'doc',
+  build_by_default: true,
 )
 
 alias_target('docs', gsword_doc)

@@ -52,17 +52,18 @@ meson test -C build
 ./build/examples/gsword-async-install ~/.sword ~/.sword/InstallMgr CrossWire KJV
 ```
 
-生成 gtk-doc API 文档：
+使用 gi-docgen 生成 API 文档：
 
 ```sh
-meson setup build-doc -Dgtk_doc=true
+meson setup build-doc -Ddocs=true
 meson compile -C build-doc docs
-# 输出：build-doc/docs/reference/html/index.html
+# 输出：build-doc/docs/reference/gsword/index.html
 ```
 
-公共头文件中的 gtk-doc 注释包含每个参数的用途、返回值、内存所有权
+公共头文件中的文档注释包含每个参数的用途、返回值、内存所有权
 （`(transfer none)` / `(transfer full)` / `(transfer container)`）以及异步
-API 的 `finish` 对应关系；枚举值、类结构和信号也有说明。
+API 的 `finish` 对应关系；枚举值、类结构和信号也有说明。`-Ddocs=true`
+会自动启用 GObject Introspection，以便 gi-docgen 从 GIR 读取 API。
 
 生成 GObject Introspection 数据：
 
@@ -87,7 +88,7 @@ M5/M6 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 A
 - GLib / GObject / GIO（>= 2.66）
 - libcurl（>= 7.68）
 - zlib
-- 可选：libbz2、liblzma、gtk-doc（API 文档）
+- 可选：libbz2、liblzma、gobject-introspection（GIR）、gi-docgen（API 文档）
 - Meson / Ninja
 
 ## 许可证
