@@ -12,15 +12,31 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GswStrKey:
+ *
+ * A string key for lexicon and dictionary modules. It is a specialised
+ * #GswKey; use gsw_key_ref() and gsw_key_unref() for ownership.
+ */
 typedef GswKey GswStrKey;
 
 #define GSW_TYPE_STR_KEY (gsw_str_key_get_type())
 
+/**
+ * gsw_str_key_get_type:
+ *
+ * Gets the #GType for #GswStrKey.
+ *
+ * Returns: the #GType for #GswStrKey
+ */
 GType       gsw_str_key_get_type(void);
 /**
  * gsw_str_key_new:
+ * @text: key text
  *
- * Returns: (transfer full): result
+ * Creates a string key for dictionary modules.
+ *
+ * Returns: (transfer full): a new #GswStrKey
  */
 GswStrKey  *gsw_str_key_new(const gchar *text);
 

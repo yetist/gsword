@@ -12,24 +12,97 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GswTreeKey:
+ *
+ * A slash-separated path key for general book modules. It supports moving
+ * between a node, its parent, its first child, and its next sibling.
+ */
 typedef GswKey GswTreeKey;
 
 #define GSW_TYPE_TREE_KEY (gsw_tree_key_get_type())
 
+/**
+ * gsw_tree_key_get_type:
+ *
+ * Gets the #GType for #GswTreeKey.
+ *
+ * Returns: the #GType for #GswTreeKey
+ */
 GType        gsw_tree_key_get_type(void);
 /**
  * gsw_tree_key_new:
+ * @base_path: base directory of the general book
  *
- * Returns: (transfer full): result
+ * Creates a tree key rooted at @base_path.
+ *
+ * Returns: (transfer full): a new #GswTreeKey
  */
 GswTreeKey  *gsw_tree_key_new(const gchar *base_path);
 
+/**
+ * gsw_tree_key_get_text:
+ * @self: a #GswTreeKey
+ *
+ * Gets the current slash-separated tree path.
+ *
+ * Returns: (transfer none): the current tree path
+ */
 const gchar *gsw_tree_key_get_text(GswTreeKey *self);
+/**
+ * gsw_tree_key_set_text:
+ * @self: a #GswTreeKey
+ * @path: a filesystem path
+ *
+ * Positions the tree key at a slash-separated path.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
 gboolean     gsw_tree_key_set_text(GswTreeKey *self, const gchar *path);
+/**
+ * gsw_tree_key_first_child:
+ * @self: a #GswTreeKey
+ *
+ * Moves to the first child node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
 gboolean     gsw_tree_key_first_child(GswTreeKey *self);
+/**
+ * gsw_tree_key_next_sibling:
+ * @self: a #GswTreeKey
+ *
+ * Moves to the next sibling node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
 gboolean     gsw_tree_key_next_sibling(GswTreeKey *self);
+/**
+ * gsw_tree_key_parent:
+ * @self: a #GswTreeKey
+ *
+ * Moves to the parent node.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
 gboolean     gsw_tree_key_parent(GswTreeKey *self);
+/**
+ * gsw_tree_key_has_children:
+ * @self: a #GswTreeKey
+ *
+ * Checks whether the current node has children.
+ *
+ * Returns: %TRUE if the condition holds, %FALSE otherwise
+ */
 gboolean     gsw_tree_key_has_children(GswTreeKey *self);
+/**
+ * gsw_tree_key_get_level:
+ * @self: a #GswTreeKey
+ *
+ * Gets the depth of the current node.
+ *
+ * Returns: the depth of the current node
+ */
 gint         gsw_tree_key_get_level(GswTreeKey *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GswTreeKey, gsw_key_unref)

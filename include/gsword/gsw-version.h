@@ -30,6 +30,17 @@ G_BEGIN_DECLS
 
 #define GSW_AVAILABLE_IN_0_1
 
+/**
+ * gsw_version_compare:
+ * @a: first version string
+ * @b: second version string
+ *
+ * Compares versions the same way SWORD's <literal>SWVersion</literal> does:
+ * up to four dot-separated integer components, with missing components treated
+ * as -1.
+ *
+ * Returns: less than 0 if @a is older, 0 if equal, greater than 0 if newer
+ */
 gint gsw_version_compare(const gchar *a, const gchar *b);
 
 G_END_DECLS
