@@ -15,6 +15,9 @@ def main():
     assert system.get_book_count() == 66
     book = system.get_book(0)
     assert book.get_osis_name() == "Gen"
+    assert hasattr(Gsw.Module, "build_search_index")
+    assert hasattr(Gsw.Module, "delete_search_index")
+    assert hasattr(Gsw.Module, "has_search_index")
     print("GIR smoke test OK")
 
 

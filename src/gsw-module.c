@@ -1145,6 +1145,7 @@ gsw_module_set_entry(GswModule *self, const gchar *entry, GError **error)
                                          strlen(data), error))
         return FALSE;
     gsw_module_clear_entry_cache(priv);
+    gsw_module_delete_search_index(self, NULL);
     return TRUE;
 }
 
@@ -1166,5 +1167,6 @@ gsw_module_delete_entry(GswModule *self, GError **error)
     if (!priv->backend->ops->delete_entry(priv->backend, priv->key, error))
         return FALSE;
     gsw_module_clear_entry_cache(priv);
+    gsw_module_delete_search_index(self, NULL);
     return TRUE;
 }

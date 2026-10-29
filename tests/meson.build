@@ -50,6 +50,10 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('cache', test_cache)
 
+  test_concurrent = executable('test-concurrent', 'test-concurrent.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('concurrent', test_concurrent)
+
   test_codec = executable('test-codec', 'test-codec.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep],
     c_args: extra_c_args)

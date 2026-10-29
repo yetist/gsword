@@ -5,7 +5,12 @@
 #include <gsword/gsw-search.h>
 #include <gsword/gsw-error.h>
 #include <gsword/gsw-verse-list.h>
+#include "gsw-lock.h"
+#include "gsw-search-private.h"
+#include "gsw-utils.h"
 
+#include <errno.h>
+#include <glib/gstdio.h>
 #include <string.h>
 
 struct _GswSearchOptions {
@@ -240,6 +245,216 @@ gsw_search_result_get_snippet(GswSearchResult *self)
     return self->snippet;
 }
 
+#define GSW_SEARCH_INDEX_MAGIC "gsword-search-index"
+#define GSW_SEARCH_INDEX_VERSION 1
+#define GSW_SEARCH_INDEX_FILE ".gsword-search-index"
+#define GSW_SEARCH_SCAN_GUARD 1000000
+
+typedef struct {
+    GHashTable *tokens;   /* case-folded token -> GPtrArray of key strings */
+} GswSearchIndex;
+
+static void
+search_key_array_free(GPtrArray *array)
+{
+    if (array != NULL)
+        g_ptr_array_unref(array);
+}
+
+static GswSearchIndex *
+search_index_new(void)
+{
+    GswSearchIndex *index = g_new0(GswSearchIndex, 1);
+
+    index->tokens = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
+                                          (GDestroyNotify)search_key_array_free);
+    return index;
+}
+
+static void
+search_index_free(GswSearchIndex *index)
+{
+    if (index == NULL)
+        return;
+    g_hash_table_unref(index->tokens);
+    g_free(index);
+}
+
+static gchar *
+search_index_path(GswModule *self)
+{
+    GswModuleInfo *info = gsw_module_get_info(self);
+    const gchar *data_path = gsw_module_info_get_absolute_data_path(info);
+
+    if (data_path == NULL || *data_path == '\0')
+        return NULL;
+    return g_build_filename(data_path, GSW_SEARCH_INDEX_FILE, NULL);
+}
+
+void
+gsw_search_index_remove_for_tree_path(const gchar *tree_path)
+{
+    gchar *dir;
+    gchar *path;
+    gchar *tmp;
+    gchar *lock_path;
+    gint lock_fd = -1;
+
+    if (tree_path == NULL)
+        return;
+    dir = g_path_get_dirname(tree_path);
+    path = g_build_filename(dir, GSW_SEARCH_INDEX_FILE, NULL);
+    {
+        GError *error = NULL;
+
+        lock_path = g_strconcat(path, ".lock", NULL);
+        lock_fd = gsw_file_lock(lock_path, &error);
+        g_clear_error(&error);
+        g_free(lock_path);
+    }
+    tmp = g_strconcat(path, ".tmp", NULL);
+    g_unlink(path);
+    g_unlink(tmp);
+    g_free(tmp);
+    if (lock_fd >= 0)
+        gsw_file_unlock(lock_fd);
+    g_free(path);
+    g_free(dir);
+}
+
+/* Split text into case-folded alphanumeric tokens. CJK runs remain a single
+ * token; callers fall back to a full scan when a query token is absent. */
+static GPtrArray *
+search_tokenize(const gchar *text)
+{
+    GPtrArray *tokens = g_ptr_array_new_with_free_func(g_free);
+    GString *word = g_string_new(NULL);
+    gchar *folded;
+    const gchar *p;
+
+    if (text == NULL || *text == '\0') {
+        g_string_free(word, TRUE);
+        return tokens;
+    }
+
+    folded = g_utf8_casefold(text, -1);
+    p = folded;
+    while (*p != '\0') {
+        gunichar ch = g_utf8_get_char(p);
+
+        if (g_unichar_isalnum(ch)) {
+            g_string_append_unichar(word, ch);
+        } else if (word->len > 0) {
+            g_ptr_array_add(tokens, g_string_free(word, FALSE));
+            word = g_string_new(NULL);
+        }
+        p = g_utf8_next_char(p);
+    }
+    if (word->len > 0)
+        g_ptr_array_add(tokens, g_string_free(word, FALSE));
+    else
+        g_string_free(word, TRUE);
+    g_free(folded);
+    return tokens;
+}
+
+static gboolean
+search_index_save(GswSearchIndex *index, const gchar *path, GError **error)
+{
+    GVariantBuilder builder;
+    GVariant *tokens;
+    GVariant *root;
+    GHashTableIter iter;
+    gpointer key, value;
+    gchar *tmp;
+    gboolean ok;
+
+    g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sas}"));
+    g_hash_table_iter_init(&iter, index->tokens);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        GPtrArray *keys = value;
+        GVariant *strv = g_variant_new_strv(
+            (const gchar * const *)keys->pdata, (gssize)keys->len);
+
+        g_variant_builder_add(&builder, "{s@as}", (const gchar *)key, strv);
+    }
+    tokens = g_variant_builder_end(&builder);
+    root = g_variant_new("(su@a{sas})", GSW_SEARCH_INDEX_MAGIC,
+                         (guint32)GSW_SEARCH_INDEX_VERSION, tokens);
+
+    tmp = g_strconcat(path, ".tmp", NULL);
+    ok = g_file_set_contents(tmp, g_variant_get_data(root),
+                             (gssize)g_variant_get_size(root), error);
+    if (ok && g_rename(tmp, path) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot replace search index %s: %s", path,
+                    g_strerror(errno));
+        g_unlink(tmp);
+        ok = FALSE;
+    }
+    g_free(tmp);
+    g_variant_unref(root);
+    return ok;
+}
+
+static GswSearchIndex *
+search_index_load(const gchar *path, GError **error)
+{
+    GswSearchIndex *index;
+    gchar *data = NULL;
+    gsize len = 0;
+    GBytes *bytes;
+    GVariant *root;
+    GVariant *tokens;
+    GVariantIter iter;
+    gchar *magic = NULL;
+    guint32 version = 0;
+    gchar *token = NULL;
+    GVariant *keys;
+
+    if (!g_file_get_contents(path, &data, &len, NULL))
+        return NULL;
+    bytes = g_bytes_new_take(data, len);
+    root = g_variant_new_from_bytes(G_VARIANT_TYPE("(sua{sas})"), bytes, FALSE);
+    g_bytes_unref(bytes);
+    if (root == NULL || !g_variant_is_normal_form(root)) {
+        if (root != NULL)
+            g_variant_unref(root);
+        return NULL;
+    }
+
+    g_variant_get(root, "(su@a{sas})", &magic, &version, &tokens);
+    if (g_strcmp0(magic, GSW_SEARCH_INDEX_MAGIC) != 0 ||
+        version != GSW_SEARCH_INDEX_VERSION) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "Unsupported search index format in %s", path);
+        g_free(magic);
+        g_variant_unref(tokens);
+        g_variant_unref(root);
+        return NULL;
+    }
+    g_free(magic);
+
+    index = search_index_new();
+    g_variant_iter_init(&iter, tokens);
+    while (g_variant_iter_next(&iter, "{s@as}", &token, &keys)) {
+        gsize n = 0;
+        gchar **strv = g_variant_dup_strv(keys, &n);
+        GPtrArray *array = g_ptr_array_new_with_free_func(g_free);
+        gsize i;
+
+        for (i = 0; i < n; i++)
+            g_ptr_array_add(array, strv[i]);
+        g_free(strv);
+        g_hash_table_insert(index->tokens, g_strdup(token), array);
+        g_free(token);
+        g_variant_unref(keys);
+    }
+    g_variant_unref(tokens);
+    g_variant_unref(root);
+    return index;
+}
+
 static GswSearchResult *
 gsw_search_result_new(const gchar *module_name, const gchar *key,
                       const gchar *text)
@@ -408,6 +623,323 @@ search_options_cleanup(GRegex *regex, gchar **words, gchar *needle)
     }
 }
 
+/* Returns NULL when the index cannot answer the query and the caller should
+ * fall back to a normal scan. An empty array is a valid "no hits" result. */
+static GPtrArray *
+search_index_candidates(GswSearchIndex *index, const gchar *text)
+{
+    GPtrArray *query = search_tokenize(text);
+    GPtrArray *arrays = g_ptr_array_new();
+    GHashTable *seen = g_hash_table_new(g_str_hash, g_str_equal);
+    GPtrArray *result = NULL;
+    GPtrArray *base = NULL;
+    guint base_index = 0;
+    guint i;
+
+    if (query->len == 0)
+        goto fallback;
+    for (i = 0; i < query->len; i++) {
+        const gchar *token = g_ptr_array_index(query, i);
+        GPtrArray *keys;
+
+        if (g_hash_table_contains(seen, token))
+            continue;
+        g_hash_table_add(seen, (gpointer)token);
+        keys = g_hash_table_lookup(index->tokens, token);
+        if (keys == NULL)
+            goto fallback;
+        g_ptr_array_add(arrays, keys);
+    }
+    if (arrays->len == 0)
+        goto fallback;
+
+    base = g_ptr_array_index(arrays, 0);
+    for (i = 1; i < arrays->len; i++) {
+        GPtrArray *candidate = g_ptr_array_index(arrays, i);
+
+        if (candidate->len < base->len) {
+            base = candidate;
+            base_index = i;
+        }
+    }
+
+    result = g_ptr_array_new_with_free_func(g_free);
+    if (arrays->len == 1) {
+        for (i = 0; i < base->len; i++)
+            g_ptr_array_add(result, g_strdup(g_ptr_array_index(base, i)));
+    } else {
+        GHashTable **sets = g_new0(GHashTable *, arrays->len);
+
+        for (i = 0; i < arrays->len; i++) {
+            GPtrArray *keys = g_ptr_array_index(arrays, i);
+            guint j;
+
+            if (i == base_index)
+                continue;
+            sets[i] = g_hash_table_new(g_str_hash, g_str_equal);
+            for (j = 0; j < keys->len; j++)
+                g_hash_table_add(sets[i], g_ptr_array_index(keys, j));
+        }
+        for (i = 0; i < base->len; i++) {
+            const gchar *key = g_ptr_array_index(base, i);
+            gboolean match = TRUE;
+            guint j;
+
+            for (j = 0; j < arrays->len; j++) {
+                if (j != base_index && !g_hash_table_contains(sets[j], key)) {
+                    match = FALSE;
+                    break;
+                }
+            }
+            if (match)
+                g_ptr_array_add(result, g_strdup(key));
+        }
+        for (i = 0; i < arrays->len; i++)
+            g_clear_pointer(&sets[i], g_hash_table_unref);
+        g_free(sets);
+    }
+
+    g_hash_table_unref(seen);
+    g_ptr_array_unref(arrays);
+    g_ptr_array_unref(query);
+    return result;
+
+fallback:
+    g_hash_table_unref(seen);
+    g_ptr_array_unref(arrays);
+    g_ptr_array_unref(query);
+    if (result != NULL)
+        g_ptr_array_unref(result);
+    return NULL;
+}
+
+static gboolean
+search_index_can_use(GswSearchOptions *options)
+{
+    return !options->case_sensitive &&
+           options->scope == NULL &&
+           options->attribute_level1 == NULL &&
+           (options->type == GSW_SEARCH_PHRASE ||
+            options->type == GSW_SEARCH_MULTIWORD);
+}
+
+static gboolean
+search_index_count_entries(GswModule *self, GCancellable *cancellable,
+                           guint *count, GError **error)
+{
+    guint guard = 0;
+
+    *count = 0;
+    if (!gsw_module_set_position(self, GSW_POSITION_TOP, error))
+        return FALSE;
+    for (;;) {
+        GError *local_error = NULL;
+
+        if (g_cancellable_is_cancelled(cancellable)) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CANCELLED,
+                        "Index build cancelled");
+            return FALSE;
+        }
+        (*count)++;
+        if (guard++ >= GSW_SEARCH_SCAN_GUARD)
+            return TRUE;
+        if (!gsw_module_next(self, 1, &local_error)) {
+            g_clear_error(&local_error);
+            break;
+        }
+    }
+    return TRUE;
+}
+
+gboolean
+gsw_module_has_search_index(GswModule *self)
+{
+    gchar *path;
+    gboolean exists;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    path = search_index_path(self);
+    if (path == NULL)
+        return FALSE;
+    exists = g_file_test(path, G_FILE_TEST_IS_REGULAR);
+    g_free(path);
+    return exists;
+}
+
+gboolean
+gsw_module_delete_search_index(GswModule *self, GError **error)
+{
+    gchar *path;
+    gchar *tmp;
+    gchar *lock_path;
+    gint lock_fd = -1;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    path = search_index_path(self);
+    if (path == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CONFIG,
+                    "Module has no data directory");
+        return FALSE;
+    }
+    lock_path = g_strconcat(path, ".lock", NULL);
+    {
+        GError *lock_error = NULL;
+
+        lock_fd = gsw_file_lock(lock_path, &lock_error);
+        g_free(lock_path);
+        if (lock_fd < 0) {
+            if (!g_file_test(path, G_FILE_TEST_EXISTS)) {
+                g_clear_error(&lock_error);
+                tmp = g_strconcat(path, ".tmp", NULL);
+                g_unlink(tmp);
+                g_free(tmp);
+                g_free(path);
+                return TRUE;
+            }
+            if (error != NULL)
+                g_propagate_error(error, lock_error);
+            else
+                g_clear_error(&lock_error);
+            g_free(path);
+            return FALSE;
+        }
+    }
+    if (g_unlink(path) != 0 && errno != ENOENT) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot delete search index %s: %s", path,
+                    g_strerror(errno));
+        gsw_file_unlock(lock_fd);
+        g_free(path);
+        return FALSE;
+    }
+    tmp = g_strconcat(path, ".tmp", NULL);
+    g_unlink(tmp);
+    g_free(tmp);
+    gsw_file_unlock(lock_fd);
+    g_free(path);
+    return TRUE;
+}
+
+gboolean
+gsw_module_build_search_index(GswModule *self, GCancellable *cancellable,
+                              GswSearchProgressFunc progress,
+                              gpointer user_data, GError **error)
+{
+    GswSearchIndex *index = NULL;
+    GswKey *saved = NULL;
+    gchar *path = NULL;
+    gchar *lock_path = NULL;
+    const gchar *module_name;
+    guint total = 0;
+    guint processed = 0;
+    guint guard = 0;
+    gint lock_fd = -1;
+    gboolean ok = FALSE;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+
+    module_name = gsw_module_get_name(self);
+    saved = gsw_key_clone(gsw_module_get_key(self));
+    if (saved == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot save module key");
+        return FALSE;
+    }
+    path = search_index_path(self);
+    if (path == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CONFIG,
+                    "Module has no data directory");
+        goto out;
+    }
+    lock_path = g_strconcat(path, ".lock", NULL);
+    lock_fd = gsw_file_lock(lock_path, error);
+    if (lock_fd < 0)
+        goto out;
+    if (!search_index_count_entries(self, cancellable, &total, error))
+        goto out;
+    if (!gsw_module_set_position(self, GSW_POSITION_TOP, error))
+        goto out;
+
+    index = search_index_new();
+    for (;;) {
+        gchar *text = NULL;
+        GError *local_error = NULL;
+        GPtrArray *tokens = NULL;
+        GHashTable *seen = NULL;
+        const gchar *key_text;
+        guint i;
+
+        if (g_cancellable_is_cancelled(cancellable)) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_CANCELLED,
+                        "Index build cancelled");
+            goto out;
+        }
+        text = gsw_module_get_text(self, &local_error);
+        if (text == NULL && local_error != NULL) {
+            if (error != NULL)
+                g_propagate_error(error, local_error);
+            else
+                g_clear_error(&local_error);
+            goto out;
+        }
+        key_text = gsw_module_get_key_text(self);
+        if (key_text == NULL)
+            key_text = "";
+
+        if (text != NULL && *text != '\0') {
+            tokens = search_tokenize(text);
+            seen = g_hash_table_new(g_str_hash, g_str_equal);
+            for (i = 0; i < tokens->len; i++) {
+                const gchar *token = g_ptr_array_index(tokens, i);
+                GPtrArray *keys;
+
+                if (g_hash_table_contains(seen, token))
+                    continue;
+                g_hash_table_add(seen, (gpointer)token);
+                keys = g_hash_table_lookup(index->tokens, token);
+                if (keys == NULL) {
+                    keys = g_ptr_array_new_with_free_func(g_free);
+                    g_hash_table_insert(index->tokens, g_strdup(token), keys);
+                }
+                if (keys->len == 0 ||
+                    g_strcmp0(g_ptr_array_index(keys, keys->len - 1),
+                              key_text) != 0)
+                    g_ptr_array_add(keys, g_strdup(key_text));
+            }
+            g_hash_table_unref(seen);
+            g_ptr_array_unref(tokens);
+        }
+        g_free(text);
+
+        processed++;
+        if (progress != NULL)
+            progress(module_name, processed, total, user_data);
+        if (guard++ >= GSW_SEARCH_SCAN_GUARD)
+            break;
+        {
+            GError *advance_error = NULL;
+
+            if (!gsw_module_next(self, 1, &advance_error)) {
+                g_clear_error(&advance_error);
+                break;
+            }
+        }
+    }
+
+    ok = search_index_save(index, path, error);
+
+out:
+    if (lock_fd >= 0)
+        gsw_file_unlock(lock_fd);
+    g_free(lock_path);
+    g_free(path);
+    search_index_free(index);
+    if (saved != NULL)
+        gsw_module_set_key(self, saved, NULL);
+    g_clear_pointer(&saved, gsw_key_unref);
+    return ok;
+}
+
 GPtrArray *
 gsw_module_search_full(GswModule *self, GswSearchOptions *options,
                        GCancellable *cancellable,
@@ -444,6 +976,82 @@ gsw_module_search_full(GswModule *self, GswSearchOptions *options,
     module_name = gsw_module_get_name(self);
     results = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsw_search_result_unref);
+
+    if (search_index_can_use(options)) {
+        gchar *index_path = search_index_path(self);
+
+        if (index_path != NULL) {
+            if (g_file_test(index_path, G_FILE_TEST_IS_REGULAR)) {
+                GError *index_error = NULL;
+                GswSearchIndex *index = search_index_load(index_path,
+                                                          &index_error);
+
+                g_clear_error(&index_error);
+                if (index != NULL) {
+                    GPtrArray *candidates = search_index_candidates(
+                        index, gsw_search_options_get_text(options));
+                    guint i;
+
+                    search_index_free(index);
+                    if (candidates != NULL) {
+                        total = candidates->len;
+                        for (i = 0; i < candidates->len; i++) {
+                            GError *local_error = NULL;
+
+                            if (g_cancellable_is_cancelled(cancellable)) {
+                                g_set_error(error, GSW_ERROR,
+                                            GSW_ERROR_CANCELLED,
+                                            "Search cancelled");
+                                ok = FALSE;
+                                g_ptr_array_unref(candidates);
+                                g_free(index_path);
+                                goto out;
+                            }
+                            if (!gsw_module_set_key_text(
+                                    self, g_ptr_array_index(candidates, i),
+                                    error)) {
+                                ok = FALSE;
+                                g_ptr_array_unref(candidates);
+                                g_free(index_path);
+                                goto out;
+                            }
+                            if (entry_matches(self, options, regex, words,
+                                              needle, &local_error)) {
+                                gchar *text = gsw_module_get_text(self, NULL);
+
+                                g_ptr_array_add(results, gsw_search_result_new(
+                                    module_name, gsw_module_get_key_text(self),
+                                    text != NULL ? text
+                                                 : gsw_module_get_key_text(self)));
+                                g_free(text);
+                                if (options->max_results > 0 &&
+                                    results->len >= options->max_results)
+                                    break;
+                            }
+                            if (local_error != NULL) {
+                                if (error != NULL)
+                                    g_propagate_error(error, local_error);
+                                else
+                                    g_clear_error(&local_error);
+                                ok = FALSE;
+                                g_ptr_array_unref(candidates);
+                                g_free(index_path);
+                                goto out;
+                            }
+                            processed++;
+                            if (progress != NULL)
+                                progress(module_name, processed, total,
+                                         user_data);
+                        }
+                        g_ptr_array_unref(candidates);
+                        g_free(index_path);
+                        goto out;
+                    }
+                }
+            }
+            g_free(index_path);
+        }
+    }
 
     if (options->scope != NULL &&
         gsw_key_get_kind(gsw_module_get_key(self)) == GSW_KEY_KIND_VERSE) {

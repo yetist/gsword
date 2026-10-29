@@ -8,6 +8,7 @@
 #include "gsw-key-private.h"
 #include "gsw-data.h"
 #include "gsw-lock.h"
+#include "gsw-search-private.h"
 
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -826,6 +827,7 @@ tree_append_node(GswKey *self, const gchar *name, gboolean sibling,
         goto out;
     self->valid = TRUE;
     gsw_tree_key_update_text(self);
+    gsw_search_index_remove_for_tree_path(self->tree_path);
     ok = TRUE;
 
 out:
@@ -890,6 +892,7 @@ gsw_tree_key_set_local_name(GswTreeKey *self, const gchar *name, GError **error)
         goto out;
     self->valid = TRUE;
     gsw_tree_key_update_text((GswKey *)self);
+    gsw_search_index_remove_for_tree_path(self->tree_path);
     ok = TRUE;
 
 out:
@@ -999,6 +1002,7 @@ gsw_tree_key_remove_node(GswTreeKey *self, GError **error)
         goto out;
     self->valid = TRUE;
     gsw_tree_key_update_text((GswKey *)self);
+    gsw_search_index_remove_for_tree_path(self->tree_path);
     ok = TRUE;
 
 out:

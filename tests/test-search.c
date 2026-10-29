@@ -102,6 +102,80 @@ make_module(const gchar *prefix)
 }
 
 static void
+make_large_module(const gchar *prefix, guint count)
+{
+    gchar *dir = g_build_filename(prefix, "modules", "texts", "rawtext",
+                                  "largesearch", NULL);
+    gchar *path;
+    GByteArray *text = g_byte_array_new();
+    GByteArray *idx = g_byte_array_new();
+    guint i;
+
+    g_mkdir_with_parents(dir, 0755);
+    for (i = 0; i < 4; i++) {
+        append_le32(idx, 0);
+        append_le16(idx, 0);
+    }
+    for (i = 0; i < count; i++) {
+        gchar *entry;
+
+        if (i == count / 2)
+            entry = g_strdup_printf("entry %u common filler needle", i);
+        else
+            entry = g_strdup_printf("entry %u common filler word", i);
+        {
+            guint32 offset = text->len;
+
+            g_byte_array_append(text, (const guint8 *)entry,
+                                (guint)strlen(entry));
+            g_byte_array_append(text, (const guint8 *)"\n", 1);
+            append_le32(idx, offset);
+            append_le16(idx, (guint16)strlen(entry));
+        }
+        g_free(entry);
+    }
+
+    path = g_build_filename(dir, "ot", NULL);
+    write_bytes(path, text->data, text->len);
+    g_free(path);
+    path = g_build_filename(dir, "ot.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+
+    g_byte_array_set_size(idx, 0);
+    for (i = 0; i < 5; i++) {
+        append_le32(idx, 0);
+        append_le16(idx, 0);
+    }
+    path = g_build_filename(dir, "nt", NULL);
+    write_bytes(path, (const guint8 *)"", 0);
+    g_free(path);
+    path = g_build_filename(dir, "nt.vss", NULL);
+    write_bytes(path, idx->data, idx->len);
+    g_free(path);
+
+    g_byte_array_unref(text);
+    g_byte_array_unref(idx);
+    g_free(dir);
+
+    {
+        gchar *mods = g_build_filename(prefix, "mods.d", NULL);
+        g_mkdir_with_parents(mods, 0755);
+        path = g_build_filename(mods, "largesearch.conf", NULL);
+        g_assert_true(g_file_set_contents(path,
+            "[LargeSearch]\n"
+            "Description=Large search test\n"
+            "DataPath=./modules/texts/rawtext/largesearch/\n"
+            "ModDrv=RawText\n"
+            "Encoding=UTF-8\n"
+            "Version=1.0\n"
+            "Versification=KJV\n", -1, NULL));
+        g_free(path);
+        g_free(mods);
+    }
+}
+
+static void
 test_search(void)
 {
     GError *error = NULL;
@@ -266,11 +340,165 @@ test_search_options(void)
     g_free(prefix);
 }
 
+static void
+index_progress(const gchar *module_name, guint processed, guint total,
+               gpointer user_data)
+{
+    guint *calls = user_data;
+
+    g_assert_cmpstr(module_name, ==, "TinySearch");
+    g_assert_cmpuint(processed, >, 0);
+    g_assert_cmpuint(total, >, 0);
+    (*calls)++;
+}
+
+static void
+test_search_index(void)
+{
+    GError *error = NULL;
+    gchar *prefix = g_dir_make_tmp("gsword-search-index-XXXXXX", &error);
+    GswManager *manager;
+    GswModule *module;
+    GswSearchOptions *options;
+    GPtrArray *results;
+    guint progress_calls = 0;
+
+    g_assert_no_error(error);
+    make_module(prefix);
+    manager = gsw_manager_new_for_path(prefix, &error);
+    g_assert_no_error(error);
+    module = gsw_manager_get_module(manager, "TinySearch");
+    g_assert_nonnull(module);
+    g_assert_false(gsw_module_has_search_index(module));
+
+    g_assert_true(gsw_module_build_search_index(module, NULL, index_progress,
+                                                &progress_calls, &error));
+    g_assert_no_error(error);
+    g_assert_cmpuint(progress_calls, >, 0);
+    g_assert_true(gsw_module_has_search_index(module));
+
+    options = gsw_search_options_new();
+    gsw_search_options_set_text(options, "love");
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
+                                     &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 2);
+    g_assert_cmpstr(gsw_search_result_get_key(g_ptr_array_index(results, 0)),
+                    ==, "Genesis 1:1");
+    g_assert_cmpstr(gsw_search_result_get_key(g_ptr_array_index(results, 1)),
+                    ==, "Genesis 1:3");
+    g_ptr_array_unref(results);
+
+    gsw_search_options_set_text(options, "God world");
+    gsw_search_options_set_search_type(options, GSW_SEARCH_MULTIWORD);
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
+                                     &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 1);
+    g_assert_cmpstr(gsw_search_result_get_key(g_ptr_array_index(results, 0)),
+                    ==, "Genesis 1:2");
+    g_ptr_array_unref(results);
+
+    /* Index cannot answer case-sensitive or regex queries; the normal scan
+     * must still return correct results. */
+    gsw_search_options_set_text(options, "god");
+    gsw_search_options_set_case_sensitive(options, TRUE);
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
+                                     &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 0);
+    g_ptr_array_unref(results);
+
+    g_assert_true(gsw_module_delete_search_index(module, &error));
+    g_assert_no_error(error);
+    g_assert_false(gsw_module_has_search_index(module));
+
+    {
+        GCancellable *cancellable = g_cancellable_new();
+
+        g_cancellable_cancel(cancellable);
+        g_assert_false(gsw_module_build_search_index(module, cancellable,
+                                                     NULL, NULL, &error));
+        g_assert_error(error, GSW_ERROR, GSW_ERROR_CANCELLED);
+        g_clear_error(&error);
+        g_object_unref(cancellable);
+        g_assert_false(gsw_module_has_search_index(module));
+    }
+
+    gsw_search_options_unref(options);
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(prefix, NULL);
+    g_free(prefix);
+}
+
+static void
+test_search_index_large(void)
+{
+    GError *error = NULL;
+    gchar *prefix = g_dir_make_tmp("gsword-search-large-XXXXXX", &error);
+    GswManager *manager;
+    GswModule *module;
+    GswSearchOptions *options;
+    GPtrArray *results;
+    GswSearchResult *result;
+    gint64 scan_start;
+    gint64 scan_elapsed;
+    gint64 index_start;
+    gint64 index_elapsed;
+    gchar *scan_key;
+
+    g_assert_no_error(error);
+    make_large_module(prefix, 3000);
+    manager = gsw_manager_new_for_path(prefix, &error);
+    g_assert_no_error(error);
+    module = gsw_manager_get_module(manager, "LargeSearch");
+    g_assert_nonnull(module);
+
+    options = gsw_search_options_new();
+    gsw_search_options_set_text(options, "needle");
+
+    scan_start = g_get_monotonic_time();
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
+                                     &error);
+    scan_elapsed = g_get_monotonic_time() - scan_start;
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 1);
+    scan_key = g_strdup(gsw_search_result_get_key(
+        g_ptr_array_index(results, 0)));
+    g_ptr_array_unref(results);
+
+    g_assert_true(gsw_module_build_search_index(module, NULL, NULL, NULL,
+                                                &error));
+    g_assert_no_error(error);
+    index_start = g_get_monotonic_time();
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
+                                     &error);
+    index_elapsed = g_get_monotonic_time() - index_start;
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 1);
+    result = g_ptr_array_index(results, 0);
+    g_assert_cmpstr(gsw_search_result_get_key(result), ==, scan_key);
+    g_ptr_array_unref(results);
+    g_free(scan_key);
+
+    g_test_message("large search: scan=%" G_GINT64_FORMAT
+                   "us index=%" G_GINT64_FORMAT "us",
+                   scan_elapsed, index_elapsed);
+    g_assert_cmpint(index_elapsed, <, scan_elapsed);
+
+    gsw_search_options_unref(options);
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(prefix, NULL);
+    g_free(prefix);
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/search/basic", test_search);
     g_test_add_func("/search/options", test_search_options);
+    g_test_add_func("/search/index", test_search_index);
+    g_test_add_func("/search/index-large", test_search_index_large);
     return g_test_run();
 }

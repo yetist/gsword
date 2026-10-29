@@ -21,7 +21,8 @@ M0–M5 已实现并通过单元/集成测试：
 - RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
 - 基础渲染选项、本地化书名、LRU 块缓存、GI 与异步 API
-- 基础搜索 API（phrase/multiword/regex）
+- 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
+- 可选 GTK4 前端原型（`examples/gtk.c`）
 
 ## 快速开始
 
@@ -45,7 +46,12 @@ meson test -C build
 ./build/examples/gsword-locale ~/.sword zh_CN KJV "John 3:16"
 ./build/examples/gsword-search ~/.sword KJV "God so loved" phrase
 ./build/examples/gsword-search ~/.sword KJV "God.*world" regex
+./build/examples/gsword-index-module ~/.sword KJV build
+./build/examples/gsword-index-module ~/.sword KJV status
 ./build/examples/gsword-parallel ~/.sword KJV "John 3:16" "Rom 8:1"
+
+# GTK4 前端原型（需要 GTK4）
+GSWORD_PREFIX=~/.sword ./build/examples/gsword-gtk
 
 # 安装（需要预先配置 InstallMgr.conf）
 ./build/examples/gsword-install-sources ~/.sword/InstallMgr
@@ -88,13 +94,14 @@ print("%s\n", key.get_text());
 key.unref();
 ```
 
-M5–M12 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
+M5–M13 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
 `locales.d` 本地化书名、zText/zCom/zLD LRU 块缓存、独立模块实例、BOTTOM 导航、
 testament 识别、HTML 渲染片段、EntryAttributes、全局渲染选项、经文范围/OSIS、
 TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、可取消/可限定范围
-的多模块搜索、RawFiles/RawGenBook 条目写入、RawGenBook 创建、树结构编辑、
-跨进程文件锁、写失败回滚和树事务崩溃恢复，以及更多示例。
+的多模块搜索、持久化倒排搜索索引、RawFiles/RawGenBook 条目写入、RawGenBook
+创建、树结构编辑、跨进程文件锁、写失败回滚和树事务崩溃恢复，以及可选 GTK4
+前端原型和更多示例。
 
 ## 文档
 
