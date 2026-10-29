@@ -21,6 +21,7 @@
 #include <gsword/gsw-module-info.h>
 #include <gsword/gsw-module.h>
 #include <gsword/gsw-manager.h>
+#include <gsword/gsw-search.h>
 #include <gsword/gsw-status-reporter.h>
 #include <gsword/gsw-transport.h>
 #include <gsword/gsw-install-source.h>

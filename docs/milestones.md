@@ -185,14 +185,26 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 
 目标：把当前扫描式基础搜索提升到 Xiphos 前端可用水平。
 
-- [ ] 增加 `GswSearchOptions`：大小写、搜索类型、范围、最大结果数
-- [ ] 增加 `GswSearchResult`：模块名、key、预览文本、匹配片段
-- [ ] 增加 `GCancellable` 与进度回调
-- [ ] 增加多模块联合搜索
-- [ ] 增加 Strong's、Morphology、Footnote 属性搜索
-- [ ] 搜索期间保护模块当前 key，并明确线程模型
+- [x] 增加 `GswSearchOptions`：大小写、搜索类型、范围、最大结果数
+- [x] 增加 `GswSearchResult`：模块名、key、预览文本、匹配片段
+- [x] 增加 `GCancellable` 与进度回调
+- [x] 增加多模块联合搜索
+- [x] 增加 Strong's、Morphology、Footnote 属性搜索
+- [x] 搜索期间保护模块当前 key，并明确线程模型
 
 验收：覆盖 Xiphos 搜索对话框主要场景，可取消搜索，可限定范围并生成结果预览。
+
+说明：M11 使用扫描式搜索引擎，不依赖索引；索引搜索仍属于 M13。搜索对象不是线程安全
+的，推荐每个搜索任务使用独立模块实例。
+
+新增 API：
+
+- `GswSearchOptions` / `GswSearchResult`
+- `gsw_module_search_full()`
+- `gsw_manager_search()`
+- `gsw_search_options_set_scope()`
+- `gsw_search_options_set_attribute()`
+- `GswSearchProgressFunc`
 
 ## M12 写入与模块编辑
 

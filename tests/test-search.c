@@ -33,7 +33,7 @@ static void
 make_module(const gchar *prefix)
 {
     const gchar *entries[] = {
-        "God is love",
+        "<w lemma=\"strong:G26\">God</w> is love",
         "God created the world",
         "love your neighbour"
     };
@@ -144,10 +144,133 @@ test_search(void)
     g_free(prefix);
 }
 
+static void
+search_progress(const gchar *module_name, guint processed, guint total,
+                gpointer user_data)
+{
+    guint *calls = user_data;
+
+    g_assert_cmpstr(module_name, ==, "TinySearch");
+    g_assert_cmpuint(processed, >, 0);
+    (void)total;
+    (*calls)++;
+}
+
+static void
+test_search_options(void)
+{
+    GError *error = NULL;
+    gchar *prefix = g_dir_make_tmp("gsword-search-XXXXXX", &error);
+    GswManager *manager;
+    GswModule *module;
+    GswSearchOptions *options;
+    GswVerseList *scope;
+    GPtrArray *results;
+    GswSearchResult *result;
+    GCancellable *cancellable;
+    guint progress_calls = 0;
+
+    g_assert_no_error(error);
+    make_module(prefix);
+    manager = gsw_manager_new_for_path(prefix, &error);
+    g_assert_no_error(error);
+    module = gsw_manager_get_module(manager, "TinySearch");
+    g_assert_nonnull(module);
+
+    options = gsw_search_options_new();
+    gsw_search_options_set_text(options, "love");
+    gsw_search_options_set_max_results(options, 1);
+    results = gsw_module_search_full(module, options, NULL, search_progress,
+                                     &progress_calls, &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(results);
+    g_assert_cmpuint(results->len, ==, 1);
+    g_assert_cmpuint(progress_calls, >, 0);
+    result = g_ptr_array_index(results, 0);
+    g_assert_cmpstr(gsw_search_result_get_module_name(result), ==,
+                    "TinySearch");
+    g_assert_cmpstr(gsw_search_result_get_key(result), ==, "Genesis 1:1");
+    g_assert_nonnull(gsw_search_result_get_preview(result));
+    g_assert_nonnull(gsw_search_result_get_snippet(result));
+    g_ptr_array_unref(results);
+
+    gsw_search_options_set_text(options, "god");
+    gsw_search_options_set_max_results(options, 0);
+    gsw_search_options_set_case_sensitive(options, TRUE);
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL, &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 0);
+    g_ptr_array_unref(results);
+
+    gsw_search_options_set_case_sensitive(options, FALSE);
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL, &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 2);
+    g_ptr_array_unref(results);
+
+    scope = gsw_verse_list_parse("Gen 1:1-2",
+                                 (GswVerseKey *)gsw_module_get_key(module),
+                                 &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(scope);
+    gsw_search_options_set_text(options, "God");
+    gsw_search_options_set_max_results(options, 1);
+    gsw_search_options_set_scope(options, scope);
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL, &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 1);
+    g_ptr_array_unref(results);
+    gsw_search_options_set_scope(options, NULL);
+    gsw_search_options_set_max_results(options, 0);
+    gsw_verse_list_unref(scope);
+
+    gsw_search_options_set_text(options, "G26");
+    gsw_search_options_set_attribute(options, "Word", "Lemma");
+    results = gsw_module_search_full(module, options, NULL, NULL, NULL, &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(results->len, ==, 1);
+    result = g_ptr_array_index(results, 0);
+    g_assert_cmpstr(gsw_search_result_get_key(result), ==, "Genesis 1:1");
+    g_ptr_array_unref(results);
+    gsw_search_options_set_attribute(options, NULL, NULL);
+
+    cancellable = g_cancellable_new();
+    g_cancellable_cancel(cancellable);
+    gsw_search_options_set_text(options, "God");
+    results = gsw_module_search_full(module, options, cancellable, NULL, NULL,
+                                     &error);
+    g_assert_null(results);
+    g_assert_error(error, GSW_ERROR, GSW_ERROR_CANCELLED);
+    g_clear_error(&error);
+    g_object_unref(cancellable);
+
+    {
+        const gchar *modules[] = { "TinySearch", NULL };
+
+        gsw_search_options_set_attribute(options, NULL, NULL);
+        gsw_search_options_set_text(options, "love");
+        results = gsw_manager_search(manager, modules, options, NULL, NULL,
+                                     NULL, &error);
+        g_assert_no_error(error);
+        g_assert_nonnull(results);
+        g_assert_cmpuint(results->len, ==, 2);
+        result = g_ptr_array_index(results, 0);
+        g_assert_cmpstr(gsw_search_result_get_module_name(result), ==,
+                        "TinySearch");
+        g_ptr_array_unref(results);
+    }
+
+    gsw_search_options_unref(options);
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(prefix, NULL);
+    g_free(prefix);
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/search/basic", test_search);
+    g_test_add_func("/search/options", test_search_options);
     return g_test_run();
 }

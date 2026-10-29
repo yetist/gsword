@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.9（M0–M10 已实现）
+- 状态：设计草案 v0.10（M0–M11 已实现）
 - 日期：2026-10-29
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -42,7 +42,8 @@
 以下功能不在第一版承诺范围内，但架构应预留：
 
 - 写入/编辑模块（`setEntry`、`linkEntry`、`deleteEntry`）。
-- 完整 Lucene/索引搜索框架；当前提供基础 phrase/multiword/regex 搜索。
+- 完整 Lucene/索引搜索框架；当前提供 phrase/multiword/regex、范围、属性、可取消
+  的扫描式搜索，索引搜索后置。
 - 完整渲染过滤器（Strong's、脚注、red letter、headings 等所有 OSIS/ThML/GBF 选项）。
 - 模块加密/解密已作为 M5 功能实现（Sapphire、`CipherKey`）。
 - 所有本地化书名、界面翻译。
@@ -601,6 +602,17 @@ gboolean       gsw_module_is_writable(GswModule *self);
  */
 gchar **gsw_module_search(GswModule *self, const gchar *text,
                           GswSearchType type, GError **error);
+
+GPtrArray *gsw_module_search_full(GswModule *self, GswSearchOptions *options,
+                                  GCancellable *cancellable,
+                                  GswSearchProgressFunc progress,
+                                  gpointer user_data, GError **error);
+GPtrArray *gsw_manager_search(GswManager *self,
+                              const gchar * const *module_names,
+                              GswSearchOptions *options,
+                              GCancellable *cancellable,
+                              GswSearchProgressFunc progress,
+                              gpointer user_data, GError **error);
 ```
 
 错误语义：
@@ -1511,13 +1523,15 @@ gnome.generate_vapi('gsword',
 - 已实现：Sapphire 解密、渲染选项、搜索、SCSU、RawFiles/HREFCom。
 - 性能优化（块缓存、目录扫描）。
 
-### M6–M10：文档、搜索扩展与前端基础
+### M6–M11：文档、搜索扩展与前端基础
 
 - M6：gi-docgen、Vala API、搜索基础能力。
 - M7：独立模块实例、`GswKeyKind`、BOTTOM 导航、testament 识别。
 - M8：HTML 片段渲染、EntryAttributes、全局/模块 render options。
 - M9：`GswVerseList` 经文范围、OSIS ref、TreeKey offset/local name。
 - M10：DIR 本地安装源、本地目录安装、CipherKey 与配置更新、选项持久化。
+- M11：`GswSearchOptions`、`GswSearchResult`、范围/属性搜索、取消、进度和
+  多模块搜索。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---

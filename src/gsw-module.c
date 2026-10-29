@@ -4,6 +4,7 @@
 
 #include <gsword/gsw-module.h>
 #include <gsword/gsw-error.h>
+#include <gsword/gsw-search.h>
 #include "gsw-key-internal.h"
 #include "gsw-module-backend.h"
 #include "gsw-options.h"
@@ -837,126 +838,29 @@ gchar **
 gsw_module_search(GswModule *self, const gchar *text, GswSearchType type,
                   GError **error)
 {
-    GswModulePrivate *priv;
+    GswSearchOptions *options;
     GPtrArray *results;
-    gchar *saved;
-    gchar **words = NULL;
-    gchar *needle_fold = NULL;
-    GRegex *regex = NULL;
+    gchar **keys;
     guint i;
-    gboolean ok = TRUE;
 
     g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
     g_return_val_if_fail(text != NULL, NULL);
 
-    priv = gsw_module_priv(self);
-    saved = g_strdup(gsw_module_get_key_text(self));
-    results = g_ptr_array_new_with_free_func(g_free);
-
-    if (*text == '\0') {
-        g_free(saved);
-        g_ptr_array_add(results, NULL);
-        return (gchar **)g_ptr_array_free(results, FALSE);
-    }
-
-    if (type == GSW_SEARCH_MULTIWORD) {
-        gchar **raw = g_strsplit_set(text, " \t", -1);
-        guint count = 0;
-        words = g_new0(gchar *, g_strv_length(raw) + 1);
-        for (i = 0; raw[i] != NULL; i++) {
-            if (raw[i][0] != '\0')
-                words[count++] = g_utf8_casefold(raw[i], -1);
-        }
-        g_strfreev(raw);
-    } else if (type == GSW_SEARCH_PHRASE) {
-        needle_fold = g_utf8_casefold(text, -1);
-    } else if (type == GSW_SEARCH_REGEX) {
-        regex = g_regex_new(text, G_REGEX_CASELESS | G_REGEX_OPTIMIZE,
-                            0, error);
-        if (regex == NULL) {
-            g_free(saved);
-            g_ptr_array_unref(results);
-            return NULL;
-        }
-    } else {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
-                    "Unsupported search type");
-        g_free(saved);
-        g_ptr_array_unref(results);
+    options = gsw_search_options_new();
+    gsw_search_options_set_text(options, text);
+    gsw_search_options_set_search_type(options, type);
+    results = gsw_module_search_full(self, options, NULL, NULL, NULL, error);
+    gsw_search_options_unref(options);
+    if (results == NULL)
         return NULL;
+
+    keys = g_new0(gchar *, results->len + 1);
+    for (i = 0; i < results->len; i++) {
+        GswSearchResult *result = g_ptr_array_index(results, i);
+        keys[i] = g_strdup(gsw_search_result_get_key(result));
     }
-
-    if (!gsw_module_set_position(self, GSW_POSITION_TOP, error)) {
-        ok = FALSE;
-        goto out;
-    }
-
-    for (i = 0; i < 1000000; i++) {
-        GError *local_error = NULL;
-        gchar *entry = gsw_module_get_text(self, &local_error);
-        gboolean match = FALSE;
-
-        if (entry == NULL) {
-            if (local_error != NULL) {
-                g_propagate_error(error, local_error);
-                ok = FALSE;
-            }
-            break;
-        }
-
-        if (type == GSW_SEARCH_REGEX) {
-            match = g_regex_match(regex, entry, 0, NULL);
-        } else if (type == GSW_SEARCH_PHRASE) {
-            gchar *folded = g_utf8_casefold(entry, -1);
-            match = strstr(folded, needle_fold) != NULL;
-            g_free(folded);
-        } else if (type == GSW_SEARCH_MULTIWORD) {
-            gchar *folded = g_utf8_casefold(entry, -1);
-            guint j;
-            match = TRUE;
-            for (j = 0; words[j] != NULL; j++) {
-                if (strstr(folded, words[j]) == NULL) {
-                    match = FALSE;
-                    break;
-                }
-            }
-            g_free(folded);
-        }
-
-        if (match)
-            g_ptr_array_add(results, g_strdup(gsw_module_get_key_text(self)));
-
-        g_free(entry);
-
-        {
-            GError *advance_error = NULL;
-            if (!gsw_module_next(self, 1, &advance_error)) {
-                g_clear_error(&advance_error);
-                break;
-            }
-        }
-    }
-
-out:
-    gsw_module_set_key_text(self, saved, NULL);
-    g_free(saved);
-    if (needle_fold != NULL)
-        g_free(needle_fold);
-    if (words != NULL) {
-        for (i = 0; words[i] != NULL; i++)
-            g_free(words[i]);
-        g_free(words);
-    }
-    g_clear_pointer(&regex, g_regex_unref);
-
-    if (!ok) {
-        g_ptr_array_unref(results);
-        return NULL;
-    }
-
-    g_ptr_array_add(results, NULL);
-    (void)priv;
-    return (gchar **)g_ptr_array_free(results, FALSE);
+    g_ptr_array_unref(results);
+    return keys;
 }
 
 gchar *

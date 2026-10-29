@@ -388,7 +388,9 @@ gboolean       gsw_module_is_writable(GswModule *self);
  * @type: a #GswSearchType
  * @error: return location for a #GError, or %NULL
  *
- * Searches all module entries for @text.
+ * Searches all module entries for @text and returns matching key texts. Use
+ * gsw_module_search_full() for ranges, attribute searches, cancellation,
+ * progress, and result previews.
  *
  * Returns: (transfer full) (array zero-terminated=1) (element-type utf8): a newly allocated %NULL-terminated array of strings
  */
