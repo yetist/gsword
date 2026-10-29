@@ -98,6 +98,36 @@ void          gsw_locale_mgr_set_default_locale(GswLocaleMgr *self,
 const gchar  *gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
                                        const gchar *locale);
 /**
+ * gsw_locale_mgr_translate_abbreviation:
+ * @self: a #GswLocaleMgr
+ * @abbreviation: localized book abbreviation from `[Book Abbrevs]`
+ * @locale: locale name, or %NULL for the default locale
+ *
+ * Looks up a localized book abbreviation and returns its OSIS book name.
+ * Matching is case-insensitive for Latin abbreviations.
+ *
+ * Returns: (transfer none) (nullable): the OSIS book name, or %NULL if the
+ *   abbreviation is unknown
+ */
+const gchar  *gsw_locale_mgr_translate_abbreviation(GswLocaleMgr *self,
+                                                    const gchar *abbreviation,
+                                                    const gchar *locale);
+/**
+ * gsw_locale_mgr_translate_preferred_abbreviation:
+ * @self: a #GswLocaleMgr
+ * @abbreviation: preferred OSIS abbreviation, for example `Gen`
+ * @locale: locale name, or %NULL for the default locale
+ *
+ * Looks up a localized preferred abbreviation from `[Pref Abbrevs]`.
+ *
+ * Returns: (transfer none) (nullable): the localized abbreviation, or %NULL
+ *   if no preferred abbreviation is available
+ */
+const gchar  *gsw_locale_mgr_translate_preferred_abbreviation(
+                                                GswLocaleMgr *self,
+                                                const gchar *abbreviation,
+                                                const gchar *locale);
+/**
  * gsw_locale_mgr_reverse:
  * @self: a #GswLocaleMgr
  * @translated: localized text to translate back
