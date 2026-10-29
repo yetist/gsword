@@ -78,10 +78,12 @@ API 的 `finish` 对应关系；枚举值、类结构和信号也有说明。`-D
 meson setup build-gir -Dintrospection=true
 meson compile -C build-gir
 meson test -C build-gir introspection
-# GIR：build-gir/Gsw-0.1.gir
-# typelib：build-gir/Gsw-0.1.typelib
+# GIR：build-gir/GSword-0.1.gir
+# typelib：build-gir/GSword-0.1.typelib
 # Vala：build-gir/gsword.vapi
 ```
+
+GIR 命名空间为 `GSword`；VAPI 命名空间仍为 `Gsw`（由 C 类型前缀生成）。
 
 `gsword.vapi` 会连同 `gsword.deps` 安装到 `share/vala/vapi`，可在 Vala
 工程中直接使用：

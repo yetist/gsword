@@ -3,7 +3,7 @@ gidocgen = find_program('gi-docgen', required: true)
 gsword_doc = custom_target('gsword-doc',
   input: [
     gir[0],
-    files('Gsw.toml'),
+    files('GSword.toml'),
     files('overview.md'),
   ],
   output: 'gsword',
