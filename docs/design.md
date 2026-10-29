@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.11（M0–M11 已实现，M12a 写入核心已实现）
+- 状态：设计草案 v0.12（M0–M11 已实现，M12 写入与树编辑已实现）
 - 日期：2026-10-29
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -1523,7 +1523,7 @@ gnome.generate_vapi('gsword',
 - 已实现：Sapphire 解密、渲染选项、搜索、SCSU、RawFiles/HREFCom。
 - 性能优化（块缓存、目录扫描）。
 
-### M6–M12a：文档、搜索扩展与前端基础
+### M6–M12：文档、搜索扩展与前端基础
 
 - M6：gi-docgen、Vala API、搜索基础能力。
 - M7：独立模块实例、`GswKeyKind`、BOTTOM 导航、testament 识别。
@@ -1532,8 +1532,9 @@ gnome.generate_vapi('gsword',
 - M10：DIR 本地安装源、本地目录安装、CipherKey 与配置更新、选项持久化。
 - M11：`GswSearchOptions`、`GswSearchResult`、范围/属性搜索、取消、进度和
   多模块搜索。
-- M12a：RawFiles 条目写入、RawGenBook 当前节点写入、删除条目和真实
-  `is_writable()`；树结构创建/重命名/删除和原子提交仍待实现。
+- M12：RawFiles 条目写入、RawGenBook 当前节点写入、RawGenBook 创建、
+  树节点追加/重命名/删除，以及临时文件替换。
+- 完整事务回滚和跨进程文件锁仍待后续加固。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---

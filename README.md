@@ -88,12 +88,12 @@ print("%s\n", key.get_text());
 key.unref();
 ```
 
-M5–M11 已完成，M12a 写入核心已实现：GIR/typelib 与 Vala API
-（`-Dintrospection=true`）、GTask 异步安装 API、Sapphire 解密、基础渲染选项
-（Strong's/脚注/标题/red letter）、`locales.d` 本地化书名、zVerse 多块缓存、
-独立模块实例、BOTTOM 导航、testament 识别、HTML 渲染片段、EntryAttributes、
-全局渲染选项、经文范围/OSIS、TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、
-选项持久化、可取消/可限定范围的多模块搜索、RawFiles/RawGenBook 条目写入，
+M5–M12 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
+异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
+`locales.d` 本地化书名、zVerse 多块缓存、独立模块实例、BOTTOM 导航、
+testament 识别、HTML 渲染片段、EntryAttributes、全局渲染选项、经文范围/OSIS、
+TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、可取消/可限定范围
+的多模块搜索、RawFiles/RawGenBook 条目写入、RawGenBook 创建和树结构编辑，
 以及更多示例。
 
 ## 文档

@@ -216,19 +216,20 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [x] `gsw_module_delete_entry()`
 - [x] RawFiles / Personal Commentary 写入
 - [x] `gsw_module_is_writable()` 返回真实值
-- [ ] 原子保存、失败回滚、文件锁
+- [x] 内容文件/树结构使用临时文件替换
+- [ ] 完整事务回滚和跨进程文件锁
 
 ### M12b RawGenBook 编辑
 
-- [ ] 创建 RawGenBook 模块
-- [ ] `append_child()` / `append_sibling()`
-- [ ] `set_local_name()`
-- [ ] `remove_node()`
-- [ ] `save()`
-- [ ] 创建模块配置文件
+- [x] 创建 RawGenBook 模块（`gsw_manager_create_genbook()`）
+- [x] `append_child()` / `append_sibling()`
+- [x] `set_local_name()`
+- [x] `remove_node()`（同时移除子树）
+- [x] 创建模块配置文件和初始根节点
+- [x] 树编辑即时写入，无需额外 `save()`
 
-当前状态：M12a 的基础写入已完成（RawFiles 条目、RawGenBook 当前节点）；
-M12b 的树结构创建/重命名/删除，以及 M12a 的原子提交和文件锁仍待实现。
+当前状态：M12a 内容写入和 M12b 基础树结构编辑已完成；完整事务回滚和文件锁
+仍需在后续加固。树编辑当前会重写 `.idx`/`.dat` 并保留旧文件直到成功替换。
 
 验收：可创建并编辑个人笔记和祷告列表，编辑结果可被上游 SWORD 读取，写入失败不破坏原模块。
 

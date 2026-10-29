@@ -253,6 +253,7 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
     guint32 start = 0;
     guint16 size = 0;
     glong index;
+    gboolean new_entry = FALSE;
     gboolean ok = FALSE;
     GError *local_error = NULL;
 
@@ -281,6 +282,7 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
     }
     start = gsw_le32(record);
     size = gsw_le16(record + 4);
+    new_entry = size == 0;
 
     if (size > 0) {
         FILE *table = gsw_verse_key_get_testament((GswVerseKey *)key) == 2
@@ -340,8 +342,6 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
             goto out;
         }
         fclose(table);
-        if (!rawfiles_write_record(idx, index, start, size, error))
-            goto out;
     }
 
     path = gsw_path_join_under(data->data_dir, name, error);
@@ -350,14 +350,33 @@ gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
     parent = g_path_get_dirname(path);
     if (!gsw_mkdir_with_parents(parent, error))
         goto out;
-    if (!g_file_set_contents(path, (const gchar *)bytes, (gssize)len,
-                             &local_error)) {
-        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
-                    "Cannot write RawFiles entry %s: %s", path,
-                    local_error->message);
-        g_error_free(local_error);
-        goto out;
+    {
+        gchar *tmp = g_strconcat(path, ".tmp", NULL);
+
+        if (!g_file_set_contents(tmp, (const gchar *)bytes, (gssize)len,
+                                 &local_error)) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot write RawFiles entry %s: %s", tmp,
+                        local_error->message);
+            g_error_free(local_error);
+            g_unlink(tmp);
+            g_free(tmp);
+            goto out;
+        }
+        if (g_rename(tmp, path) != 0) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot replace RawFiles entry %s: %s", path,
+                        g_strerror(errno));
+            g_unlink(tmp);
+            g_free(tmp);
+            goto out;
+        }
+        g_free(tmp);
     }
+
+    if (new_entry &&
+        !rawfiles_write_record(idx, index, start, size, error))
+        goto out;
 
     ok = TRUE;
 

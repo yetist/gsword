@@ -42,6 +42,10 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep, zlib_dep])
   test('reader', test_reader)
 
+  test_genbook_write = executable('test-genbook-write', 'test-genbook-write.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('genbook-write', test_genbook_write)
+
   test_codec = executable('test-codec', 'test-codec.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep],
     c_args: extra_c_args)
