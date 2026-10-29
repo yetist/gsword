@@ -470,6 +470,41 @@ collect_attributes(GHashTable *attributes, const gchar *markup,
 }
 
 static void
+collect_tag_attributes(GHashTable *attributes, const gchar *markup,
+                       const gchar *pattern, const gchar *level1,
+                       const gchar *level2)
+{
+    GRegex *regex;
+    GMatchInfo *match = NULL;
+    guint index = 0;
+
+    regex = g_regex_new(pattern, G_REGEX_CASELESS | G_REGEX_DOTALL, 0, NULL);
+    if (regex == NULL)
+        return;
+
+    if (g_regex_match(regex, markup, 0, &match)) {
+        do {
+            gchar *value = g_match_info_fetch(match, 1);
+            gchar *key;
+
+            if (value == NULL)
+                value = g_match_info_fetch(match, 2);
+            if (value == NULL)
+                value = g_match_info_fetch(match, 3);
+            if (value == NULL || *value == '\0') {
+                g_free(value);
+                continue;
+            }
+
+            key = g_strdup_printf("%s/%s/%u", level1, level2, index++);
+            g_hash_table_replace(attributes, key, value);
+        } while (g_match_info_next(match, NULL));
+    }
+    g_match_info_free(match);
+    g_regex_unref(regex);
+}
+
+static void
 collect_images(GHashTable *attributes, const gchar *markup)
 {
     GRegex *regex;
@@ -521,6 +556,14 @@ gsw_render_collect_attributes(const gchar *markup)
                        "<(?:reference|xref)\\b[^>]*>(.*?)"
                        "</(?:reference|xref)\\s*>",
                        "Crossref", "body");
+    collect_tag_attributes(
+        attributes, text,
+        "<w\\b[^>]*\\blemma\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))",
+        "Word", "Lemma");
+    collect_tag_attributes(
+        attributes, text,
+        "<w\\b[^>]*\\bmorph\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))",
+        "Word", "Morph");
     collect_images(attributes, text);
     return attributes;
 }
