@@ -36,16 +36,6 @@ gsw_version_parse(const gchar *text, gint parts[GSW_VERSION_PARTS])
     }
 }
 
-/**
- * gsw_version_compare:
- * @a: first version string
- * @b: second version string
- *
- * Compares versions the same way SWORD's SWVersion does: up to four
- * dot-separated integer components, with missing components treated as -1.
- *
- * Returns: less than 0 if @a is older, 0 if equal, greater than 0 if newer.
- */
 gint
 gsw_version_compare(const gchar *a, const gchar *b)
 {

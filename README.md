@@ -60,6 +60,10 @@ meson compile -C build-doc docs
 # 输出：build-doc/docs/reference/html/index.html
 ```
 
+公共头文件中的 gtk-doc 注释包含每个参数的用途、返回值、内存所有权
+（`(transfer none)` / `(transfer full)` / `(transfer container)`）以及异步
+API 的 `finish` 对应关系；枚举值、类结构和信号也有说明。
+
 生成 GObject Introspection 数据：
 
 ```sh

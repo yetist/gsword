@@ -43,6 +43,13 @@ typedef enum {
 
 #define GSW_ERROR (gsw_error_quark())
 
+/**
+ * gsw_error_quark:
+ *
+ * Gets the #GQuark identifying the gsword error domain.
+ *
+ * Returns: the #GQuark identifying the gsword error domain
+ */
 GQuark gsw_error_quark(void);
 
 G_END_DECLS
