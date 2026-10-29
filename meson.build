@@ -135,7 +135,7 @@ if get_option('introspection') or get_option('docs')
   gir = gnome.generate_gir(
     gsword_lib,
     sources: gsword_sources + gsword_headers,
-    namespace: 'Gsw',
+    namespace: 'GSword',
     nsversion: '0.1',
     identifier_prefix: 'Gsw',
     symbol_prefix: 'gsw_',

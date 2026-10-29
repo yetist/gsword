@@ -46,12 +46,12 @@ accessed.
 
 ## Installing modules
 
-[class@Gsw.InstallManager] reads `InstallMgr.conf`, refreshes remote sources,
-reports progress through [class@Gsw.StatusReporter], and installs modules
+[class@GSword.InstallManager] reads `InstallMgr.conf`, refreshes remote sources,
+reports progress through [class@GSword.StatusReporter], and installs modules
 atomically. Synchronous and GTask-based asynchronous APIs are available.
 
-Connect to the [signal@Gsw.StatusReporter::pre-status] signal for status
-messages and to [signal@Gsw.StatusReporter::progress] for byte-level progress:
+Connect to the [signal@GSword.StatusReporter::pre-status] signal for status
+messages and to [signal@GSword.StatusReporter::progress] for byte-level progress:
 
 ```c
 static void
@@ -90,21 +90,21 @@ g_object_unref(installer);
 ```
 
 The asynchronous variants use the standard GIO pattern: call
-[method@Gsw.InstallManager.install_module_async] and then call
-[method@Gsw.InstallManager.install_module_finish] from the
+[method@GSword.InstallManager.install_module_async] and then call
+[method@GSword.InstallManager.install_module_finish] from the
 [type@Gio.AsyncReadyCallback].
 
 ## Keys and versification
 
-[class@Gsw.Module] exposes a module-compatible key through
-[method@Gsw.Module.create_key]. Bible modules use [alias@Gsw.VerseKey],
-dictionaries use [alias@Gsw.StrKey], and general books use
-[alias@Gsw.TreeKey]. Verse keys can also be detached from a module and used
+[class@GSword.Module] exposes a module-compatible key through
+[method@GSword.Module.create_key]. Bible modules use [alias@GSword.VerseKey],
+dictionaries use [alias@GSword.StrKey], and general books use
+[alias@GSword.TreeKey]. Verse keys can also be detached from a module and used
 with a versification system directly.
 
-[class@Gsw.VersificationMgr] provides the built-in KJV, Catholic, and other
+[class@GSword.VersificationMgr] provides the built-in KJV, Catholic, and other
 versification systems. Book names are localized through
-[class@Gsw.LocaleMgr].
+[class@GSword.LocaleMgr].
 
 ## Memory and ownership
 
@@ -123,13 +123,13 @@ Encrypted modules use SWORD-compatible Sapphire decryption.
 
 ## Searching
 
-[method@Gsw.Module.search] provides phrase, multiword, and regular-expression
+[method@GSword.Module.search] provides phrase, multiword, and regular-expression
 searches over a module and returns matching key texts.
 
 ## GObject Introspection
 
-Configure with `-Dintrospection=true` to generate `Gsw-0.1.gir` and
-`Gsw-0.1.typelib` for Python, JavaScript, and other GObject binding consumers.
+Configure with `-Dintrospection=true` to generate `GSword-0.1.gir` and
+`GSword-0.1.typelib` for Python, JavaScript, and other GObject binding consumers.
 The documentation build enables GIR generation automatically.
 
 ## Building this reference

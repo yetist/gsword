@@ -1378,12 +1378,12 @@ zlib_dep = dependency('zlib')
 - `libgsword.so.0`
 - `include/gsword/*.h`
 - `gsword.pc`
-- 可选：`Gsw-0.1.gir`、`Gsw-0.1.typelib`、`gsword.vapi`、`gsword.deps`
+- 可选：`GSword-0.1.gir`、`GSword-0.1.typelib`、`gsword.vapi`、`gsword.deps`
 - 可选：示例程序 `gsword-lookup`、`gsword-install`
 
 ### 11.2.1 gi-docgen
 
-- `docs/reference/`：`Gsw.toml`、`overview.md` 和 Meson 集成脚本。
+- `docs/reference/`：`GSword.toml`、`overview.md` 和 Meson 集成脚本。
 - `-Ddocs=true` 启用，同时自动生成 GIR；`meson compile -C build docs` 构建。
 - 安装到 `share/doc/gsword`。
 - 文档内容来自 GIR 中的 GObject Introspection 注解和公共头文件注释。
@@ -1395,7 +1395,7 @@ zlib_dep = dependency('zlib')
 ```meson
 gir = gnome.generate_gir(gsword_lib,
   sources: gsword_sources + gsword_headers,
-  namespace: 'Gsw', nsversion: '0.1',
+  namespace: 'GSword', nsversion: '0.1',
   identifier_prefix: 'Gsw', symbol_prefix: 'gsw_',
   includes: ['GObject-2.0', 'Gio-2.0'],
   install: true)
