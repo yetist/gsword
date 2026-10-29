@@ -65,15 +65,31 @@ meson compile -C build-doc docs
 API 的 `finish` 对应关系；枚举值、类结构和信号也有说明。`-Ddocs=true`
 会自动启用 GObject Introspection，以便 gi-docgen 从 GIR 读取 API。
 
-生成 GObject Introspection 数据：
+生成 GObject Introspection 数据和 Vala API：
 
 ```sh
 meson setup build-gir -Dintrospection=true
 meson compile -C build-gir
 meson test -C build-gir introspection
+# GIR：build-gir/Gsw-0.1.gir
+# typelib：build-gir/Gsw-0.1.typelib
+# Vala：build-gir/gsword.vapi
 ```
 
-M5/M6 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、`locales.d` 本地化书名、zVerse 多块缓存，以及更多示例。
+`gsword.vapi` 会连同 `gsword.deps` 安装到 `share/vala/vapi`，可在 Vala
+工程中直接使用：
+
+```vala
+using Gsw;
+
+var key = Gsw.verse_key_new("John 3:16", "");
+print("%s\n", key.get_text());
+key.unref();
+```
+
+M5/M6 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
+异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
+`locales.d` 本地化书名、zVerse 多块缓存，以及更多示例。
 
 ## 文档
 
@@ -88,7 +104,7 @@ M5/M6 已完成：GIR/typelib（`-Dintrospection=true`）、GTask 异步安装 A
 - GLib / GObject / GIO（>= 2.66）
 - libcurl（>= 7.68）
 - zlib
-- 可选：libbz2、liblzma、gobject-introspection（GIR）、gi-docgen（API 文档）
+- 可选：libbz2、liblzma、gobject-introspection（GIR）、vala/vapigen（VAPI）、gi-docgen（API 文档）
 - Meson / Ninja
 
 ## 许可证
