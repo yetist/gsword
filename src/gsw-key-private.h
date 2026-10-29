@@ -55,5 +55,6 @@ gboolean gsw_tree_key_set_position(GswKey *self, GswPosition pos);
 const gchar *gsw_tree_key_get_user_data(GswKey *self, gint *size);
 gboolean gsw_tree_key_set_user_data(GswKey *self, const guint8 *data,
                                     gint size);
+gboolean gsw_tree_key_recover_locked(GswKey *self, GError **error);
 
 #endif /* __GSW_KEY_PRIVATE_H__ */

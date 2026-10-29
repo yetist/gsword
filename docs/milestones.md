@@ -219,7 +219,7 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [x] 内容文件/树结构使用临时文件替换
 - [x] 跨进程文件锁（RawFiles 索引、RawGenBook 数据/树）
 - [x] I/O 失败回滚（恢复旧索引记录或旧树文件）
-- [ ] 进程崩溃后自动恢复跨文件提交间隙
+- [x] 进程崩溃后自动恢复跨文件提交间隙（`.txn` 标记和 `.bak` 备份）
 
 ### M12b RawGenBook 编辑
 
@@ -231,8 +231,9 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [x] 树编辑即时写入，无需额外 `save()`
 
 当前状态：M12a 内容写入和 M12b 树结构编辑已完成，写入路径使用跨进程
-`flock()` 锁；树编辑会重写 `.idx`/`.dat`，先写临时文件并在失败时恢复旧文件。
-进程在两次文件替换之间崩溃时仍可能留下待恢复状态，自动恢复将在后续加固。
+`flock()` 锁；树编辑会重写 `.idx`/`.dat`，先写临时文件，再通过 `.txn`
+标记和 `.bak` 备份提交。打开模块或执行下一次写入时会自动完成或回滚中断的
+树事务。
 
 验收：可创建并编辑个人笔记和祷告列表，编辑结果可被上游 SWORD 读取，写入失败不破坏原模块。
 
@@ -245,6 +246,5 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [ ] 大模块搜索性能测试
 - [ ] 块缓存、LRU、并发读取优化
 - [ ] 用 gsword 编写最小 GTK 前端原型
-- [ ] 或实现 Xiphos backend shim，验证功能覆盖
 
 验收：大型模块搜索可接受；最小 GTK 原型覆盖模块列表、阅读、并行、搜索、安装和笔记。

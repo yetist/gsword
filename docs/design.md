@@ -1533,8 +1533,8 @@ gnome.generate_vapi('gsword',
 - M11：`GswSearchOptions`、`GswSearchResult`、范围/属性搜索、取消、进度和
   多模块搜索。
 - M12：RawFiles 条目写入、RawGenBook 当前节点写入、RawGenBook 创建、
-  树节点追加/重命名/删除、临时文件替换、跨进程 `flock()` 锁和 I/O 失败回滚。
-- 进程崩溃后跨文件提交间隙的自动恢复仍待后续加固。
+  树节点追加/重命名/删除、临时文件替换、跨进程 `flock()` 锁、I/O 失败回滚，
+  以及通过 `.txn`/`.bak` 完成崩溃后的树事务恢复。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---
