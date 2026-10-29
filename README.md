@@ -1,6 +1,18 @@
 # libsword
 
-基于 C / GObject 重新实现的 SWORD 模块库。
+基于 C / GObject 重新实现的 SWORD 模块库，同时包含基于该库的 GTK4 桌面应用
+`gsword`。
+
+## 目录结构
+
+- `lib/`：`libgsword` 库实现
+- `include/gsword/`：`libgsword` 公共 API
+- `src/`：`gsword` GTK4 桌面应用
+- `examples/`：库示例和 GTK4 前端原型
+- `tests/`：库测试
+- `docs/app-design.md`：`gsword` 应用功能与界面设计
+
+`gsword` 应用只依赖 `include/gsword/` 的公共接口。
 
 本项目不链接上游 C++ `libsword`，而是按 SWORD 1.9 的公开行为、目录布局和存储格式重新实现一套可被 GObject Introspection 使用的 C 库，目标包括：
 
@@ -107,7 +119,8 @@ TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、
 
 ## 文档
 
-- [`docs/design.md`](docs/design.md)：总体架构、对象模型、API 草案、流程、里程碑、风险。
+- [`docs/design.md`](docs/design.md)：libgsword 总体架构、对象模型、API 草案、流程、里程碑、风险。
+- [`docs/app-design.md`](docs/app-design.md)：gsword GTK4 应用的功能与界面设计。
 - [`docs/formats.md`](docs/formats.md)：配置文件、模块目录、Raw/z 存储格式、压缩、安装源等字节级说明。
 - [`docs/upstream-analysis.md`](docs/upstream-analysis.md)：上游 SWORD 1.9 源码分析与缺陷总结。
 
