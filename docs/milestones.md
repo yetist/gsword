@@ -85,4 +85,4 @@
 - [x] 基础搜索 API（phrase/multiword/regex）
 - [x] `gsword-search` 示例与搜索测试
 - [x] 搜索结果恢复当前键、跳过标题条目、索引越界安全处理
-- [x] gtk-doc API reference（`-Dgtk_doc=true`，`docs` 目标，安装到 `share/gtk-doc/html/gsword`）
+- [x] gi-docgen API reference（`-Ddocs=true`，`docs` 目标，安装到 `share/doc/gsword`）

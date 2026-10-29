@@ -1348,21 +1348,22 @@ zlib_dep = dependency('zlib')
 - `-Dlzma=auto|enabled|disabled`
 - `-Dintrospection=true|false`
 - `-Dtests=true|false`
-- `-Dgtk_doc=true|false`（gtk-doc API reference）
+- `-Ddocs=true|false`（gi-docgen API reference，自动启用 GIR）
 
 ### 11.2 安装产物
 
 - `libgsword.so.0`
 - `include/gsword/*.h`
 - `gsword.pc`
-- 可选：`Gsword-0.1.gir`、`Gsword-0.1.typelib`
+- 可选：`Gsw-0.1.gir`、`Gsw-0.1.typelib`
 - 可选：示例程序 `gsword-lookup`、`gsword-install`
 
-### 11.2.1 gtk-doc
+### 11.2.1 gi-docgen
 
-- `docs/reference/`：`gsword-docs.xml`、`gsword-overview.xml`、`gsword-sections.txt`、`gsword.types`。
-- `-Dgtk_doc=true` 启用，`meson compile -C build docs` 构建。
-- 安装到 `share/gtk-doc/html/gsword`。
+- `docs/reference/`：`Gsw.toml`、`overview.md` 和 Meson 集成脚本。
+- `-Ddocs=true` 启用，同时自动生成 GIR；`meson compile -C build docs` 构建。
+- 安装到 `share/doc/gsword`。
+- 文档内容来自 GIR 中的 GObject Introspection 注解和公共头文件注释。
 
 ### 11.3 GI 注解
 
