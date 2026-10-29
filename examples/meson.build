@@ -50,6 +50,18 @@ executable('gsword-search', 'search.c',
   dependencies: gsword_dep,
   install: false)
 
+executable('gsword-index-module', 'index-module.c',
+  dependencies: gsword_dep,
+  install: false)
+
 executable('gsword-parallel', 'parallel.c',
   dependencies: gsword_dep,
   install: false)
+
+gtk4_dep = dependency('gtk4', required: false)
+if gtk4_dep.found()
+  executable('gsword-gtk', 'gtk.c',
+    dependencies: [gsword_dep, gtk4_dep],
+    c_args: ['-Wno-deprecated-declarations'],
+    install: false)
+endif

@@ -46,10 +46,15 @@ test_genbook_write(void)
     set_module_tree_key(module, tree);
     g_assert_true(gsw_module_set_entry(module, "Entry 1", &error));
     g_assert_no_error(error);
+    g_assert_true(gsw_module_build_search_index(module, NULL, NULL, NULL,
+                                                &error));
+    g_assert_no_error(error);
+    g_assert_true(gsw_module_has_search_index(module));
 
     g_assert_true(gsw_tree_key_append_sibling(tree, "Chapter 2", &error));
     g_assert_no_error(error);
     g_assert_cmpstr(gsw_tree_key_get_text(tree), ==, "Chapter 2");
+    g_assert_false(gsw_module_has_search_index(module));
     set_module_tree_key(module, tree);
     g_assert_true(gsw_module_set_entry(module, "Entry 2", &error));
     g_assert_no_error(error);

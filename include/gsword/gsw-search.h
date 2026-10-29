@@ -265,6 +265,46 @@ const gchar      *gsw_search_result_get_preview(GswSearchResult *self);
 const gchar      *gsw_search_result_get_snippet(GswSearchResult *self);
 
 /**
+ * gsw_module_has_search_index:
+ * @self: a #GswModule
+ *
+ * Checks whether a persistent search index exists for @self.
+ *
+ * Returns: %TRUE if an index file is present
+ */
+gboolean         gsw_module_has_search_index(GswModule *self);
+/**
+ * gsw_module_build_search_index:
+ * @self: a #GswModule
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @progress: (nullable) (scope call): progress callback
+ * @user_data: user data for @progress
+ * @error: return location for a #GError, or %NULL
+ *
+ * Builds or rebuilds a persistent inverted index for @self. The index is
+ * stored in the module data directory and is replaced atomically. The module's
+ * current key is preserved.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean         gsw_module_build_search_index(GswModule *self,
+                                               GCancellable *cancellable,
+                                               GswSearchProgressFunc progress,
+                                               gpointer user_data,
+                                               GError **error);
+/**
+ * gsw_module_delete_search_index:
+ * @self: a #GswModule
+ * @error: return location for a #GError, or %NULL
+ *
+ * Deletes the persistent search index for @self, if present.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean         gsw_module_delete_search_index(GswModule *self,
+                                                GError **error);
+
+/**
  * gsw_module_search_full:
  * @self: a #GswModule
  * @options: search options

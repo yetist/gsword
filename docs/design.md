@@ -1535,6 +1535,8 @@ gnome.generate_vapi('gsword',
 - M12：RawFiles 条目写入、RawGenBook 当前节点写入、RawGenBook 创建、
   树节点追加/重命名/删除、临时文件替换、跨进程 `flock()` 锁、I/O 失败回滚，
   以及通过 `.txn`/`.bak` 完成崩溃后的树事务恢复。
+- M13：持久化倒排搜索索引、索引创建/删除/进度、大模块搜索性能测试、
+  zText/zCom/zLD LRU 块缓存、独立模块实例并发读取验证，以及可选 GTK4 前端原型。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---
