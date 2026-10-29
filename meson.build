@@ -135,6 +135,15 @@ if get_option('introspection') or get_option('docs')
     install: get_option('introspection'),
     extra_args: ['--c-include=gsword/gsword.h'],
   )
+
+  if get_option('introspection')
+    gnome.generate_vapi(
+      'gsword',
+      sources: gir[0],
+      packages: ['glib-2.0', 'gobject-2.0', 'gio-2.0'],
+      install: true,
+    )
+  endif
 endif
 
 if get_option('docs')

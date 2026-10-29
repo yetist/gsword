@@ -1355,7 +1355,7 @@ zlib_dep = dependency('zlib')
 - `libgsword.so.0`
 - `include/gsword/*.h`
 - `gsword.pc`
-- 可选：`Gsw-0.1.gir`、`Gsw-0.1.typelib`
+- 可选：`Gsw-0.1.gir`、`Gsw-0.1.typelib`、`gsword.vapi`、`gsword.deps`
 - 可选：示例程序 `gsword-lookup`、`gsword-install`
 
 ### 11.2.1 gi-docgen
@@ -1378,7 +1378,18 @@ gir = gnome.generate_gir(gsword_lib,
   install: true)
 ```
 
-使用 `-Dintrospection=true` 启用；GIR 安装在 `share/gir-1.0`，typelib 安装在 `lib/girepository-1.0`。
+使用 `-Dintrospection=true` 启用；GIR 安装在 `share/gir-1.0`，typelib 安装在
+`lib/girepository-1.0`。同时从 GIR 生成 Vala API：
+
+```meson
+gnome.generate_vapi('gsword',
+  sources: gir[0],
+  packages: ['glib-2.0', 'gobject-2.0', 'gio-2.0'],
+  install: true)
+```
+
+生成的 `gsword.vapi` 和 `gsword.deps` 安装到 `share/vala/vapi`，构建目录中可直接
+通过 `valac --pkg gsword` 使用。
 
 
 示例：

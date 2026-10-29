@@ -86,3 +86,4 @@
 - [x] `gsword-search` 示例与搜索测试
 - [x] 搜索结果恢复当前键、跳过标题条目、索引越界安全处理
 - [x] gi-docgen API reference（`-Ddocs=true`，`docs` 目标，安装到 `share/doc/gsword`）
+- [x] Vala API（`-Dintrospection=true` 生成 `gsword.vapi`，安装到 `share/vala/vapi`）
