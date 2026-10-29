@@ -452,6 +452,9 @@ gsw_zstr_backend_new(GswModuleInfo *info)
         gsw_zstr_has,
         gsw_zstr_move,
         gsw_zstr_set_position,
+        NULL,
+        NULL,
+        NULL,
         gsw_zstr_free
     };
 

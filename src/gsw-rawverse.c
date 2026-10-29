@@ -251,6 +251,9 @@ gsw_rawverse_backend_new(GswModuleInfo *info)
         gsw_rawverse_has,
         gsw_rawverse_next,
         gsw_rawverse_set_position,
+        NULL,
+        NULL,
+        NULL,
         gsw_rawverse_free
     };
 

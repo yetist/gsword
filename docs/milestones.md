@@ -212,10 +212,10 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 
 ### M12a 写入核心
 
-- [ ] `gsw_module_set_entry()`
-- [ ] `gsw_module_delete_entry()`
-- [ ] RawFiles / Personal Commentary 写入
-- [ ] `gsw_module_is_writable()` 返回真实值
+- [x] `gsw_module_set_entry()`
+- [x] `gsw_module_delete_entry()`
+- [x] RawFiles / Personal Commentary 写入
+- [x] `gsw_module_is_writable()` 返回真实值
 - [ ] 原子保存、失败回滚、文件锁
 
 ### M12b RawGenBook 编辑
@@ -226,6 +226,9 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [ ] `remove_node()`
 - [ ] `save()`
 - [ ] 创建模块配置文件
+
+当前状态：M12a 的基础写入已完成（RawFiles 条目、RawGenBook 当前节点）；
+M12b 的树结构创建/重命名/删除，以及 M12a 的原子提交和文件锁仍待实现。
 
 验收：可创建并编辑个人笔记和祷告列表，编辑结果可被上游 SWORD 读取，写入失败不破坏原模块。
 

@@ -9,6 +9,7 @@
 #include "gsw-utils.h"
 
 #include <errno.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -196,6 +197,274 @@ gsw_rawfiles_set_position(GswModuleBackend *backend, GswKey *key,
     return gsw_verse_key_set_last(key, ot_index, nt_index, error);
 }
 
+static gboolean
+rawfiles_index_paths(GswRawFilesData *data, GswKey *key, gchar **table_path,
+                     gchar **index_path)
+{
+    gint testament = gsw_verse_key_get_testament((GswVerseKey *)key);
+    const gchar *table = testament == 2 ? "nt" : "ot";
+    gchar *index;
+
+    index = g_strconcat(table, ".vss", NULL);
+    *table_path = g_build_filename(data->data_dir, table, NULL);
+    *index_path = g_build_filename(data->data_dir, index, NULL);
+    g_free(index);
+    return TRUE;
+}
+
+static gboolean
+rawfiles_write_record(FILE *idx, glong index, guint32 start, guint16 size,
+                      GError **error)
+{
+    guint8 record[6];
+
+    record[0] = (guint8)(start & 0xff);
+    record[1] = (guint8)((start >> 8) & 0xff);
+    record[2] = (guint8)((start >> 16) & 0xff);
+    record[3] = (guint8)((start >> 24) & 0xff);
+    record[4] = (guint8)(size & 0xff);
+    record[5] = (guint8)((size >> 8) & 0xff);
+
+    if (fseeko(idx, (off_t)(index * 6), SEEK_SET) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot seek RawFiles index: %s", g_strerror(errno));
+        return FALSE;
+    }
+    if (fwrite(record, 1, sizeof(record), idx) != sizeof(record)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot write RawFiles index: %s", g_strerror(errno));
+        return FALSE;
+    }
+    return fflush(idx) == 0;
+}
+
+static gboolean
+gsw_rawfiles_write_entry(GswModuleBackend *backend, GswKey *key,
+                         const guint8 *bytes, gsize len, GError **error)
+{
+    GswRawFilesData *data = backend->data;
+    gchar *table_path = NULL;
+    gchar *index_path = NULL;
+    gchar *name = NULL;
+    gchar *path = NULL;
+    gchar *parent = NULL;
+    FILE *idx = NULL;
+    guint8 record[6];
+    guint32 start = 0;
+    guint16 size = 0;
+    glong index;
+    gboolean ok = FALSE;
+    GError *local_error = NULL;
+
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                    "Writing encrypted RawFiles modules is not supported");
+        return FALSE;
+    }
+    if (!gsw_rawfiles_open(backend, error))
+        return FALSE;
+
+    index = gsw_verse_key_get_testament_index((GswVerseKey *)key);
+    rawfiles_index_paths(data, key, &table_path, &index_path);
+    idx = fopen(index_path, "r+b");
+    if (idx == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot open RawFiles index %s: %s", index_path,
+                    g_strerror(errno));
+        goto out;
+    }
+    if (fseeko(idx, (off_t)(index * 6), SEEK_SET) != 0 ||
+        fread(record, 1, sizeof(record), idx) != sizeof(record)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Cannot read RawFiles index record: %s", g_strerror(errno));
+        goto out;
+    }
+    start = gsw_le32(record);
+    size = gsw_le16(record + 4);
+
+    if (size > 0) {
+        FILE *table = gsw_verse_key_get_testament((GswVerseKey *)key) == 2
+            ? data->nt : data->ot;
+
+        name = g_malloc((gsize)size + 1);
+        if (!gsw_file_read_at(table, start, name, size, error)) {
+            g_free(name);
+            name = NULL;
+            goto out;
+        }
+        name[size] = '\0';
+        while (size > 0 && (name[size - 1] == '\r' || name[size - 1] == '\n'))
+            name[--size] = '\0';
+    } else {
+        GStatBuf st;
+        FILE *table;
+        guint suffix = 0;
+
+        for (;;) {
+            g_free(name);
+            name = g_strdup_printf("verse-%d-%ld-%u.txt",
+                                   gsw_verse_key_get_testament(
+                                       (GswVerseKey *)key),
+                                   index, suffix++);
+            path = gsw_path_join_under(data->data_dir, name, error);
+            if (path == NULL)
+                goto out;
+            if (!g_file_test(path, G_FILE_TEST_EXISTS))
+                break;
+            g_free(path);
+            path = NULL;
+        }
+        g_free(path);
+        path = NULL;
+
+        if (g_stat(table_path, &st) != 0) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot stat RawFiles name table %s: %s",
+                        table_path, g_strerror(errno));
+            goto out;
+        }
+        start = (guint32)st.st_size;
+        size = (guint16)strlen(name);
+        table = fopen(table_path, "ab");
+        if (table == NULL) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot append RawFiles name table %s: %s",
+                        table_path, g_strerror(errno));
+            goto out;
+        }
+        if (fwrite(name, 1, size, table) != size) {
+            fclose(table);
+            g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                        "Cannot write RawFiles name table %s: %s",
+                        table_path, g_strerror(errno));
+            goto out;
+        }
+        fclose(table);
+        if (!rawfiles_write_record(idx, index, start, size, error))
+            goto out;
+    }
+
+    path = gsw_path_join_under(data->data_dir, name, error);
+    if (path == NULL)
+        goto out;
+    parent = g_path_get_dirname(path);
+    if (!gsw_mkdir_with_parents(parent, error))
+        goto out;
+    if (!g_file_set_contents(path, (const gchar *)bytes, (gssize)len,
+                             &local_error)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot write RawFiles entry %s: %s", path,
+                    local_error->message);
+        g_error_free(local_error);
+        goto out;
+    }
+
+    ok = TRUE;
+
+out:
+    if (idx != NULL)
+        fclose(idx);
+    g_free(table_path);
+    g_free(index_path);
+    g_free(name);
+    g_free(path);
+    g_free(parent);
+    if (ok) {
+        gsw_rawfiles_close(backend);
+        gsw_rawfiles_open(backend, NULL);
+    }
+    return ok;
+}
+
+static gboolean
+gsw_rawfiles_delete_entry(GswModuleBackend *backend, GswKey *key,
+                          GError **error)
+{
+    GswRawFilesData *data = backend->data;
+    gchar *table_path = NULL;
+    gchar *index_path = NULL;
+    gchar *name = NULL;
+    gchar *path = NULL;
+    FILE *idx = NULL;
+    FILE *table;
+    guint8 record[6];
+    guint32 start;
+    guint16 size;
+    glong index;
+    gboolean ok = FALSE;
+
+    if (!gsw_rawfiles_open(backend, error))
+        return FALSE;
+
+    index = gsw_verse_key_get_testament_index((GswVerseKey *)key);
+    rawfiles_index_paths(data, key, &table_path, &index_path);
+    idx = fopen(index_path, "r+b");
+    if (idx == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot open RawFiles index %s: %s", index_path,
+                    g_strerror(errno));
+        goto out;
+    }
+    if (fseeko(idx, (off_t)(index * 6), SEEK_SET) != 0 ||
+        fread(record, 1, sizeof(record), idx) != sizeof(record)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Cannot read RawFiles index record: %s", g_strerror(errno));
+        goto out;
+    }
+    start = gsw_le32(record);
+    size = gsw_le16(record + 4);
+    if (size == 0) {
+        ok = TRUE;
+        goto out;
+    }
+
+    table = gsw_verse_key_get_testament((GswVerseKey *)key) == 2
+        ? data->nt : data->ot;
+    name = g_malloc((gsize)size + 1);
+    if (!gsw_file_read_at(table, start, name, size, error)) {
+        g_free(name);
+        name = NULL;
+        goto out;
+    }
+    name[size] = '\0';
+    while (size > 0 && (name[size - 1] == '\r' || name[size - 1] == '\n'))
+        name[--size] = '\0';
+
+    path = gsw_path_join_under(data->data_dir, name, error);
+    if (path == NULL)
+        goto out;
+    if (g_unlink(path) != 0 && errno != ENOENT) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot delete RawFiles entry %s: %s", path,
+                    g_strerror(errno));
+        goto out;
+    }
+    if (!rawfiles_write_record(idx, index, 0, 0, error))
+        goto out;
+    ok = TRUE;
+
+out:
+    if (idx != NULL)
+        fclose(idx);
+    g_free(table_path);
+    g_free(index_path);
+    g_free(name);
+    g_free(path);
+    if (ok) {
+        gsw_rawfiles_close(backend);
+        gsw_rawfiles_open(backend, NULL);
+    }
+    return ok;
+}
+
+static gboolean
+gsw_rawfiles_is_writable(GswModuleBackend *backend, GswKey *key)
+{
+    (void)backend;
+    (void)key;
+    return TRUE;
+}
+
 static void
 gsw_rawfiles_free(GswModuleBackend *backend)
 {
@@ -218,6 +487,9 @@ gsw_rawfiles_backend_new(GswModuleInfo *info)
         gsw_rawfiles_has,
         gsw_rawfiles_next,
         gsw_rawfiles_set_position,
+        gsw_rawfiles_write_entry,
+        gsw_rawfiles_delete_entry,
+        gsw_rawfiles_is_writable,
         gsw_rawfiles_free
     };
 

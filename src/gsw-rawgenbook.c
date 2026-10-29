@@ -9,6 +9,7 @@
 #include "gsw-cipher.h"
 
 #include <errno.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -157,6 +158,106 @@ gsw_rawgenbook_set_position(GswModuleBackend *backend, GswKey *key,
     return TRUE;
 }
 
+static gboolean
+gsw_rawgenbook_write_entry(GswModuleBackend *backend, GswKey *key,
+                           const guint8 *bytes, gsize len, GError **error)
+{
+    gchar *base;
+    gchar *path;
+    GStatBuf st;
+    FILE *out;
+    guint8 user_data[8];
+    gboolean ok = FALSE;
+
+    if (gsw_module_info_is_ciphered(backend->info)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_CIPHERED,
+                    "Writing encrypted general books is not supported");
+        return FALSE;
+    }
+    if (!gsw_rawgenbook_open(backend, error))
+        return FALSE;
+    if (len > G_MAXUINT32) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                    "General book entry is too large");
+        return FALSE;
+    }
+
+    base = gsw_module_data_base(backend->info);
+    path = g_strconcat(base, ".bdt", NULL);
+    g_free(base);
+    if (g_stat(path, &st) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot stat general book data %s: %s", path,
+                    g_strerror(errno));
+        g_free(path);
+        return FALSE;
+    }
+    user_data[0] = (guint8)(st.st_size & 0xff);
+    user_data[1] = (guint8)((st.st_size >> 8) & 0xff);
+    user_data[2] = (guint8)((st.st_size >> 16) & 0xff);
+    user_data[3] = (guint8)((st.st_size >> 24) & 0xff);
+    user_data[4] = (guint8)(len & 0xff);
+    user_data[5] = (guint8)((len >> 8) & 0xff);
+    user_data[6] = (guint8)((len >> 16) & 0xff);
+    user_data[7] = (guint8)((len >> 24) & 0xff);
+
+    out = fopen(path, "ab");
+    if (out == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot open general book data %s: %s", path,
+                    g_strerror(errno));
+        goto out;
+    }
+    if (len > 0 && fwrite(bytes, 1, len, out) != len) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot write general book data %s: %s", path,
+                    g_strerror(errno));
+        fclose(out);
+        goto out;
+    }
+    if (fflush(out) != 0 || fclose(out) != 0) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot flush general book data %s: %s", path,
+                    g_strerror(errno));
+        goto out;
+    }
+    if (!gsw_tree_key_set_user_data(key, user_data, 8)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot update general book node data");
+        goto out;
+    }
+    gsw_rawgenbook_close(backend);
+    gsw_rawgenbook_open(backend, NULL);
+    ok = TRUE;
+
+out:
+    g_free(path);
+    return ok;
+}
+
+static gboolean
+gsw_rawgenbook_delete_entry(GswModuleBackend *backend, GswKey *key,
+                            GError **error)
+{
+    const guint8 empty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    (void)backend;
+    if (!gsw_tree_key_set_user_data(key, empty, 8)) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
+                    "Cannot clear general book entry");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static gboolean
+gsw_rawgenbook_is_writable(GswModuleBackend *backend, GswKey *key)
+{
+    (void)backend;
+    (void)key;
+    return TRUE;
+}
+
 static void
 gsw_rawgenbook_free(GswModuleBackend *backend)
 {
@@ -179,6 +280,9 @@ gsw_rawgenbook_backend_new(GswModuleInfo *info)
         gsw_rawgenbook_has,
         gsw_rawgenbook_next,
         gsw_rawgenbook_set_position,
+        gsw_rawgenbook_write_entry,
+        gsw_rawgenbook_delete_entry,
+        gsw_rawgenbook_is_writable,
         gsw_rawgenbook_free
     };
 

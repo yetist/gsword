@@ -21,6 +21,11 @@ typedef struct {
                      GError **error);
     gboolean (*set_position)(GswModuleBackend *backend, GswKey *key,
                              GswPosition pos, GError **error);
+    gboolean (*write_entry)(GswModuleBackend *backend, GswKey *key,
+                            const guint8 *data, gsize len, GError **error);
+    gboolean (*delete_entry)(GswModuleBackend *backend, GswKey *key,
+                             GError **error);
+    gboolean (*is_writable)(GswModuleBackend *backend, GswKey *key);
     void     (*free)(GswModuleBackend *backend);
 } GswModuleBackendOps;
 

@@ -426,6 +426,9 @@ gsw_rawstr_backend_new(GswModuleInfo *info)
         gsw_rawstr_has,
         gsw_rawstr_move,
         gsw_rawstr_set_position,
+        NULL,
+        NULL,
+        NULL,
         gsw_rawstr_free
     };
     const gchar *case_sensitive = gsw_module_info_get_value(info, "CaseSensitiveKeys");
