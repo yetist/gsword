@@ -860,6 +860,11 @@ gsw_transport_new_curl(GswSourceType type, const gchar *host, GError **error)
                     "Transport host is empty");
         return NULL;
     }
+    if (type == GSW_SOURCE_DIR) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
+                    "Local DIR sources do not use a network transport");
+        return NULL;
+    }
 
     self = g_object_new(GSW_TYPE_CURL_TRANSPORT, NULL);
     priv = gsw_transport_priv(self);

@@ -201,6 +201,66 @@ GPtrArray     *gsw_manager_get_options(GswManager *self);
 GPtrArray     *gsw_manager_get_option_values(GswManager *self,
                                               const gchar *name);
 /**
+ * gsw_manager_load_render_options:
+ * @self: a #GswManager
+ * @path: path to a render option configuration file
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads global render options from the `RenderOptions` section of an INI file.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_manager_load_render_options(GswManager *self,
+                                               const gchar *path,
+                                               GError **error);
+/**
+ * gsw_manager_save_render_options:
+ * @self: a #GswManager
+ * @path: path to a render option configuration file
+ * @error: return location for a #GError, or %NULL
+ *
+ * Saves global render options to the `RenderOptions` section of an INI file.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_manager_save_render_options(GswManager *self,
+                                               const gchar *path,
+                                               GError **error);
+/**
+ * gsw_manager_set_module_config_value:
+ * @self: a #GswManager
+ * @name: module name
+ * @key: configuration key
+ * @value: (nullable): new value, or %NULL to remove the key
+ * @error: return location for a #GError, or %NULL
+ *
+ * Updates a value in the module's configuration file and reloads the module
+ * library.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_manager_set_module_config_value(GswManager *self,
+                                                   const gchar *name,
+                                                   const gchar *key,
+                                                   const gchar *value,
+                                                   GError **error);
+/**
+ * gsw_manager_set_module_cipher_key:
+ * @self: a #GswManager
+ * @name: module name
+ * @key: (nullable): cipher key, or %NULL to remove it
+ * @error: return location for a #GError, or %NULL
+ *
+ * Updates the module's `CipherKey`, saves its configuration file, and reloads
+ * the module library. Existing #GswModule instances are invalidated.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_manager_set_module_cipher_key(GswManager *self,
+                                                 const gchar *name,
+                                                 const gchar *key,
+                                                 GError **error);
+/**
  * gsw_manager_get_config:
  * @self: a #GswManager
  *

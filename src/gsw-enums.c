@@ -76,6 +76,7 @@ static const GEnumValue source_type_values[] = {
     { GSW_SOURCE_HTTP,  "GSW_SOURCE_HTTP",  "http" },
     { GSW_SOURCE_HTTPS, "GSW_SOURCE_HTTPS", "https" },
     { GSW_SOURCE_SFTP,  "GSW_SOURCE_SFTP",  "sftp" },
+    { GSW_SOURCE_DIR,   "GSW_SOURCE_DIR",   "dir" },
     { 0, NULL, NULL }
 };
 
@@ -137,6 +138,7 @@ gsw_source_type_to_string(GswSourceType type)
     case GSW_SOURCE_HTTP:  return "HTTP";
     case GSW_SOURCE_HTTPS: return "HTTPS";
     case GSW_SOURCE_SFTP:  return "SFTP";
+    case GSW_SOURCE_DIR:   return "DIR";
     case GSW_SOURCE_FTP:
     default:               return "FTP";
     }
@@ -149,6 +151,7 @@ gsw_source_type_to_scheme(GswSourceType type)
     case GSW_SOURCE_HTTP:  return "http";
     case GSW_SOURCE_HTTPS: return "https";
     case GSW_SOURCE_SFTP:  return "sftp";
+    case GSW_SOURCE_DIR:   return "file";
     case GSW_SOURCE_FTP:
     default:               return "ftp";
     }

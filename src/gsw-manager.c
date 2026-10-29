@@ -735,6 +735,127 @@ gsw_manager_get_option_values(GswManager *self, const gchar *name)
     return gsw_options_values(name);
 }
 
+gboolean
+gsw_manager_load_render_options(GswManager *self, const gchar *path,
+                                GError **error)
+{
+    GswManagerPrivate *priv;
+    GswConfig *config;
+    gchar **keys;
+    guint i;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), FALSE);
+    g_return_val_if_fail(path != NULL, FALSE);
+
+    priv = gsw_manager_get_instance_private(self);
+    if (!g_file_test(path, G_FILE_TEST_EXISTS))
+        return TRUE;
+
+    config = gsw_config_new_from_file(path, error);
+    if (config == NULL)
+        return FALSE;
+
+    keys = gsw_config_get_keys(config, "RenderOptions");
+    for (i = 0; keys != NULL && keys[i] != NULL; i++) {
+        if (!gsw_options_known(keys[i]))
+            continue;
+        g_hash_table_replace(priv->options, g_strdup(keys[i]),
+                             g_strdup(gsw_config_get(config, "RenderOptions",
+                                                     keys[i])));
+    }
+    g_strfreev(keys);
+    g_object_unref(config);
+
+    {
+        GHashTableIter iter;
+        gpointer item;
+
+        g_hash_table_iter_init(&iter, priv->modules);
+        while (g_hash_table_iter_next(&iter, NULL, &item))
+            gsw_module_apply_default_options(item, priv->options);
+    }
+    return TRUE;
+}
+
+gboolean
+gsw_manager_save_render_options(GswManager *self, const gchar *path,
+                                GError **error)
+{
+    GswManagerPrivate *priv;
+    GswConfig *config;
+    GHashTableIter iter;
+    gpointer key, value;
+    gboolean ok;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), FALSE);
+    g_return_val_if_fail(path != NULL, FALSE);
+
+    priv = gsw_manager_get_instance_private(self);
+    {
+        gchar *parent = g_path_get_dirname(path);
+
+        ok = gsw_mkdir_with_parents(parent, error);
+        g_free(parent);
+        if (!ok)
+            return FALSE;
+    }
+
+    config = gsw_config_new();
+    g_hash_table_iter_init(&iter, priv->options);
+    while (g_hash_table_iter_next(&iter, &key, &value))
+        gsw_config_set(config, "RenderOptions", key, value);
+    ok = gsw_config_save(config, path, error);
+    g_object_unref(config);
+    return ok;
+}
+
+gboolean
+gsw_manager_set_module_config_value(GswManager *self, const gchar *name,
+                                    const gchar *key, const gchar *value,
+                                    GError **error)
+{
+    GswManagerPrivate *priv;
+    const gchar *path;
+    GswConfig *config;
+    gboolean ok;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), FALSE);
+    g_return_val_if_fail(name != NULL, FALSE);
+    g_return_val_if_fail(key != NULL, FALSE);
+
+    priv = gsw_manager_get_instance_private(self);
+    path = g_hash_table_lookup(priv->config_files, name);
+    if (path == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
+                    "Configuration file for module [%s] is not available", name);
+        return FALSE;
+    }
+
+    config = gsw_config_new_from_file(path, error);
+    if (config == NULL)
+        return FALSE;
+
+    if (value != NULL && *value != '\0')
+        gsw_config_set(config, name, key, value);
+    else
+        gsw_config_remove_key(config, name, key);
+
+    ok = gsw_config_save(config, path, error);
+    g_object_unref(config);
+    if (!ok)
+        return FALSE;
+
+    return gsw_manager_reload(self, error);
+}
+
+gboolean
+gsw_manager_set_module_cipher_key(GswManager *self, const gchar *name,
+                                  const gchar *key, GError **error)
+{
+    return gsw_manager_set_module_config_value(self, name, "CipherKey",
+                                               key, error);
+}
+
 GswConfig *
 gsw_manager_get_config(GswManager *self)
 {

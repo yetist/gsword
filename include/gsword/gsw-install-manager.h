@@ -19,9 +19,9 @@ G_BEGIN_DECLS
  * GswInstallManager:
  *
  * Downloads, installs, updates, and removes modules from remote SWORD
- * sources. It reads and writes <filename>InstallMgr.conf</filename>, caches
- * remote metadata, and reports transfer progress through a
- * #GswStatusReporter.
+ * sources, and installs modules from local DIR sources. It reads and writes
+ * <filename>InstallMgr.conf</filename>, caches source metadata, and reports
+ * transfer progress through a #GswStatusReporter.
  */
 #define GSW_TYPE_INSTALL_MANAGER (gsw_install_manager_get_type())
 G_DECLARE_FINAL_TYPE(GswInstallManager, gsw_install_manager, GSW,
@@ -390,6 +390,25 @@ gboolean gsw_install_manager_install_module_finish(GswInstallManager *self,
 gboolean gsw_install_manager_install_module(GswInstallManager *self,
                                             GswManager *destination,
                                             GswInstallSource *source,
+                                            const gchar *module_name,
+                                            GError **error);
+/**
+ * gsw_install_manager_install_module_from_directory:
+ * @self: a #GswInstallManager
+ * @destination: the destination #GswManager
+ * @directory: local SWORD library directory containing the module
+ * @module_name: the module name
+ * @error: return location for a #GError, or %NULL
+ *
+ * Installs a module from a local SWORD library directory without requiring a
+ * remote source refresh.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean gsw_install_manager_install_module_from_directory(
+                                            GswInstallManager *self,
+                                            GswManager *destination,
+                                            const gchar *directory,
                                             const gchar *module_name,
                                             GError **error);
 /**

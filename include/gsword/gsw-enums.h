@@ -79,14 +79,16 @@ typedef enum {
  * @GSW_SOURCE_HTTP: unencrypted HTTP
  * @GSW_SOURCE_HTTPS: HTTP over TLS
  * @GSW_SOURCE_SFTP: SSH File Transfer Protocol
+ * @GSW_SOURCE_DIR: a local SWORD library directory
  *
- * The protocol used by an installation source.
+ * The protocol or local storage type used by an installation source.
  */
 typedef enum {
     GSW_SOURCE_FTP,
     GSW_SOURCE_HTTP,
     GSW_SOURCE_HTTPS,
-    GSW_SOURCE_SFTP
+    GSW_SOURCE_SFTP,
+    GSW_SOURCE_DIR
 } GswSourceType;
 
 /**
