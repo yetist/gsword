@@ -2,7 +2,8 @@
 
 - 状态：设计草案 v0.12（M0–M11 已实现，M12 写入与树编辑已实现）
 - 日期：2026-10-29
-- 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
+- 库名：`libgsword`（C 前缀 `Gsw`），实现位于 `lib/`
+- 应用名：`gsword`（GTK4 桌面应用），实现位于 `src/`
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
 
 ---
@@ -199,7 +200,16 @@ libsword/
 │   ├── gsw-transport.h
 │   ├── gsw-install-source.h
 │   └── gsw-install-manager.h
-├── src/
+├── src/                         # gsword GTK4 应用
+│   ├── main.c
+│   ├── application.c / .h
+│   ├── window.c / .h
+│   ├── reader/
+│   ├── search/
+│   ├── notes/
+│   ├── library/
+│   └── settings/
+├── lib/                         # libgsword 实现
 │   ├── gsw-config.c
 │   ├── gsw-module-info.c
 │   ├── gsw-manager.c
@@ -1162,7 +1172,7 @@ v1 不做自动重试；可选的单文件重试次数作为后续选项。TLS �
 内部接口（不安装）：
 
 ```c
-/* src/modules/gsw-module-backend.h */
+/* lib/modules/gsw-module-backend.h */
 typedef struct _GswModuleBackend GswModuleBackend;
 typedef struct _GswModuleBackendClass GswModuleBackendClass;
 
