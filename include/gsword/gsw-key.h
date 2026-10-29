@@ -8,6 +8,7 @@
 #define __GSW_KEY_H__ 1
 
 #include <glib-object.h>
+#include <gsword/gsw-enums.h>
 #include <gsword/gsw-version.h>
 
 G_BEGIN_DECLS
@@ -32,6 +33,15 @@ typedef struct _GswKey GswKey;
  * Returns: the #GType for #GswKey
  */
 GType        gsw_key_get_type(void);
+/**
+ * gsw_key_get_kind:
+ * @self: a #GswKey
+ *
+ * Gets the runtime kind of @self.
+ *
+ * Returns: the #GswKeyKind of @self
+ */
+GswKeyKind    gsw_key_get_kind(GswKey *self);
 /**
  * gsw_key_ref:
  * @self: a #GswKey

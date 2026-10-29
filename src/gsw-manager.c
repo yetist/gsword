@@ -5,7 +5,6 @@
 #include <gsword/gsw-manager.h>
 #include <gsword/gsw-error.h>
 #include "gsw-utils.h"
-#include "gsw-module-internal.h"
 
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -647,6 +646,21 @@ gsw_manager_get_module(GswManager *self, const gchar *name)
 
     g_hash_table_insert(priv->modules, g_strdup(name), module);
     return module;
+}
+
+GswModule *
+gsw_manager_create_module(GswManager *self, const gchar *name)
+{
+    GswModuleInfo *info;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
+    g_return_val_if_fail(name != NULL, NULL);
+
+    info = gsw_manager_lookup_module_info(self, name);
+    if (info == NULL)
+        return NULL;
+
+    return gsw_module_new_from_info(info);
 }
 
 GswConfig *

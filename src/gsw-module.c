@@ -6,7 +6,6 @@
 #include <gsword/gsw-error.h>
 #include "gsw-key-internal.h"
 #include "gsw-module-backend.h"
-#include "gsw-module-internal.h"
 #include "gsw-utils.h"
 #include "gsw-encoding.h"
 #include "gsw-backend-utils.h"
@@ -28,6 +27,8 @@ typedef struct {
     gsize raw_len;
     GError *backend_error;
     GHashTable *options; /* option name -> value */
+    GswTestamentFlags testaments;
+    gboolean testaments_valid;
 } GswModulePrivate;
 
 G_DEFINE_TYPE(GswModule, gsw_module, G_TYPE_OBJECT)
@@ -158,6 +159,64 @@ gsw_module_is_supported(GswModule *self)
 {
     GswModulePrivate *priv = gsw_module_priv(self);
     return priv->backend != NULL;
+}
+
+GswTestamentFlags
+gsw_module_get_testaments(GswModule *self)
+{
+    GswModulePrivate *priv;
+    GswKey *saved;
+    GError *local_error = NULL;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), GSW_TESTAMENT_NONE);
+
+    priv = gsw_module_priv(self);
+    if (priv->testaments_valid)
+        return priv->testaments;
+
+    priv->testaments_valid = TRUE;
+    priv->testaments = GSW_TESTAMENT_NONE;
+
+    if (gsw_key_get_kind(priv->key) != GSW_KEY_KIND_VERSE)
+        return priv->testaments;
+
+    saved = gsw_key_clone(priv->key);
+    if (saved == NULL)
+        return priv->testaments;
+
+    if (gsw_module_set_key_text(self, "Gen 1:1", NULL) &&
+        gsw_module_has_entry(self))
+        priv->testaments |= GSW_TESTAMENT_OLD;
+    if (gsw_module_set_key_text(self, "Matt 1:1", NULL) &&
+        gsw_module_has_entry(self))
+        priv->testaments |= GSW_TESTAMENT_NEW;
+
+    if (priv->testaments == GSW_TESTAMENT_NONE &&
+        gsw_module_set_position(self, GSW_POSITION_BOTTOM, &local_error)) {
+        gint testament = gsw_verse_key_get_testament(
+            (GswVerseKey *)priv->key);
+        if (testament == 1)
+            priv->testaments |= GSW_TESTAMENT_OLD;
+        else if (testament == 2)
+            priv->testaments |= GSW_TESTAMENT_NEW;
+    }
+    g_clear_error(&local_error);
+
+    gsw_module_set_key(self, saved, NULL);
+    gsw_key_unref(saved);
+    return priv->testaments;
+}
+
+gboolean
+gsw_module_has_testament(GswModule *self, GswTestamentFlags testament)
+{
+    GswTestamentFlags present;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    if (testament == GSW_TESTAMENT_NONE)
+        return FALSE;
+    present = gsw_module_get_testaments(self);
+    return (present & testament) == testament;
 }
 
 static gboolean
@@ -894,6 +953,34 @@ gsw_module_set_position(GswModule *self, GswPosition pos, GError **error)
         return FALSE;
     if (!priv->backend->ops->set_position(priv->backend, priv->key, pos, error))
         return FALSE;
+
+    if (pos == GSW_POSITION_BOTTOM &&
+        gsw_key_get_kind(priv->key) == GSW_KEY_KIND_VERSE) {
+        guint attempts = 0;
+        gboolean found = FALSE;
+
+        while (attempts < 4096) {
+            GError *local_error = NULL;
+
+            if (priv->backend->ops->has_entry(priv->backend, priv->key)) {
+                found = TRUE;
+                break;
+            }
+            if (!priv->backend->ops->next(priv->backend, priv->key, -1,
+                                          &local_error)) {
+                g_clear_error(&local_error);
+                break;
+            }
+            attempts++;
+        }
+
+        if (!found) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
+                        "No non-empty entry found at the bottom of the module");
+            return FALSE;
+        }
+    }
+
     g_clear_pointer(&priv->raw, g_bytes_unref);
     g_clear_pointer(&priv->raw_text, g_free);
     return TRUE;

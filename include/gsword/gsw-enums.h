@@ -110,6 +110,36 @@ typedef enum {
 } GswModuleStatusFlags;
 
 /**
+ * GswKeyKind:
+ * @GSW_KEY_KIND_VERSE: a verse key such as #GswVerseKey
+ * @GSW_KEY_KIND_STRING: a string key such as #GswStrKey
+ * @GSW_KEY_KIND_TREE: a tree key such as #GswTreeKey
+ *
+ * The runtime kind of a #GswKey. Frontends can use this instead of relying
+ * only on the module driver when casting a key to a concrete key type.
+ */
+typedef enum {
+    GSW_KEY_KIND_VERSE,
+    GSW_KEY_KIND_STRING,
+    GSW_KEY_KIND_TREE
+} GswKeyKind;
+
+/**
+ * GswTestamentFlags:
+ * @GSW_TESTAMENT_NONE: no testament is available
+ * @GSW_TESTAMENT_OLD: the module contains Old Testament entries
+ * @GSW_TESTAMENT_NEW: the module contains New Testament entries
+ *
+ * Bit flags describing which testaments are present in a verse-keyed module.
+ * Combine with the bitwise OR operator.
+ */
+typedef enum {
+    GSW_TESTAMENT_NONE = 0,
+    GSW_TESTAMENT_OLD  = 1 << 0,
+    GSW_TESTAMENT_NEW  = 1 << 1
+} GswTestamentFlags;
+
+/**
  * GswEncoding:
  * @GSW_ENCODING_UNKNOWN: the encoding is unknown
  * @GSW_ENCODING_LATIN1: ISO-8859-1
@@ -189,6 +219,8 @@ typedef enum {
 
 #define GSW_TYPE_MODULE_TYPE (gsw_module_type_get_type())
 #define GSW_TYPE_DRIVER (gsw_driver_get_type())
+#define GSW_TYPE_KEY_KIND (gsw_key_kind_get_type())
+#define GSW_TYPE_TESTAMENT_FLAGS (gsw_testament_flags_get_type())
 #define GSW_TYPE_SOURCE_TYPE (gsw_source_type_get_type())
 #define GSW_TYPE_ENCODING (gsw_encoding_get_type())
 #define GSW_TYPE_DIRECTION (gsw_direction_get_type())
@@ -212,6 +244,22 @@ GType gsw_module_type_get_type(void);
  * Returns: the #GType for #GswDriver
  */
 GType gsw_driver_get_type(void);
+/**
+ * gsw_key_kind_get_type:
+ *
+ * Gets the #GType for #GswKeyKind.
+ *
+ * Returns: the #GType for #GswKeyKind
+ */
+GType gsw_key_kind_get_type(void);
+/**
+ * gsw_testament_flags_get_type:
+ *
+ * Gets the #GType for #GswTestamentFlags.
+ *
+ * Returns: the #GType for #GswTestamentFlags
+ */
+GType gsw_testament_flags_get_type(void);
 /**
  * gsw_source_type_get_type:
  *

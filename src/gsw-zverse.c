@@ -317,14 +317,23 @@ static gboolean
 gsw_zverse_set_position(GswModuleBackend *backend, GswKey *key,
                         GswPosition pos, GError **error)
 {
-    (void)backend;
+    GswZVerseData *data = backend->data;
+    gsize rec_size = data->is4 ? 12 : 10;
+    glong ot_index, nt_index;
+
     if (pos == GSW_POSITION_TOP) {
         gsw_verse_key_set_index((GswVerseKey *)key, 0);
         return TRUE;
     }
-    g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
-                "Bottom position is not implemented for zVerse");
-    return FALSE;
+    if (!gsw_zverse_open(backend, error))
+        return FALSE;
+    if (!gsw_find_last_nonempty(data->comp[0], rec_size, 8, data->is4,
+                                &ot_index, error) ||
+        !gsw_find_last_nonempty(data->comp[1], rec_size, 8, data->is4,
+                                &nt_index, error))
+        return FALSE;
+
+    return gsw_verse_key_set_last(key, ot_index, nt_index, error);
 }
 
 static void

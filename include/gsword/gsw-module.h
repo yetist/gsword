@@ -26,6 +26,18 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GswModule, gsw_module, GSW, MODULE, GObject)
 
 /**
+ * gsw_module_new_from_info:
+ * @info: the module metadata
+ *
+ * Creates a new module instance from @info. Each instance owns an independent
+ * key and render options, so the same module can be opened in several views
+ * at different positions.
+ *
+ * Returns: (transfer full): a new #GswModule
+ */
+GswModule     *gsw_module_new_from_info(GswModuleInfo *info);
+
+/**
  * gsw_module_get_info:
  * @self: a #GswModule
  *
@@ -61,6 +73,29 @@ gboolean       gsw_module_is_open(GswModule *self);
  * Returns: %TRUE if the condition holds, %FALSE otherwise
  */
 gboolean       gsw_module_is_supported(GswModule *self);
+
+/**
+ * gsw_module_get_testaments:
+ * @self: a #GswModule
+ *
+ * Detects which testaments contain entries. This is meaningful for
+ * verse-keyed Bible and commentary modules; other module kinds return
+ * %GSW_TESTAMENT_NONE.
+ *
+ * Returns: a bitwise OR of #GswTestamentFlags values
+ */
+GswTestamentFlags gsw_module_get_testaments(GswModule *self);
+/**
+ * gsw_module_has_testament:
+ * @self: a #GswModule
+ * @testament: one or more #GswTestamentFlags values
+ *
+ * Checks whether @self contains the requested testament or testaments.
+ *
+ * Returns: %TRUE if all requested testaments are present, %FALSE otherwise
+ */
+gboolean       gsw_module_has_testament(GswModule *self,
+                                        GswTestamentFlags testament);
 
 /**
  * gsw_module_create_key:

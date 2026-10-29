@@ -54,4 +54,33 @@ gsw_file_size(FILE *fp)
     return (gint64)size;
 }
 
+/*
+ * Finds the last record in an index file whose size field is non-zero.
+ * Returns -1 in @index when the index is empty or contains only empty entries.
+ */
+static inline gboolean
+gsw_find_last_nonempty(FILE *idx, gsize rec_size, gsize size_offset,
+                       gboolean size4, glong *index, GError **error)
+{
+    gint64 count = gsw_file_size(idx) / (gint64)rec_size;
+    guint8 record[12];
+
+    *index = -1;
+    while (count > 0) {
+        guint32 size;
+
+        count--;
+        if (!gsw_file_read_at(idx, count * (gint64)rec_size, record,
+                              rec_size, error))
+            return FALSE;
+        size = size4 ? gsw_le32(record + size_offset)
+                     : gsw_le16(record + size_offset);
+        if (size > 0) {
+            *index = (glong)count;
+            return TRUE;
+        }
+    }
+    return TRUE;
+}
+
 #endif /* __GSW_DATA_H__ */
