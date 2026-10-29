@@ -972,6 +972,59 @@ gsw_verse_key_get_versification(GswVerseKey *self)
 }
 
 gint
+gsw_verse_key_get_global_book_number(GswVerseKey *self)
+{
+    g_return_val_if_fail(self != NULL, -1);
+    return gsw_key_global_book(self);
+}
+
+gchar *
+gsw_verse_key_get_osis_ref(GswVerseKey *self)
+{
+    GswBook *book;
+    gint global;
+    const gchar *osis;
+
+    g_return_val_if_fail(self != NULL, NULL);
+    if (self->v11n == NULL || self->testament == 0 || self->book < 1 ||
+        self->chapter < 1 || self->verse < 1)
+        return NULL;
+
+    global = gsw_key_global_book(self);
+    book = gsw_versification_get_book(self->v11n, global);
+    if (book == NULL)
+        return NULL;
+    osis = gsw_book_get_osis_name(book);
+    if (osis == NULL || *osis == '\0')
+        return NULL;
+    return g_strdup_printf("%s.%d.%d", osis, self->chapter, self->verse);
+}
+
+gchar *
+gsw_verse_key_get_short_text(GswVerseKey *self)
+{
+    GswBook *book;
+    gint global;
+    const gchar *abbrev;
+
+    g_return_val_if_fail(self != NULL, NULL);
+    if (self->v11n == NULL || self->testament == 0 || self->book < 1 ||
+        self->chapter < 1 || self->verse < 1)
+        return NULL;
+
+    global = gsw_key_global_book(self);
+    book = gsw_versification_get_book(self->v11n, global);
+    if (book == NULL)
+        return NULL;
+    abbrev = gsw_book_get_preferred_abbreviation(book);
+    if (abbrev == NULL || *abbrev == '\0')
+        abbrev = gsw_book_get_osis_name(book);
+    if (abbrev == NULL || *abbrev == '\0')
+        return NULL;
+    return g_strdup_printf("%s %d:%d", abbrev, self->chapter, self->verse);
+}
+
+gint
 gsw_verse_key_get_chapter_max(GswVerseKey *self)
 {
     GswBook *book;
@@ -1031,7 +1084,10 @@ void
 gsw_verse_key_set_lower_bound(GswVerseKey *self, GswVerseKey *bound)
 {
     g_return_if_fail(self != NULL);
-    g_return_if_fail(bound != NULL);
+    if (bound == NULL) {
+        self->has_lower = FALSE;
+        return;
+    }
     self->has_lower = TRUE;
     self->lower_testament = bound->testament;
     self->lower_book = bound->book;
@@ -1043,12 +1099,49 @@ void
 gsw_verse_key_set_upper_bound(GswVerseKey *self, GswVerseKey *bound)
 {
     g_return_if_fail(self != NULL);
-    g_return_if_fail(bound != NULL);
+    if (bound == NULL) {
+        self->has_upper = FALSE;
+        return;
+    }
     self->has_upper = TRUE;
     self->upper_testament = bound->testament;
     self->upper_book = bound->book;
     self->upper_chapter = bound->chapter;
     self->upper_verse = bound->verse;
+}
+
+static GswVerseKey *
+gsw_verse_key_bound_new(GswVerseKey *self, gboolean lower)
+{
+    GswKey *bound;
+
+    bound = gsw_key_alloc_internal(GSW_KEY_KIND_VERSE);
+    bound->v11n = self->v11n != NULL ? gsw_versification_ref(self->v11n) : NULL;
+    bound->testament = lower ? self->lower_testament : self->upper_testament;
+    bound->book = lower ? self->lower_book : self->upper_book;
+    bound->chapter = lower ? self->lower_chapter : self->upper_chapter;
+    bound->verse = lower ? self->lower_verse : self->upper_verse;
+    bound->valid = TRUE;
+    gsw_verse_key_freshtext(bound);
+    return (GswVerseKey *)bound;
+}
+
+GswVerseKey *
+gsw_verse_key_get_lower_bound(GswVerseKey *self)
+{
+    g_return_val_if_fail(self != NULL, NULL);
+    if (!self->has_lower)
+        return NULL;
+    return gsw_verse_key_bound_new(self, TRUE);
+}
+
+GswVerseKey *
+gsw_verse_key_get_upper_bound(GswVerseKey *self)
+{
+    g_return_val_if_fail(self != NULL, NULL);
+    if (!self->has_upper)
+        return NULL;
+    return gsw_verse_key_bound_new(self, FALSE);
 }
 
 void

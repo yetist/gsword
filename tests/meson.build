@@ -30,6 +30,10 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('verse-key', test_verse_key)
 
+  test_verse_list = executable('test-verse-list', 'test-verse-list.c',
+    dependencies: [gsword_dep, glib_dep])
+  test('verse-list', test_verse_list)
+
   test_reader = executable('test-reader', 'test-reader.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep])
   test('reader', test_reader)

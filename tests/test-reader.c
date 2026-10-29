@@ -850,6 +850,20 @@ run_reader_test(void)
     g_assert_no_error(error);
     g_assert_cmpstr(text, ==, "Content 2");
     g_free(text);
+    {
+        GswTreeKey *tree = (GswTreeKey *)gsw_module_create_key(module);
+        glong offset;
+
+        g_assert_true(gsw_tree_key_set_text(tree, "Chapter 2"));
+        g_assert_cmpstr(gsw_tree_key_get_local_name(tree), ==, "Chapter 2");
+        offset = gsw_tree_key_get_offset(tree);
+        g_assert_cmpint(offset, >, 0);
+        g_assert_true(gsw_tree_key_previous_sibling(tree));
+        g_assert_cmpstr(gsw_tree_key_get_local_name(tree), ==, "Chapter 1");
+        g_assert_true(gsw_tree_key_set_offset(tree, offset));
+        g_assert_cmpstr(gsw_tree_key_get_local_name(tree), ==, "Chapter 2");
+        gsw_key_unref(tree);
+    }
 
     module = gsw_manager_get_module(manager, "TinyRawFiles");
     g_assert_nonnull(module);
