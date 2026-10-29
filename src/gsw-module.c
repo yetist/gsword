@@ -1115,6 +1115,56 @@ gsw_module_get_entry_size(GswModule *self)
 gboolean
 gsw_module_is_writable(GswModule *self)
 {
-    (void)self;
-    return FALSE;
+    GswModulePrivate *priv;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    priv = gsw_module_priv(self);
+    return priv->backend != NULL &&
+           priv->backend->ops->is_writable != NULL &&
+           priv->backend->ops->is_writable(priv->backend, priv->key);
+}
+
+gboolean
+gsw_module_set_entry(GswModule *self, const gchar *entry, GError **error)
+{
+    GswModulePrivate *priv;
+    const gchar *data = entry != NULL ? entry : "";
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    priv = gsw_module_priv(self);
+    if (!gsw_module_ensure_open(self, error))
+        return FALSE;
+    if (priv->backend->ops->write_entry == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
+                    "Module driver [%s] is read-only",
+                    gsw_module_info_get_driver_name(priv->info));
+        return FALSE;
+    }
+    if (!priv->backend->ops->write_entry(priv->backend, priv->key,
+                                         (const guint8 *)data,
+                                         strlen(data), error))
+        return FALSE;
+    gsw_module_clear_entry_cache(priv);
+    return TRUE;
+}
+
+gboolean
+gsw_module_delete_entry(GswModule *self, GError **error)
+{
+    GswModulePrivate *priv;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
+    priv = gsw_module_priv(self);
+    if (!gsw_module_ensure_open(self, error))
+        return FALSE;
+    if (priv->backend->ops->delete_entry == NULL) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
+                    "Module driver [%s] is read-only",
+                    gsw_module_info_get_driver_name(priv->info));
+        return FALSE;
+    }
+    if (!priv->backend->ops->delete_entry(priv->backend, priv->key, error))
+        return FALSE;
+    gsw_module_clear_entry_cache(priv);
+    return TRUE;
 }

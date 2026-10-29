@@ -358,6 +358,9 @@ gsw_zverse_backend_new(GswModuleInfo *info)
         gsw_zverse_has,
         gsw_zverse_next,
         gsw_zverse_set_position,
+        NULL,
+        NULL,
+        NULL,
         gsw_zverse_free
     };
     gint i;

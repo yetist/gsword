@@ -53,5 +53,7 @@ gboolean gsw_tree_key_has_children(GswKey *self);
 gint     gsw_tree_key_get_level(GswKey *self);
 gboolean gsw_tree_key_set_position(GswKey *self, GswPosition pos);
 const gchar *gsw_tree_key_get_user_data(GswKey *self, gint *size);
+gboolean gsw_tree_key_set_user_data(GswKey *self, const guint8 *data,
+                                    gint size);
 
 #endif /* __GSW_KEY_PRIVATE_H__ */

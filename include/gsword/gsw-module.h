@@ -380,6 +380,29 @@ gsize          gsw_module_get_entry_size(GswModule *self);
  * Returns: %TRUE if the condition holds, %FALSE otherwise
  */
 gboolean       gsw_module_is_writable(GswModule *self);
+/**
+ * gsw_module_set_entry:
+ * @self: a #GswModule
+ * @entry: new entry text
+ * @error: return location for a #GError, or %NULL
+ *
+ * Writes the current entry. Writing is currently supported by RawFiles and
+ * RawGenBook modules.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_module_set_entry(GswModule *self, const gchar *entry,
+                                    GError **error);
+/**
+ * gsw_module_delete_entry:
+ * @self: a #GswModule
+ * @error: return location for a #GError, or %NULL
+ *
+ * Deletes the current entry when the module supports writing.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean       gsw_module_delete_entry(GswModule *self, GError **error);
 
 /**
  * gsw_module_search:

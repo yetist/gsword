@@ -458,3 +458,70 @@ gsw_tree_key_get_user_data(GswKey *self, gint *size)
         *size = self->tree_user_size;
     return self->tree_user_data;
 }
+
+gboolean
+gsw_tree_key_set_user_data(GswKey *self, const guint8 *data, gint size)
+{
+    gchar *idx_path;
+    gchar *dat_path;
+    FILE *idx = NULL;
+    FILE *dat = NULL;
+    guint8 raw_offset[4];
+    guint8 size_bytes[2];
+    guint32 dat_offset;
+    gint old_size;
+    gint name_len = 0;
+    gboolean ok = FALSE;
+
+    if (self == NULL || self->kind != GSW_KEY_KIND_TREE ||
+        data == NULL || size < 0 || size > 65535)
+        return FALSE;
+
+    idx_path = g_strconcat(self->tree_path, ".idx", NULL);
+    dat_path = g_strconcat(self->tree_path, ".dat", NULL);
+    idx = fopen(idx_path, "rb");
+    if (idx == NULL)
+        goto out;
+    if (fseeko(idx, (off_t)self->tree_offset, SEEK_SET) != 0 ||
+        fread(raw_offset, 1, 4, idx) != 4)
+        goto out;
+    dat_offset = gsw_le32(raw_offset);
+
+    dat = fopen(dat_path, "r+b");
+    if (dat == NULL)
+        goto out;
+    if (fseeko(dat, (off_t)dat_offset + 12, SEEK_SET) != 0)
+        goto out;
+    while (name_len <= 4096) {
+        gint ch = fgetc(dat);
+
+        if (ch == EOF)
+            goto out;
+        if (ch == 0)
+            break;
+        name_len++;
+    }
+    if (name_len > 4096 || fread(size_bytes, 1, 2, dat) != 2)
+        goto out;
+    old_size = (gint)gsw_le16(size_bytes);
+    if (old_size != size)
+        goto out;
+    if (fwrite(data, 1, (gsize)size, dat) != (gsize)size ||
+        fflush(dat) != 0)
+        goto out;
+
+    g_free(self->tree_user_data);
+    self->tree_user_data = g_malloc((gsize)size);
+    memcpy(self->tree_user_data, data, (gsize)size);
+    self->tree_user_size = size;
+    ok = TRUE;
+
+out:
+    if (idx != NULL)
+        fclose(idx);
+    if (dat != NULL)
+        fclose(dat);
+    g_free(idx_path);
+    g_free(dat_path);
+    return ok;
+}

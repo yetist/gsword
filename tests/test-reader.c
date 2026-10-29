@@ -891,6 +891,43 @@ run_reader_test(void)
     g_assert_cmpstr(text, ==, "神爱世人");
     g_free(text);
 
+    module = gsw_manager_get_module(manager, "TinyRaw");
+    g_assert_false(gsw_module_is_writable(module));
+
+    module = gsw_manager_get_module(manager, "TinyRawFiles");
+    g_assert_true(gsw_module_set_key_text(module, "Gen 1:1", &error));
+    g_assert_true(gsw_module_is_writable(module));
+    g_assert_true(gsw_module_set_entry(module, "Updated RawFiles content",
+                                       &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Updated RawFiles content");
+    g_free(text);
+    g_assert_true(gsw_module_delete_entry(module, &error));
+    g_assert_no_error(error);
+    g_assert_false(gsw_module_has_entry(module));
+    g_assert_true(gsw_module_set_entry(module, "Created RawFiles content",
+                                       &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Created RawFiles content");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyGenBook");
+    g_assert_true(gsw_module_set_key_text(module, "Chapter 1", &error));
+    g_assert_true(gsw_module_is_writable(module));
+    g_assert_true(gsw_module_set_entry(module, "Updated Content 1", &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Updated Content 1");
+    g_free(text);
+    g_assert_true(gsw_module_delete_entry(module, &error));
+    g_assert_no_error(error);
+    g_assert_false(gsw_module_has_entry(module));
+
     g_object_unref(manager);
     gsw_dir_remove_recursive(prefix, NULL);
     g_free(prefix);

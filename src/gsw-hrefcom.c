@@ -206,6 +206,9 @@ gsw_hrefcom_backend_new(GswModuleInfo *info)
         gsw_hrefcom_has,
         gsw_hrefcom_next,
         gsw_hrefcom_set_position,
+        NULL,
+        NULL,
+        NULL,
         gsw_hrefcom_free
     };
 
