@@ -32,7 +32,7 @@ M0–M5 已实现并通过单元/集成测试：
 - RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
 - RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
-- 基础渲染选项、本地化书名与缩写、LRU 块缓存、GI 与异步 API
+- 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
 - 可选 GTK4 前端原型（`examples/gtk.c`）
 

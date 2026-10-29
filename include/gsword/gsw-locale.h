@@ -15,9 +15,14 @@ G_BEGIN_DECLS
 /**
  * GswLocaleMgr:
  *
- * Loads SWORD locale files and translates book names, abbreviations, and
- * other localized strings. A process-wide instance is available through
+ * Loads locale data and translates book names, abbreviations, and other
+ * localized strings. A process-wide instance is available through
  * gsw_locale_mgr_get_default().
+ *
+ * An English locale is built in and needs no external files. Additional
+ * locale packs are loaded from `GSW_LOCALE_PATH` and from
+ * `gsword/locales.d` below the XDG data directories. The system SWORD
+ * `locales.d` directory is not read implicitly.
  */
 #define GSW_TYPE_LOCALE_MGR (gsw_locale_mgr_get_type())
 G_DECLARE_FINAL_TYPE(GswLocaleMgr, gsw_locale_mgr, GSW, LOCALE_MGR, GObject)
@@ -112,6 +117,23 @@ const gchar  *gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
 const gchar  *gsw_locale_mgr_translate_abbreviation(GswLocaleMgr *self,
                                                     const gchar *abbreviation,
                                                     const gchar *locale);
+/**
+ * gsw_locale_mgr_get_book_candidates:
+ * @self: a #GswLocaleMgr
+ * @text: book name, abbreviation, or prefix
+ * @locale: locale name, or %NULL for the default locale
+ *
+ * Returns possible OSIS book names for @text. Exact aliases are returned
+ * before prefix matches. Multiple OSIS names may be returned when an
+ * abbreviation is ambiguous; the caller should resolve them against the
+ * current versification.
+ *
+ * Returns: (transfer container) (element-type utf8): a newly allocated array
+ *   of OSIS names, or an empty array if nothing matches
+ */
+GPtrArray    *gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self,
+                                                 const gchar *text,
+                                                 const gchar *locale);
 /**
  * gsw_locale_mgr_translate_preferred_abbreviation:
  * @self: a #GswLocaleMgr

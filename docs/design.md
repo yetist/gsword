@@ -760,13 +760,28 @@ const gchar  *gsw_locale_mgr_translate_preferred_abbreviation(
                                                 GswLocaleMgr *self,
                                                 const gchar *abbreviation,
                                                 const gchar *locale);
+GPtrArray    *gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self,
+                                                 const gchar *text,
+                                                 const gchar *locale);
 ```
 
-加载 SWORD `locales.d/*.conf` 的 `[Text]`、`[Book Abbrevs]` 和
-`[Pref Abbrevs]` 映射。`[Book Abbrevs]` 将本地化书名/缩写映射到 OSIS，
-`[Pref Abbrevs]` 将 OSIS 缩写映射到本地化短缩写。`GswVerseKey` 的书名解析、
-缩写解析和短文本显示都会使用默认 locale；`prefAbbr_` 前缀也由
-`gsw_locale_mgr_translate()` 支持。
+libgsword 内建一个 `en` locale，合并内置 canon 缩写和 KJV 书名，不再隐式读取
+`/usr/share/sword/locales.d`。额外 locale 包从以下位置加载：
+
+1. XDG system data dirs 下的 `gsword/locales.d`
+2. `g_get_user_data_dir()/gsword/locales.d`
+3. `GSW_LOCALE_PATH` 中的目录列表，最后加载，可覆盖前面的同名 locale
+
+locale 文件继续兼容 SWORD 的 `[Text]`、`[Book Abbrevs]` 和
+`[Pref Abbrevs]` 节。`[Book Abbrevs]` 表示多个本地化别名到同一 OSIS 的
+多对一映射；`[Pref Abbrevs]` 表示每本书唯一的首选显示缩写。
+
+每个 locale 都先预置英文内置别名，再由 locale 文件覆盖同名 key。别名查找对
+输入和 key 同时做 UTF-8 case folding；精确匹配优先，精确匹配不存在时才做
+前缀匹配。`gsw_locale_mgr_get_book_candidates()` 返回按确定性顺序排列的 OSIS
+候选，`GswVerseKey` 再用当前 versification 选择其中第一个有效书号，从而避免
+不同 canon 下别名失效。`prefAbbr_` 前缀仍由 `gsw_locale_mgr_translate()`
+支持。
 
 ### 5.8 `GswStatusReporter`
 
