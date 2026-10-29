@@ -49,3 +49,7 @@ executable('gsword-locale', 'locale.c',
 executable('gsword-search', 'search.c',
   dependencies: gsword_dep,
   install: false)
+
+executable('gsword-parallel', 'parallel.c',
+  dependencies: gsword_dep,
+  install: false)

@@ -9,12 +9,6 @@
 #include <gsword/gsw-enums.h>
 #include <gsword/gsw-versification.h>
 
-typedef enum {
-    GSW_KEY_KIND_VERSE,
-    GSW_KEY_KIND_STRING,
-    GSW_KEY_KIND_TREE
-} GswKeyKind;
-
 struct _GswKey {
     gatomicrefcount ref_count;
     GswKeyKind kind;

@@ -669,6 +669,101 @@ run_reader_test(void)
     g_assert_true(gsw_manager_has_module(manager, "TinyHref"));
     g_assert_true(gsw_manager_has_module(manager, "TinySCSU"));
 
+    {
+        GswModule *first = gsw_manager_create_module(manager, "TinyRaw");
+        GswModule *second = gsw_manager_create_module(manager, "TinyRaw");
+        GswKey *key;
+
+        g_assert_nonnull(first);
+        g_assert_nonnull(second);
+        g_assert_true(first != second);
+
+        g_assert_true(gsw_module_set_key_text(first, "Gen 1:1", &error));
+        g_assert_true(gsw_module_set_key_text(second, "Matt 1:1", &error));
+        text = gsw_module_get_text(first, &error);
+        g_assert_no_error(error);
+        g_assert_cmpstr(text, ==, "Raw OT Gen 1:1");
+        g_free(text);
+        text = gsw_module_get_text(second, &error);
+        g_assert_no_error(error);
+        g_assert_cmpstr(text, ==, "Raw NT Matt 1:1");
+        g_free(text);
+        text = gsw_module_get_text(first, &error);
+        g_assert_no_error(error);
+        g_assert_cmpstr(text, ==, "Raw OT Gen 1:1");
+        g_free(text);
+
+        key = gsw_module_create_key(first);
+        g_assert_cmpint(gsw_key_get_kind(key), ==, GSW_KEY_KIND_VERSE);
+        gsw_key_unref(key);
+
+        g_assert_cmpint(gsw_module_get_testaments(first), ==,
+                        GSW_TESTAMENT_OLD | GSW_TESTAMENT_NEW);
+        g_assert_true(gsw_module_has_testament(first, GSW_TESTAMENT_OLD));
+        g_assert_true(gsw_module_has_testament(first, GSW_TESTAMENT_NEW));
+
+        g_object_unref(first);
+        g_object_unref(second);
+    }
+
+    module = gsw_manager_get_module(manager, "TinyRaw");
+    g_assert_true(gsw_module_set_position(module, GSW_POSITION_BOTTOM,
+                                          &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Raw NT Matt 1:1");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyZ");
+    g_assert_true(gsw_module_set_position(module, GSW_POSITION_BOTTOM,
+                                          &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "ZIP OT Gen 1:2");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyRawFiles");
+    g_assert_cmpint(gsw_module_get_testaments(module), ==,
+                    GSW_TESTAMENT_OLD);
+    {
+        gboolean ok = gsw_module_set_position(module, GSW_POSITION_BOTTOM,
+                                              &error);
+        g_assert_no_error(error);
+        g_assert_true(ok);
+    }
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "RawFiles content");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyHref");
+    g_assert_true(gsw_module_set_position(module, GSW_POSITION_BOTTOM,
+                                          &error));
+    g_assert_no_error(error);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "file:///base/entry.html");
+    g_free(text);
+
+    module = gsw_manager_get_module(manager, "TinyDict");
+    g_assert_cmpint(gsw_module_get_testaments(module), ==,
+                    GSW_TESTAMENT_NONE);
+    {
+        GswKey *key = gsw_module_create_key(module);
+        g_assert_cmpint(gsw_key_get_kind(key), ==, GSW_KEY_KIND_STRING);
+        gsw_key_unref(key);
+    }
+    module = gsw_manager_get_module(manager, "TinyGenBook");
+    g_assert_cmpint(gsw_module_get_testaments(module), ==,
+                    GSW_TESTAMENT_NONE);
+    {
+        GswKey *key = gsw_module_create_key(module);
+        g_assert_cmpint(gsw_key_get_kind(key), ==, GSW_KEY_KIND_TREE);
+        gsw_key_unref(key);
+    }
+
     module = gsw_manager_get_module(manager, "TinyRaw");
     g_assert_nonnull(module);
     g_assert_true(gsw_module_is_supported(module));

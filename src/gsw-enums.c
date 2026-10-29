@@ -16,6 +16,17 @@
         return (GType)gtype;                                                 \
     }
 
+#define GSW_DEFINE_FLAGS_TYPE(function_name, type_name, values)              \
+    GType function_name(void)                                                \
+    {                                                                        \
+        static gsize gtype = 0;                                              \
+        if (g_once_init_enter(&gtype)) {                                     \
+            GType registered = g_flags_register_static(type_name, values);   \
+            g_once_init_leave(&gtype, registered);                           \
+        }                                                                    \
+        return (GType)gtype;                                                 \
+    }
+
 static const GEnumValue module_type_values[] = {
     { GSW_MODULE_TYPE_UNKNOWN,      "GSW_MODULE_TYPE_UNKNOWN",      "Unknown" },
     { GSW_MODULE_TYPE_BIBLES,       "GSW_MODULE_TYPE_BIBLES",       "bibles" },
@@ -44,6 +55,19 @@ static const GEnumValue driver_values[] = {
     { GSW_DRIVER_RAW_GENBOOK,  "GSW_DRIVER_RAW_GENBOOK",  "raw_genbook" },
     { GSW_DRIVER_RAW_FILES,    "GSW_DRIVER_RAW_FILES",    "raw_files" },
     { GSW_DRIVER_HREF_COM,     "GSW_DRIVER_HREF_COM",     "href_com" },
+    { 0, NULL, NULL }
+};
+
+static const GEnumValue key_kind_values[] = {
+    { GSW_KEY_KIND_VERSE,  "GSW_KEY_KIND_VERSE",  "verse" },
+    { GSW_KEY_KIND_STRING, "GSW_KEY_KIND_STRING", "string" },
+    { GSW_KEY_KIND_TREE,   "GSW_KEY_KIND_TREE",   "tree" },
+    { 0, NULL, NULL }
+};
+
+static const GFlagsValue testament_flag_values[] = {
+    { GSW_TESTAMENT_OLD, "GSW_TESTAMENT_OLD", "old" },
+    { GSW_TESTAMENT_NEW, "GSW_TESTAMENT_NEW", "new" },
     { 0, NULL, NULL }
 };
 
@@ -96,6 +120,9 @@ static const GEnumValue search_type_values[] = {
 
 GSW_DEFINE_ENUM_TYPE(gsw_module_type_get_type, "GswModuleType", module_type_values)
 GSW_DEFINE_ENUM_TYPE(gsw_driver_get_type, "GswDriver", driver_values)
+GSW_DEFINE_ENUM_TYPE(gsw_key_kind_get_type, "GswKeyKind", key_kind_values)
+GSW_DEFINE_FLAGS_TYPE(gsw_testament_flags_get_type, "GswTestamentFlags",
+                      testament_flag_values)
 GSW_DEFINE_ENUM_TYPE(gsw_source_type_get_type, "GswSourceType", source_type_values)
 GSW_DEFINE_ENUM_TYPE(gsw_encoding_get_type, "GswEncoding", encoding_values)
 GSW_DEFINE_ENUM_TYPE(gsw_direction_get_type, "GswDirection", direction_values)

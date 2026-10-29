@@ -87,3 +87,120 @@
 - [x] 搜索结果恢复当前键、跳过标题条目、索引越界安全处理
 - [x] gi-docgen API reference（`-Ddocs=true`，`docs` 目标，安装到 `share/doc/gsword`）
 - [x] Vala API（`-Dintrospection=true` 生成 `gsword.vapi`，安装到 `share/vala/vapi`）
+
+## 后续路线：面向 GTK/Xiphos 类前端
+
+以下里程碑按“先完成只读 GTK 阅读器 MVP，再补齐 Xiphos 级能力”的顺序安排。
+每个里程碑完成后必须保持可构建、可测试，并同步更新公共头文件文档和示例。
+
+## M7 多实例与阅读导航补全
+
+目标：让同一模块可以同时出现在多个视图/窗格中，并补齐前后端都依赖的基础导航能力。
+
+- [x] 公开 `gsw_module_new_from_info()`，允许从模块元数据创建独立模块实例
+- [x] 新增 `gsw_manager_create_module()`，不进入 manager 的模块缓存
+- [x] 新增 `GswKeyKind` 和 `gsw_key_get_kind()`，避免前端依赖驱动名称进行 key 强转
+- [x] 完成 `RawVerse` / `zVerse` / `RawFiles` / `HREFCom` 的 `GSW_POSITION_BOTTOM`
+- [x] BOTTOM 定位时跳过尾部空条目，定位到最后一个非空条目
+- [x] 新增 `GswTestamentFlags`、`gsw_module_get_testaments()`、
+      `gsw_module_has_testament()`
+- [x] 增加独立模块实例、key kind、BOTTOM、testament 的回归测试
+- [x] 增加 `gsword-parallel` 示例
+- [x] `gsw_module_set_position()` 清除旧条目的 raw 缓存
+
+验收：
+
+- 同一模块创建两个实例，分别定位到不同经文，互不干扰。
+- `gsw_module_set_position(BOTTOM)` 在 RawVerse/zVerse/RawFiles/HREFCom 上可定位到最后一个非空条目。
+- Bible/commentary 模块可识别 OT/NT；字典和通用书返回 `GSW_TESTAMENT_NONE`。
+- 普通测试、ASan 测试、GI 测试通过。
+
+## M8 渲染与 EntryAttributes
+
+目标：支撑 Xiphos 风格的富文本显示。
+
+- [ ] 增加中性渲染 API：HTML 片段、纯文本和 strip 文本
+- [ ] 增加 EntryAttributes API，支持 Heading/Preverse、脚注、交叉引用、图片等
+- [ ] 扩展 render options：Strong's、Morphology、Footnotes、Cross-references、
+      Headings、Red Letter、Greek Accents、Hebrew Vowel Points、Transliteration、
+      Morpheme Segmentation、Textual Variants、Glosses、Images
+- [ ] 增加全局 render options 与模块级覆盖
+- [ ] 保持 gsword 不依赖 GTK/WebKit
+- [ ] 用 OSIS/ThML/GBF 模块做 golden 对比测试
+
+验收：OSIS/ThML/GBF 模块可输出可供 WebKit 使用的 HTML 片段，并读取条目属性。
+
+## M9 经文范围、OSIS 与 TreeKey 补全
+
+目标：支撑书签、导出、搜索范围、并行同步和通用书导航。
+
+- [ ] 新增经文 list/range 类型与解析 API（单节、范围、多段范围）
+- [ ] 暴露 VerseKey 上下界读取接口
+- [ ] 增加 `gsw_verse_key_get_osis_ref()` 和短文本接口
+- [ ] 增加 book OSIS / 全局 book number 转换辅助
+- [ ] TreeKey 增加 offset、local name、previous sibling API
+- [ ] 增加经文范围、OSIS 往返和通用书遍历测试
+
+验收：可解析 `John 3:16-18; Rom 8:1`，OSIS ref 可往返，RawGenBook 可完整遍历。
+
+## M10 模块管理与加密完整性
+
+目标：补齐 Xiphos 模块管理器的后端能力。
+
+- [ ] `GswSourceType` 增加 `DIR`，支持本地目录安装源
+- [ ] 增加本地目录/本地归档安装 API
+- [ ] 增加运行期 CipherKey 设置与保存 API
+- [ ] 允许安装 locked 模块，读取时再提示密钥
+- [ ] 增加模块配置更新 API，并支持保存后刷新 manager
+- [ ] 增加全局 render options 的持久化入口
+
+验收：可从本地目录安装模块，可安装并解锁加密模块，修改配置后可重新加载。
+
+## M11 搜索 2.0
+
+目标：把当前扫描式基础搜索提升到 Xiphos 前端可用水平。
+
+- [ ] 增加 `GswSearchOptions`：大小写、搜索类型、范围、最大结果数
+- [ ] 增加 `GswSearchResult`：模块名、key、预览文本、匹配片段
+- [ ] 增加 `GCancellable` 与进度回调
+- [ ] 增加多模块联合搜索
+- [ ] 增加 Strong's、Morphology、Footnote 属性搜索
+- [ ] 搜索期间保护模块当前 key，并明确线程模型
+
+验收：覆盖 Xiphos 搜索对话框主要场景，可取消搜索，可限定范围并生成结果预览。
+
+## M12 写入与模块编辑
+
+目标：支撑个人笔记、Personal Commentary、祷告列表、日记和书籍编辑。
+
+### M12a 写入核心
+
+- [ ] `gsw_module_set_entry()`
+- [ ] `gsw_module_delete_entry()`
+- [ ] RawFiles / Personal Commentary 写入
+- [ ] `gsw_module_is_writable()` 返回真实值
+- [ ] 原子保存、失败回滚、文件锁
+
+### M12b RawGenBook 编辑
+
+- [ ] 创建 RawGenBook 模块
+- [ ] `append_child()` / `append_sibling()`
+- [ ] `set_local_name()`
+- [ ] `remove_node()`
+- [ ] `save()`
+- [ ] 创建模块配置文件
+
+验收：可创建并编辑个人笔记和祷告列表，编辑结果可被上游 SWORD 读取，写入失败不破坏原模块。
+
+## M13 索引、性能与 Xiphos 迁移验证
+
+目标：达到 Xiphos 级体验并验证 API 可用性。
+
+- [ ] 可选搜索索引框架（内部倒排索引或可选 CLucene）
+- [ ] 创建/删除索引、索引进度
+- [ ] 大模块搜索性能测试
+- [ ] 块缓存、LRU、并发读取优化
+- [ ] 用 gsword 编写最小 GTK 前端原型
+- [ ] 或实现 Xiphos backend shim，验证功能覆盖
+
+验收：大型模块搜索可接受；最小 GTK 原型覆盖模块列表、阅读、并行、搜索、安装和笔记。

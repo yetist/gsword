@@ -7,6 +7,7 @@
 #include <gsword/gsw-str-key.h>
 #include <gsword/gsw-locale.h>
 #include <gsword/gsw-versification.h>
+#include <gsword/gsw-error.h>
 #include "gsw-key-internal.h"
 #include "gsw-key-private.h"
 #include "gsw-versification-data.h"
@@ -82,6 +83,13 @@ gsw_verse_key_get_type(void)
         g_once_init_leave(&type, registered);
     }
     return (GType)type;
+}
+
+GswKeyKind
+gsw_key_get_kind(GswKey *self)
+{
+    g_return_val_if_fail(self != NULL, GSW_KEY_KIND_STRING);
+    return self->kind;
 }
 
 GswKey *
@@ -710,6 +718,38 @@ gsw_verse_key_set_index(GswVerseKey *self, glong index)
     self->verse = verse;
     self->valid = TRUE;
     gsw_verse_key_freshtext(self);
+}
+
+gboolean
+gsw_verse_key_set_last(GswKey *key, glong ot_index, glong nt_index,
+                       GError **error)
+{
+    glong index;
+
+    g_return_val_if_fail(key != NULL, FALSE);
+    if (key->kind != GSW_KEY_KIND_VERSE) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_UNSUPPORTED,
+                    "Bottom position requires a verse key");
+        return FALSE;
+    }
+
+    if (nt_index >= 0) {
+        index = gsw_versification_get_nt_start_offset(key->v11n) + nt_index;
+    } else if (ot_index >= 0) {
+        index = ot_index;
+    } else {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Module contains no verse entries");
+        return FALSE;
+    }
+
+    gsw_verse_key_set_index((GswVerseKey *)key, index);
+    if (!key->valid) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
+                    "Last module entry is outside the versification");
+        return FALSE;
+    }
+    return TRUE;
 }
 
 gboolean

@@ -144,6 +144,18 @@ gboolean       gsw_manager_has_module(GswManager *self, const gchar *name);
  */
 GswModule     *gsw_manager_get_module(GswManager *self, const gchar *name);
 /**
+ * gsw_manager_create_module:
+ * @self: a #GswManager
+ * @name: module name
+ *
+ * Creates a new module instance that is not stored in the manager's module
+ * cache. Use this when the same module must be displayed in several views at
+ * different positions.
+ *
+ * Returns: (transfer full): a new #GswModule, or %NULL if @name is not found
+ */
+GswModule     *gsw_manager_create_module(GswManager *self, const gchar *name);
+/**
  * gsw_manager_get_config:
  * @self: a #GswManager
  *
