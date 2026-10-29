@@ -6,6 +6,8 @@
 #include <gsword/gsw-error.h>
 #include "gsw-key-internal.h"
 #include "gsw-module-backend.h"
+#include "gsw-options.h"
+#include "gsw-render.h"
 #include "gsw-utils.h"
 #include "gsw-encoding.h"
 #include "gsw-backend-utils.h"
@@ -26,7 +28,10 @@ typedef struct {
     gchar *raw_text;
     gsize raw_len;
     GError *backend_error;
-    GHashTable *options; /* option name -> value */
+    GHashTable *options;          /* option name -> value */
+    GHashTable *option_overrides; /* option names explicitly set */
+    GHashTable *attributes;       /* "level1/level2/level3" -> value */
+    gboolean attributes_valid;
     GswTestamentFlags testaments;
     gboolean testaments_valid;
 } GswModulePrivate;
@@ -47,17 +52,23 @@ gsw_module_priv(GswModule *self)
             priv = g_new0(GswModulePrivate, 1);
             priv->options = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                   g_free, g_free);
-            g_hash_table_insert(priv->options, g_strdup("Strong's Numbers"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Footnotes"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Headings"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Red Letter Words"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Morphology"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Variants"), g_strdup("Off"));
-            g_hash_table_insert(priv->options, g_strdup("Glosses"), g_strdup("Off"));
+            priv->option_overrides = g_hash_table_new_full(
+                g_str_hash, g_str_equal, g_free, NULL);
+            gsw_options_init(priv->options);
             g_object_set_qdata_full(G_OBJECT(self), quark, priv, g_free);
         }
         return priv;
     }
+}
+
+static void
+gsw_module_clear_entry_cache(GswModulePrivate *priv)
+{
+    g_clear_pointer(&priv->raw, g_bytes_unref);
+    g_clear_pointer(&priv->raw_text, g_free);
+    g_clear_pointer(&priv->attributes, g_hash_table_unref);
+    priv->attributes_valid = FALSE;
+    priv->raw_len = 0;
 }
 
 static void
@@ -74,6 +85,8 @@ gsw_module_finalize(GObject *object)
     g_free(priv->raw_text);
     g_clear_error(&priv->backend_error);
     g_clear_pointer(&priv->options, g_hash_table_unref);
+    g_clear_pointer(&priv->option_overrides, g_hash_table_unref);
+    g_clear_pointer(&priv->attributes, g_hash_table_unref);
 
     G_OBJECT_CLASS(gsw_module_parent_class)->finalize(object);
 }
@@ -271,8 +284,7 @@ gsw_module_set_key(GswModule *self, GswKey *key, GError **error)
                     "Key is outside the module's bounds");
         return FALSE;
     }
-    g_clear_pointer(&priv->raw, g_bytes_unref);
-    g_clear_pointer(&priv->raw_text, g_free);
+    gsw_module_clear_entry_cache(priv);
     return TRUE;
 }
 
@@ -290,8 +302,7 @@ gsw_module_set_key_text(GswModule *self, const gchar *text, GError **error)
                     text != NULL ? text : "");
         return FALSE;
     }
-    g_clear_pointer(&priv->raw, g_bytes_unref);
-    g_clear_pointer(&priv->raw_text, g_free);
+    gsw_module_clear_entry_cache(priv);
     return TRUE;
 }
 
@@ -399,6 +410,18 @@ gsw_module_option_on(GswModule *self, const gchar *name)
 
     return value != NULL && (g_ascii_strcasecmp(value, "On") == 0 ||
                              gsw_str_is_true(value));
+}
+
+static gboolean
+gsw_module_option_on_any(GswModule *self, const gchar *const *names)
+{
+    guint i;
+
+    for (i = 0; names[i] != NULL; i++) {
+        if (gsw_module_option_on(self, names[i]))
+            return TRUE;
+    }
+    return FALSE;
 }
 
 static gchar *
@@ -540,13 +563,25 @@ gsw_render_strongs(GString *out, const gchar *value)
 static gchar *
 gsw_render_markup(GswModule *self, const gchar *input)
 {
+    static const gchar *const strongs_names[] = {
+        "Strong's Numbers", "Lemmas", NULL
+    };
+    static const gchar *const morph_names[] = {
+        "Morphology", "Morphological Tags", NULL
+    };
+    static const gchar *const red_names[] = {
+        "Red Letter Words", "Words of Christ in Red", NULL
+    };
     GString *out = g_string_new(NULL);
     gboolean last_space = TRUE;
-    gboolean strongs = gsw_module_option_on(self, "Strong's Numbers");
+    gboolean strongs = gsw_module_option_on_any(self, strongs_names);
     gboolean footnotes = gsw_module_option_on(self, "Footnotes");
     gboolean headings = gsw_module_option_on(self, "Headings");
-    gboolean redletter = gsw_module_option_on(self, "Red Letter Words");
-    gboolean morph = gsw_module_option_on(self, "Morphology");
+    gboolean redletter = gsw_module_option_on_any(self, red_names);
+    gboolean morph = gsw_module_option_on_any(self, morph_names);
+    gboolean xrefs = gsw_module_option_on(self, "Cross-references");
+    gboolean glosses = gsw_module_option_on(self, "Glosses");
+    gboolean images = gsw_module_option_on(self, "Images");
     gchar *skip_tag = NULL;
     gint skip_depth = 0;
     gboolean in_word = FALSE;
@@ -614,7 +649,20 @@ gsw_render_markup(GswModule *self, const gchar *input)
                 ((!footnotes && (g_strcmp0(name, "note") == 0 ||
                                  g_strcmp0(name, "F") == 0)) ||
                  (!headings && (g_strcmp0(name, "title") == 0 ||
-                                g_strcmp0(name, "H") == 0)))) {
+                                g_strcmp0(name, "H") == 0 ||
+                                g_strcmp0(name, "h1") == 0 ||
+                                g_strcmp0(name, "h2") == 0 ||
+                                g_strcmp0(name, "h3") == 0 ||
+                                g_strcmp0(name, "h4") == 0 ||
+                                g_strcmp0(name, "h5") == 0 ||
+                                g_strcmp0(name, "h6") == 0)) ||
+                 (!xrefs && (g_strcmp0(name, "reference") == 0 ||
+                             g_strcmp0(name, "xref") == 0)) ||
+                 (!glosses && (g_strcmp0(name, "gloss") == 0 ||
+                               g_strcmp0(name, "G") == 0)) ||
+                 (!images && !self_closing &&
+                  (g_strcmp0(name, "img") == 0 ||
+                   g_strcmp0(name, "image") == 0)))) {
                 g_free(skip_tag);
                 skip_tag = g_strdup(name);
                 skip_depth = 1;
@@ -709,10 +757,13 @@ gsw_module_set_option(GswModule *self, const gchar *name, const gchar *value)
     g_return_val_if_fail(name != NULL, FALSE);
 
     priv = gsw_module_priv(self);
-    if (!g_hash_table_contains(priv->options, name))
+    if (!gsw_options_known(name) &&
+        !g_hash_table_contains(priv->options, name))
         return FALSE;
     g_hash_table_replace(priv->options, g_strdup(name),
                          g_strdup(value != NULL ? value : "Off"));
+    g_hash_table_replace(priv->option_overrides, g_strdup(name),
+                         GINT_TO_POINTER(1));
     return TRUE;
 }
 
@@ -749,18 +800,36 @@ gsw_module_get_options(GswModule *self)
 GPtrArray *
 gsw_module_get_option_values(GswModule *self, const gchar *name)
 {
-    GPtrArray *result;
-
     g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
     g_return_val_if_fail(name != NULL, NULL);
 
     if (gsw_module_get_option(self, name) == NULL)
         return NULL;
+    return gsw_options_values(name);
+}
 
-    result = g_ptr_array_new_with_free_func(g_free);
-    g_ptr_array_add(result, g_strdup("On"));
-    g_ptr_array_add(result, g_strdup("Off"));
-    return result;
+void
+gsw_module_apply_default_options(GswModule *self, GHashTable *defaults)
+{
+    GHashTableIter iter;
+    gpointer key, value;
+    GswModulePrivate *priv;
+
+    g_return_if_fail(GSW_IS_MODULE(self));
+
+    priv = gsw_module_priv(self);
+    if (defaults == NULL)
+        return;
+
+    g_hash_table_iter_init(&iter, defaults);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        const gchar *name = key;
+
+        if (g_hash_table_contains(priv->option_overrides, name))
+            continue;
+        g_hash_table_replace(priv->options, g_strdup(name),
+                             g_strdup(value));
+    }
 }
 
 
@@ -896,28 +965,159 @@ gsw_module_get_render_text(GswModule *self, GError **error)
     return gsw_module_get_text(self, error);
 }
 
-gchar *
-gsw_module_get_text(GswModule *self, GError **error)
+static gchar *
+gsw_module_get_current_markup(GswModule *self, GError **error)
 {
     GswModulePrivate *priv;
-    gchar *utf8;
-    gchar *text;
-
-    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
 
     priv = gsw_module_priv(self);
     if (!gsw_module_update_raw(self, error))
         return NULL;
+    return gsw_module_convert_to_utf8(
+        priv->raw_text, priv->raw_len,
+        gsw_module_info_get_encoding(priv->info), error);
+}
 
-    utf8 = gsw_module_convert_to_utf8(priv->raw_text, priv->raw_len,
-                                      gsw_module_info_get_encoding(priv->info),
-                                      error);
-    if (utf8 == NULL)
+gchar *
+gsw_module_get_text(GswModule *self, GError **error)
+{
+    gchar *markup;
+    gchar *text;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+
+    markup = gsw_module_get_current_markup(self, error);
+    if (markup == NULL)
+        return NULL;
+    text = gsw_module_render_text(self, markup, error);
+    g_free(markup);
+    return text;
+}
+
+gchar *
+gsw_module_get_render_html(GswModule *self, GError **error)
+{
+    gchar *markup;
+    gchar *html;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+
+    markup = gsw_module_get_current_markup(self, error);
+    if (markup == NULL)
+        return NULL;
+    html = gsw_module_render_html(self, markup, error);
+    g_free(markup);
+    return html;
+}
+
+gchar *
+gsw_module_render_text(GswModule *self, const gchar *text, GError **error)
+{
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    g_return_val_if_fail(text != NULL, NULL);
+
+    (void)error;
+    return gsw_render_markup(self, text);
+}
+
+gchar *
+gsw_module_render_html(GswModule *self, const gchar *text, GError **error)
+{
+    GswModulePrivate *priv;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    g_return_val_if_fail(text != NULL, NULL);
+
+    (void)error;
+    priv = gsw_module_priv(self);
+    return gsw_render_markup_html(priv->options, text);
+}
+
+gchar *
+gsw_module_strip_text(GswModule *self, const gchar *text, GError **error)
+{
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    g_return_val_if_fail(text != NULL, NULL);
+
+    (void)error;
+    return gsw_render_strip_markup(text);
+}
+
+static GHashTable *
+gsw_module_ensure_attributes(GswModule *self, GError **error)
+{
+    GswModulePrivate *priv;
+    gchar *markup;
+
+    priv = gsw_module_priv(self);
+    if (priv->attributes_valid)
+        return priv->attributes;
+
+    markup = gsw_module_get_current_markup(self, error);
+    if (markup == NULL)
         return NULL;
 
-    text = gsw_render_markup(self, utf8);
-    g_free(utf8);
-    return text;
+    priv->attributes = gsw_render_collect_attributes(markup);
+    priv->attributes_valid = TRUE;
+    g_free(markup);
+    return priv->attributes;
+}
+
+gchar *
+gsw_module_get_entry_attribute(GswModule *self, const gchar *level1,
+                               const gchar *level2, const gchar *level3,
+                               GError **error)
+{
+    GHashTable *attributes;
+    gchar *key;
+    const gchar *value;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    g_return_val_if_fail(level1 != NULL, NULL);
+    g_return_val_if_fail(level2 != NULL, NULL);
+    g_return_val_if_fail(level3 != NULL, NULL);
+
+    attributes = gsw_module_ensure_attributes(self, error);
+    if (attributes == NULL)
+        return NULL;
+
+    key = g_strdup_printf("%s/%s/%s", level1, level2, level3);
+    value = g_hash_table_lookup(attributes, key);
+    g_free(key);
+    return value != NULL ? g_strdup(value) : NULL;
+}
+
+GPtrArray *
+gsw_module_get_entry_attribute_keys(GswModule *self, const gchar *level1,
+                                    const gchar *level2, GError **error)
+{
+    GHashTable *attributes;
+    GHashTableIter iter;
+    gpointer key, value;
+    gchar *prefix;
+    gsize prefix_len;
+    GPtrArray *result;
+
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    g_return_val_if_fail(level1 != NULL, NULL);
+    g_return_val_if_fail(level2 != NULL, NULL);
+
+    attributes = gsw_module_ensure_attributes(self, error);
+    if (attributes == NULL)
+        return NULL;
+
+    prefix = g_strdup_printf("%s/%s/", level1, level2);
+    prefix_len = strlen(prefix);
+    result = g_ptr_array_new_with_free_func(g_free);
+    g_hash_table_iter_init(&iter, attributes);
+    while (g_hash_table_iter_next(&iter, &key, &value)) {
+        const gchar *name = key;
+
+        if (g_str_has_prefix(name, prefix))
+            g_ptr_array_add(result, g_strdup(name + prefix_len));
+    }
+    g_free(prefix);
+    return result;
 }
 
 gboolean
@@ -931,8 +1131,7 @@ gsw_module_next(GswModule *self, gint steps, GError **error)
         return FALSE;
     if (!priv->backend->ops->next(priv->backend, priv->key, steps, error))
         return FALSE;
-    g_clear_pointer(&priv->raw, g_bytes_unref);
-    g_clear_pointer(&priv->raw_text, g_free);
+    gsw_module_clear_entry_cache(priv);
     return TRUE;
 }
 
@@ -981,8 +1180,7 @@ gsw_module_set_position(GswModule *self, GswPosition pos, GError **error)
         }
     }
 
-    g_clear_pointer(&priv->raw, g_bytes_unref);
-    g_clear_pointer(&priv->raw_text, g_free);
+    gsw_module_clear_entry_cache(priv);
     return TRUE;
 }
 

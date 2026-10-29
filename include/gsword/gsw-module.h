@@ -19,8 +19,10 @@ G_BEGIN_DECLS
  * GswModule:
  *
  * A readable SWORD module. A module owns a key and opens its storage backend
- * lazily on first access. Text can be read as raw bytes, plain text, or
- * rendered text with options such as footnotes and strong's markup enabled.
+ * lazily on first access. Text can be read as raw bytes, plain text, rendered
+ * text, or an HTML fragment with options such as footnotes and Strong's markup
+ * enabled. Entry attributes such as headings and cross-references are also
+ * available.
  */
 #define GSW_TYPE_MODULE (gsw_module_get_type())
 G_DECLARE_FINAL_TYPE(GswModule, gsw_module, GSW, MODULE, GObject)
@@ -188,6 +190,91 @@ gchar         *gsw_module_get_text(GswModule *self, GError **error);
  * Returns: (transfer full): the entry with render options applied, or %NULL on error
  */
 gchar         *gsw_module_get_render_text(GswModule *self, GError **error);
+/**
+ * gsw_module_get_render_html:
+ * @self: a #GswModule
+ * @error: return location for a #GError, or %NULL
+ *
+ * Gets the current entry as an HTML fragment. The returned fragment is not a
+ * complete document and does not include CSS or a WebKit wrapper.
+ *
+ * Returns: (transfer full): an HTML fragment, or %NULL on error
+ */
+gchar         *gsw_module_get_render_html(GswModule *self, GError **error);
+/**
+ * gsw_module_render_text:
+ * @self: a #GswModule
+ * @text: markup to render
+ * @error: return location for a #GError, or %NULL
+ *
+ * Applies the module's render options to arbitrary markup and returns plain
+ * text.
+ *
+ * Returns: (transfer full): rendered plain text, or %NULL on error
+ */
+gchar         *gsw_module_render_text(GswModule *self, const gchar *text,
+                                      GError **error);
+/**
+ * gsw_module_render_html:
+ * @self: a #GswModule
+ * @text: markup to render
+ * @error: return location for a #GError, or %NULL
+ *
+ * Applies the module's render options to arbitrary markup and returns an HTML
+ * fragment suitable for a WebKit view.
+ *
+ * Returns: (transfer full): an HTML fragment, or %NULL on error
+ */
+gchar         *gsw_module_render_html(GswModule *self, const gchar *text,
+                                      GError **error);
+/**
+ * gsw_module_strip_text:
+ * @self: a #GswModule
+ * @text: markup to strip
+ * @error: return location for a #GError, or %NULL
+ *
+ * Removes markup and entities from arbitrary text without applying render
+ * options.
+ *
+ * Returns: (transfer full): stripped text, or %NULL on error
+ */
+gchar         *gsw_module_strip_text(GswModule *self, const gchar *text,
+                                     GError **error);
+/**
+ * gsw_module_get_entry_attribute:
+ * @self: a #GswModule
+ * @level1: first attribute level, for example `Heading`
+ * @level2: second attribute level, for example `Preverse`
+ * @level3: third attribute level, for example `0`
+ * @error: return location for a #GError, or %NULL
+ *
+ * Gets an entry attribute extracted from the current entry. Common attributes
+ * include `Heading/Preverse/0`, `Footnote/body/0`, `Crossref/body/0`, and
+ * `Image/src/0`.
+ *
+ * Returns: (transfer full): the attribute value, or %NULL if not present
+ */
+gchar         *gsw_module_get_entry_attribute(GswModule *self,
+                                              const gchar *level1,
+                                              const gchar *level2,
+                                              const gchar *level3,
+                                              GError **error);
+/**
+ * gsw_module_get_entry_attribute_keys:
+ * @self: a #GswModule
+ * @level1: first attribute level
+ * @level2: second attribute level
+ * @error: return location for a #GError, or %NULL
+ *
+ * Gets the level-3 keys available under a two-level attribute prefix.
+ *
+ * Returns: (transfer container) (element-type utf8): an array of keys, or
+ *   %NULL on error
+ */
+GPtrArray     *gsw_module_get_entry_attribute_keys(GswModule *self,
+                                                    const gchar *level1,
+                                                    const gchar *level2,
+                                                    GError **error);
 
 /**
  * gsw_module_set_option:

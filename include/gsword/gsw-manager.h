@@ -156,6 +156,51 @@ GswModule     *gsw_manager_get_module(GswManager *self, const gchar *name);
  */
 GswModule     *gsw_manager_create_module(GswManager *self, const gchar *name);
 /**
+ * gsw_manager_set_option:
+ * @self: a #GswManager
+ * @name: render option name
+ * @value: option value
+ *
+ * Sets a global render option default. Existing modules that have not
+ * explicitly overridden @name are updated immediately; modules created later
+ * inherit the new value.
+ *
+ * Returns: %TRUE if the option is known, %FALSE otherwise
+ */
+gboolean       gsw_manager_set_option(GswManager *self, const gchar *name,
+                                      const gchar *value);
+/**
+ * gsw_manager_get_option:
+ * @self: a #GswManager
+ * @name: render option name
+ *
+ * Gets the global value of a render option.
+ *
+ * Returns: (transfer none): the option value, or %NULL if unknown
+ */
+const gchar   *gsw_manager_get_option(GswManager *self, const gchar *name);
+/**
+ * gsw_manager_get_options:
+ * @self: a #GswManager
+ *
+ * Gets all known global render option names.
+ *
+ * Returns: (transfer container) (element-type utf8): an array of option names
+ */
+GPtrArray     *gsw_manager_get_options(GswManager *self);
+/**
+ * gsw_manager_get_option_values:
+ * @self: a #GswManager
+ * @name: render option name
+ *
+ * Gets the allowed values for a global render option.
+ *
+ * Returns: (transfer container) (element-type utf8): an array of allowed
+ *   values, or %NULL if the option is unknown
+ */
+GPtrArray     *gsw_manager_get_option_values(GswManager *self,
+                                              const gchar *name);
+/**
  * gsw_manager_get_config:
  * @self: a #GswManager
  *

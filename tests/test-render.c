@@ -47,9 +47,13 @@ make_module(const gchar *prefix)
 {
     const gchar *entry =
         "<title>Heading</title> "
-        "<w lemma=\"strong:G26\">love</w> "
+        "<h2>Second heading</h2> "
+        "<w lemma=\"strong:G26\" morph=\"N-ASF\">love</w> "
         "<note>note text</note> "
-        "<q who=\"Jesus\">red words</q>";
+        "<q who=\"Jesus\">red words</q> "
+        "<reference>John 3:16</reference> "
+        "<gloss>gloss text</gloss> "
+        "<img src=\"map.png\"/>";
     gchar *dir = g_build_filename(prefix, "modules", "texts", "rawtext",
                                   "tinyrender", NULL);
     gchar *path;
@@ -104,8 +108,11 @@ test_render_options(void)
     gchar *prefix = g_dir_make_tmp("gsword-render-XXXXXX", &error);
     GswManager *manager;
     GswModule *module;
+    GswModule *fresh;
     gchar *text;
+    gchar *html;
     GPtrArray *items;
+    GPtrArray *keys;
 
     g_assert_no_error(error);
     make_module(prefix);
@@ -120,6 +127,43 @@ test_render_options(void)
     g_assert_no_error(error);
     g_assert_cmpstr(text, ==, "love red words");
     g_free(text);
+
+    text = gsw_module_strip_text(module,
+                                 "<b>Hello</b> &amp; <i>world</i>", &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Hello & world");
+    g_free(text);
+
+    text = gsw_module_get_entry_attribute(module, "Heading", "Preverse", "0",
+                                          &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Heading");
+    g_free(text);
+    text = gsw_module_get_entry_attribute(module, "Heading", "Preverse", "1",
+                                          &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Second heading");
+    g_free(text);
+    text = gsw_module_get_entry_attribute(module, "Footnote", "body", "0",
+                                          &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "note text");
+    g_free(text);
+    text = gsw_module_get_entry_attribute(module, "Crossref", "body", "0",
+                                          &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "John 3:16");
+    g_free(text);
+    text = gsw_module_get_entry_attribute(module, "Image", "src", "0",
+                                          &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "map.png");
+    g_free(text);
+    keys = gsw_module_get_entry_attribute_keys(module, "Heading", "Preverse",
+                                               &error);
+    g_assert_no_error(error);
+    g_assert_cmpuint(keys->len, ==, 2);
+    g_ptr_array_unref(keys);
 
     g_assert_true(gsw_module_set_option(module, "Footnotes", "On"));
     text = gsw_module_get_text(module, &error);
@@ -146,6 +190,22 @@ test_render_options(void)
     g_assert_nonnull(strstr(text, "\xC2\xABred words\xC2\xBB"));
     g_free(text);
 
+    g_assert_true(gsw_module_set_option(module, "Footnotes", "On"));
+    g_assert_true(gsw_module_set_option(module, "Cross-references", "On"));
+    g_assert_true(gsw_module_set_option(module, "Images", "On"));
+    g_assert_true(gsw_module_set_option(module, "Morphological Tags", "On"));
+    html = gsw_module_get_render_html(module, &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(strstr(html, "<div class=\"gsw-heading\">Heading</div>"));
+    g_assert_nonnull(strstr(html, "<span class=\"gsw-strongs\">G26</span>"));
+    g_assert_nonnull(strstr(html, "<span class=\"gsw-morph\">N-ASF</span>"));
+    g_assert_nonnull(strstr(html, "class=\"gsw-footnote\""));
+    g_assert_nonnull(strstr(html, "class=\"gsw-words-of-christ\""));
+    g_assert_nonnull(strstr(html, "class=\"gsw-crossref\""));
+    g_assert_nonnull(strstr(html, "<img src=\"map.png\""));
+    g_free(html);
+    g_assert_true(gsw_module_set_option(module, "Footnotes", "Off"));
+
     g_assert_cmpstr(gsw_module_get_option(module, "Headings"), ==, "On");
     items = gsw_module_get_options(module);
     g_assert_cmpuint(items->len, >=, 5);
@@ -154,6 +214,18 @@ test_render_options(void)
     g_assert_cmpuint(items->len, ==, 2);
     g_assert_cmpstr(g_ptr_array_index(items, 0), ==, "On");
     g_ptr_array_unref(items);
+
+    items = gsw_manager_get_option_values(manager, "Textual Variants");
+    g_assert_cmpuint(items->len, ==, 4);
+    g_ptr_array_unref(items);
+    g_assert_true(gsw_manager_set_option(manager, "Footnotes", "On"));
+    g_assert_false(gsw_manager_set_option(manager, "No Such Option", "On"));
+    g_assert_cmpstr(gsw_manager_get_option(manager, "Footnotes"), ==, "On");
+    g_assert_cmpstr(gsw_module_get_option(module, "Footnotes"), ==, "Off");
+    fresh = gsw_manager_create_module(manager, "TinyRender");
+    g_assert_nonnull(fresh);
+    g_assert_cmpstr(gsw_module_get_option(fresh, "Footnotes"), ==, "On");
+    g_object_unref(fresh);
 
     g_object_unref(manager);
     gsw_dir_remove_recursive(prefix, NULL);
