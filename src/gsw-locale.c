@@ -12,6 +12,10 @@ typedef struct {
     gchar *name;
     GHashTable *forward; /* English -> localized */
     GHashTable *reverse; /* localized -> English */
+    GHashTable *abbrevs; /* localized abbreviation -> OSIS */
+    GHashTable *abbrevs_folded; /* case-folded abbreviation -> OSIS */
+    GHashTable *pref_abbrevs; /* OSIS abbreviation -> localized */
+    GHashTable *pref_abbrevs_folded; /* case-folded OSIS -> localized */
 } GswLocale;
 
 struct _GswLocaleMgr {
@@ -39,6 +43,10 @@ gsw_locale_free(gpointer data)
     g_free(locale->name);
     g_clear_pointer(&locale->forward, g_hash_table_unref);
     g_clear_pointer(&locale->reverse, g_hash_table_unref);
+    g_clear_pointer(&locale->abbrevs, g_hash_table_unref);
+    g_clear_pointer(&locale->abbrevs_folded, g_hash_table_unref);
+    g_clear_pointer(&locale->pref_abbrevs, g_hash_table_unref);
+    g_clear_pointer(&locale->pref_abbrevs_folded, g_hash_table_unref);
     g_free(locale);
 }
 
@@ -48,9 +56,80 @@ gsw_locale_new(const gchar *name)
     GswLocale *locale = g_new0(GswLocale, 1);
 
     locale->name = g_strdup(name);
-    locale->forward = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
-    locale->reverse = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    locale->forward = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
+                                            g_free);
+    locale->reverse = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
+                                            g_free);
+    locale->abbrevs = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
+                                            g_free);
+    locale->abbrevs_folded = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                   g_free, g_free);
+    locale->pref_abbrevs = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                 g_free, g_free);
+    locale->pref_abbrevs_folded = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                        g_free, g_free);
     return locale;
+}
+
+static void
+locale_add_abbrev(GswLocale *locale, const gchar *abbrev, const gchar *osis)
+{
+    gchar *folded;
+
+    if (abbrev == NULL || *abbrev == '\0' || osis == NULL || *osis == '\0')
+        return;
+    g_hash_table_replace(locale->abbrevs, g_strdup(abbrev), g_strdup(osis));
+    folded = g_utf8_casefold(abbrev, -1);
+    g_hash_table_replace(locale->abbrevs_folded, folded, g_strdup(osis));
+}
+
+static void
+locale_add_pref_abbrev(GswLocale *locale, const gchar *osis,
+                       const gchar *abbrev)
+{
+    gchar *folded;
+
+    if (osis == NULL || *osis == '\0' || abbrev == NULL || *abbrev == '\0')
+        return;
+    g_hash_table_replace(locale->pref_abbrevs, g_strdup(osis),
+                         g_strdup(abbrev));
+    folded = g_utf8_casefold(osis, -1);
+    g_hash_table_replace(locale->pref_abbrevs_folded, folded,
+                         g_strdup(abbrev));
+}
+
+static const gchar *
+locale_lookup_abbrev(GswLocale *locale, const gchar *abbrev)
+{
+    const gchar *result;
+    gchar *folded;
+
+    if (locale == NULL || abbrev == NULL || *abbrev == '\0')
+        return NULL;
+    result = g_hash_table_lookup(locale->abbrevs, abbrev);
+    if (result != NULL)
+        return result;
+    folded = g_utf8_casefold(abbrev, -1);
+    result = g_hash_table_lookup(locale->abbrevs_folded, folded);
+    g_free(folded);
+    return result;
+}
+
+static const gchar *
+locale_lookup_pref_abbrev(GswLocale *locale, const gchar *osis)
+{
+    const gchar *result;
+    gchar *folded;
+
+    if (locale == NULL || osis == NULL || *osis == '\0')
+        return NULL;
+    result = g_hash_table_lookup(locale->pref_abbrevs, osis);
+    if (result != NULL)
+        return result;
+    folded = g_utf8_casefold(osis, -1);
+    result = g_hash_table_lookup(locale->pref_abbrevs_folded, folded);
+    g_free(folded);
+    return result;
 }
 
 static void
@@ -170,6 +249,23 @@ gsw_locale_mgr_load_file(GswLocaleMgr *self, const gchar *path, GError **error)
         }
     }
     g_strfreev(keys);
+
+    keys = gsw_config_get_keys(config, "Book Abbrevs");
+    for (i = 0; keys != NULL && keys[i] != NULL; i++) {
+        const gchar *osis = gsw_config_get(config, "Book Abbrevs", keys[i]);
+
+        locale_add_abbrev(locale, keys[i], osis);
+    }
+    g_strfreev(keys);
+
+    keys = gsw_config_get_keys(config, "Pref Abbrevs");
+    for (i = 0; keys != NULL && keys[i] != NULL; i++) {
+        const gchar *abbrev = gsw_config_get(config, "Pref Abbrevs", keys[i]);
+
+        locale_add_pref_abbrev(locale, keys[i], abbrev);
+    }
+    g_strfreev(keys);
+
     g_object_unref(config);
 
     priv = gsw_locale_mgr_get_instance_private(self);
@@ -265,30 +361,41 @@ gsw_locale_mgr_set_default_locale(GswLocaleMgr *self, const gchar *name)
     priv->default_locale = g_strdup(name);
 }
 
+static GswLocale *
+locale_mgr_resolve(GswLocaleMgr *self, const gchar *locale_name)
+{
+    GswLocaleMgrPrivate *priv;
+    const gchar *name;
+
+    priv = gsw_locale_mgr_get_instance_private(self);
+    if (locale_name == NULL && priv->default_locale == NULL)
+        return NULL;
+    gsw_locale_mgr_scan_system(self);
+    priv = gsw_locale_mgr_get_instance_private(self);
+    name = locale_name != NULL ? locale_name : priv->default_locale;
+    if (name == NULL)
+        return NULL;
+    return g_hash_table_lookup(priv->locales, name);
+}
+
 const gchar *
 gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
                          const gchar *locale_name)
 {
-    GswLocaleMgrPrivate *priv;
     GswLocale *locale;
     const gchar *result;
 
     g_return_val_if_fail(GSW_IS_LOCALE_MGR(self), NULL);
     g_return_val_if_fail(text != NULL, NULL);
 
-    priv = gsw_locale_mgr_get_instance_private(self);
-    if (locale_name == NULL && priv->default_locale == NULL)
-        return text;
-    gsw_locale_mgr_scan_system(self);
-    priv = gsw_locale_mgr_get_instance_private(self);
-    {
-        const gchar *name = locale_name != NULL ? locale_name : priv->default_locale;
-        if (name == NULL)
-            return text;
-        locale = g_hash_table_lookup(priv->locales, name);
-    }
+    locale = locale_mgr_resolve(self, locale_name);
     if (locale == NULL)
         return text;
+    if (g_str_has_prefix(text, "prefAbbr_")) {
+        result = locale_lookup_pref_abbrev(locale, text + 9);
+        if (result != NULL)
+            return result;
+    }
     result = g_hash_table_lookup(locale->forward, text);
     return result != NULL ? result : text;
 }
@@ -297,26 +404,43 @@ const gchar *
 gsw_locale_mgr_reverse(GswLocaleMgr *self, const gchar *translated,
                        const gchar *locale_name)
 {
-    GswLocaleMgrPrivate *priv;
     GswLocale *locale;
     const gchar *result;
 
     g_return_val_if_fail(GSW_IS_LOCALE_MGR(self), NULL);
     g_return_val_if_fail(translated != NULL, NULL);
 
-    priv = gsw_locale_mgr_get_instance_private(self);
-    if (locale_name == NULL && priv->default_locale == NULL)
-        return translated;
-    gsw_locale_mgr_scan_system(self);
-    priv = gsw_locale_mgr_get_instance_private(self);
-    {
-        const gchar *name = locale_name != NULL ? locale_name : priv->default_locale;
-        if (name == NULL)
-            return translated;
-        locale = g_hash_table_lookup(priv->locales, name);
-    }
+    locale = locale_mgr_resolve(self, locale_name);
     if (locale == NULL)
         return translated;
     result = g_hash_table_lookup(locale->reverse, translated);
     return result != NULL ? result : translated;
+}
+
+const gchar *
+gsw_locale_mgr_translate_abbreviation(GswLocaleMgr *self,
+                                      const gchar *abbreviation,
+                                      const gchar *locale_name)
+{
+    GswLocale *locale;
+
+    g_return_val_if_fail(GSW_IS_LOCALE_MGR(self), NULL);
+    g_return_val_if_fail(abbreviation != NULL, NULL);
+
+    locale = locale_mgr_resolve(self, locale_name);
+    return locale_lookup_abbrev(locale, abbreviation);
+}
+
+const gchar *
+gsw_locale_mgr_translate_preferred_abbreviation(GswLocaleMgr *self,
+                                                const gchar *abbreviation,
+                                                const gchar *locale_name)
+{
+    GswLocale *locale;
+
+    g_return_val_if_fail(GSW_IS_LOCALE_MGR(self), NULL);
+    g_return_val_if_fail(abbreviation != NULL, NULL);
+
+    locale = locale_mgr_resolve(self, locale_name);
+    return locale_lookup_pref_abbrev(locale, abbreviation);
 }

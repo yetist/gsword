@@ -743,9 +743,20 @@ const gchar  *gsw_locale_mgr_get_default_locale(GswLocaleMgr *self);
 void          gsw_locale_mgr_set_default_locale(GswLocaleMgr *self, const gchar *name);
 const gchar  *gsw_locale_mgr_translate(GswLocaleMgr *self, const gchar *text,
                                        const gchar *locale);
+const gchar  *gsw_locale_mgr_translate_abbreviation(GswLocaleMgr *self,
+                                                    const gchar *abbreviation,
+                                                    const gchar *locale);
+const gchar  *gsw_locale_mgr_translate_preferred_abbreviation(
+                                                GswLocaleMgr *self,
+                                                const gchar *abbreviation,
+                                                const gchar *locale);
 ```
 
-加载 SWORD `locales.d/*.conf` 的 `[Text]` 映射；`GswVerseKey` 的书名、缩写解析和显示会使用默认 locale。
+加载 SWORD `locales.d/*.conf` 的 `[Text]`、`[Book Abbrevs]` 和
+`[Pref Abbrevs]` 映射。`[Book Abbrevs]` 将本地化书名/缩写映射到 OSIS，
+`[Pref Abbrevs]` 将 OSIS 缩写映射到本地化短缩写。`GswVerseKey` 的书名解析、
+缩写解析和短文本显示都会使用默认 locale；`prefAbbr_` 前缀也由
+`gsw_locale_mgr_translate()` 支持。
 
 ### 5.8 `GswStatusReporter`
 

@@ -19,7 +19,14 @@ test_locale(void)
         "Encoding=UTF-8\n"
         "[Text]\n"
         "Genesis=创世记\n"
-        "John=约翰福音\n", -1, NULL));
+        "John=约翰福音\n"
+        "[Book Abbrevs]\n"
+        "創=Gen\n"
+        "出=Exod\n"
+        "XGen=Gen\n"
+        "[Pref Abbrevs]\n"
+        "Gen=創\n"
+        "Exod=出\n", -1, NULL));
 
     g_assert_true(gsw_locale_mgr_load_file(mgr, path, &error));
     g_assert_no_error(error);
@@ -30,10 +37,38 @@ test_locale(void)
                     "创世记");
     g_assert_cmpstr(gsw_locale_mgr_reverse(mgr, "创世记", NULL), ==,
                     "Genesis");
+    g_assert_cmpstr(gsw_locale_mgr_translate_abbreviation(mgr, "創", NULL),
+                    ==, "Gen");
+    g_assert_cmpstr(gsw_locale_mgr_translate_abbreviation(mgr, "xgen", NULL),
+                    ==, "Gen");
+    g_assert_cmpstr(gsw_locale_mgr_translate_preferred_abbreviation(
+                        mgr, "Gen", NULL), ==, "創");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "prefAbbr_Gen", NULL), ==,
+                    "創");
+    g_assert_null(gsw_locale_mgr_translate_abbreviation(mgr, "unknown",
+                                                        NULL));
 
     key = gsw_verse_key_new("Genesis 1:1", "KJV");
     g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, "创世记 1:1");
     g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "创世记");
+    {
+        gchar *short_text = gsw_verse_key_get_short_text(key);
+
+        g_assert_cmpstr(short_text, ==, "創 1:1");
+        g_free(short_text);
+    }
+    gsw_key_unref((GswKey *)key);
+
+    key = gsw_verse_key_new("出 2:3", "KJV");
+    g_assert_cmpint(gsw_verse_key_get_book(key), ==, 2);
+    g_assert_cmpint(gsw_verse_key_get_chapter(key), ==, 2);
+    g_assert_cmpint(gsw_verse_key_get_verse(key), ==, 3);
+    gsw_key_unref((GswKey *)key);
+
+    key = gsw_verse_key_new("xgen 1:2", "KJV");
+    g_assert_cmpint(gsw_verse_key_get_book(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_chapter(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_verse(key), ==, 2);
     gsw_key_unref((GswKey *)key);
 
     key = gsw_verse_key_new("约翰福音 3:16", "KJV");

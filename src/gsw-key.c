@@ -177,6 +177,18 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
         return -1;
 
     {
+        const gchar *osis = gsw_locale_mgr_translate_abbreviation(
+            gsw_locale_mgr_get_default(), token, NULL);
+
+        if (osis != NULL) {
+            gint index = gsw_versification_get_book_number_by_osis(v11n, osis);
+
+            if (index >= 0)
+                return index;
+        }
+    }
+
+    {
         const gchar *reverse = gsw_locale_mgr_reverse(
             gsw_locale_mgr_get_default(), token, NULL);
         if (g_strcmp0(reverse, token) != 0)
@@ -1021,6 +1033,14 @@ gsw_verse_key_get_short_text(GswVerseKey *self)
         abbrev = gsw_book_get_osis_name(book);
     if (abbrev == NULL || *abbrev == '\0')
         return NULL;
+    {
+        const gchar *localized =
+            gsw_locale_mgr_translate_preferred_abbreviation(
+                gsw_locale_mgr_get_default(), abbrev, NULL);
+
+        if (localized != NULL)
+            abbrev = localized;
+    }
     return g_strdup_printf("%s %d:%d", abbrev, self->chapter, self->verse);
 }
 

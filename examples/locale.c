@@ -39,7 +39,11 @@ main(int argc, char **argv)
     printf("Key: %s\n", gsw_module_get_key_text(module));
     {
         GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(module);
+        gchar *short_text = gsw_verse_key_get_short_text(key);
+
         printf("Book: %s\n", gsw_verse_key_get_book_name(key));
+        printf("Short: %s\n", short_text != NULL ? short_text : "");
+        g_free(short_text);
     }
 
     text = gsw_module_get_text(module, &error);
