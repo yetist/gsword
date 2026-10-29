@@ -244,7 +244,8 @@ Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进�
 - [ ] 可选搜索索引框架（内部倒排索引或可选 CLucene）
 - [ ] 创建/删除索引、索引进度
 - [ ] 大模块搜索性能测试
-- [ ] 块缓存、LRU、并发读取优化
+- [x] 块缓存、LRU（zText/zCom/zLD）
+- [ ] 并发读取优化
 - [ ] 用 gsword 编写最小 GTK 前端原型
 
 验收：大型模块搜索可接受；最小 GTK 原型覆盖模块列表、阅读、并行、搜索、安装和笔记。

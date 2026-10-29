@@ -20,7 +20,7 @@ M0–M5 已实现并通过单元/集成测试：
 - RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
 - RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
-- 基础渲染选项、本地化书名、4 块 zVerse 缓存、GI 与异步 API
+- 基础渲染选项、本地化书名、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）
 
 ## 快速开始
@@ -90,7 +90,7 @@ key.unref();
 
 M5–M12 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
-`locales.d` 本地化书名、zVerse 多块缓存、独立模块实例、BOTTOM 导航、
+`locales.d` 本地化书名、zText/zCom/zLD LRU 块缓存、独立模块实例、BOTTOM 导航、
 testament 识别、HTML 渲染片段、EntryAttributes、全局渲染选项、经文范围/OSIS、
 TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、可取消/可限定范围
 的多模块搜索、RawFiles/RawGenBook 条目写入、RawGenBook 创建、树结构编辑、
