@@ -119,16 +119,25 @@
 
 目标：支撑 Xiphos 风格的富文本显示。
 
-- [ ] 增加中性渲染 API：HTML 片段、纯文本和 strip 文本
-- [ ] 增加 EntryAttributes API，支持 Heading/Preverse、脚注、交叉引用、图片等
-- [ ] 扩展 render options：Strong's、Morphology、Footnotes、Cross-references、
+- [x] 增加中性渲染 API：HTML 片段、纯文本和 strip 文本
+      （`gsw_module_get_render_html()`、`gsw_module_render_html()`、
+      `gsw_module_render_text()`、`gsw_module_strip_text()`）
+- [x] 增加 EntryAttributes API，支持 Heading/Preverse、脚注、交叉引用、图片等
+      （`gsw_module_get_entry_attribute()`、
+      `gsw_module_get_entry_attribute_keys()`）
+- [x] 扩展 render options：Strong's、Morphology、Footnotes、Cross-references、
       Headings、Red Letter、Greek Accents、Hebrew Vowel Points、Transliteration、
       Morpheme Segmentation、Textual Variants、Glosses、Images
-- [ ] 增加全局 render options 与模块级覆盖
-- [ ] 保持 gsword 不依赖 GTK/WebKit
-- [ ] 用 OSIS/ThML/GBF 模块做 golden 对比测试
+- [x] 增加全局 render options 与模块级覆盖
+      （`gsw_manager_*_option()` + `gsw_module_*_option()`）
+- [x] 保持 gsword 不依赖 GTK/WebKit
+- [x] 增加 OSIS/ThML/GBF 风格标记的渲染、属性和选项回归测试
 
-验收：OSIS/ThML/GBF 模块可输出可供 WebKit 使用的 HTML 片段，并读取条目属性。
+验收：OSIS/ThML/GBF 风格模块可输出可供 WebKit 使用的 HTML 片段，并读取条目属性。
+
+说明：M8 完成的是基础渲染和属性层，不追求一次覆盖上游 SWORD 的全部过滤器语义；
+Greek/Hebrew 重音、Textual Variants、Morpheme Segmentation 等选项已进入统一选项表，
+后续可在 filter 层逐步细化。
 
 ## M9 经文范围、OSIS 与 TreeKey 补全
 

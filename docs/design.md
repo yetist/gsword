@@ -1,6 +1,6 @@
 # libsword（GObject/C）设计
 
-- 状态：设计草案 v0.6（M0–M7 已实现）
+- 状态：设计草案 v0.7（M0–M8 已实现）
 - 日期：2026-10-29
 - 目标代码名：`gsword`（库名 `libgsword`，C 前缀 `Gsw`）
 - 参考实现：`sword-1.9.0/`（C++，仅作为行为与格式参考，不链接、不包含其头文件）
@@ -1202,7 +1202,7 @@ struct _GswModuleBackendClass {
 ### 8.2.1 加密与渲染选项
 
 - 加密：`CipherKey` 存在时，对 zVerse 压缩块、zLD 块、RawVerse/RawLD/RawGenBook 条目执行 Sapphire 解密。
-- 渲染：`gsw_module_set_option()` 支持 `Strong's Numbers`、`Footnotes`、`Headings`、`Red Letter Words`、`Morphology`、`Variants`、`Glosses`；`gsw_module_get_render_text()` 返回选项处理后的纯文本。
+- 渲染：`gsw_module_set_option()` 支持 `Strong's Numbers`、`Footnotes`、`Headings`、`Red Letter Words`、`Morphology`、`Variants`、`Glosses` 等选项；`gsw_module_get_render_text()` 返回选项处理后的纯文本，`gsw_module_get_render_html()` 返回 HTML 片段。`gsw_module_get_entry_attribute()` 提供 `Heading/Preverse`、`Footnote/body`、`Crossref/body`、`Image/src` 等条目属性。
 
 ### 8.3 编码与文本
 
@@ -1511,10 +1511,11 @@ gnome.generate_vapi('gsword',
 - 已实现：Sapphire 解密、渲染选项、搜索、SCSU、RawFiles/HREFCom。
 - 性能优化（块缓存、目录扫描）。
 
-### M6/M7：文档、搜索扩展与前端基础
+### M6/M7/M8：文档、搜索扩展与前端基础
 
 - M6：gi-docgen、Vala API、搜索基础能力。
 - M7：独立模块实例、`GswKeyKind`、BOTTOM 导航、testament 识别。
+- M8：HTML 片段渲染、EntryAttributes、全局/模块 render options。
 - 详细验收项见 [`docs/milestones.md`](milestones.md)。
 
 ---
@@ -1546,7 +1547,7 @@ gnome.generate_vapi('gsword',
 
 1. **最低平台**：GLib 2.66、libcurl 7.68 是否满足目标发行版？
 2. **加密模块**：已实现 Sapphire 解密；缺密钥时报 `GSW_ERROR_CIPHERED`。
-3. **渲染**：v1 的 `get_text` 只做基础去标签是否足够，还是必须支持 Strong's/脚注等选项？（设计默认基础去标签。）
+3. **渲染**：M8 已提供 HTML 片段、EntryAttributes 和基础选项；完整 OSIS/ThML/GBF filter 语义作为后续增强。
 4. **安装冲突策略**：升级时是否保留旧文件备份（设计默认直接覆盖，失败清理临时目录）。
 
 ---

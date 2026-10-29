@@ -38,6 +38,8 @@ gsword_sources = files(
   'src/gsw-version.c',
   'src/gsw-enums.c',
   'src/gsw-utils.c',
+  'src/gsw-options.c',
+  'src/gsw-render.c',
   'src/gsw-config.c',
   'src/gsw-module-info.c',
   'src/gsw-manager.c',

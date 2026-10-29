@@ -4,6 +4,7 @@
 
 #include <gsword/gsw-manager.h>
 #include <gsword/gsw-error.h>
+#include "gsw-options.h"
 #include "gsw-utils.h"
 
 #include <errno.h>
@@ -24,6 +25,7 @@ typedef struct {
     GHashTable *modules;      /* name -> GswModule* */
     GPtrArray *info_order;    /* GswModuleInfo* pointers */
     GPtrArray *augment_paths; /* gchar* */
+    GHashTable *options;      /* global render option defaults */
     gboolean config_is_dir;
     gboolean loaded;
 } GswManagerPrivate;
@@ -57,6 +59,7 @@ gsw_manager_finalize(GObject *object)
     g_clear_pointer(&priv->modules, g_hash_table_unref);
     g_clear_pointer(&priv->info_order, g_ptr_array_unref);
     g_clear_pointer(&priv->augment_paths, g_ptr_array_unref);
+    g_clear_pointer(&priv->options, g_hash_table_unref);
 
     G_OBJECT_CLASS(gsw_manager_parent_class)->finalize(object);
 }
@@ -78,6 +81,9 @@ gsw_manager_init(GswManager *self)
     priv->config_files = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
     priv->modules = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
                                           g_object_unref);
+    priv->options = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                          g_free, g_free);
+    gsw_options_init(priv->options);
     priv->info_order = g_ptr_array_new();
     priv->augment_paths = g_ptr_array_new_with_free_func(g_free);
 }
@@ -644,6 +650,7 @@ gsw_manager_get_module(GswManager *self, const gchar *name)
     if (module == NULL)
         return NULL;
 
+    gsw_module_apply_default_options(module, priv->options);
     g_hash_table_insert(priv->modules, g_strdup(name), module);
     return module;
 }
@@ -651,16 +658,81 @@ gsw_manager_get_module(GswManager *self, const gchar *name)
 GswModule *
 gsw_manager_create_module(GswManager *self, const gchar *name)
 {
+    GswManagerPrivate *priv;
     GswModuleInfo *info;
+    GswModule *module;
 
     g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
     g_return_val_if_fail(name != NULL, NULL);
 
+    priv = gsw_manager_get_instance_private(self);
     info = gsw_manager_lookup_module_info(self, name);
     if (info == NULL)
         return NULL;
 
-    return gsw_module_new_from_info(info);
+    module = gsw_module_new_from_info(info);
+    if (module != NULL)
+        gsw_module_apply_default_options(module, priv->options);
+    return module;
+}
+
+gboolean
+gsw_manager_set_option(GswManager *self, const gchar *name, const gchar *value)
+{
+    GswManagerPrivate *priv;
+    GHashTableIter iter;
+    gpointer item;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), FALSE);
+    g_return_val_if_fail(name != NULL, FALSE);
+
+    priv = gsw_manager_get_instance_private(self);
+    if (!gsw_options_known(name))
+        return FALSE;
+
+    g_hash_table_replace(priv->options, g_strdup(name),
+                         g_strdup(value != NULL ? value : "Off"));
+    g_hash_table_iter_init(&iter, priv->modules);
+    while (g_hash_table_iter_next(&iter, NULL, &item))
+        gsw_module_apply_default_options(item, priv->options);
+    return TRUE;
+}
+
+const gchar *
+gsw_manager_get_option(GswManager *self, const gchar *name)
+{
+    GswManagerPrivate *priv;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
+    g_return_val_if_fail(name != NULL, NULL);
+    priv = gsw_manager_get_instance_private(self);
+    return g_hash_table_lookup(priv->options, name);
+}
+
+GPtrArray *
+gsw_manager_get_options(GswManager *self)
+{
+    GswManagerPrivate *priv;
+    GList *keys;
+    GList *item;
+    GPtrArray *result;
+
+    g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
+    priv = gsw_manager_get_instance_private(self);
+    result = g_ptr_array_new_with_free_func(g_free);
+    keys = g_hash_table_get_keys(priv->options);
+    for (item = keys; item != NULL; item = item->next)
+        g_ptr_array_add(result, g_strdup(item->data));
+    g_list_free(keys);
+    return result;
+}
+
+GPtrArray *
+gsw_manager_get_option_values(GswManager *self, const gchar *name)
+{
+    g_return_val_if_fail(GSW_IS_MANAGER(self), NULL);
+    g_return_val_if_fail(name != NULL, NULL);
+    return gsw_options_values(name);
 }
 
 GswConfig *

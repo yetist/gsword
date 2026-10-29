@@ -88,10 +88,10 @@ print("%s\n", key.get_text());
 key.unref();
 ```
 
-M5/M6/M7 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
+M5/M6/M7/M8 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
 异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
-`locales.d` 本地化书名、zVerse 多块缓存、独立模块实例、BOTTOM 导航与
-testament 识别，以及更多示例。
+`locales.d` 本地化书名、zVerse 多块缓存、独立模块实例、BOTTOM 导航、
+testament 识别、HTML 渲染片段、EntryAttributes 和全局渲染选项，以及更多示例。
 
 ## 文档
 
