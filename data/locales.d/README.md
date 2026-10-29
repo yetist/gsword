@@ -40,7 +40,7 @@ Rules:
 
 ## Search paths
 
-The planned runtime lookup order is:
+The runtime lookup order is:
 
 1. built-in English fallback
 2. compiled-in `${datadir}/libgsword/locales.d`

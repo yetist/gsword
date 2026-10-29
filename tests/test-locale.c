@@ -32,19 +32,32 @@ test_locale(void)
     }
     path = g_build_filename(dir, "zh_Test.conf", NULL);
     g_assert_true(g_file_set_contents(path,
-        "[Meta]\n"
-        "Name=zh_Test\n"
-        "Encoding=UTF-8\n"
-        "[Text]\n"
-        "Genesis=创世记\n"
-        "John=约翰福音\n"
-        "[Book Abbrevs]\n"
-        "創=Gen\n"
-        "出=Exod\n"
-        "XGen=Gen\n"
-        "[Pref Abbrevs]\n"
-        "Gen=創\n"
-        "Exod=出\n", -1, NULL));
+        "[Locale]\n"
+        "Format=1\n"
+        "Id=zh_Test\n"
+        "Name=测试中文\n"
+        "Language=zh-Test\n"
+        "Direction=ltr\n"
+        "Version=2026.10\n"
+        "Fallback=en\n"
+        "Aliases=zh_CN;zh-CN\n"
+        "\n"
+        "[Strings]\n"
+        "Chapter=章\n"
+        "\n"
+        "[Book Gen]\n"
+        "Name=创世记\n"
+        "Abbrev=創\n"
+        "Aliases=XGen\n"
+        "\n"
+        "[Book Exod]\n"
+        "Name=出埃及记\n"
+        "Abbrev=出\n"
+        "Aliases=出埃及記\n"
+        "\n"
+        "[Book John]\n"
+        "Name=约翰福音\n"
+        "Abbrev=约\n", -1, NULL));
 
     g_assert_true(gsw_locale_mgr_load_file(mgr, path, &error));
     g_assert_no_error(error);
@@ -73,6 +86,10 @@ test_locale(void)
     g_assert_cmpstr(gsw_locale_mgr_get_default_locale(mgr), ==, "zh_Test");
     g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", NULL), ==,
                     "创世记");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh_CN"), ==,
+                    "创世记");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Chapter", NULL), ==,
+                    "章");
     g_assert_cmpstr(gsw_locale_mgr_reverse(mgr, "创世记", NULL), ==,
                     "Genesis");
     g_assert_cmpstr(gsw_locale_mgr_translate_abbreviation(mgr, "創", NULL),
@@ -152,17 +169,27 @@ test_locale_paths(void)
     g_mkdir_with_parents(path_dir, 0755);
     g_mkdir_with_parents(sword_dir, 0755);
     g_assert_true(g_file_set_contents(path_conf,
-        "[Meta]\n"
-        "Name=path_Test\n"
-        "Encoding=UTF-8\n"
-        "[Book Abbrevs]\n"
-        "XPath=Gen\n", -1, NULL));
+        "[Locale]\n"
+        "Format=1\n"
+        "Id=path_Test\n"
+        "Name=Path test\n"
+        "Language=path\n"
+        "Fallback=en\n"
+        "\n"
+        "[Book Gen]\n"
+        "Name=Path Genesis\n"
+        "Abbrev=XPath\n", -1, NULL));
     g_assert_true(g_file_set_contents(sword_conf,
-        "[Meta]\n"
-        "Name=sword_Test\n"
-        "Encoding=UTF-8\n"
-        "[Book Abbrevs]\n"
-        "XSword=Gen\n", -1, NULL));
+        "[Locale]\n"
+        "Format=1\n"
+        "Id=sword_Test\n"
+        "Name=Sword test\n"
+        "Language=sword\n"
+        "Fallback=en\n"
+        "\n"
+        "[Book Gen]\n"
+        "Name=Sword Genesis\n"
+        "Abbrev=XSword\n", -1, NULL));
 
     g_setenv("GSW_LOCALE_PATH", path_dir, TRUE);
     g_setenv("SWORD_PATH", sword_root, TRUE);
@@ -192,11 +219,44 @@ test_locale_paths(void)
     g_free(root);
 }
 
+static void
+test_shipped_locales(void)
+{
+#ifdef GSW_TEST_LOCALE_DIR
+    GswLocaleMgr *mgr;
+    GPtrArray *locales;
+
+    g_setenv("GSW_LOCALE_PATH", GSW_TEST_LOCALE_DIR, TRUE);
+    mgr = g_object_new(GSW_TYPE_LOCALE_MGR, NULL);
+    locales = gsw_locale_mgr_get_locales(mgr);
+    g_assert_true(locales_contain(locales, "zh-Hans"));
+    g_assert_true(locales_contain(locales, "zh-Hant"));
+    g_assert_true(locales_contain(locales, "de"));
+    g_assert_true(locales_contain(locales, "fr"));
+    g_ptr_array_unref(locales);
+
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh-Hans"), ==,
+                    "创世记");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "de"), ==,
+                    "1. Mose");
+    g_assert_cmpstr(gsw_locale_mgr_translate_preferred_abbreviation(
+                        mgr, "Gen", "de"), ==, "1Mo");
+    g_assert_cmpstr(gsw_locale_mgr_translate_abbreviation(mgr, "1MO", "de"),
+                    ==, "Gen");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh_CN"), ==,
+                    "创世记");
+
+    g_object_unref(mgr);
+    g_unsetenv("GSW_LOCALE_PATH");
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/locale/translate", test_locale);
     g_test_add_func("/locale/paths", test_locale_paths);
+    g_test_add_func("/locale/shipped", test_shipped_locales);
     return g_test_run();
 }

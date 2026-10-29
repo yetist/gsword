@@ -21,7 +21,7 @@ G_BEGIN_DECLS
  *
  * An English locale is built in and needs no external files. Additional
  * locale packs are loaded from `GSW_LOCALE_PATH` and from
- * `gsword/locales.d` below the XDG data directories. The system SWORD
+ * `libgsword/locales.d` below the XDG data directories. The system SWORD
  * `locales.d` directory is not read implicitly.
  */
 #define GSW_TYPE_LOCALE_MGR (gsw_locale_mgr_get_type())

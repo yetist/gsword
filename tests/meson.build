@@ -76,7 +76,8 @@ if get_option('tests')
   test('render', test_render)
 
   test_locale = executable('test-locale', 'test-locale.c',
-    dependencies: [gsword_dep, glib_dep])
+    dependencies: [gsword_dep, glib_dep],
+    c_args: ['-DGSW_TEST_LOCALE_DIR="' + meson.project_source_root() + '/data/locales.d"'])
   test('locale', test_locale)
 
   test_encoding = executable('test-encoding', 'test-encoding.c',

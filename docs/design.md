@@ -803,7 +803,7 @@ Aliases=創;创世;Gen;Gn
 别名。多个别名指向同一 OSIS 表示多对一；每个 locale 内精确别名必须唯一。
 `[Strings]` 可选，用于非书名字符串。
 
-计划中的运行时搜索顺序：
+运行时搜索顺序：
 
 1. 内建英文 fallback
 2. 编译时 `${datadir}/libgsword/locales.d`
@@ -811,9 +811,9 @@ Aliases=創;创世;Gen;Gn
 4. `${XDG_DATA_HOME}/libgsword/locales.d`
 5. `GSW_LOCALE_PATH`，最后加载，可覆盖前面的同名 locale
 
-阶段 1 已完成数据目录、转换工具、校验工具和 Meson 安装；运行时切换将在后续
-阶段完成。当前实现仍兼容旧的 SWORD section 解析和 `gsword/locales.d` 搜索路径，
-直到新格式解析器和安装路径切换完成。
+新格式解析器和搜索路径已经实现。旧的 SWORD `[Text]` / `[Book Abbrevs]` /
+`[Pref Abbrevs]` section 不再是运行时格式；数据由 `data/locales.d` 安装，
+`SWORD_PATH` 不再影响 locale 查找。
 
 ### 5.8 `GswStatusReporter`
 
