@@ -10,6 +10,17 @@ project('gsword', 'c',
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
 
+gsword_locale_dir = join_paths(
+  get_option('prefix'),
+  get_option('datadir'),
+  'libgsword',
+  'locales.d',
+)
+add_project_arguments(
+  '-DGSW_LOCALE_DIR="' + gsword_locale_dir + '"',
+  language: 'c',
+)
+
 glib_dep = dependency('glib-2.0', version: '>=2.66')
 gobject_dep = dependency('gobject-2.0', version: '>=2.66')
 gio_dep = dependency('gio-2.0', version: '>=2.66')
