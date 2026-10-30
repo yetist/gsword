@@ -21,5 +21,20 @@
       <summary>Color scheme</summary>
       <description>One of system, light, or dark.</description>
     </key>
+    <key name="active-page" type="s">
+      <default>'reader'</default>
+      <summary>Active workspace page</summary>
+      <description>One of reader, parallel, or search.</description>
+    </key>
+    <key name="parallel-a" type="s">
+      <default>''</default>
+      <summary>First parallel module</summary>
+      <description>Module shown in the first parallel pane.</description>
+    </key>
+    <key name="parallel-b" type="s">
+      <default>''</default>
+      <summary>Second parallel module</summary>
+      <description>Module shown in the second parallel pane.</description>
+    </key>
   </schema>
 </schemalist>
