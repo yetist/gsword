@@ -156,11 +156,43 @@ gsw_key_clone(GswKey *self)
     return copy;
 }
 
+static gchar *
+gsw_key_locale_from_lang(void)
+{
+    const gchar *lang = g_getenv("LANG");
+    gchar *locale;
+    gchar *suffix;
+
+    if (lang == NULL || *lang == '\0')
+        return NULL;
+
+    locale = g_strdup(lang);
+
+    /* LANG commonly looks like zh_CN.UTF-8 or sr_RS.UTF-8@latin. Locale
+     * aliases in gsword are stored without the codeset/modifier. */
+    suffix = strchr(locale, '.');
+    if (suffix != NULL)
+        *suffix = '\0';
+    suffix = strchr(locale, '@');
+    if (suffix != NULL)
+        *suffix = '\0';
+    if (*locale == '\0') {
+        g_free(locale);
+        return NULL;
+    }
+    return locale;
+}
+
 static const gchar *
 gsw_key_book_name(GswBook *book)
 {
     const gchar *name = gsw_book_get_name(book);
-    return gsw_locale_mgr_translate(gsw_locale_mgr_get_default(), name, NULL);
+    gchar *locale = gsw_key_locale_from_lang();
+    const gchar *translated = gsw_locale_mgr_translate(
+        gsw_locale_mgr_get_default(), name, locale);
+
+    g_free(locale);
+    return translated;
 }
 
 static gint

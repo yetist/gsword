@@ -805,6 +805,11 @@ Aliases=創;创世;Gen;Gn
 书卷候选会继续搜索所有已加载 locale，因此用户可以在默认英文界面下直接输入
 `启示录 1:1` 或 `来 4:1`。
 
+`gsw_key_book_name()` 生成显示书名时会读取 `LANG`，去掉 `.codeset` 和
+`@modifier` 后作为 `gsw_locale_mgr_translate()` 的 locale 参数。例如
+`LANG=zh_CN.UTF-8` 会通过 `zh_CN` 别名使用简体中文 locale；`LANG` 为空时
+使用 locale manager 的默认 locale。
+
 `data/locales.d` 中的文件是权威数据，允许手工维护。导入工具只用于生成缺失的
 基线文件；默认跳过已存在文件，必须显式使用 `--force` 才会覆盖人工修改。
 
