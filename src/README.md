@@ -13,7 +13,8 @@ Current implementation:
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, chapter
   navigation, parallel reading, study panel, search/index UI, notes/tags/verse
-  lists/highlights/export, workspace persistence, preferences dialog
+  lists/highlights/export, module install/update/remove UI, workspace
+  persistence, preferences dialog
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword-app/app.db`
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
