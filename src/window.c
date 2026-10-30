@@ -3056,6 +3056,11 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
             g_clear_error(&error);
         } else {
             priv->install_reporter = gsw_status_reporter_new();
+            /* Install tasks run in a GTask worker thread. Dispatch progress
+             * signals on GTK's main context so callbacks only touch widgets
+             * from the UI thread. */
+            gsw_status_reporter_set_main_context(priv->install_reporter,
+                                                 g_main_context_default());
             g_signal_connect(priv->install_reporter, "pre-status",
                              G_CALLBACK(on_install_pre_status), self);
             g_signal_connect(priv->install_reporter, "progress",
