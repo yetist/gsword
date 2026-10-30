@@ -478,12 +478,18 @@ gsword
 ## 10. 状态与数据存储
 
 ```text
-~/.local/share/gsword/          SWORD 模块库
-~/.local/share/gsword-app/      应用私有状态
-  ├── app.db                    SQLite：标签、收藏、工作区
+~/.local/share/gsword/          模块库和应用私有状态
+  ├── mods.d/                   模块配置
+  ├── modules/                  模块数据
+  ├── app.db                    SQLite：笔记、计划、背经、教学笔记
+  ├── installmgr/               安装源和下载缓存
   ├── exports/                  导出文件
   └── cache/                    HTML、搜索结果缓存
 ```
+
+首次启动时会自动把旧版 `~/.local/share/gsword-app` 中的 `app.db` 和
+`installmgr/` 迁移到 `~/.local/share/gsword`；新目录已存在时保留新文件，
+缺失的文件从旧目录补齐。
 
 原则：
 
@@ -527,7 +533,7 @@ gsword
 - [x] 导出 Markdown
 
 个人笔记、标签、经文列表和高亮索引存储于应用私有 SQLite 数据库
-`~/.local/share/gsword-app/app.db`；笔记正文本身仍可通过后续增强同步到
+`~/.local/share/gsword/app.db`；笔记正文本身仍可通过后续增强同步到
 SWORD 兼容模块。
 
 ### 阶段 4：模块生态

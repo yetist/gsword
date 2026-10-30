@@ -1,6 +1,7 @@
 #include "window.h"
 #include "notes-store.h"
 #include "plan-store.h"
+#include "app-paths.h"
 
 #include <string.h>
 
@@ -4671,8 +4672,8 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
         g_clear_error(&error);
     }
     {
-        gchar *installmgr_dir = g_build_filename(
-            g_get_user_data_dir(), "gsword-app", "installmgr", NULL);
+        gchar *data_dir = gsword_app_data_dir();
+        gchar *installmgr_dir = g_build_filename(data_dir, "installmgr", NULL);
 
         priv->installer = gsw_install_manager_new(installmgr_dir, &error);
         if (priv->installer == NULL) {
@@ -4696,6 +4697,7 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
                 priv->installer, TRUE);
         }
         g_free(installmgr_dir);
+        g_free(data_dir);
     }
 
     gsword_window_build(self);
