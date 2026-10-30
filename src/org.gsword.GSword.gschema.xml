@@ -24,7 +24,7 @@
     <key name="active-page" type="s">
       <default>'reader'</default>
       <summary>Active workspace page</summary>
-      <description>One of reader, parallel, or search.</description>
+      <description>One of reader, parallel, search, notes, plan, teaching, or library.</description>
     </key>
     <key name="parallel-a" type="s">
       <default>''</default>
@@ -35,6 +35,16 @@
       <default>''</default>
       <summary>Second parallel module</summary>
       <description>Module shown in the second parallel pane.</description>
+    </key>
+    <key name="active-plan-id" type="s">
+      <default>''</default>
+      <summary>Active reading plan</summary>
+      <description>Identifier of the reading plan shown in the Plan workspace.</description>
+    </key>
+    <key name="devotion-module" type="s">
+      <default>''</default>
+      <summary>Daily devotional module</summary>
+      <description>Module used by the Daily Devotion tab.</description>
     </key>
   </schema>
 </schemalist>

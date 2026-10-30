@@ -13,12 +13,15 @@ Current implementation:
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, chapter
   navigation, parallel reading, study panel, search/index UI, notes/tags/verse
-  lists/highlights/export, module install/update/remove UI, workspace
-  persistence, preferences dialog
+  lists/highlights/export, module install/update/remove UI, reading plans,
+  daily devotion, memory review, teaching layout, workspace persistence,
+  preferences dialog
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword-app/app.db`
+- `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
+  memory review queue, and teaching notes in the same application database
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
-  parallel modules, font scale, theme
+  parallel modules, active plan, devotion module, font scale, theme
 
 The application design is documented in `../docs/app-design.md`.
 
