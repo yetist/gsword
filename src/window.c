@@ -1,5 +1,6 @@
 #include "window.h"
 #include "notes-store.h"
+#include "plan-store.h"
 
 #include <string.h>
 
@@ -78,6 +79,50 @@ typedef struct {
     GtkButton *local_install_button;
     gchar *selected_remote_name;
 
+    gboolean selecting_module;
+
+    GswordPlanStore *plans;
+    GtkDropDown *plan_selector;
+    GtkStringList *plan_names;
+    GPtrArray *plan_items;
+    GtkLabel *plan_summary;
+    GtkLabel *plan_today;
+    GtkButton *plan_open_button;
+    GtkButton *plan_complete_button;
+    GtkListBox *plan_days;
+    GtkEntry *plan_name_entry;
+    GtkEntry *plan_start_entry;
+    GtkSpinButton *plan_days_spin;
+    GtkSpinButton *plan_chapters_spin;
+    gint64 selected_plan_id;
+
+    GtkDropDown *devotion_selector;
+    GtkStringList *devotion_names;
+    GtkTextView *devotion_view;
+    GtkLabel *devotion_title;
+
+    GtkListBox *memory_list;
+    GPtrArray *memory_items;
+    GtkTextView *memory_card;
+    GtkLabel *memory_title;
+    GtkLabel *memory_due;
+    GtkEntry *memory_input;
+    GtkLabel *memory_result;
+    GtkDropDown *memory_mode;
+    gchar *memory_module;
+    gchar *memory_key;
+    gchar *memory_display;
+    gchar *memory_text;
+    gint64 memory_id;
+
+    GtkTextView *teaching_view;
+    GtkTextView *teaching_notes;
+    GtkEntry *teaching_ref_entry;
+    GtkButton *teaching_fullscreen_button;
+    gchar *teaching_module;
+    gchar *teaching_reference;
+    gboolean teaching_fullscreen;
+
     GswordNotesStore *notes;
     GtkEntry *note_search;
     GtkEntry *note_key_entry;
@@ -119,6 +164,11 @@ static void on_install_finished(GObject *source, GAsyncResult *result,
                                 gpointer user_data);
 static void on_remove_finished(GObject *source, GAsyncResult *result,
                                gpointer user_data);
+static void on_plan_day_toggled(GtkCheckButton *button, gpointer user_data);
+static void gsword_window_refresh_plans(GswordWindow *self);
+static void gsword_window_refresh_memory(GswordWindow *self);
+static void gsword_window_refresh_devotion(GswordWindow *self);
+static void gsword_window_teaching_load(GswordWindow *self);
 
 static void
 gsword_window_set_status(GswordWindow *self, const gchar *message)
@@ -173,7 +223,9 @@ gsword_window_apply_css(GswordWindow *self)
     if (priv->css == NULL)
         return;
     css_text = g_strdup_printf(
-        ".gsw-reader { font-size: %.1fpt; }", points);
+        ".gsw-reader { font-size: %.1fpt; }\n"
+        ".memory-card { font-size: 16pt; }\n"
+        ".teaching-reader { font-size: 18pt; }", points);
     gtk_css_provider_load_from_string(priv->css, css_text);
     g_free(css_text);
 }
@@ -962,6 +1014,1467 @@ gsword_window_make_notes_page(GswordWindow *self)
     return paned;
 }
 
+static GswModule *
+gsword_window_ensure_verse_module(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GPtrArray *infos;
+    guint i;
+
+    if (priv->module != NULL &&
+        gsw_key_get_kind(gsw_module_get_key(priv->module)) ==
+            GSW_KEY_KIND_VERSE)
+        return priv->module;
+
+    infos = gsw_manager_get_module_infos(priv->manager);
+    for (i = 0; i < infos->len; i++) {
+        GswModuleInfo *info = g_ptr_array_index(infos, i);
+
+        if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_BIBLES) {
+            gchar *name = g_strdup(gsw_module_info_get_name(info));
+
+            g_ptr_array_unref(infos);
+            gsword_window_load_module(self, name);
+            g_free(name);
+            if (priv->module != NULL &&
+                gsw_key_get_kind(gsw_module_get_key(priv->module)) ==
+                    GSW_KEY_KIND_VERSE)
+                return priv->module;
+            return NULL;
+        }
+    }
+    g_ptr_array_unref(infos);
+    gsword_window_set_status(self, "No Bible text module is installed");
+    return NULL;
+}
+
+static void
+gsword_window_open_reference(GswordWindow *self, const gchar *reference)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (reference == NULL || *reference == '\0' ||
+        gsword_window_ensure_verse_module(self) == NULL)
+        return;
+    if (gsword_window_set_key_text(self, reference))
+        gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+}
+
+static GPtrArray *
+gsword_window_generate_plan_references(const gchar *start_ref,
+                                       gint days, gint chapters_per_day)
+{
+    GPtrArray *references = g_ptr_array_new_with_free_func(g_free);
+    GswVerseKey *key;
+    GswVersificationMgr *mgr;
+    GswVersification *versification;
+    gint global_book;
+    gint chapter;
+    gint book_count;
+    gint total_chapters = 0;
+    gint per_day;
+    gint extra;
+    gint day;
+
+    key = gsw_verse_key_new(start_ref, NULL);
+    if (key == NULL)
+        return references;
+    global_book = gsw_verse_key_get_global_book_number(key);
+    chapter = gsw_verse_key_get_chapter(key);
+    if (global_book < 0 || chapter < 1) {
+        gsw_key_unref(key);
+        return references;
+    }
+
+    mgr = gsw_versification_mgr_get_default();
+    versification = gsw_versification_mgr_get_system(
+        mgr, gsw_verse_key_get_versification(key));
+    if (versification == NULL) {
+        gsw_key_unref(key);
+        return references;
+    }
+    book_count = gsw_versification_get_book_count(versification);
+
+    {
+        gint book_index;
+        gint first_chapter = chapter;
+
+        for (book_index = global_book; book_index < book_count; book_index++) {
+            GswBook *book = gsw_versification_get_book(versification,
+                                                       book_index);
+            gint maximum;
+            gint first;
+
+            if (book == NULL)
+                break;
+            maximum = gsw_book_get_chapter_max(book);
+            first = book_index == global_book ? first_chapter : 1;
+            if (maximum >= first)
+                total_chapters += maximum - first + 1;
+        }
+    }
+
+    if (total_chapters <= 0) {
+        gsw_key_unref(key);
+        return references;
+    }
+
+    /*
+     * When the requested days are enough to cover the selected range, spread
+     * chapters evenly over the days (e.g. 1189 chapters over 365 days gives a
+     * mix of 3- and 4-chapter days). Otherwise use the requested chapters per
+     * day and stop when the Bible ends.
+     */
+    if (total_chapters <= days * chapters_per_day) {
+        per_day = total_chapters / days;
+        extra = total_chapters % days;
+        if (per_day == 0) {
+            per_day = 1;
+            extra = 0;
+            days = MIN(days, total_chapters);
+        }
+    } else {
+        per_day = chapters_per_day;
+        extra = 0;
+    }
+
+    for (day = 0; day < days && global_book < book_count; day++) {
+        GswBook *book = gsw_versification_get_book(versification,
+                                                   global_book);
+        gint count = per_day + (day < extra ? 1 : 0);
+        gint c;
+
+        if (book == NULL)
+            break;
+        g_ptr_array_add(references,
+            g_strdup_printf("%s %d", gsw_book_get_name(book), chapter));
+
+        for (c = 0; c < count; c++) {
+            gint maximum = gsw_book_get_chapter_max(book);
+
+            if (chapter < maximum) {
+                chapter++;
+            } else if (global_book + 1 < book_count) {
+                global_book++;
+                chapter = 1;
+                book = gsw_versification_get_book(versification, global_book);
+            } else {
+                global_book = book_count;
+                break;
+            }
+        }
+    }
+    gsw_key_unref(key);
+    return references;
+}
+
+static GswordPlan *
+gsword_window_selected_plan(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint i;
+
+    if (priv->plan_items == NULL)
+        return NULL;
+    for (i = 0; i < priv->plan_items->len; i++) {
+        GswordPlan *plan = g_ptr_array_index(priv->plan_items, i);
+
+        if (plan->id == priv->selected_plan_id)
+            return plan;
+    }
+    return priv->plan_items->len > 0
+         ? g_ptr_array_index(priv->plan_items, 0) : NULL;
+}
+
+static void
+gsword_window_refresh_plan_views(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswordPlan *plan = gsword_window_selected_plan(self);
+    GPtrArray *days;
+
+    if (priv->plan_days == NULL)
+        return;
+    gsword_window_clear_list(priv->plan_days);
+
+    if (plan == NULL) {
+        gtk_label_set_text(priv->plan_summary,
+                           "Create a reading plan to get started.");
+        gtk_label_set_text(priv->plan_today, "");
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_open_button), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
+                                 FALSE);
+        return;
+    }
+
+    priv->selected_plan_id = plan->id;
+    {
+        gdouble percent = plan->total_days > 0
+                        ? (gdouble)plan->completed_days * 100.0 /
+                          plan->total_days : 0.0;
+        gchar *summary = g_strdup_printf(
+            "%s  ·  %d/%d days (%.1f%%)  ·  streak %d",
+            plan->name, plan->completed_days, plan->total_days, percent,
+            plan->streak);
+
+        gtk_label_set_text(priv->plan_summary, summary);
+        g_free(summary);
+    }
+    if (plan->next_day > 0) {
+        gchar *today = g_strdup_printf("Day %d: %s", plan->next_day,
+                                       plan->next_reference != NULL
+                                       ? plan->next_reference : "");
+        gtk_label_set_text(priv->plan_today, today);
+        g_free(today);
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_open_button), TRUE);
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
+                                 TRUE);
+    } else {
+        gtk_label_set_text(priv->plan_today, "Plan complete");
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_open_button), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
+                                 FALSE);
+    }
+
+    days = gsword_plan_store_get_plan_days(priv->plans, plan->id);
+    {
+        guint i;
+
+        for (i = 0; i < days->len; i++) {
+            GswordPlanDay *day = g_ptr_array_index(days, i);
+            GtkWidget *row = gtk_list_box_row_new();
+            GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+            GtkWidget *label;
+            GtkWidget *check;
+            gchar *text;
+            gchar *day_number = g_strdup_printf("%d", day->day);
+            gchar *plan_number = g_strdup_printf("%" G_GINT64_FORMAT,
+                                                 plan->id);
+
+            text = g_strdup_printf("Day %d   %s", day->day,
+                                   day->reference != NULL ? day->reference : "");
+
+            label = gtk_label_new(text);
+            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+            gtk_widget_set_hexpand(label, TRUE);
+            check = gtk_check_button_new_with_label("Done");
+            gtk_check_button_set_active(GTK_CHECK_BUTTON(check),
+                                        day->completed_on != NULL);
+            g_object_set_data_full(G_OBJECT(check), "plan-id", plan_number,
+                                   g_free);
+            g_object_set_data_full(G_OBJECT(check), "plan-day", day_number,
+                                   g_free);
+            g_signal_connect(check, "toggled",
+                             G_CALLBACK(on_plan_day_toggled), self);
+            gtk_box_append(GTK_BOX(box), label);
+            gtk_box_append(GTK_BOX(box), check);
+            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
+            g_object_set_data_full(G_OBJECT(row), "plan-reference",
+                                   g_strdup(day->reference), g_free);
+            gtk_list_box_append(priv->plan_days, row);
+            g_free(text);
+        }
+    }
+    g_ptr_array_unref(days);
+}
+
+static void
+gsword_window_refresh_plans(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GPtrArray *plans;
+    GtkStringList *names;
+    gchar *active = NULL;
+    guint selected = 0;
+    guint i;
+
+    if (priv->plans == NULL || priv->plan_selector == NULL)
+        return;
+
+    plans = gsword_plan_store_list_plans(priv->plans);
+    names = gtk_string_list_new(NULL);
+    g_clear_pointer(&priv->plan_items, g_ptr_array_unref);
+    priv->plan_items = plans;
+    if (priv->settings != NULL)
+        active = g_settings_get_string(priv->settings, "active-plan-id");
+
+    for (i = 0; i < plans->len; i++) {
+        GswordPlan *plan = g_ptr_array_index(plans, i);
+
+        gtk_string_list_append(names, plan->name);
+        if (active != NULL && *active != '\0' &&
+            plan->id == g_ascii_strtoll(active, NULL, 10))
+            selected = i;
+    }
+    g_clear_object(&priv->plan_names);
+    priv->plan_names = names;
+    gtk_drop_down_set_model(priv->plan_selector, G_LIST_MODEL(names));
+    if (plans->len > 0) {
+        if (selected >= plans->len)
+            selected = 0;
+        priv->selected_plan_id =
+            ((GswordPlan *)g_ptr_array_index(plans, selected))->id;
+        gtk_drop_down_set_selected(priv->plan_selector, selected);
+    } else {
+        priv->selected_plan_id = 0;
+    }
+    g_free(active);
+    gsword_window_refresh_plan_views(self);
+}
+
+static gboolean
+refresh_plan_idle(gpointer data)
+{
+    gsword_window_refresh_plans(GSWORD_WINDOW(data));
+    return G_SOURCE_REMOVE;
+}
+
+static void
+gsword_window_schedule_plan_refresh(GswordWindow *self)
+{
+    g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, refresh_plan_idle,
+                    g_object_ref(self), g_object_unref);
+}
+
+static void
+on_plan_selected(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint selected = gtk_drop_down_get_selected(priv->plan_selector);
+    GswordPlan *plan;
+
+    (void)object;
+    (void)pspec;
+    if (priv->plan_items == NULL || selected == GTK_INVALID_LIST_POSITION ||
+        selected >= priv->plan_items->len)
+        return;
+    plan = g_ptr_array_index(priv->plan_items, selected);
+    priv->selected_plan_id = plan->id;
+    if (priv->settings != NULL) {
+        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, plan->id);
+
+        g_settings_set_string(priv->settings, "active-plan-id", id);
+        g_free(id);
+    }
+    gsword_window_refresh_plan_views(self);
+}
+
+static void
+on_plan_day_toggled(GtkCheckButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *plan_id = g_object_get_data(G_OBJECT(button), "plan-id");
+    const gchar *day = g_object_get_data(G_OBJECT(button), "plan-day");
+    GError *error = NULL;
+
+    if (priv->plans == NULL || plan_id == NULL || day == NULL)
+        return;
+    if (!gsword_plan_store_complete_day(
+            priv->plans, g_ascii_strtoll(plan_id, NULL, 10),
+            (gint)g_ascii_strtoll(day, NULL, 10),
+            gtk_check_button_get_active(button), &error)) {
+        gsword_window_show_error(self, "Cannot update plan", error);
+        return;
+    }
+    gsword_window_set_status(self, "Reading plan updated");
+    gsword_window_schedule_plan_refresh(self);
+}
+
+static void
+on_plan_day_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    const gchar *reference;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    reference = g_object_get_data(G_OBJECT(row), "plan-reference");
+    if (reference != NULL)
+        gsword_window_open_reference(GSWORD_WINDOW(user_data), reference);
+}
+
+static void
+on_plan_open_today(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordPlan *plan = gsword_window_selected_plan(self);
+
+    (void)button;
+    if (plan != NULL && plan->next_reference != NULL)
+        gsword_window_open_reference(self, plan->next_reference);
+}
+
+static void
+on_plan_complete_today(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswordPlan *plan = gsword_window_selected_plan(self);
+    GError *error = NULL;
+
+    (void)button;
+    if (priv->plans == NULL || plan == NULL || plan->next_day <= 0)
+        return;
+    if (!gsword_plan_store_complete_day(priv->plans, plan->id, plan->next_day,
+                                        TRUE, &error)) {
+        gsword_window_show_error(self, "Cannot update plan", error);
+        return;
+    }
+    gsword_window_set_status(self, "Day marked complete");
+    gsword_window_refresh_plans(self);
+}
+
+static void
+on_plan_create(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *name = gtk_editable_get_text(GTK_EDITABLE(priv->plan_name_entry));
+    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(priv->plan_start_entry));
+    gint days = gtk_spin_button_get_value_as_int(priv->plan_days_spin);
+    gint chapters = gtk_spin_button_get_value_as_int(priv->plan_chapters_spin);
+    GPtrArray *references;
+    GError *error = NULL;
+    gint64 plan_id;
+    gchar *id;
+
+    (void)button;
+    if (priv->plans == NULL)
+        return;
+    if (name == NULL || *name == '\0' ||
+        start == NULL || *start == '\0') {
+        gsword_window_set_status(self, "Enter a plan name and start reference");
+        return;
+    }
+    references = gsword_window_generate_plan_references(start, days, chapters);
+    if (references->len == 0) {
+        gsword_window_show_error(self, "Cannot create plan",
+            g_error_new_literal(G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                                "Invalid start reference or empty plan"));
+        g_ptr_array_unref(references);
+        return;
+    }
+    plan_id = gsword_plan_store_create_plan(priv->plans, name, start, chapters,
+                                            references, &error);
+    g_ptr_array_unref(references);
+    if (plan_id == 0) {
+        gsword_window_show_error(self, "Cannot create plan", error);
+        return;
+    }
+    id = g_strdup_printf("%" G_GINT64_FORMAT, plan_id);
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "active-plan-id", id);
+    g_free(id);
+    gsword_window_refresh_plans(self);
+    gsword_window_set_status(self, "Reading plan created");
+}
+
+static void
+on_plan_delete_response(AdwAlertDialog *dialog, const gchar *response,
+                        gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswordPlan *plan = gsword_window_selected_plan(self);
+    GError *error = NULL;
+
+    (void)dialog;
+    if (g_strcmp0(response, "delete") != 0 || plan == NULL ||
+        priv->plans == NULL)
+        return;
+    if (!gsword_plan_store_delete_plan(priv->plans, plan->id, &error)) {
+        gsword_window_show_error(self, "Cannot delete plan", error);
+        return;
+    }
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "active-plan-id", "");
+    priv->selected_plan_id = 0;
+    gsword_window_refresh_plans(self);
+    gsword_window_set_status(self, "Reading plan deleted");
+}
+
+static void
+on_plan_delete(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordPlan *plan = gsword_window_selected_plan(self);
+    AdwDialog *dialog;
+
+    (void)button;
+    if (plan == NULL)
+        return;
+    dialog = adw_alert_dialog_new("Delete reading plan?", NULL);
+    adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog),
+        "Delete “%s” and its reading progress? This cannot be undone.",
+        plan->name);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", "Cancel",
+                                   "delete", "Delete",
+                                   NULL);
+    adw_alert_dialog_set_response_appearance(ADW_ALERT_DIALOG(dialog),
+                                             "delete",
+                                             ADW_RESPONSE_DESTRUCTIVE);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_plan_delete_response), self);
+    adw_dialog_present(dialog, GTK_WIDGET(self));
+}
+
+static gboolean
+module_info_is_devotional(GswModuleInfo *info)
+{
+    gchar **features;
+    const gchar *category;
+    gboolean result = FALSE;
+    guint i;
+
+    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_DAILY_DEVOS)
+        return TRUE;
+    features = gsw_module_info_get_values(info, "Feature");
+    for (i = 0; features != NULL && features[i] != NULL; i++) {
+        if (g_ascii_strcasecmp(features[i], "DailyDevotion") == 0) {
+            result = TRUE;
+            break;
+        }
+    }
+    g_strfreev(features);
+    if (result)
+        return TRUE;
+    category = gsw_module_info_get_value(info, "Category");
+    return category != NULL &&
+           g_ascii_strncasecmp(category, "Daily Devotional", 16) == 0;
+}
+
+static void
+gsword_window_load_devotion(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint selected = priv->devotion_selector != NULL
+                   ? gtk_drop_down_get_selected(priv->devotion_selector)
+                   : GTK_INVALID_LIST_POSITION;
+    const gchar *name;
+    GError *error = NULL;
+    GDateTime *now;
+    gchar *date_text;
+    gchar *text = NULL;
+    gchar *title;
+    const gchar *formats[] = {
+        "%m.%d", "%m%d", "%m-%d", "%m/%d", "%B %-d", "%b %-d", "%B %d",
+        "%b %d", NULL
+    };
+    guint i;
+
+    if (priv->devotion_view == NULL || priv->devotion_names == NULL ||
+        selected == GTK_INVALID_LIST_POSITION)
+        return;
+    name = gtk_string_list_get_string(priv->devotion_names, selected);
+    if (name == NULL || *name == '\0')
+        return;
+
+    now = g_date_time_new_now_local();
+    date_text = g_date_time_format(now, "%B %-d, %Y");
+    for (i = 0; formats[i] != NULL; i++) {
+        gchar *key = g_date_time_format(now, formats[i]);
+        GswModule *module = gsw_manager_create_module(priv->manager, name);
+
+        if (module != NULL &&
+            gsw_module_set_key_text(module, key, NULL) &&
+            gsw_module_has_entry(module)) {
+            text = gsw_module_get_text(module, &error);
+            if (text != NULL && *text == '\0') {
+                g_free(text);
+                text = NULL;
+            }
+        }
+        g_clear_object(&module);
+        g_free(key);
+        if (text != NULL)
+            break;
+    }
+    g_date_time_unref(now);
+
+    if (text == NULL) {
+        gsword_window_set_view_text(
+            priv->devotion_view,
+            "No devotional entry is available for today in this module.");
+    } else {
+        gsword_window_set_view_text(priv->devotion_view, text);
+        g_free(text);
+    }
+    title = g_strdup_printf("Daily Devotion · %s · %s", name,
+                            date_text != NULL ? date_text : "");
+    gtk_label_set_text(priv->devotion_title, title);
+    g_free(title);
+    g_free(date_text);
+    g_clear_error(&error);
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "devotion-module", name);
+}
+
+static void
+gsword_window_refresh_devotion(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GPtrArray *infos;
+    GtkStringList *names;
+    gchar *wanted = NULL;
+    guint selected = 0;
+    gboolean found = FALSE;
+    guint i;
+    guint count = 0;
+
+    if (priv->devotion_selector == NULL)
+        return;
+    infos = gsw_manager_get_module_infos(priv->manager);
+    names = gtk_string_list_new(NULL);
+    if (priv->settings != NULL)
+        wanted = g_settings_get_string(priv->settings, "devotion-module");
+    for (i = 0; i < infos->len; i++) {
+        GswModuleInfo *info = g_ptr_array_index(infos, i);
+
+        if (!module_info_is_devotional(info))
+            continue;
+        gtk_string_list_append(names, gsw_module_info_get_name(info));
+        count++;
+        if (wanted != NULL &&
+            g_strcmp0(wanted, gsw_module_info_get_name(info)) == 0 &&
+            !found) {
+            selected = count - 1;
+            found = TRUE;
+        }
+    }
+    g_ptr_array_unref(infos);
+    g_clear_object(&priv->devotion_names);
+    priv->devotion_names = names;
+    gtk_drop_down_set_model(priv->devotion_selector, G_LIST_MODEL(names));
+    if (count > 0) {
+        gtk_drop_down_set_selected(priv->devotion_selector, selected);
+        gsword_window_load_devotion(self);
+    } else {
+        gtk_label_set_text(priv->devotion_title, "Daily Devotion");
+        gsword_window_set_view_text(
+            priv->devotion_view,
+            "No daily devotional module is installed.\n\n"
+            "Install a module such as Daily Light or Morning and Evening "
+            "from the Library page.");
+    }
+    g_free(wanted);
+}
+
+static void
+on_devotion_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    gsword_window_load_devotion(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_devotion_refresh(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_refresh_devotion(GSWORD_WINDOW(user_data));
+}
+
+static gchar *
+memory_masked_text(const gchar *text, gboolean first_letters)
+{
+    GString *result = g_string_new(NULL);
+    const gchar *p = text != NULL ? text : "";
+    gboolean in_word = FALSE;
+
+    while (*p != '\0') {
+        gunichar c = g_utf8_get_char(p);
+
+        p = g_utf8_next_char(p);
+        if (g_unichar_isspace(c)) {
+            g_string_append_unichar(result, c);
+            in_word = FALSE;
+        } else if (g_unichar_isalnum(c)) {
+            if (first_letters && !in_word)
+                g_string_append_unichar(result, c);
+            else
+                g_string_append_c(result, '_');
+            in_word = TRUE;
+        } else {
+            g_string_append_unichar(result, c);
+            in_word = FALSE;
+        }
+    }
+    return g_string_free(result, FALSE);
+}
+
+static gchar *
+memory_normalized_text(const gchar *text)
+{
+    GString *result = g_string_new(NULL);
+    const gchar *p = text != NULL ? text : "";
+
+    while (*p != '\0') {
+        gunichar c = g_utf8_get_char(p);
+
+        p = g_utf8_next_char(p);
+        if (g_unichar_isalnum(c))
+            g_string_append_unichar(result, g_unichar_tolower(c));
+    }
+    return g_string_free(result, FALSE);
+}
+
+static void
+gsword_window_update_memory_card(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint mode;
+    gchar *masked;
+
+    if (priv->memory_card == NULL)
+        return;
+    if (priv->memory_text == NULL || *priv->memory_text == '\0') {
+        gsword_window_set_view_text(priv->memory_card, "");
+        return;
+    }
+    mode = priv->memory_mode != NULL
+         ? gtk_drop_down_get_selected(priv->memory_mode) : 0;
+    if (mode == 1)
+        masked = memory_masked_text(priv->memory_text, TRUE);
+    else if (mode == 2)
+        masked = memory_masked_text(priv->memory_text, FALSE);
+    else
+        masked = g_strdup(priv->memory_text);
+    gsword_window_set_view_text(priv->memory_card, masked);
+    g_free(masked);
+}
+
+static void
+gsword_window_clear_memory_selection(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    priv->memory_id = 0;
+    g_clear_pointer(&priv->memory_module, g_free);
+    g_clear_pointer(&priv->memory_key, g_free);
+    g_clear_pointer(&priv->memory_display, g_free);
+    g_clear_pointer(&priv->memory_text, g_free);
+    gtk_label_set_text(priv->memory_title, "Select a verse card");
+    gtk_label_set_text(priv->memory_due, "");
+    gtk_editable_set_text(GTK_EDITABLE(priv->memory_input), "");
+    gtk_label_set_text(priv->memory_result, "");
+    gsword_window_set_view_text(priv->memory_card, "");
+}
+
+static void
+on_memory_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *id_text;
+    gint64 id;
+    guint i;
+
+    (void)list;
+    if (row == NULL || priv->memory_items == NULL) {
+        gsword_window_clear_memory_selection(self);
+        return;
+    }
+    id_text = g_object_get_data(G_OBJECT(row), "memory-id");
+    if (id_text == NULL)
+        return;
+    id = g_ascii_strtoll(id_text, NULL, 10);
+    for (i = 0; i < priv->memory_items->len; i++) {
+        GswordMemoryVerse *verse = g_ptr_array_index(priv->memory_items, i);
+        gchar *due;
+
+        if (verse->id != id)
+            continue;
+        priv->memory_id = verse->id;
+        g_free(priv->memory_module);
+        g_free(priv->memory_key);
+        g_free(priv->memory_display);
+        g_free(priv->memory_text);
+        priv->memory_module = g_strdup(verse->module);
+        priv->memory_key = g_strdup(verse->key);
+        priv->memory_display = g_strdup(verse->display_key);
+        priv->memory_text = g_strdup(verse->text);
+        due = g_strdup_printf("Due %s  ·  box %d", verse->due, verse->box);
+        gtk_label_set_text(priv->memory_title, verse->display_key);
+        gtk_label_set_text(priv->memory_due, due);
+        g_free(due);
+        gtk_editable_set_text(GTK_EDITABLE(priv->memory_input), "");
+        gtk_label_set_text(priv->memory_result, "");
+        gsword_window_update_memory_card(self);
+        return;
+    }
+}
+
+static void
+gsword_window_refresh_memory(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint i;
+    GtkListBoxRow *wanted = NULL;
+    GtkListBoxRow *first = NULL;
+
+    if (priv->memory_list == NULL || priv->plans == NULL)
+        return;
+    gsword_window_clear_list(priv->memory_list);
+    g_clear_pointer(&priv->memory_items, g_ptr_array_unref);
+    priv->memory_items = gsword_plan_store_list_memory_verses(priv->plans);
+
+    for (i = 0; i < priv->memory_items->len; i++) {
+        GswordMemoryVerse *verse = g_ptr_array_index(priv->memory_items, i);
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *label;
+        gchar *text = g_strdup_printf("%s\nDue %s  ·  box %d",
+                                      verse->display_key, verse->due,
+                                      verse->box);
+        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, verse->id);
+
+        label = gtk_label_new(text);
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(label), TRUE);
+        gtk_widget_set_margin_top(label, 4);
+        gtk_widget_set_margin_bottom(label, 4);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        g_object_set_data_full(G_OBJECT(row), "memory-id", id, g_free);
+        gtk_list_box_append(priv->memory_list, row);
+        if (first == NULL)
+            first = GTK_LIST_BOX_ROW(row);
+        if (verse->id == priv->memory_id)
+            wanted = GTK_LIST_BOX_ROW(row);
+        g_free(text);
+    }
+
+    if (wanted == NULL)
+        wanted = first;
+    if (wanted != NULL)
+        gtk_list_box_select_row(priv->memory_list, wanted);
+    else
+        gsword_window_clear_memory_selection(self);
+}
+
+static void
+on_memory_mode_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    gsword_window_update_memory_card(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_memory_add_current(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswModule *module;
+    gchar *storage_key;
+    gchar *display_key;
+    gchar *text;
+    GError *error = NULL;
+    GPtrArray *items;
+    guint i;
+
+    (void)button;
+    if (priv->plans == NULL)
+        return;
+    module = gsword_window_ensure_verse_module(self);
+    if (module == NULL)
+        return;
+    storage_key = gsword_window_current_storage_key(self);
+    display_key = gsword_window_current_display_key(self);
+    text = gsw_module_get_text(module, &error);
+    if (storage_key == NULL || display_key == NULL || text == NULL) {
+        gsword_window_show_error(self, "Cannot add memory verse", error);
+        g_free(storage_key);
+        g_free(display_key);
+        g_free(text);
+        return;
+    }
+    if (!gsword_plan_store_add_memory_verse(
+            priv->plans, gsw_module_get_name(module), storage_key,
+            display_key, text, &error)) {
+        gsword_window_show_error(self, "Cannot save memory verse", error);
+        g_free(storage_key);
+        g_free(display_key);
+        g_free(text);
+        return;
+    }
+    items = gsword_plan_store_list_memory_verses(priv->plans);
+    for (i = 0; i < items->len; i++) {
+        GswordMemoryVerse *verse = g_ptr_array_index(items, i);
+
+        if (g_strcmp0(verse->module, gsw_module_get_name(module)) == 0 &&
+            g_strcmp0(verse->key, storage_key) == 0) {
+            priv->memory_id = verse->id;
+            break;
+        }
+    }
+    g_ptr_array_unref(items);
+    g_free(storage_key);
+    g_free(display_key);
+    g_free(text);
+    gsword_window_refresh_memory(self);
+    gsword_window_set_status(self, "Verse added to memory review");
+}
+
+static void
+on_memory_review(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gboolean remembered = GPOINTER_TO_INT(
+        g_object_get_data(G_OBJECT(button), "remembered"));
+    GError *error = NULL;
+
+    if (priv->plans == NULL || priv->memory_id == 0)
+        return;
+    if (!gsword_plan_store_review_memory_verse(
+            priv->plans, priv->memory_id, remembered, &error)) {
+        gsword_window_show_error(self, "Cannot schedule review", error);
+        return;
+    }
+    gsword_window_refresh_memory(self);
+    gsword_window_set_status(self, remembered
+                             ? "Review scheduled: nice work"
+                             : "Card will be shown again today");
+}
+
+static void
+on_memory_check(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *answer;
+    gchar *normalized_answer;
+    gchar *normalized_text;
+
+    (void)button;
+    if (priv->memory_text == NULL)
+        return;
+    answer = gtk_editable_get_text(GTK_EDITABLE(priv->memory_input));
+    normalized_answer = memory_normalized_text(answer);
+    normalized_text = memory_normalized_text(priv->memory_text);
+    if (*normalized_answer != '\0' &&
+        g_strcmp0(normalized_answer, normalized_text) == 0) {
+        gtk_label_set_text(priv->memory_result, "Correct");
+        gsword_window_set_status(self, "Memory verse recited correctly");
+    } else {
+        gtk_label_set_text(priv->memory_result, "Keep practicing");
+    }
+    g_free(normalized_answer);
+    g_free(normalized_text);
+}
+
+static void
+on_memory_delete(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GError *error = NULL;
+
+    (void)button;
+    if (priv->plans == NULL || priv->memory_id == 0)
+        return;
+    if (!gsword_plan_store_delete_memory_verse(priv->plans, priv->memory_id,
+                                               &error)) {
+        gsword_window_show_error(self, "Cannot delete memory verse", error);
+        return;
+    }
+    priv->memory_id = 0;
+    gsword_window_refresh_memory(self);
+    gsword_window_set_status(self, "Memory verse removed");
+}
+
+static gchar *
+gsword_window_current_chapter_reference(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswKey *key;
+    gchar *reference;
+    gchar *dot;
+
+    if (priv->module == NULL)
+        return NULL;
+    key = gsw_module_get_key(priv->module);
+    if (gsw_key_get_kind(key) != GSW_KEY_KIND_VERSE)
+        return g_strdup(gsw_module_get_key_text(priv->module));
+    reference = gsw_verse_key_get_osis_ref((GswVerseKey *)key);
+    if (reference == NULL)
+        return NULL;
+    dot = strrchr(reference, '.');
+    if (dot != NULL)
+        *dot = '\0';
+    return reference;
+}
+
+static gchar *
+gsword_window_current_chapter_display(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->module == NULL)
+        return g_strdup("");
+    if (gsw_key_get_kind(gsw_module_get_key(priv->module)) ==
+        GSW_KEY_KIND_VERSE) {
+        GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(priv->module);
+
+        return g_strdup_printf("%s %d", gsw_verse_key_get_book_name(key),
+                               gsw_verse_key_get_chapter(key));
+    }
+    return g_strdup(gsw_module_get_key_text(priv->module));
+}
+
+static void
+gsword_window_teaching_load(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswModule *module;
+    gchar *reference;
+    gchar *display;
+    gchar *text;
+    gchar *notes;
+    GError *error = NULL;
+
+    if (priv->teaching_view == NULL)
+        return;
+    module = gsword_window_ensure_verse_module(self);
+    if (module == NULL)
+        return;
+    reference = gsword_window_current_chapter_reference(self);
+    display = gsword_window_current_chapter_display(self);
+    if (reference == NULL) {
+        g_free(display);
+        return;
+    }
+
+    text = gsword_window_chapter_text_for_module(module);
+    if (text == NULL)
+        text = gsw_module_get_text(module, &error);
+    if (text == NULL) {
+        gsword_window_show_error(self, "Cannot read teaching passage", error);
+        g_free(reference);
+        g_free(display);
+        return;
+    }
+    gsword_window_set_view_text(priv->teaching_view, text);
+    g_free(text);
+    gtk_editable_set_text(GTK_EDITABLE(priv->teaching_ref_entry),
+                          display != NULL ? display : reference);
+    g_clear_pointer(&priv->teaching_module, g_free);
+    g_clear_pointer(&priv->teaching_reference, g_free);
+    priv->teaching_module = g_strdup(gsw_module_get_name(module));
+    priv->teaching_reference = g_strdup(reference);
+    notes = priv->plans != NULL
+          ? gsword_plan_store_get_teaching_note(
+                priv->plans, priv->teaching_module, reference)
+          : NULL;
+    gtk_text_buffer_set_text(
+        gtk_text_view_get_buffer(priv->teaching_notes),
+        notes != NULL ? notes : "", -1);
+    g_free(notes);
+    g_free(reference);
+    g_free(display);
+    gtk_stack_set_visible_child_name(priv->content_stack, "teaching");
+}
+
+static void
+on_teaching_load(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_teaching_load(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_teaching_save(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkTextBuffer *buffer;
+    GtkTextIter start;
+    GtkTextIter end;
+    gchar *notes;
+    GError *error = NULL;
+
+    (void)button;
+    if (priv->plans == NULL || priv->teaching_module == NULL ||
+        priv->teaching_reference == NULL)
+        return;
+    buffer = gtk_text_view_get_buffer(priv->teaching_notes);
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    notes = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    if (!gsword_plan_store_save_teaching_note(
+            priv->plans, priv->teaching_module, priv->teaching_reference,
+            notes, &error)) {
+        gsword_window_show_error(self, "Cannot save teaching notes", error);
+        g_free(notes);
+        return;
+    }
+    g_free(notes);
+    gsword_window_set_status(self, "Teaching notes saved");
+}
+
+static void
+on_teaching_fullscreen(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)button;
+    priv->teaching_fullscreen = !priv->teaching_fullscreen;
+    if (priv->teaching_fullscreen)
+        gtk_window_fullscreen(GTK_WINDOW(self));
+    else
+        gtk_window_unfullscreen(GTK_WINDOW(self));
+    gtk_button_set_label(priv->teaching_fullscreen_button,
+                         priv->teaching_fullscreen
+                         ? "Exit fullscreen" : "Fullscreen");
+}
+
+static void
+on_teaching_close(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)button;
+    if (priv->teaching_fullscreen) {
+        priv->teaching_fullscreen = FALSE;
+        gtk_window_unfullscreen(GTK_WINDOW(self));
+        gtk_button_set_label(priv->teaching_fullscreen_button, "Fullscreen");
+    }
+    gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+}
+
+static void
+on_teaching_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)button;
+    gsword_window_teaching_load(self);
+    gtk_stack_set_visible_child_name(priv->content_stack, "teaching");
+}
+
+static GtkWidget *
+gsword_window_make_plan_page(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkWidget *notebook = gtk_notebook_new();
+    GtkWidget *today = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *today_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *plans = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *plan_form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *plan_form_row1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *plan_form_row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *days_scroll = gtk_scrolled_window_new();
+    GtkWidget *devotion = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *devotion_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *memory = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    GtkWidget *memory_left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *memory_right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *memory_scroll = gtk_scrolled_window_new();
+    GtkWidget *memory_left_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *memory_card_scroll = gtk_scrolled_window_new();
+    GtkWidget *memory_mode_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *memory_input_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *memory_review_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *open = gtk_button_new_with_label("Open today's reading");
+    GtkWidget *complete = gtk_button_new_with_label("Mark today complete");
+    GtkWidget *create = gtk_button_new_with_label("Create plan");
+    GtkWidget *delete_plan = gtk_button_new_with_label("Delete plan");
+    GtkWidget *add_current = gtk_button_new_with_label("Add current verse");
+    GtkWidget *delete_verse = gtk_button_new_with_label("Delete");
+    GtkWidget *check = gtk_button_new_with_label("Check answer");
+    GtkWidget *again = gtk_button_new_with_label("Again");
+    GtkWidget *good = gtk_button_new_with_label("Good");
+    GtkWidget *refresh_devotion = gtk_button_new_with_label("Refresh");
+    GtkStringList *modes = gtk_string_list_new(
+        (const gchar * const[]) { "Full text", "First letters", "Hide words",
+                                  NULL });
+
+    gtk_widget_set_margin_top(today, 10);
+    gtk_widget_set_margin_bottom(today, 10);
+    gtk_widget_set_margin_start(today, 12);
+    gtk_widget_set_margin_end(today, 12);
+    gtk_widget_set_margin_top(plans, 10);
+    gtk_widget_set_margin_bottom(plans, 10);
+    gtk_widget_set_margin_start(plans, 12);
+    gtk_widget_set_margin_end(plans, 12);
+    gtk_widget_set_margin_top(devotion, 10);
+    gtk_widget_set_margin_bottom(devotion, 10);
+    gtk_widget_set_margin_start(devotion, 12);
+    gtk_widget_set_margin_end(devotion, 12);
+    gtk_widget_set_margin_top(memory_left, 10);
+    gtk_widget_set_margin_bottom(memory_left, 10);
+    gtk_widget_set_margin_start(memory_left, 12);
+    gtk_widget_set_margin_end(memory_left, 12);
+    gtk_widget_set_margin_top(memory_right, 10);
+    gtk_widget_set_margin_bottom(memory_right, 10);
+    gtk_widget_set_margin_start(memory_right, 12);
+    gtk_widget_set_margin_end(memory_right, 12);
+
+    priv->plan_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->plan_selector), TRUE);
+    g_signal_connect(priv->plan_selector, "notify::selected",
+                     G_CALLBACK(on_plan_selected), self);
+    priv->plan_summary = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->plan_summary, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->plan_summary), "heading");
+    priv->plan_today = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->plan_today, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->plan_today), "title-2");
+    priv->plan_open_button = GTK_BUTTON(open);
+    priv->plan_complete_button = GTK_BUTTON(complete);
+    g_signal_connect(open, "clicked", G_CALLBACK(on_plan_open_today), self);
+    g_signal_connect(complete, "clicked", G_CALLBACK(on_plan_complete_today),
+                     self);
+    gtk_box_append(GTK_BOX(today_controls), GTK_WIDGET(priv->plan_selector));
+    gtk_box_append(GTK_BOX(today_controls), open);
+    gtk_box_append(GTK_BOX(today_controls), complete);
+    gtk_box_append(GTK_BOX(today), today_controls);
+    gtk_box_append(GTK_BOX(today), GTK_WIDGET(priv->plan_summary));
+    gtk_box_append(GTK_BOX(today), GTK_WIDGET(priv->plan_today));
+    {
+        GtkWidget *label = gtk_label_new("Schedule");
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_add_css_class(label, "heading");
+        gtk_box_append(GTK_BOX(today), label);
+    }
+    priv->plan_days = GTK_LIST_BOX(gtk_list_box_new());
+    gtk_list_box_set_activate_on_single_click(priv->plan_days, FALSE);
+    g_signal_connect(priv->plan_days, "row-activated",
+                     G_CALLBACK(on_plan_day_activated), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(days_scroll),
+                                  GTK_WIDGET(priv->plan_days));
+    gtk_widget_set_vexpand(days_scroll, TRUE);
+    gtk_box_append(GTK_BOX(today), days_scroll);
+
+    priv->plan_name_entry = GTK_ENTRY(gtk_entry_new());
+    gtk_entry_set_placeholder_text(priv->plan_name_entry, "Plan name");
+    priv->plan_start_entry = GTK_ENTRY(gtk_entry_new());
+    gtk_entry_set_placeholder_text(priv->plan_start_entry, "Start, e.g. Genesis 1");
+    gtk_editable_set_width_chars(GTK_EDITABLE(priv->plan_start_entry), 16);
+    priv->plan_days_spin = GTK_SPIN_BUTTON(
+        gtk_spin_button_new_with_range(1, 3650, 1));
+    gtk_spin_button_set_value(priv->plan_days_spin, 365);
+    priv->plan_chapters_spin = GTK_SPIN_BUTTON(
+        gtk_spin_button_new_with_range(1, 20, 1));
+    gtk_spin_button_set_value(priv->plan_chapters_spin, 4);
+    g_signal_connect(create, "clicked", G_CALLBACK(on_plan_create), self);
+    g_signal_connect(delete_plan, "clicked", G_CALLBACK(on_plan_delete), self);
+    gtk_widget_add_css_class(delete_plan, "destructive-action");
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->plan_name_entry), TRUE);
+    gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_name_entry));
+    gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_start_entry));
+    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new("Days"));
+    gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_days_spin));
+    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new("Chapters/day"));
+    gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_chapters_spin));
+    gtk_box_append(GTK_BOX(plan_form_row2), create);
+    gtk_box_append(GTK_BOX(plan_form_row2), delete_plan);
+    gtk_box_append(GTK_BOX(plan_form), plan_form_row1);
+    gtk_box_append(GTK_BOX(plan_form), plan_form_row2);
+    {
+        GtkWidget *hint = gtk_label_new(
+            "The plan advances through chapters from the start reference. "
+            "Reading days can be opened by double-clicking a schedule row.");
+        gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
+        gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
+        gtk_widget_add_css_class(hint, "dim-label");
+        gtk_box_append(GTK_BOX(plans), plan_form);
+        gtk_box_append(GTK_BOX(plans), hint);
+    }
+
+    priv->devotion_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->devotion_selector), TRUE);
+    g_signal_connect(priv->devotion_selector, "notify::selected",
+                     G_CALLBACK(on_devotion_changed), self);
+    g_signal_connect(refresh_devotion, "clicked",
+                     G_CALLBACK(on_devotion_refresh), self);
+    priv->devotion_title = GTK_LABEL(gtk_label_new("Daily Devotion"));
+    gtk_label_set_xalign(priv->devotion_title, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->devotion_title), "heading");
+    priv->devotion_view = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_editable(priv->devotion_view, FALSE);
+    gtk_text_view_set_cursor_visible(priv->devotion_view, FALSE);
+    gtk_text_view_set_wrap_mode(priv->devotion_view, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(priv->devotion_view, 12);
+    gtk_text_view_set_right_margin(priv->devotion_view, 12);
+    gtk_text_view_set_top_margin(priv->devotion_view, 12);
+    gtk_text_view_set_bottom_margin(priv->devotion_view, 12);
+    gtk_box_append(GTK_BOX(devotion_controls),
+                   GTK_WIDGET(priv->devotion_selector));
+    gtk_box_append(GTK_BOX(devotion_controls), refresh_devotion);
+    {
+        GtkWidget *scroll = gtk_scrolled_window_new();
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),
+                                      GTK_WIDGET(priv->devotion_view));
+        gtk_widget_set_vexpand(scroll, TRUE);
+        gtk_box_append(GTK_BOX(devotion), devotion_controls);
+        gtk_box_append(GTK_BOX(devotion), GTK_WIDGET(priv->devotion_title));
+        gtk_box_append(GTK_BOX(devotion), scroll);
+    }
+
+    priv->memory_list = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->memory_list, "row-selected",
+                     G_CALLBACK(on_memory_selected), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(memory_scroll),
+                                  GTK_WIDGET(priv->memory_list));
+    gtk_widget_set_vexpand(memory_scroll, TRUE);
+    gtk_widget_set_size_request(memory_scroll, 260, -1);
+    g_signal_connect(add_current, "clicked",
+                     G_CALLBACK(on_memory_add_current), self);
+    g_signal_connect(delete_verse, "clicked",
+                     G_CALLBACK(on_memory_delete), self);
+    gtk_box_append(GTK_BOX(memory_left_buttons), add_current);
+    gtk_box_append(GTK_BOX(memory_left_buttons), delete_verse);
+    gtk_box_append(GTK_BOX(memory_left), memory_scroll);
+    gtk_box_append(GTK_BOX(memory_left), memory_left_buttons);
+
+    priv->memory_title = GTK_LABEL(gtk_label_new("Select a verse card"));
+    gtk_label_set_xalign(priv->memory_title, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->memory_title), "title-2");
+    priv->memory_due = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->memory_due, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->memory_due), "dim-label");
+    priv->memory_card = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_editable(priv->memory_card, FALSE);
+    gtk_text_view_set_cursor_visible(priv->memory_card, FALSE);
+    gtk_text_view_set_wrap_mode(priv->memory_card, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(priv->memory_card, 12);
+    gtk_text_view_set_right_margin(priv->memory_card, 12);
+    gtk_text_view_set_top_margin(priv->memory_card, 12);
+    gtk_text_view_set_bottom_margin(priv->memory_card, 12);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->memory_card), "memory-card");
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(memory_card_scroll),
+                                  GTK_WIDGET(priv->memory_card));
+    gtk_widget_set_vexpand(memory_card_scroll, TRUE);
+    priv->memory_mode = GTK_DROP_DOWN(gtk_drop_down_new(
+        G_LIST_MODEL(modes), NULL));
+    g_signal_connect(priv->memory_mode, "notify::selected",
+                     G_CALLBACK(on_memory_mode_changed), self);
+    gtk_box_append(GTK_BOX(memory_mode_row), gtk_label_new("Card mode"));
+    gtk_box_append(GTK_BOX(memory_mode_row), GTK_WIDGET(priv->memory_mode));
+    priv->memory_input = GTK_ENTRY(gtk_entry_new());
+    gtk_entry_set_placeholder_text(priv->memory_input, "Type the verse");
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->memory_input), TRUE);
+    g_signal_connect(check, "clicked", G_CALLBACK(on_memory_check), self);
+    gtk_box_append(GTK_BOX(memory_input_row), GTK_WIDGET(priv->memory_input));
+    gtk_box_append(GTK_BOX(memory_input_row), check);
+    priv->memory_result = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->memory_result, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->memory_result), "dim-label");
+    g_object_set_data(G_OBJECT(again), "remembered", GINT_TO_POINTER(0));
+    g_object_set_data(G_OBJECT(good), "remembered", GINT_TO_POINTER(1));
+    g_signal_connect(again, "clicked", G_CALLBACK(on_memory_review), self);
+    g_signal_connect(good, "clicked", G_CALLBACK(on_memory_review), self);
+    gtk_box_append(GTK_BOX(memory_review_row), again);
+    gtk_box_append(GTK_BOX(memory_review_row), good);
+    gtk_box_append(GTK_BOX(memory_right), GTK_WIDGET(priv->memory_title));
+    gtk_box_append(GTK_BOX(memory_right), GTK_WIDGET(priv->memory_due));
+    gtk_box_append(GTK_BOX(memory_right), memory_card_scroll);
+    gtk_box_append(GTK_BOX(memory_right), memory_mode_row);
+    gtk_box_append(GTK_BOX(memory_right), memory_input_row);
+    gtk_box_append(GTK_BOX(memory_right), GTK_WIDGET(priv->memory_result));
+    gtk_box_append(GTK_BOX(memory_right), memory_review_row);
+    gtk_paned_set_start_child(GTK_PANED(memory), memory_left);
+    gtk_paned_set_end_child(GTK_PANED(memory), memory_right);
+    gtk_paned_set_position(GTK_PANED(memory), 280);
+
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), today,
+                             gtk_label_new("Today"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), plans,
+                             gtk_label_new("Plans"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), devotion,
+                             gtk_label_new("Devotion"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), memory,
+                             gtk_label_new("Memorize"));
+    gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+    g_object_unref(modes);
+    return notebook;
+}
+
+static GtkWidget *
+gsword_window_make_teaching_page(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    GtkWidget *scripture_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *notes_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *scripture_scroll = gtk_scrolled_window_new();
+    GtkWidget *notes_scroll = gtk_scrolled_window_new();
+    GtkWidget *scripture_label = gtk_label_new("Scripture");
+    GtkWidget *notes_label = gtk_label_new("Teaching notes");
+    GtkWidget *load = gtk_button_new_with_label("Load current passage");
+    GtkWidget *save = gtk_button_new_with_label("Save notes");
+    GtkWidget *back = gtk_button_new_with_label("Back to reading");
+    GtkWidget *fullscreen = gtk_button_new_with_label("Fullscreen");
+
+    gtk_widget_set_margin_top(toolbar, 8);
+    gtk_widget_set_margin_bottom(toolbar, 8);
+    gtk_widget_set_margin_start(toolbar, 12);
+    gtk_widget_set_margin_end(toolbar, 12);
+    priv->teaching_ref_entry = GTK_ENTRY(gtk_entry_new());
+    gtk_editable_set_editable(GTK_EDITABLE(priv->teaching_ref_entry), FALSE);
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->teaching_ref_entry), TRUE);
+    gtk_entry_set_placeholder_text(priv->teaching_ref_entry, "Current passage");
+    priv->teaching_view = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_editable(priv->teaching_view, FALSE);
+    gtk_text_view_set_cursor_visible(priv->teaching_view, FALSE);
+    gtk_text_view_set_wrap_mode(priv->teaching_view, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(priv->teaching_view, 24);
+    gtk_text_view_set_right_margin(priv->teaching_view, 24);
+    gtk_text_view_set_top_margin(priv->teaching_view, 18);
+    gtk_text_view_set_bottom_margin(priv->teaching_view, 18);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->teaching_view),
+                             "teaching-reader");
+    priv->teaching_notes = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_wrap_mode(priv->teaching_notes, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(priv->teaching_notes, 12);
+    gtk_text_view_set_right_margin(priv->teaching_notes, 12);
+    gtk_text_view_set_top_margin(priv->teaching_notes, 12);
+    gtk_text_view_set_bottom_margin(priv->teaching_notes, 12);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scripture_scroll),
+                                  GTK_WIDGET(priv->teaching_view));
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(notes_scroll),
+                                  GTK_WIDGET(priv->teaching_notes));
+    gtk_widget_set_vexpand(scripture_scroll, TRUE);
+    gtk_widget_set_vexpand(notes_scroll, TRUE);
+    gtk_widget_set_size_request(notes_scroll, 320, -1);
+    gtk_label_set_xalign(GTK_LABEL(scripture_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(notes_label), 0.0f);
+    gtk_widget_add_css_class(scripture_label, "heading");
+    gtk_widget_add_css_class(notes_label, "heading");
+    gtk_widget_set_margin_start(scripture_label, 12);
+    gtk_widget_set_margin_start(notes_label, 12);
+    gtk_box_append(GTK_BOX(scripture_box), scripture_label);
+    gtk_box_append(GTK_BOX(scripture_box), scripture_scroll);
+    gtk_box_append(GTK_BOX(notes_box), notes_label);
+    gtk_box_append(GTK_BOX(notes_box), notes_scroll);
+    g_signal_connect(load, "clicked", G_CALLBACK(on_teaching_load), self);
+    g_signal_connect(save, "clicked", G_CALLBACK(on_teaching_save), self);
+    g_signal_connect(back, "clicked", G_CALLBACK(on_teaching_close), self);
+    g_signal_connect(fullscreen, "clicked",
+                     G_CALLBACK(on_teaching_fullscreen), self);
+    priv->teaching_fullscreen_button = GTK_BUTTON(fullscreen);
+    gtk_box_append(GTK_BOX(toolbar), GTK_WIDGET(priv->teaching_ref_entry));
+    gtk_box_append(GTK_BOX(toolbar), load);
+    gtk_box_append(GTK_BOX(toolbar), save);
+    gtk_box_append(GTK_BOX(toolbar), fullscreen);
+    gtk_box_append(GTK_BOX(toolbar), back);
+    gtk_paned_set_start_child(GTK_PANED(paned), scripture_box);
+    gtk_paned_set_end_child(GTK_PANED(paned), notes_box);
+    gtk_paned_set_position(GTK_PANED(paned), 660);
+    gtk_box_append(GTK_BOX(box), toolbar);
+    gtk_box_append(GTK_BOX(box), paned);
+    return box;
+}
+
 static void
 gsword_window_refresh_reader(GswordWindow *self)
 {
@@ -1215,6 +2728,24 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
 
     g_free(saved_module);
     g_free(saved_key);
+    if (priv->module_list != NULL) {
+        GtkWidget *child = gtk_widget_get_first_child(
+            GTK_WIDGET(priv->module_list));
+
+        priv->selecting_module = TRUE;
+        while (child != NULL) {
+            const gchar *row_name = g_object_get_data(G_OBJECT(child),
+                                                      "module-name");
+
+            if (row_name != NULL && g_strcmp0(row_name, name) == 0) {
+                gtk_list_box_select_row(priv->module_list,
+                                        GTK_LIST_BOX_ROW(child));
+                break;
+            }
+            child = gtk_widget_get_next_sibling(child);
+        }
+        priv->selecting_module = FALSE;
+    }
     gsword_window_refresh_reader(self);
 }
 
@@ -1227,7 +2758,7 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
     const gchar *name;
 
     (void)list;
-    if (row == NULL)
+    if (row == NULL || priv->selecting_module)
         return;
     name = g_object_get_data(G_OBJECT(row), "module-name");
     if (name != NULL) {
@@ -1635,6 +3166,12 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
         gsword_window_refresh_notes(self);
         if (priv->note_storage_key == NULL && priv->module != NULL)
             gsword_window_open_note_for_current(self);
+    } else if (g_strcmp0(name, "plan") == 0) {
+        gsword_window_refresh_plans(self);
+        gsword_window_refresh_devotion(self);
+        gsword_window_refresh_memory(self);
+    } else if (g_strcmp0(name, "teaching") == 0) {
+        gsword_window_teaching_load(self);
     } else if (g_strcmp0(name, "library") == 0) {
         if (priv->install_sources == NULL ||
             priv->install_sources->len == 0)
@@ -1655,7 +3192,9 @@ gsword_window_restore_page(GswordWindow *self)
     if (page != NULL &&
         (g_strcmp0(page, "reader") == 0 ||
          g_strcmp0(page, "parallel") == 0 ||
-         g_strcmp0(page, "search") == 0))
+         g_strcmp0(page, "search") == 0 ||
+         g_strcmp0(page, "plan") == 0 ||
+         g_strcmp0(page, "teaching") == 0))
         gtk_stack_set_visible_child_name(priv->content_stack, page);
     g_free(page);
 }
@@ -1726,6 +3265,7 @@ gsword_window_make_reader(GswordWindow *self)
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *highlight = gtk_button_new_from_icon_name(
         "emblem-favorite-symbolic");
+    GtkWidget *teaching = gtk_button_new_with_label("Teach");
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *scrolled = gtk_scrolled_window_new();
     GtkWidget *content_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -1754,6 +3294,10 @@ gsword_window_make_reader(GswordWindow *self)
     g_signal_connect(note, "clicked", G_CALLBACK(on_note_clicked), self);
     g_signal_connect(highlight, "clicked",
                      G_CALLBACK(on_highlight_clicked), self);
+    g_signal_connect(teaching, "clicked",
+                     G_CALLBACK(on_teaching_clicked), self);
+    gtk_widget_set_tooltip_text(teaching,
+                                "Open teaching layout for this passage");
     gtk_button_set_icon_name(GTK_BUTTON(study_button),
                              "dialog-information-symbolic");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), TRUE);
@@ -1772,6 +3316,7 @@ gsword_window_make_reader(GswordWindow *self)
     gtk_box_append(GTK_BOX(toolbar), go);
     gtk_box_append(GTK_BOX(toolbar), note);
     gtk_box_append(GTK_BOX(toolbar), highlight);
+    gtk_box_append(GTK_BOX(toolbar), teaching);
     gtk_box_append(GTK_BOX(toolbar), study_button);
     gtk_box_append(GTK_BOX(toolbar), copy);
 
@@ -2962,6 +4507,12 @@ gsword_window_build(GswordWindow *self)
                          gsword_window_make_notes_page(self),
                          "notes", "Notes");
     gtk_stack_add_titled(priv->content_stack,
+                         gsword_window_make_plan_page(self),
+                         "plan", "Plan");
+    gtk_stack_add_named(priv->content_stack,
+                        gsword_window_make_teaching_page(self),
+                        "teaching");
+    gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_library_page(self),
                          "library", "Library");
     gtk_stack_set_visible_child_name(priv->content_stack, "reader");
@@ -3056,6 +4607,17 @@ gsword_window_finalize(GObject *object)
     g_clear_object(&priv->preferences_dialog);
     g_clear_pointer(&priv->css, g_object_unref);
     g_clear_pointer(&priv->notes, gsword_notes_store_free);
+    g_clear_pointer(&priv->plans, gsword_plan_store_free);
+    g_clear_pointer(&priv->plan_items, g_ptr_array_unref);
+    g_clear_object(&priv->plan_names);
+    g_clear_object(&priv->devotion_names);
+    g_clear_pointer(&priv->memory_items, g_ptr_array_unref);
+    g_clear_pointer(&priv->memory_module, g_free);
+    g_clear_pointer(&priv->memory_key, g_free);
+    g_clear_pointer(&priv->memory_display, g_free);
+    g_clear_pointer(&priv->memory_text, g_free);
+    g_clear_pointer(&priv->teaching_module, g_free);
+    g_clear_pointer(&priv->teaching_reference, g_free);
     g_clear_object(&priv->installer);
     g_clear_object(&priv->install_reporter);
     g_clear_pointer(&priv->install_sources, g_ptr_array_unref);
@@ -3099,6 +4661,12 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     priv->notes = gsword_notes_store_new(&error);
     if (priv->notes == NULL) {
         g_printerr("gsword: cannot open notes database: %s\n",
+                   error != NULL ? error->message : "unknown error");
+        g_clear_error(&error);
+    }
+    priv->plans = gsword_plan_store_new(&error);
+    if (priv->plans == NULL) {
+        g_printerr("gsword: cannot open planner database: %s\n",
                    error != NULL ? error->message : "unknown error");
         g_clear_error(&error);
     }
