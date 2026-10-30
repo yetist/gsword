@@ -955,10 +955,12 @@ test_localized_module_key(void)
                                   GSW_TEST_LOCALE_DIR, NULL);
     gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), "en");
 
-    g_assert_true(gsw_module_set_key_text(module, "创世记 1:1", &error));
+    g_assert_true(gsw_module_set_key_text(module, "创世记 1", &error));
     g_assert_no_error(error);
     key = (GswVerseKey *)gsw_module_get_key(module);
     g_assert_cmpint(gsw_verse_key_get_book(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_chapter(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_verse(key), ==, 1);
     text = gsw_module_get_text(module, &error);
     g_assert_no_error(error);
     g_assert_cmpstr(text, ==, "Raw OT Gen 1:1");
