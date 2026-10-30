@@ -99,13 +99,72 @@ gsword_window_save_last_position(GswordWindow *self)
         g_settings_set_string(priv->settings, "last-key", key);
 }
 
+static gchar *
+gsword_window_chapter_text(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswVerseKey *key;
+    gchar *original;
+    gchar *book_name;
+    gint chapter;
+    gint maximum;
+    gint verse;
+    GString *result;
+
+    if (priv->module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(priv->module)) !=
+            GSW_KEY_KIND_VERSE)
+        return NULL;
+
+    key = (GswVerseKey *)gsw_module_get_key(priv->module);
+    if (gsw_verse_key_get_book(key) < 1 ||
+        gsw_verse_key_get_chapter(key) < 1)
+        return NULL;
+
+    chapter = gsw_verse_key_get_chapter(key);
+    maximum = gsw_verse_key_get_verse_max(key);
+    if (maximum < 1)
+        return NULL;
+
+    original = g_strdup(gsw_module_get_key_text(priv->module));
+    book_name = g_strdup(gsw_verse_key_get_book_name(key));
+    result = g_string_new(NULL);
+    g_string_append_printf(result, "%s %d\n\n", book_name, chapter);
+
+    for (verse = 1; verse <= maximum; verse++) {
+        GError *error = NULL;
+        gchar *text;
+
+        gsw_verse_key_set_verse(key, verse);
+        if (!gsw_module_set_key_text(priv->module,
+                                     gsw_module_get_key_text(priv->module),
+                                     &error)) {
+            g_clear_error(&error);
+            break;
+        }
+        text = gsw_module_get_text(priv->module, &error);
+        if (text != NULL && *text != '\0') {
+            g_string_append_printf(result, "%d  %s\n\n", verse, text);
+        }
+        g_free(text);
+        g_clear_error(&error);
+    }
+
+    if (original != NULL) {
+        gsw_module_set_key_text(priv->module, original, NULL);
+        g_free(original);
+    }
+    g_free(book_name);
+    return g_string_free(result, FALSE);
+}
+
 static void
 gsword_window_refresh_reader(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GError *error = NULL;
     gchar *text;
-    const gchar *key_text;
+    gchar *display_key = NULL;
     gchar *status;
 
     if (priv->module == NULL) {
@@ -113,23 +172,42 @@ gsword_window_refresh_reader(GswordWindow *self)
         return;
     }
 
-    text = gsw_module_get_text(priv->module, &error);
+    if (gsw_key_get_kind(gsw_module_get_key(priv->module)) ==
+        GSW_KEY_KIND_VERSE) {
+        GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(priv->module);
+
+        if (gsw_verse_key_get_book(key) >= 1 &&
+            gsw_verse_key_get_chapter(key) >= 1) {
+            text = gsword_window_chapter_text(self);
+            display_key = g_strdup_printf("%s %d",
+                                          gsw_verse_key_get_book_name(key),
+                                          gsw_verse_key_get_chapter(key));
+        } else {
+            text = gsw_module_get_text(priv->module, &error);
+        }
+    } else {
+        text = gsw_module_get_text(priv->module, &error);
+    }
+
     if (text == NULL) {
         gsword_window_show_error(self, "Cannot read entry", error);
+        g_free(display_key);
         return;
     }
     gsword_window_set_text(self, text);
     g_free(text);
 
-    key_text = gsw_module_get_key_text(priv->module);
+    if (display_key == NULL)
+        display_key = g_strdup(gsw_module_get_key_text(priv->module));
     gtk_editable_set_text(GTK_EDITABLE(priv->key_entry),
-                          key_text != NULL ? key_text : "");
+                          display_key != NULL ? display_key : "");
 
     status = g_strdup_printf("%s  |  %s",
                              gsw_module_get_name(priv->module),
-                             key_text != NULL ? key_text : "");
+                             display_key != NULL ? display_key : "");
     gsword_window_set_status(self, status);
     g_free(status);
+    g_free(display_key);
 
     gtk_stack_set_visible_child_name(priv->content_stack, "reader");
     gsword_window_save_last_position(self);
