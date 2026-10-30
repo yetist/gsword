@@ -495,6 +495,8 @@ test_search_index_large(void)
 int
 main(int argc, char **argv)
 {
+    /* Key display text follows LANG; keep these assertions deterministic. */
+    g_setenv("LANG", "C", TRUE);
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/search/basic", test_search);
     g_test_add_func("/search/options", test_search_options);

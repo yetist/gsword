@@ -105,6 +105,8 @@ test_invalid_range(void)
 int
 main(int argc, char **argv)
 {
+    /* Key display text follows LANG; keep these assertions deterministic. */
+    g_setenv("LANG", "C", TRUE);
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/verse-list/parse", test_parse_list);
     g_test_add_func("/verse-list/relative-ranges", test_relative_ranges);
