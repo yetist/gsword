@@ -36,7 +36,7 @@ M0–M5 已实现并通过单元/集成测试：
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
 - 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
-- 可选 GTK4 前端原型（`examples/gtk.c`）
+- GTK4/libadwaita 桌面应用 `gsword`（`src/`）
 
 ## 快速开始
 
@@ -65,8 +65,10 @@ meson test -C build
 ./build/examples/gsword-index-module ~/.sword KJV status
 ./build/examples/gsword-parallel ~/.sword KJV "John 3:16" "Rom 8:1"
 
-# GTK4 前端原型（需要 GTK4）
-GSWORD_PREFIX=~/.sword ./build/examples/gsword-gtk
+# GTK4 桌面应用
+GSWORD_PREFIX=~/.sword ./build/src/gsword
+# 或指定模块库
+./build/src/gsword --library ~/.sword
 
 # 安装（需要预先配置 InstallMgr.conf）
 ./build/examples/gsword-install-sources ~/.sword/InstallMgr

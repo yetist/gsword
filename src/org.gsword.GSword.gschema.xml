@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gsword.GSword" path="/org/gsword/GSword/">
+    <key name="last-module" type="s">
+      <default>''</default>
+      <summary>Last opened module</summary>
+      <description>The module name restored when gsword starts.</description>
+    </key>
+    <key name="last-key" type="s">
+      <default>''</default>
+      <summary>Last opened key</summary>
+      <description>The key text restored when gsword starts.</description>
+    </key>
+    <key name="font-scale" type="d">
+      <default>1.0</default>
+      <summary>Reader font scale</summary>
+      <description>Multiplier applied to the reader font size.</description>
+    </key>
+    <key name="theme" type="s">
+      <default>'system'</default>
+      <summary>Color scheme</summary>
+      <description>One of system, light, or dark.</description>
+    </key>
+  </schema>
+</schemalist>
