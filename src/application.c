@@ -199,8 +199,12 @@ gsword_application_init(GswordApplication *self)
 GswordApplication *
 gsword_application_new(void)
 {
+    GApplicationFlags flags = G_APPLICATION_DEFAULT_FLAGS;
+
+    if (g_getenv("GSWORD_NON_UNIQUE") != NULL)
+        flags |= G_APPLICATION_NON_UNIQUE;
     return g_object_new(GSWORD_TYPE_APPLICATION,
                         "application-id", "org.gsword.GSword",
-                        "flags", G_APPLICATION_DEFAULT_FLAGS,
+                        "flags", flags,
                         NULL);
 }

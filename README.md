@@ -37,7 +37,8 @@ M0–M5 已实现并通过单元/集成测试：
 - 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
 - GTK4/libadwaita 桌面应用 `gsword`（`src/`），支持阅读、并行、研经面板、
-  搜索索引、笔记、标签、经文列表、高亮和 Markdown 导出
+  搜索索引、笔记、标签、经文列表、高亮、Markdown 导出，以及模块安装/更新/
+  删除和来源管理
 
 ## 快速开始
 
