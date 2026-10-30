@@ -119,7 +119,9 @@ gboolean          gsw_install_manager_get_passive_ftp(GswInstallManager *self);
  * @self: a #GswInstallManager
  * @timeout_msec: timeout in milliseconds
  *
- * Sets the transfer timeout.
+ * Sets the connection timeout and the interval used to detect stalled
+ * transfers. It does not limit the total duration of a download, so large
+ * modules can still complete on slow connections.
  */
 void              gsw_install_manager_set_timeout(GswInstallManager *self,
                                                   guint timeout_msec);
@@ -127,7 +129,7 @@ void              gsw_install_manager_set_timeout(GswInstallManager *self,
  * gsw_install_manager_get_timeout:
  * @self: a #GswInstallManager
  *
- * Gets the transfer timeout.
+ * Gets the connection timeout.
  *
  * Returns: the timeout in milliseconds
  */

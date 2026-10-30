@@ -349,9 +349,15 @@ gsw_curl_setup(GswTransport *self, CURL *curl, const gchar *url,
     curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)priv->timeout_msec);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)priv->timeout_msec);
+    /*
+     * Do not set CURLOPT_TIMEOUT_MS here. It limits the whole transfer, so a
+     * slow but healthy multi-megabyte module download would be aborted after
+     * the connection timeout (10 seconds by default). Use the low-speed
+     * watchdog instead to abort only genuinely stalled transfers.
+     */
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
-    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME,
+                     (long)MAX(1U, priv->timeout_msec / 1000U));
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, priv->verify_peer ? 1L : 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, priv->verify_peer ? 2L : 0L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gsw_curl_write_cb);

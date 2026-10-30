@@ -141,12 +141,25 @@ static void
 gsword_window_show_error(GswordWindow *self, const gchar *prefix,
                          GError *error)
 {
-    gchar *message = g_strdup_printf("%s: %s", prefix,
-                                     error != NULL ? error->message
-                                                   : "unknown error");
+    const gchar *detail = error != NULL ? error->message : "unknown error";
+    gchar *message = g_strdup_printf("%s: %s", prefix, detail);
 
     gsword_window_set_status(self, message);
     g_free(message);
+
+    if (gtk_widget_get_mapped(GTK_WIDGET(self))) {
+        AdwDialog *dialog = adw_alert_dialog_new(prefix, NULL);
+
+        adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog), "%s", detail);
+        adw_alert_dialog_add_response(ADW_ALERT_DIALOG(dialog),
+                                      "close", "Close");
+        adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog),
+                                              "close");
+        adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog),
+                                            "close");
+        /* AdwDialog is floating; adw_dialog_present() takes ownership. */
+        adw_dialog_present(dialog, GTK_WIDGET(self));
+    }
     g_clear_error(&error);
 }
 
@@ -2495,6 +2508,29 @@ on_refresh_remote_clicked(GtkButton *button, gpointer user_data)
         on_refresh_remote_finished, self);
 }
 
+static gboolean
+clear_install_progress_cb(gpointer data)
+{
+    GswordWindow *self = GSWORD_WINDOW(data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->install_cancellable == NULL) {
+        gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
+        gtk_label_set_text(priv->install_status, "");
+    }
+    return G_SOURCE_REMOVE;
+}
+
+static void
+gsword_window_clear_install_progress_later(GswordWindow *self)
+{
+    /* Progress events are queued on the main context from the worker thread.
+     * Clear after those events have been processed so a final progress update
+     * cannot leave a stale "Downloading..." label after the operation ends. */
+    g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, clear_install_progress_cb,
+                    g_object_ref(self), g_object_unref);
+}
+
 static void
 on_refresh_remote_finished(GObject *source, GAsyncResult *result,
                            gpointer user_data)
@@ -2514,6 +2550,7 @@ on_refresh_remote_finished(GObject *source, GAsyncResult *result,
     gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
     g_clear_object(&priv->install_cancellable);
     gsword_window_refresh_remote_modules(self);
+    gsword_window_clear_install_progress_later(self);
 }
 
 static void
@@ -2544,22 +2581,37 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GError *error = NULL;
+    gboolean installed;
+    gchar *installed_name = g_strdup(priv->selected_remote_name);
 
-    if (!gsw_install_manager_install_module_finish(
-            GSW_INSTALL_MANAGER(source), result, &error)) {
+    installed = gsw_install_manager_install_module_finish(
+        GSW_INSTALL_MANAGER(source), result, &error);
+    if (!installed) {
         gsword_window_show_error(self, "Module install failed", error);
-    } else {
-        gsword_window_set_status(self, "Module installed");
     }
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
     gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
     g_clear_object(&priv->install_cancellable);
     if (priv->manager != NULL)
         gsw_manager_reload(priv->manager, NULL);
+    if (installed && installed_name != NULL && priv->settings != NULL) {
+        /* Make the newly installed module visible and selected instead of
+         * silently keeping the previously selected module. */
+        g_settings_set_string(priv->settings, "last-module", installed_name);
+        g_settings_set_string(priv->settings, "last-key", "");
+    }
     gsword_window_populate_modules(self);
     gsword_window_refresh_installed_dropdown(self);
     gsword_window_refresh_remote_modules(self);
     gtk_stack_set_visible_child_name(priv->content_stack, "library");
+    if (installed && installed_name != NULL) {
+        gchar *message = g_strdup_printf("Installed module %s",
+                                         installed_name);
+        gsword_window_set_status(self, message);
+        g_free(message);
+    }
+    g_free(installed_name);
+    gsword_window_clear_install_progress_later(self);
 }
 
 static void
@@ -2609,6 +2661,7 @@ on_remove_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     gsword_window_refresh_installed_dropdown(self);
     gsword_window_refresh_remote_modules(self);
     gtk_stack_set_visible_child_name(priv->content_stack, "library");
+    gsword_window_clear_install_progress_later(self);
 }
 
 static void
@@ -2620,7 +2673,7 @@ on_cancel_install_clicked(GtkButton *button, gpointer user_data)
 
     if (priv->install_cancellable != NULL)
         g_cancellable_cancel(priv->install_cancellable);
-  gsword_window_set_status(self, "Cancelling...");
+    gsword_window_set_status(self, "Cancelling...");
 }
 
 static void
@@ -2689,6 +2742,10 @@ on_local_install_clicked(GtkButton *button, gpointer user_data)
         return;
     }
     gsw_manager_reload(priv->manager, NULL);
+    if (priv->settings != NULL) {
+        g_settings_set_string(priv->settings, "last-module", name);
+        g_settings_set_string(priv->settings, "last-key", "");
+    }
     gsword_window_populate_modules(self);
     gsword_window_refresh_installed_dropdown(self);
     gsword_window_refresh_remote_modules(self);

@@ -173,7 +173,8 @@ void              gsw_transport_set_passive(GswTransport *self, gboolean passive
  * @self: a #GswTransport
  * @timeout_msec: timeout in milliseconds
  *
- * Sets the transfer timeout.
+ * Sets the connection timeout and the interval used to detect stalled
+ * transfers. It is not a limit on the total duration of a download.
  */
 void              gsw_transport_set_timeout(GswTransport *self, guint timeout_msec);
 /**

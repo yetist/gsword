@@ -1170,8 +1170,9 @@ gsw_module_read_raw(mod)
 - 选项：
   - `CURLOPT_URL`
   - `CURLOPT_FOLLOWLOCATION`（限制重定向次数）
-  - `CURLOPT_CONNECTTIMEOUT_MS` / `CURLOPT_TIMEOUT_MS`（默认 10s/可配置）
-  - `CURLOPT_LOW_SPEED_LIMIT` / `CURLOPT_LOW_SPEED_TIME` 防止挂死
+  - `CURLOPT_CONNECTTIMEOUT_MS`（默认 10s/可配置）；不设置整体传输超时，
+    避免大模块因总耗时超过连接超时而被错误中止
+  - `CURLOPT_LOW_SPEED_LIMIT` / `CURLOPT_LOW_SPEED_TIME` 防止传输挂死
   - `CURLOPT_FAILONERROR`
   - `CURLOPT_NOSIGNAL`（线程安全）
   - `CURLOPT_USERAGENT`（`gsword/<version>`）
