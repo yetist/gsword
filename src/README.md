@@ -17,9 +17,12 @@ Current implementation:
   daily devotion, memory review, teaching layout, workspace persistence,
   preferences dialog
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
-  highlights in `~/.local/share/gsword-app/app.db`
+  highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
   memory review queue, and teaching notes in the same application database
+- `app-paths.c` / `app-paths.h`: unified application data directory
+  (`~/.local/share/gsword`) and one-time migration from the old
+  `~/.local/share/gsword-app` location
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
   parallel modules, active plan, devotion module, font scale, theme
 

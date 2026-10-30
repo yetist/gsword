@@ -1,5 +1,6 @@
 #include "application.h"
 #include "window.h"
+#include "app-paths.h"
 
 #include <gsword/gsword.h>
 #include <glib/gstdio.h>
@@ -110,7 +111,7 @@ gsword_default_library_path(void)
     if (g_file_test(legacy, G_FILE_TEST_IS_DIR))
         return legacy;
     g_free(legacy);
-    return g_build_filename(g_get_user_data_dir(), "gsword", NULL);
+    return gsword_app_data_dir();
 }
 
 static GswManager *
@@ -151,6 +152,7 @@ gsword_application_activate(GApplication *application)
     GtkWindow *window;
     GError *error = NULL;
 
+    gsword_app_migrate_legacy_data();
     window = gtk_application_get_active_window(GTK_APPLICATION(application));
     if (window != NULL) {
         gtk_window_present(window);

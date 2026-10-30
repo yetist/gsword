@@ -1,4 +1,5 @@
 #include "plan-store.h"
+#include "app-paths.h"
 
 #include <glib/gstdio.h>
 #include <sqlite3.h>
@@ -172,8 +173,7 @@ GswordPlanStore *
 gsword_plan_store_new(GError **error)
 {
     GswordPlanStore *self = g_new0(GswordPlanStore, 1);
-    gchar *directory = g_build_filename(g_get_user_data_dir(), "gsword-app",
-                                        NULL);
+    gchar *directory = gsword_app_data_dir();
     gchar *path = g_build_filename(directory, "app.db", NULL);
     const gchar *schema =
         "PRAGMA foreign_keys = ON;"

@@ -1,4 +1,5 @@
 #include "notes-store.h"
+#include "app-paths.h"
 
 #include <glib/gstdio.h>
 #include <sqlite3.h>
@@ -72,8 +73,7 @@ GswordNotesStore *
 gsword_notes_store_new(GError **error)
 {
     GswordNotesStore *self = g_new0(GswordNotesStore, 1);
-    gchar *directory = g_build_filename(g_get_user_data_dir(), "gsword-app",
-                                        NULL);
+    gchar *directory = gsword_app_data_dir();
     gchar *path = g_build_filename(directory, "app.db", NULL);
     const gchar *schema =
         "PRAGMA foreign_keys = ON;"
