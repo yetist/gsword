@@ -61,6 +61,7 @@ typedef struct {
     GtkListBox *notes_list;
     GtkListBox *tags_list;
     GtkListBox *lists_list;
+    GtkListBox *list_items;
     GtkEntry *new_list_entry;
     GtkTextTag *highlight_tag;
     gchar *note_module;
@@ -79,6 +80,9 @@ static void gsword_window_refresh_notes(GswordWindow *self);
 static gchar *gsword_window_current_storage_key(GswordWindow *self);
 static gchar *gsword_window_current_display_key(GswordWindow *self);
 static void gsword_window_apply_highlights(GswordWindow *self);
+static void gsword_window_load_module(GswordWindow *self, const gchar *name);
+static gboolean gsword_window_set_key_text(GswordWindow *self,
+                                           const gchar *text);
 
 static void
 gsword_window_set_status(GswordWindow *self, const gchar *message)
@@ -672,6 +676,30 @@ on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 }
 
 static void
+on_list_item_selected(GtkListBox *list, GtkListBoxRow *row,
+                      gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *module;
+    const gchar *key;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    module = g_object_get_data(G_OBJECT(row), "item-module");
+    key = g_object_get_data(G_OBJECT(row), "item-display");
+    if (module == NULL || key == NULL)
+        return;
+    if (priv->module == NULL ||
+        g_strcmp0(module, gsw_module_get_name(priv->module)) != 0) {
+        gsword_window_load_module(self, module);
+    }
+    if (gsword_window_set_key_text(self, key))
+        gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+}
+
+static void
 on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -683,6 +711,27 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         return;
     id = g_object_get_data(G_OBJECT(row), "list-id");
     priv->selected_list_id = id != NULL ? g_ascii_strtoll(id, NULL, 10) : 0;
+    gsword_window_clear_list(priv->list_items);
+    if (priv->notes != NULL && priv->selected_list_id != 0) {
+        GPtrArray *items = gsword_notes_store_list_items(
+            priv->notes, priv->selected_list_id);
+        guint i;
+
+        for (i = 0; i < items->len; i++) {
+            GswordVerseListItem *item = g_ptr_array_index(items, i);
+            GtkWidget *item_row = gtk_list_box_row_new();
+            GtkWidget *label = gtk_label_new(item->display_key);
+
+            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(item_row), label);
+            g_object_set_data_full(G_OBJECT(item_row), "item-module",
+                                   g_strdup(item->module), g_free);
+            g_object_set_data_full(G_OBJECT(item_row), "item-display",
+                                   g_strdup(item->display_key), g_free);
+            gtk_list_box_append(priv->list_items, item_row);
+        }
+        g_ptr_array_unref(items);
+    }
 }
 
 static void
@@ -739,11 +788,13 @@ gsword_window_make_notes_page(GswordWindow *self)
     GtkWidget *notes_scroll = gtk_scrolled_window_new();
     GtkWidget *tags_scroll = gtk_scrolled_window_new();
     GtkWidget *lists_scroll = gtk_scrolled_window_new();
+    GtkWidget *list_items_scroll = gtk_scrolled_window_new();
     GtkWidget *new_list_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *new_list_button = gtk_button_new_with_label("Add list");
     GtkWidget *notes_label = gtk_label_new("Notes");
     GtkWidget *tags_label = gtk_label_new("Tags");
     GtkWidget *lists_label = gtk_label_new("Verse lists");
+    GtkWidget *list_items_label = gtk_label_new("List verses");
     GtkWidget *editor_scroll = gtk_scrolled_window_new();
     GtkWidget *buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *save = gtk_button_new_with_label("Save");
@@ -786,7 +837,14 @@ gsword_window_make_notes_page(GswordWindow *self)
                      G_CALLBACK(on_list_selected), self);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(lists_scroll),
                                   GTK_WIDGET(priv->lists_list));
-    gtk_widget_set_size_request(lists_scroll, -1, 120);
+    gtk_widget_set_size_request(lists_scroll, -1, 90);
+
+    priv->list_items = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->list_items, "row-selected",
+                     G_CALLBACK(on_list_item_selected), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(list_items_scroll),
+                                  GTK_WIDGET(priv->list_items));
+    gtk_widget_set_size_request(list_items_scroll, -1, 100);
     priv->new_list_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->new_list_entry, "New list");
     gtk_widget_set_hexpand(GTK_WIDGET(priv->new_list_entry), TRUE);
@@ -798,9 +856,11 @@ gsword_window_make_notes_page(GswordWindow *self)
     gtk_label_set_xalign(GTK_LABEL(notes_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(tags_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(lists_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(list_items_label), 0.0f);
     gtk_widget_add_css_class(notes_label, "heading");
     gtk_widget_add_css_class(tags_label, "heading");
     gtk_widget_add_css_class(lists_label, "heading");
+    gtk_widget_add_css_class(list_items_label, "heading");
     gtk_box_append(GTK_BOX(left), GTK_WIDGET(priv->note_search));
     gtk_box_append(GTK_BOX(left), notes_label);
     gtk_box_append(GTK_BOX(left), notes_scroll);
@@ -808,6 +868,8 @@ gsword_window_make_notes_page(GswordWindow *self)
     gtk_box_append(GTK_BOX(left), tags_scroll);
     gtk_box_append(GTK_BOX(left), lists_label);
     gtk_box_append(GTK_BOX(left), lists_scroll);
+    gtk_box_append(GTK_BOX(left), list_items_label);
+    gtk_box_append(GTK_BOX(left), list_items_scroll);
     gtk_box_append(GTK_BOX(left), new_list_row);
 
     priv->note_key_entry = GTK_ENTRY(gtk_entry_new());
