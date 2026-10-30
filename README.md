@@ -50,6 +50,7 @@ meson test -C build
 
 # 读取经文
 ./build/examples/gsword-lookup ~/.sword KJV "John 3:16"
+./build/examples/gsword-lookup ~/.sword KJV "启示录 1:1" zh-Hans
 
 # 模块信息、章节、字典、通用书
 ./build/examples/gsword-module-info ~/.sword KJV
@@ -57,7 +58,7 @@ meson test -C build
 ./build/examples/gsword-dict-lookup ~/.sword StrongsGreek G26
 ./build/examples/gsword-genbook-walk ~/.sword BookChapter 1
 ./build/examples/gsword-render-options ~/.sword KJV "John 3:16" "Strong's Numbers=On"
-./build/examples/gsword-locale ~/.sword zh_CN KJV "John 3:16"
+./build/examples/gsword-locale ~/.sword zh-Hans KJV "来 4:1"
 ./build/examples/gsword-search ~/.sword KJV "God so loved" phrase
 ./build/examples/gsword-search ~/.sword KJV "God.*world" regex
 ./build/examples/gsword-index-module ~/.sword KJV build
@@ -71,6 +72,13 @@ GSWORD_PREFIX=~/.sword ./build/examples/gsword-gtk
 ./build/examples/gsword-install-sources ~/.sword/InstallMgr
 ./build/examples/gsword-install-module ~/.sword ~/.sword/InstallMgr CrossWire KJV
 ./build/examples/gsword-async-install ~/.sword ~/.sword/InstallMgr CrossWire KJV
+```
+
+开发构建尚未安装 locale 数据时，可以指向源码数据目录：
+
+```sh
+GSW_LOCALE_PATH=$PWD/data/locales.d \
+  ./build/examples/gsword-lookup ~/.sword KJV "启示录 1:1" zh-Hans
 ```
 
 使用 gi-docgen 生成 API 文档：

@@ -134,7 +134,10 @@ gboolean       gsw_module_set_key(GswModule *self, GswKey *key, GError **error);
  * @text: key text
  * @error: return location for a #GError, or %NULL
  *
- * Sets the current key from text.
+ * Sets the current key from text. For verse-keyed modules, the book part may
+ * be an OSIS name, an English name, a localized name, or a localized
+ * abbreviation from the active locale. Other loaded locales are searched as a
+ * fallback when the active locale has no match.
  *
  * Returns: %TRUE on success, %FALSE otherwise
  */

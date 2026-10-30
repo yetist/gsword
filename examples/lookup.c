@@ -9,10 +9,15 @@ main(int argc, char **argv)
     GswModule *module;
     gchar *text;
 
-    if (argc != 4) {
-        fprintf(stderr, "usage: %s <library-path> <module> <key>\n", argv[0]);
+    if (argc < 4 || argc > 5) {
+        fprintf(stderr,
+                "usage: %s <library-path> <module> <key> [locale]\n", argv[0]);
         return 2;
     }
+
+    if (argc == 5)
+        gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(),
+                                          argv[4]);
 
     manager = gsw_manager_new_for_path(argv[1], &error);
     if (manager == NULL) {
@@ -29,8 +34,11 @@ main(int argc, char **argv)
     }
 
     if (!gsw_module_set_key_text(module, argv[3], &error)) {
-        fprintf(stderr, "cannot set key: %s\n", error->message);
+        fprintf(stderr, "cannot set key: %s\n",
+                error != NULL ? error->message : "unknown error");
         g_clear_error(&error);
+        g_object_unref(manager);
+        return 1;
     }
 
     printf("%s\n", gsw_module_get_key_text(module));
