@@ -36,7 +36,8 @@ M0–M5 已实现并通过单元/集成测试：
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
 - 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
-- GTK4/libadwaita 桌面应用 `gsword`（`src/`）
+- GTK4/libadwaita 桌面应用 `gsword`（`src/`），支持阅读、并行、研经面板、
+  搜索索引、笔记、标签、经文列表、高亮和 Markdown 导出
 
 ## 快速开始
 
@@ -144,6 +145,7 @@ TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、
 - libcurl（>= 7.68）
 - zlib
 - 可选：libbz2、liblzma、gobject-introspection（GIR）、vala/vapigen（VAPI）、gi-docgen（API 文档）
+- GTK4 应用：GTK4、libadwaita、SQLite3
 - Meson / Ninja
 
 ## 许可证

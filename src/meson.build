@@ -1,10 +1,11 @@
 gtk4_dep = dependency('gtk4', required: false)
 adw_dep = dependency('libadwaita-1', required: false)
+sqlite3_dep = dependency('sqlite3', required: false)
 
-if gtk4_dep.found() and adw_dep.found()
+if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
   gsword_app = executable('gsword',
-    ['main.c', 'application.c', 'window.c'],
-    dependencies: [gsword_dep, gtk4_dep, adw_dep],
+    ['main.c', 'application.c', 'window.c', 'notes-store.c'],
+    dependencies: [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep],
     install: true,
   )
 
