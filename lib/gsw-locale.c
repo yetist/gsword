@@ -33,6 +33,7 @@ typedef struct {
     GPtrArray *order;
     gchar *default_locale;
     gboolean scanned_paths;
+    GMutex scan_mutex;
 } GswLocaleMgrPrivate;
 
 static GswLocaleMgr *default_manager = NULL;
@@ -381,6 +382,7 @@ gsw_locale_mgr_finalize(GObject *object)
     g_clear_pointer(&priv->locale_aliases, g_hash_table_unref);
     g_clear_pointer(&priv->order, g_ptr_array_unref);
     g_free(priv->default_locale);
+    g_mutex_clear(&priv->scan_mutex);
 
     G_OBJECT_CLASS(gsw_locale_mgr_parent_class)->finalize(object);
 }
@@ -403,6 +405,7 @@ gsw_locale_mgr_init(GswLocaleMgr *self)
     priv->order = g_ptr_array_new();
     priv->default_locale = g_strdup("en");
     priv->scanned_paths = FALSE;
+    g_mutex_init(&priv->scan_mutex);
 
     locale_mgr_store(self, gsw_locale_new("en"));
 }
@@ -436,8 +439,11 @@ gsw_locale_mgr_scan_paths(GswLocaleMgr *self)
     gchar *dir;
     guint i;
 
-    if (priv->scanned_paths)
+    g_mutex_lock(&priv->scan_mutex);
+    if (priv->scanned_paths) {
+        g_mutex_unlock(&priv->scan_mutex);
         return;
+    }
     priv->scanned_paths = TRUE;
 
     /* Installed data, XDG system data, user data, then explicit override. */
@@ -467,6 +473,7 @@ gsw_locale_mgr_scan_paths(GswLocaleMgr *self)
         }
         g_strfreev(paths);
     }
+    g_mutex_unlock(&priv->scan_mutex);
 }
 
 static gchar *
