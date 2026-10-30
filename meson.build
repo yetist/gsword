@@ -172,3 +172,4 @@ endif
 subdir('data')
 subdir('tests')
 subdir('examples')
+subdir('src')
