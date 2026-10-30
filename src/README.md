@@ -12,8 +12,10 @@ Current implementation:
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, chapter
-  navigation, copy action, preferences dialog, empty state
-- `org.gsword.GSword.gschema.xml`: last module/key, font scale, theme
+  navigation, parallel reading, study panel, search/index UI, workspace
+  persistence, preferences dialog
+- `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
+  parallel modules, font scale, theme
 
 The application design is documented in `../docs/app-design.md`.
 
