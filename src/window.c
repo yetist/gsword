@@ -2912,9 +2912,11 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     GswVerseKey *key;
     gint chapter;
     gint maximum;
+    gint global_book;
+    GswVersification *versification;
     GError *error = NULL;
 
-    if (priv->module == NULL ||
+    if (priv->module == NULL || direction == 0 ||
         gsw_key_get_kind(gsw_module_get_key(priv->module)) !=
             GSW_KEY_KIND_VERSE)
         return;
@@ -2923,18 +2925,49 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     maximum = gsw_verse_key_get_chapter_max(key);
     if (chapter < 1 || maximum < 1)
         return;
-    if ((direction < 0 && chapter <= 1) ||
-        (direction > 0 && chapter >= maximum))
-        return;
 
-    gsw_verse_key_set_chapter(key, chapter + direction);
-    if (!gsw_module_set_key_text(priv->module,
-                                 gsw_module_get_key_text(priv->module),
-                                 &error)) {
-        gsword_window_show_error(self, "Cannot change chapter", error);
+    if ((direction < 0 && chapter > 1) ||
+        (direction > 0 && chapter < maximum)) {
+        gsw_verse_key_set_chapter(key, chapter + direction);
+        if (!gsw_module_set_key_text(priv->module,
+                                     gsw_module_get_key_text(priv->module),
+                                     &error)) {
+            gsword_window_show_error(self, "Cannot change chapter", error);
+            return;
+        }
+        gsword_window_refresh_reader(self);
         return;
     }
-    gsword_window_refresh_reader(self);
+
+    /*
+     * Crossing a book boundary: previous from chapter 1 goes to the last
+     * chapter of the previous book; next from the last chapter goes to
+     * chapter 1 of the next book.
+     */
+    global_book = gsw_verse_key_get_global_book_number(key);
+    versification = gsw_versification_mgr_get_system(
+        gsw_versification_mgr_get_default(),
+        gsw_verse_key_get_versification(key));
+    if (global_book < 0 || versification == NULL)
+        return;
+    global_book += direction;
+    if (global_book < 0 ||
+        global_book >= gsw_versification_get_book_count(versification))
+        return;
+
+    {
+        GswBook *book = gsw_versification_get_book(versification,
+                                                   global_book);
+        gchar *reference;
+
+        if (book == NULL)
+            return;
+        reference = g_strdup_printf(
+            "%s %d", gsw_book_get_name(book),
+            direction < 0 ? gsw_book_get_chapter_max(book) : 1);
+        gsword_window_set_key_text(self, reference);
+        g_free(reference);
+    }
 }
 
 static void
