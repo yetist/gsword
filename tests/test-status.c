@@ -47,10 +47,39 @@ test_signals(void)
     g_object_unref(reporter);
 }
 
+static void
+test_main_context_dispatch(void)
+{
+    GMainContext *context = g_main_context_new();
+    GswStatusReporter *reporter = gsw_status_reporter_new();
+
+    progress_count = 0;
+    pre_status_count = 0;
+    g_signal_connect(reporter, "progress", G_CALLBACK(on_progress), NULL);
+    g_signal_connect(reporter, "pre-status", G_CALLBACK(on_pre_status), NULL);
+    gsw_status_reporter_set_main_context(reporter, context);
+
+    gsw_status_reporter_emit_progress(reporter, 100, 42);
+    gsw_status_reporter_emit_pre_status(reporter, 100, 42, "Downloading");
+
+    g_assert_cmpuint(progress_count, ==, 0);
+    g_assert_cmpuint(pre_status_count, ==, 0);
+    while (g_main_context_iteration(context, FALSE))
+        ;
+    g_assert_cmpuint(progress_count, ==, 1);
+    g_assert_cmpuint(pre_status_count, ==, 1);
+    g_assert_cmpuint(last_total, ==, 100);
+    g_assert_cmpuint(last_done, ==, 42);
+
+    g_object_unref(reporter);
+    g_main_context_unref(context);
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/status/signals", test_signals);
+    g_test_add_func("/status/main-context-dispatch", test_main_context_dispatch);
     return g_test_run();
 }
