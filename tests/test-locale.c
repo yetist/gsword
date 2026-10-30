@@ -246,6 +246,22 @@ test_shipped_locales(void)
     g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh_CN"), ==,
                     "创世记");
 
+    {
+        GswLocaleMgr *global = gsw_locale_mgr_get_default();
+        GswVerseKey *key;
+
+        gsw_locale_mgr_load_directory(global, GSW_TEST_LOCALE_DIR, NULL);
+        gsw_locale_mgr_set_default_locale(global, "en");
+
+        key = gsw_verse_key_new("启示录 1:1", "KJV");
+        g_assert_cmpint(gsw_verse_key_get_book(key), ==, 27);
+        gsw_key_unref((GswKey *)key);
+
+        key = gsw_verse_key_new("来 4:1", "KJV");
+        g_assert_cmpint(gsw_verse_key_get_book(key), ==, 19);
+        gsw_key_unref((GswKey *)key);
+    }
+
     g_object_unref(mgr);
     g_unsetenv("GSW_LOCALE_PATH");
 #endif

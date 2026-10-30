@@ -125,9 +125,10 @@ const gchar  *gsw_locale_mgr_translate_abbreviation(GswLocaleMgr *self,
  * @locale: locale name, or %NULL for the default locale
  *
  * Returns possible OSIS book names for @text. Exact aliases are returned
- * before prefix matches. Multiple OSIS names may be returned when an
- * abbreviation is ambiguous; the caller should resolve them against the
- * current versification.
+ * before prefix matches. If the selected locale and its fallback have no
+ * match, other loaded locales are searched as a last resort. Multiple OSIS
+ * names may be returned when an abbreviation is ambiguous; the caller should
+ * resolve them against the current versification.
  *
  * Returns: (transfer container) (element-type utf8): a newly allocated array
  *   of OSIS names, or an empty array if nothing matches

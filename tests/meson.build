@@ -39,7 +39,8 @@ if get_option('tests')
   test('verse-list', test_verse_list)
 
   test_reader = executable('test-reader', 'test-reader.c',
-    dependencies: [gsword_dep, glib_dep, zlib_dep])
+    dependencies: [gsword_dep, glib_dep, zlib_dep],
+    c_args: ['-DGSW_TEST_LOCALE_DIR="' + meson.project_source_root() + '/data/locales.d"'])
   test('reader', test_reader)
 
   test_genbook_write = executable('test-genbook-write', 'test-genbook-write.c',

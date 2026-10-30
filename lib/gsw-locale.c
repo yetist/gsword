@@ -837,9 +837,12 @@ GPtrArray *
 gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self, const gchar *text,
                                    const gchar *locale_name)
 {
+    GswLocaleMgrPrivate *priv;
     GswLocale *locale;
     GPtrArray *result;
-    GHashTable *seen;
+    GHashTable *seen_locales;
+    GHashTable *seen_osis;
+    guint i;
 
     g_return_val_if_fail(GSW_IS_LOCALE_MGR(self), NULL);
     g_return_val_if_fail(text != NULL, NULL);
@@ -849,18 +852,20 @@ gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self, const gchar *text,
     if (locale == NULL)
         return result;
 
-    seen = g_hash_table_new(g_str_hash, g_str_equal);
-    while (locale != NULL && !g_hash_table_contains(seen, locale->name)) {
-        GPtrArray *candidates;
-        guint i;
+    seen_locales = g_hash_table_new(g_str_hash, g_str_equal);
+    seen_osis = g_hash_table_new(g_str_hash, g_str_equal);
 
-        g_hash_table_add(seen, locale->name);
+    while (locale != NULL &&
+           !g_hash_table_contains(seen_locales, locale->name)) {
+        GPtrArray *candidates;
+
+        g_hash_table_add(seen_locales, locale->name);
         candidates = locale_lookup_candidates(locale, text);
         for (i = 0; i < candidates->len; i++) {
             const gchar *osis = g_ptr_array_index(candidates, i);
 
-            if (!g_hash_table_contains(seen, osis)) {
-                g_hash_table_add(seen, (gpointer)osis);
+            if (!g_hash_table_contains(seen_osis, osis)) {
+                g_hash_table_add(seen_osis, (gpointer)osis);
                 g_ptr_array_add(result, g_strdup(osis));
             }
         }
@@ -869,7 +874,37 @@ gsw_locale_mgr_get_book_candidates(GswLocaleMgr *self, const gchar *text,
             break;
         locale = locale_mgr_next_fallback(self, locale);
     }
-    g_hash_table_unref(seen);
+
+    /* Last resort for user-entered localized names: search every loaded
+     * locale, not just the selected one. This keeps input such as
+     * "启示录 1:1" usable while the UI default locale is still English. */
+    if (result->len == 0) {
+        priv = gsw_locale_mgr_get_instance_private(self);
+        for (i = 0; i < priv->order->len; i++) {
+            GPtrArray *candidates;
+            guint j;
+
+            locale = g_ptr_array_index(priv->order, i);
+            if (g_hash_table_contains(seen_locales, locale->name))
+                continue;
+            g_hash_table_add(seen_locales, locale->name);
+            candidates = locale_lookup_candidates(locale, text);
+            for (j = 0; j < candidates->len; j++) {
+                const gchar *osis = g_ptr_array_index(candidates, j);
+
+                if (!g_hash_table_contains(seen_osis, osis)) {
+                    g_hash_table_add(seen_osis, (gpointer)osis);
+                    g_ptr_array_add(result, g_strdup(osis));
+                }
+            }
+            g_ptr_array_unref(candidates);
+            if (result->len > 0)
+                break;
+        }
+    }
+
+    g_hash_table_unref(seen_osis);
+    g_hash_table_unref(seen_locales);
     return result;
 }
 

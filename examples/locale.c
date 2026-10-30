@@ -33,8 +33,13 @@ main(int argc, char **argv)
         return 1;
     }
 
-    gsw_module_set_key_text(module, argv[4], &error);
-    g_clear_error(&error);
+    if (!gsw_module_set_key_text(module, argv[4], &error)) {
+        fprintf(stderr, "cannot set key: %s\n",
+                error != NULL ? error->message : "unknown error");
+        g_clear_error(&error);
+        g_object_unref(manager);
+        return 1;
+    }
 
     printf("Key: %s\n", gsw_module_get_key_text(module));
     {

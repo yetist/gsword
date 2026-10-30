@@ -933,10 +933,60 @@ run_reader_test(void)
     g_free(prefix);
 }
 
+static void
+test_localized_module_key(void)
+{
+#ifdef GSW_TEST_LOCALE_DIR
+    GError *error = NULL;
+    gchar *prefix = g_dir_make_tmp("gsword-reader-locale-XXXXXX", &error);
+    GswManager *manager;
+    GswModule *module;
+    GswVerseKey *key;
+    gchar *text;
+
+    g_assert_no_error(error);
+    make_raw_module(prefix);
+    manager = gsw_manager_new_for_path(prefix, &error);
+    g_assert_no_error(error);
+    module = gsw_manager_get_module(manager, "TinyRaw");
+    g_assert_nonnull(module);
+
+    gsw_locale_mgr_load_directory(gsw_locale_mgr_get_default(),
+                                  GSW_TEST_LOCALE_DIR, NULL);
+    gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), "en");
+
+    g_assert_true(gsw_module_set_key_text(module, "创世记 1:1", &error));
+    g_assert_no_error(error);
+    key = (GswVerseKey *)gsw_module_get_key(module);
+    g_assert_cmpint(gsw_verse_key_get_book(key), ==, 1);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Raw OT Gen 1:1");
+    g_free(text);
+
+    g_assert_true(gsw_module_set_key_text(module, "马太福音 1:1", &error));
+    g_assert_no_error(error);
+    key = (GswVerseKey *)gsw_module_get_key(module);
+    g_assert_cmpint(gsw_verse_key_get_testament(key), ==, 2);
+    g_assert_cmpint(gsw_verse_key_get_book(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_global_book_number(key), ==, 39);
+    text = gsw_module_get_text(module, &error);
+    g_assert_no_error(error);
+    g_assert_cmpstr(text, ==, "Raw NT Matt 1:1");
+    g_free(text);
+
+    gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), NULL);
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(prefix, NULL);
+    g_free(prefix);
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/reader/raw-ztext-dicts-genbook", run_reader_test);
+    g_test_add_func("/reader/localized-key", test_localized_module_key);
     return g_test_run();
 }
