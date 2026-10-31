@@ -36,8 +36,8 @@ typedef struct {
     GtkPopover *popover;
     GtkNotebook *book_notebook;
     GtkListBox *book_lists[2];
-    GtkFlowBox *chapter_flow;
-    GtkFlowBox *verse_flow;
+    GtkGrid *chapter_grid;
+    GtkGrid *verse_grid;
     GtkLabel *hint;
     GswVersification *v11n;
     gchar *versification_name;
@@ -220,8 +220,8 @@ clear_chapter_buttons(GswordReferenceChooserPrivate *priv)
     GtkWidget *child;
 
     while ((child = gtk_widget_get_first_child(
-                GTK_WIDGET(priv->chapter_flow))) != NULL)
-        gtk_flow_box_remove(priv->chapter_flow, child);
+                GTK_WIDGET(priv->chapter_grid))) != NULL)
+        gtk_grid_remove(priv->chapter_grid, child);
 }
 
 static void
@@ -275,7 +275,7 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
     GswordBookInfo *book;
     gint chapter;
 
-    if (priv->chapter_flow == NULL || priv->books == NULL ||
+    if (priv->chapter_grid == NULL || priv->books == NULL ||
         priv->book < 0 || priv->book >= (gint)priv->books->len)
         return;
     book = g_ptr_array_index(priv->books, priv->book);
@@ -292,7 +292,8 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
                          G_CALLBACK(on_chapter_clicked), priv->self);
         if (chapter == priv->chapter)
             gtk_widget_add_css_class(button, "suggested-action");
-        gtk_flow_box_append(priv->chapter_flow, button);
+        gtk_grid_attach(priv->chapter_grid, button,
+                        (chapter - 1) % 8, (chapter - 1) / 8, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -374,8 +375,8 @@ clear_verse_buttons(GswordReferenceChooserPrivate *priv)
     GtkWidget *child;
 
     while ((child = gtk_widget_get_first_child(
-                GTK_WIDGET(priv->verse_flow))) != NULL)
-        gtk_flow_box_remove(priv->verse_flow, child);
+                GTK_WIDGET(priv->verse_grid))) != NULL)
+        gtk_grid_remove(priv->verse_grid, child);
 }
 
 static void
@@ -411,7 +412,7 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
     gint verse_max;
     gint verse;
 
-    if (priv->verse_flow == NULL)
+    if (priv->verse_grid == NULL)
         return;
     verse_max = get_verse_max(priv, priv->chapter);
     priv->updating = TRUE;
@@ -427,7 +428,8 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
                          G_CALLBACK(on_verse_clicked), priv->self);
         if (verse == priv->verse)
             gtk_widget_add_css_class(button, "suggested-action");
-        gtk_flow_box_append(priv->verse_flow, button);
+        gtk_grid_attach(priv->verse_grid, button,
+                        (verse - 1) % 8, (verse - 1) / 8, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -1577,19 +1579,16 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_box_append(GTK_BOX(book_page), book_notebook);
     }
 
-    priv->chapter_flow = GTK_FLOW_BOX(gtk_flow_box_new());
-    gtk_flow_box_set_homogeneous(priv->chapter_flow, FALSE);
-    gtk_flow_box_set_selection_mode(priv->chapter_flow, GTK_SELECTION_NONE);
-    gtk_flow_box_set_max_children_per_line(priv->chapter_flow, 8);
-    gtk_flow_box_set_min_children_per_line(priv->chapter_flow, 8);
-    gtk_flow_box_set_column_spacing(priv->chapter_flow, 4);
-    gtk_flow_box_set_row_spacing(priv->chapter_flow, 4);
-    gtk_flow_box_set_activate_on_single_click(priv->chapter_flow, TRUE);
+    priv->chapter_grid = GTK_GRID(gtk_grid_new());
+    gtk_grid_set_column_spacing(priv->chapter_grid, 4);
+    gtk_grid_set_row_spacing(priv->chapter_grid, 4);
+    gtk_widget_set_halign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
+    gtk_widget_set_valign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
     chapter_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(chapter_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(chapter_scroll),
-                                  GTK_WIDGET(priv->chapter_flow));
+                                  GTK_WIDGET(priv->chapter_grid));
     gtk_widget_set_size_request(chapter_scroll, 360, 320);
     gtk_widget_set_vexpand(chapter_scroll, TRUE);
     gtk_box_append(GTK_BOX(chapter_page), chapter_scroll);
@@ -1600,19 +1599,16 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_widget_add_css_class(verse_label, "heading");
         gtk_box_append(GTK_BOX(chapter_page), verse_label);
     }
-    priv->verse_flow = GTK_FLOW_BOX(gtk_flow_box_new());
-    gtk_flow_box_set_homogeneous(priv->verse_flow, FALSE);
-    gtk_flow_box_set_selection_mode(priv->verse_flow, GTK_SELECTION_NONE);
-    gtk_flow_box_set_max_children_per_line(priv->verse_flow, 8);
-    gtk_flow_box_set_min_children_per_line(priv->verse_flow, 8);
-    gtk_flow_box_set_column_spacing(priv->verse_flow, 4);
-    gtk_flow_box_set_row_spacing(priv->verse_flow, 4);
-    gtk_flow_box_set_activate_on_single_click(priv->verse_flow, TRUE);
+    priv->verse_grid = GTK_GRID(gtk_grid_new());
+    gtk_grid_set_column_spacing(priv->verse_grid, 4);
+    gtk_grid_set_row_spacing(priv->verse_grid, 4);
+    gtk_widget_set_halign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
+    gtk_widget_set_valign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
     verse_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(verse_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(verse_scroll),
-                                  GTK_WIDGET(priv->verse_flow));
+                                  GTK_WIDGET(priv->verse_grid));
     gtk_widget_set_size_request(verse_scroll, 360, 100);
     gtk_box_append(GTK_BOX(chapter_page), verse_scroll);
 
