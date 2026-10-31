@@ -151,8 +151,8 @@ activate  user confirmed a reference
   not affect the entry's layout.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
   `GtkNotebook`, plus `GtkFlowBox` for chapter buttons.
-- The compact navigation row sits above the text entry and updates the same
-  selection state as the popover.
+- The compact navigation controls and the text entry share one row; they
+  update the same selection state as the popover.
 - Book aliases are resolved through `GswLocaleMgr`; the widget does not
   hard-code the 66 book names.
 - The main application is deliberately untouched.
