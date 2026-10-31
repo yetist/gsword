@@ -68,6 +68,9 @@ argv[3]  initial reference
 - Chapters and verses are laid out in a `GtkGrid` with exactly 10 fixed
   columns; they are left-aligned and are not stretched evenly across the
   available width.
+- The book pane and the chapter/verse pane are separated by a fixed-width
+  `GtkBox` layout and a vertical separator, so long book names cannot overlap
+  the numeric grids.
 - The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
   the surrounding scrolled area is reserved at 452 px so the tenth column and
   the vertical scrollbar always have enough room.
@@ -93,6 +96,12 @@ argv[3]  initial reference
 - The apply and cancel buttons provide the same actions with the mouse.
 - The picker's filter entry accepts the same abbreviations as the main entry.
 - `Enter` in the filter entry confirms the reference.
+- Clicking a book row focuses the book list; `Up` / `Down` then switches to
+  the previous/next book.
+- Clicking a chapter number focuses it; `Left` / `Right` switches chapter.
+- Clicking a verse number focuses it; `Left` / `Right` switches verse.
+- From the chapter grid, `Down` moves focus to the verse grid; from the verse
+  grid, `Up` returns to the chapter grid.
 - The path bar itself remains fully mouse-driven; no text entry is shown until
   the edit button, `Ctrl+L`, or the pencil is used.
 
