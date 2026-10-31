@@ -20,8 +20,15 @@ typedef struct {
     GtkEntry *entry;
     GtkEntry *filter_entry;
     GtkButton *button;
+    GtkButton *book_button;
+    GtkButton *chapter_button;
+    GtkButton *prev_book_button;
+    GtkButton *next_book_button;
+    GtkButton *prev_chapter_button;
+    GtkButton *next_chapter_button;
     GtkPopover *popover;
-    GtkListBox *book_list;
+    GtkNotebook *book_notebook;
+    GtkListBox *book_lists[2];
     GtkFlowBox *chapter_flow;
     GtkLabel *hint;
     GswVersification *v11n;
@@ -37,6 +44,8 @@ typedef struct {
 struct _GswordReferenceChooser {
     GtkBox parent_instance;
 };
+
+static void update_navigation_labels(GswordReferenceChooser *self);
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswordReferenceChooser,
                            gsword_reference_chooser, GTK_TYPE_BOX)
@@ -134,34 +143,21 @@ clear_book_rows(GtkListBox *list)
 }
 
 static void
-append_group_row(GtkListBox *list, const gchar *title)
-{
-    GtkWidget *row = gtk_list_box_row_new();
-    GtkWidget *label = gtk_label_new(title);
-
-    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-    gtk_widget_add_css_class(label, "heading");
-    gtk_widget_set_margin_top(label, 8);
-    gtk_widget_set_margin_bottom(label, 2);
-    gtk_widget_set_margin_start(label, 8);
-    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
-    gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
-    gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
-    gtk_list_box_append(list, row);
-}
-
-static void
 populate_book_list(GswordReferenceChooserPrivate *priv, GPtrArray *filter)
 {
     guint i;
-    gint last_testament = 0;
+    gint first_page = -1;
+    gint current_page = -1;
+    gboolean current_selected = FALSE;
 
-    if (priv->book_list == NULL)
+    if (priv->book_lists[0] == NULL || priv->book_lists[1] == NULL)
         return;
     priv->updating = TRUE;
-    clear_book_rows(priv->book_list);
+    clear_book_rows(priv->book_lists[0]);
+    clear_book_rows(priv->book_lists[1]);
     for (i = 0; i < priv->books->len; i++) {
         GswordBookInfo *book = g_ptr_array_index(priv->books, i);
+        GtkListBox *list;
         GtkWidget *row;
         GtkWidget *box;
         GtkWidget *name;
@@ -169,12 +165,9 @@ populate_book_list(GswordReferenceChooserPrivate *priv, GPtrArray *filter)
 
         if (!book_matches_filter(book, filter))
             continue;
-        if (book->testament != last_testament) {
-            append_group_row(priv->book_list,
-                             book->testament == 1 ? "Old Testament"
-                                                  : "New Testament");
-            last_testament = book->testament;
-        }
+        list = priv->book_lists[book->testament - 1];
+        if (first_page < 0)
+            first_page = book->testament - 1;
         row = gtk_list_box_row_new();
         box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
         name = gtk_label_new(book->name != NULL ? book->name : book->osis);
@@ -192,10 +185,18 @@ populate_book_list(GswordReferenceChooserPrivate *priv, GPtrArray *filter)
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data(G_OBJECT(row), "book-index",
                           GINT_TO_POINTER(book->index + 1));
-        gtk_list_box_append(priv->book_list, row);
-        if (book->index == priv->book)
-            gtk_list_box_select_row(priv->book_list,
-                                    GTK_LIST_BOX_ROW(row));
+        gtk_list_box_append(list, row);
+        if (book->index == priv->book) {
+            current_page = book->testament - 1;
+            current_selected = TRUE;
+        }
+    }
+    if (priv->book_notebook != NULL) {
+        gint page = current_selected ? current_page
+                   : current_page >= 0 ? current_page
+                   : first_page >= 0 ? first_page : 0;
+
+        gtk_notebook_set_current_page(priv->book_notebook, page);
     }
     priv->updating = FALSE;
 }
@@ -232,6 +233,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     priv->updating = FALSE;
     g_free(text);
     populate_book_list(priv, NULL);
+    update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
     g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
     gtk_popover_popdown(priv->popover);
@@ -268,6 +270,47 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
 }
 
 static void
+update_navigation_labels(GswordReferenceChooser *self)
+{
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    gboolean chinese;
+    gchar *chapter_text;
+
+    if (priv->book_button == NULL || priv->chapter_button == NULL ||
+        priv->books == NULL || priv->books->len == 0)
+        return;
+    chinese = priv->locale != NULL &&
+              g_str_has_prefix(priv->locale, "zh");
+    gtk_button_set_label(priv->book_button,
+                         book_display_name(priv, priv->book));
+    chapter_text = chinese
+                 ? g_strdup_printf("第 %d 章", priv->chapter)
+                 : g_strdup_printf("Chapter %d", priv->chapter);
+    gtk_button_set_label(priv->chapter_button, chapter_text);
+    g_free(chapter_text);
+
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->prev_book_button),
+                             priv->book > 0);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->next_book_button),
+                             priv->book + 1 < (gint)priv->books->len);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->prev_chapter_button),
+                             priv->book > 0 || priv->chapter > 1);
+    {
+        GswordBookInfo *book = g_ptr_array_index(priv->books, priv->book);
+
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->next_chapter_button),
+                                 priv->chapter < book->chapter_max ||
+                                 priv->book + 1 <
+                                 (gint)priv->books->len);
+    }
+    if (priv->book_notebook != NULL)
+        gtk_notebook_set_current_page(
+            priv->book_notebook,
+            ((GswordBookInfo *)g_ptr_array_index(
+                priv->books, priv->book))->testament - 1);
+}
+
+static void
 on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
@@ -291,6 +334,7 @@ on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         ((GswordBookInfo *)g_ptr_array_index(priv->books, book))->chapter_max)
         priv->chapter = 1;
     populate_chapter_buttons(priv);
+    update_navigation_labels(self);
     {
         gchar *text = g_strdup_printf("%s %d:%d",
             book_display_name(priv, priv->book), priv->chapter, priv->verse);
@@ -339,8 +383,92 @@ set_reference_internal(GswordReferenceChooser *self, gint book,
     priv->updating = FALSE;
     g_free(text);
     populate_chapter_buttons(priv);
+    update_navigation_labels(self);
     if (emit)
         g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+}
+
+static void
+emit_navigation(GswordReferenceChooser *self)
+{
+    g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+    g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
+}
+
+static void
+on_prev_book_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+
+    (void)button;
+    if (priv->books == NULL || priv->book <= 0)
+        return;
+    set_reference_internal(self, priv->book - 1, priv->chapter, 1, FALSE);
+    emit_navigation(self);
+}
+
+static void
+on_next_book_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+
+    (void)button;
+    if (priv->books == NULL || priv->book + 1 >= (gint)priv->books->len)
+        return;
+    set_reference_internal(self, priv->book + 1, priv->chapter, 1, FALSE);
+    emit_navigation(self);
+}
+
+static void
+on_prev_chapter_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GswordBookInfo *book;
+    gint target_book = priv->book;
+    gint target_chapter;
+
+    (void)button;
+    if (priv->books == NULL || priv->books->len == 0)
+        return;
+    if (priv->chapter > 1) {
+        target_chapter = priv->chapter - 1;
+    } else if (priv->book > 0) {
+        target_book = priv->book - 1;
+        book = g_ptr_array_index(priv->books, target_book);
+        target_chapter = book->chapter_max;
+    } else {
+        return;
+    }
+    set_reference_internal(self, target_book, target_chapter, 1, FALSE);
+    emit_navigation(self);
+}
+
+static void
+on_next_chapter_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GswordBookInfo *book;
+    gint target_book = priv->book;
+    gint target_chapter;
+
+    (void)button;
+    if (priv->books == NULL || priv->books->len == 0)
+        return;
+    book = g_ptr_array_index(priv->books, priv->book);
+    if (priv->chapter < book->chapter_max) {
+        target_chapter = priv->chapter + 1;
+    } else if (priv->book + 1 < (gint)priv->books->len) {
+        target_book = priv->book + 1;
+        target_chapter = 1;
+    } else {
+        return;
+    }
+    set_reference_internal(self, target_book, target_chapter, 1, FALSE);
+    emit_navigation(self);
 }
 
 static GPtrArray *
@@ -654,6 +782,7 @@ on_entry_changed(GtkEditable *editable, gpointer user_data)
         priv->verse = reference.verse;
         populate_chapter_buttons(priv);
         populate_book_list(priv, candidates);
+        update_navigation_labels(self);
         gtk_label_set_text(priv->hint, "");
     } else if (g_error_matches(error, GSWORD_REFERENCE_ERROR,
                                GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK) &&
@@ -696,6 +825,7 @@ on_popover_filter_changed(GtkEditable *editable, gpointer user_data)
         priv->verse = reference.verse;
         populate_book_list(priv, candidates);
         populate_chapter_buttons(priv);
+        update_navigation_labels(self);
         gtk_label_set_text(priv->hint, "");
     } else if (g_error_matches(error, GSWORD_REFERENCE_ERROR,
                                GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK) &&
@@ -788,14 +918,14 @@ load_books(GswordReferenceChooserPrivate *priv)
     GswLocaleMgr *locale_mgr = gsw_locale_mgr_get_default();
     gint count;
     gint i;
-    gint nt_start;
+    gint ot_books = 0;
 
     g_clear_pointer(&priv->books, g_ptr_array_unref);
     priv->books = g_ptr_array_new_with_free_func(book_info_free);
     if (priv->v11n == NULL)
         return;
     count = gsw_versification_get_book_count(priv->v11n);
-    nt_start = gsw_versification_get_nt_start_offset(priv->v11n);
+    gsw_versification_get_bmax(priv->v11n, &ot_books, NULL);
     for (i = 0; i < count; i++) {
         GswBook *book = gsw_versification_get_book(priv->v11n, i);
         GswordBookInfo *info;
@@ -813,7 +943,7 @@ load_books(GswordReferenceChooserPrivate *priv)
                 locale_mgr, abbrev, priv->locale);
         info = g_new0(GswordBookInfo, 1);
         info->index = i;
-        info->testament = i < nt_start ? 1 : 2;
+        info->testament = i < ot_books ? 1 : 2;
         info->chapter_max = gsw_book_get_chapter_max(book);
         info->osis = g_strdup(gsw_book_get_osis_name(book));
         info->name = g_strdup(name != NULL ? name : info->osis);
@@ -859,6 +989,7 @@ gsword_reference_chooser_set_versification(
     }
     populate_book_list(priv, NULL);
     populate_chapter_buttons(priv);
+    update_navigation_labels(self);
 }
 
 void
@@ -882,6 +1013,7 @@ gsword_reference_chooser_set_locale(GswordReferenceChooser *self,
     g_free(text);
     populate_book_list(priv, NULL);
     populate_chapter_buttons(priv);
+    update_navigation_labels(self);
 }
 
 void
@@ -949,15 +1081,17 @@ static void
 gsword_reference_chooser_init(GswordReferenceChooser *self)
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
-    GtkWidget *book_scroll;
     GtkWidget *chapter_scroll;
     GtkWidget *popover_box;
     GtkWidget *paned;
     GtkWidget *book_page;
     GtkWidget *chapter_page;
+    GtkWidget *entry_row;
+    GtkWidget *nav_row;
+    GtkWidget *separator;
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(self),
-                                   GTK_ORIENTATION_HORIZONTAL);
+                                   GTK_ORIENTATION_VERTICAL);
     gtk_box_set_spacing(GTK_BOX(self), 4);
 
     priv->self = self;
@@ -987,8 +1121,59 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     g_signal_connect(priv->button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
 
-    gtk_box_append(GTK_BOX(self), GTK_WIDGET(priv->entry));
-    gtk_box_append(GTK_BOX(self), GTK_WIDGET(priv->button));
+    entry_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    gtk_box_append(GTK_BOX(entry_row), GTK_WIDGET(priv->entry));
+    gtk_box_append(GTK_BOX(entry_row), GTK_WIDGET(priv->button));
+
+    nav_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    priv->prev_book_button = GTK_BUTTON(
+        gtk_button_new_from_icon_name("go-previous-symbolic"));
+    priv->next_book_button = GTK_BUTTON(
+        gtk_button_new_from_icon_name("go-next-symbolic"));
+    priv->prev_chapter_button = GTK_BUTTON(
+        gtk_button_new_from_icon_name("go-previous-symbolic"));
+    priv->next_chapter_button = GTK_BUTTON(
+        gtk_button_new_from_icon_name("go-next-symbolic"));
+    priv->book_button = GTK_BUTTON(gtk_button_new_with_label(""));
+    priv->chapter_button = GTK_BUTTON(gtk_button_new_with_label(""));
+    gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
+    gtk_widget_add_css_class(GTK_WIDGET(priv->chapter_button), "flat");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_book_button),
+                                "Previous book");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_book_button),
+                                "Next book");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_chapter_button),
+                                "Previous chapter");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_chapter_button),
+                                "Next chapter");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
+                                "Choose a book");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->chapter_button),
+                                "Choose a chapter");
+    g_signal_connect(priv->prev_book_button, "clicked",
+                     G_CALLBACK(on_prev_book_clicked), self);
+    g_signal_connect(priv->next_book_button, "clicked",
+                     G_CALLBACK(on_next_book_clicked), self);
+    g_signal_connect(priv->prev_chapter_button, "clicked",
+                     G_CALLBACK(on_prev_chapter_clicked), self);
+    g_signal_connect(priv->next_chapter_button, "clicked",
+                     G_CALLBACK(on_next_chapter_clicked), self);
+    g_signal_connect(priv->book_button, "clicked",
+                     G_CALLBACK(on_button_clicked), self);
+    g_signal_connect(priv->chapter_button, "clicked",
+                     G_CALLBACK(on_button_clicked), self);
+    separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_widget_set_margin_start(GTK_WIDGET(priv->book_button), 4);
+    gtk_widget_set_margin_end(GTK_WIDGET(priv->book_button), 4);
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_book_button));
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->book_button));
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_book_button));
+    gtk_box_append(GTK_BOX(nav_row), separator);
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_chapter_button));
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->chapter_button));
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_chapter_button));
+    gtk_box_append(GTK_BOX(self), nav_row);
+    gtk_box_append(GTK_BOX(self), entry_row);
 
     priv->filter_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->filter_entry,
@@ -1018,16 +1203,34 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_widget_add_css_class(gtk_widget_get_last_child(chapter_page),
                              "heading");
 
-    priv->book_list = GTK_LIST_BOX(gtk_list_box_new());
-    gtk_list_box_set_selection_mode(priv->book_list, GTK_SELECTION_SINGLE);
-    g_signal_connect(priv->book_list, "row-selected",
-                     G_CALLBACK(on_book_selected), self);
-    book_scroll = gtk_scrolled_window_new();
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(book_scroll),
-                                  GTK_WIDGET(priv->book_list));
-    gtk_widget_set_size_request(book_scroll, 230, 320);
-    gtk_widget_set_vexpand(book_scroll, TRUE);
-    gtk_box_append(GTK_BOX(book_page), book_scroll);
+    {
+        GtkWidget *book_notebook = gtk_notebook_new();
+        const gchar *tab_labels[2] = { "旧约 / OT", "新约 / NT" };
+        guint i;
+
+        for (i = 0; i < 2; i++) {
+            GtkWidget *book_scroll = gtk_scrolled_window_new();
+
+            priv->book_lists[i] = GTK_LIST_BOX(gtk_list_box_new());
+            gtk_list_box_set_selection_mode(priv->book_lists[i],
+                                            GTK_SELECTION_NONE);
+            gtk_list_box_set_activate_on_single_click(priv->book_lists[i],
+                                                      TRUE);
+            g_signal_connect(priv->book_lists[i], "row-activated",
+                             G_CALLBACK(on_book_selected), self);
+            gtk_scrolled_window_set_child(
+                GTK_SCROLLED_WINDOW(book_scroll),
+                GTK_WIDGET(priv->book_lists[i]));
+            gtk_widget_set_vexpand(book_scroll, TRUE);
+            gtk_notebook_append_page(
+                GTK_NOTEBOOK(book_notebook), book_scroll,
+                gtk_label_new(tab_labels[i]));
+        }
+        gtk_widget_set_size_request(book_notebook, 230, 320);
+        gtk_widget_set_vexpand(book_notebook, TRUE);
+        priv->book_notebook = GTK_NOTEBOOK(book_notebook);
+        gtk_box_append(GTK_BOX(book_page), book_notebook);
+    }
 
     priv->chapter_flow = GTK_FLOW_BOX(gtk_flow_box_new());
     gtk_flow_box_set_selection_mode(priv->chapter_flow, GTK_SELECTION_NONE);
@@ -1072,6 +1275,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     load_books(priv);
     populate_book_list(priv, NULL);
     populate_chapter_buttons(priv);
+    update_navigation_labels(self);
     if (priv->books != NULL && priv->books->len > 0) {
         gchar *text = g_strdup_printf("%s 1:1",
             book_display_name(priv, priv->book));
