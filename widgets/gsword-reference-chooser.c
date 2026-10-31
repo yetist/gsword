@@ -35,8 +35,11 @@ typedef struct {
     GtkButton *apply_button;
     GtkButton *cancel_button;
     GtkButton *book_button;
+    GtkLabel *book_label;
     GtkButton *chapter_button;
+    GtkLabel *chapter_label;
     GtkButton *verse_button;
+    GtkLabel *verse_label;
     GtkButton *prev_book_button;
     GtkButton *next_book_button;
     GtkButton *prev_chapter_button;
@@ -332,16 +335,18 @@ update_navigation_labels(GswordReferenceChooser *self)
         return;
     chinese = priv->locale != NULL &&
               g_str_has_prefix(priv->locale, "zh");
-    gtk_button_set_label(priv->book_button,
-                         book_display_name(priv, priv->book));
+    gtk_label_set_text(priv->book_label,
+                       book_display_name(priv, priv->book));
     chapter_text = chinese
                  ? g_strdup_printf("第 %d 章", priv->chapter)
                  : g_strdup_printf("Chapter %d", priv->chapter);
     verse_text = chinese
                ? g_strdup_printf("第 %d 节", priv->verse)
                : g_strdup_printf("Verse %d", priv->verse);
-    gtk_button_set_label(priv->chapter_button, chapter_text);
-    gtk_button_set_label(priv->verse_button, verse_text);
+    gtk_label_set_text(priv->chapter_label, chapter_text);
+    gtk_label_set_text(priv->verse_label, verse_text);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
+                                book_display_name(priv, priv->book));
     g_free(chapter_text);
     g_free(verse_text);
 
@@ -1655,6 +1660,24 @@ gsword_reference_chooser_class_init(GswordReferenceChooserClass *klass)
         0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
+static GtkButton *
+make_path_segment_button(GtkLabel **label_out, gint width, gint width_chars)
+{
+    GtkButton *button = GTK_BUTTON(gtk_button_new());
+    GtkLabel *label = GTK_LABEL(gtk_label_new(""));
+
+    gtk_label_set_xalign(label, 0.5f);
+    gtk_label_set_width_chars(label, width_chars);
+    gtk_label_set_ellipsize(label, PANGO_ELLIPSIZE_END);
+    gtk_button_set_child(button, GTK_WIDGET(label));
+    gtk_widget_set_size_request(GTK_WIDGET(button), width, 32);
+    gtk_widget_set_hexpand(GTK_WIDGET(button), FALSE);
+    gtk_widget_set_halign(GTK_WIDGET(button), GTK_ALIGN_CENTER);
+    gtk_widget_add_css_class(GTK_WIDGET(button), "flat");
+    *label_out = label;
+    return button;
+}
+
 static void
 gsword_reference_chooser_init(GswordReferenceChooser *self)
 {
@@ -1721,9 +1744,10 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_button_new_from_icon_name("go-previous-symbolic"));
     priv->next_verse_button = GTK_BUTTON(
         gtk_button_new_from_icon_name("go-next-symbolic"));
-    priv->book_button = GTK_BUTTON(gtk_button_new_with_label(""));
-    priv->chapter_button = GTK_BUTTON(gtk_button_new_with_label(""));
-    priv->verse_button = GTK_BUTTON(gtk_button_new_with_label(""));
+    priv->book_button = make_path_segment_button(&priv->book_label, 140, 12);
+    priv->chapter_button = make_path_segment_button(&priv->chapter_label,
+                                                    120, 12);
+    priv->verse_button = make_path_segment_button(&priv->verse_label, 120, 12);
     priv->edit_button = GTK_BUTTON(
         gtk_button_new_from_icon_name("document-edit-symbolic"));
     gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
