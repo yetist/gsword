@@ -2,6 +2,7 @@
 #include "notes-store.h"
 #include "plan-store.h"
 #include "app-paths.h"
+#include "gsword-reference-chooser.h"
 
 #include <glib/gi18n.h>
 
@@ -22,7 +23,8 @@ typedef struct {
     GtkWidget *header;
     GtkDropDown *module_selector;
     GtkStringList *module_names;
-    GtkEntry *key_entry;
+    GswordReferenceChooser *reference_chooser;
+    gchar *versification;
     GtkToggleButton *follow;
     GtkScrolledWindow *scroll;
     GtkTextView *view;
@@ -49,7 +51,7 @@ typedef struct {
     gboolean page_restored;
     gboolean startup_selecting;
     GtkTextView *reader;
-    GtkEntry *key_entry;
+    GswordReferenceChooser *reference_chooser;
     GtkLabel *status_label;
     AdwDialog *preferences_dialog;
     GtkCssProvider *css;
@@ -2937,6 +2939,81 @@ gsword_window_make_resource_page(GswordWindow *self)
     return box;
 }
 
+static gchar *
+gsword_window_locale_name(void)
+{
+    const gchar * const *names = g_get_language_names();
+    gchar *locale;
+    gchar *suffix;
+
+    if (names == NULL || names[0] == NULL || *names[0] == '\0')
+        return g_strdup("en");
+    locale = g_strdup(names[0]);
+    suffix = strchr(locale, '.');
+    if (suffix != NULL)
+        *suffix = '\0';
+    suffix = strchr(locale, '@');
+    if (suffix != NULL)
+        *suffix = '\0';
+    if (g_strcmp0(locale, "C") == 0 || g_strcmp0(locale, "POSIX") == 0) {
+        g_free(locale);
+        return g_strdup("en");
+    }
+    return locale;
+}
+
+static void
+gsword_window_sync_reference_context(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswModuleInfo *info;
+    const gchar *versification = NULL;
+    gchar *locale;
+
+    if (priv->reference_chooser == NULL || priv->module == NULL)
+        return;
+    info = gsw_module_get_info(priv->module);
+    if (info != NULL)
+        versification = gsw_module_info_get_versification(info);
+    locale = gsword_window_locale_name();
+    gsword_reference_chooser_set_versification(
+        priv->reference_chooser,
+        versification != NULL && *versification != '\0'
+        ? versification : "KJV");
+    gsword_reference_chooser_set_locale(priv->reference_chooser, locale);
+    g_free(locale);
+}
+
+static void
+gsword_window_sync_reference_chooser(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswKey *key;
+    GswVerseKey *verse_key;
+    gint book;
+    gint chapter;
+    gint verse;
+
+    if (priv->reference_chooser == NULL)
+        return;
+    if (priv->module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(priv->module)) !=
+            GSW_KEY_KIND_VERSE) {
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->reference_chooser), FALSE);
+        return;
+    }
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->reference_chooser), TRUE);
+    key = gsw_module_get_key(priv->module);
+    verse_key = (GswVerseKey *)key;
+    book = gsw_verse_key_get_global_book_number(verse_key);
+    chapter = gsw_verse_key_get_chapter(verse_key);
+    verse = MAX(gsw_verse_key_get_verse(verse_key), 1);
+    if (book < 0 || chapter < 1)
+        return;
+    gsword_reference_chooser_set_reference(priv->reference_chooser,
+                                           book, chapter, verse);
+}
+
 static void
 gsword_window_refresh_reader(GswordWindow *self)
 {
@@ -2951,8 +3028,8 @@ gsword_window_refresh_reader(GswordWindow *self)
         gsword_window_set_text(self,
             _("No modules found.\n\nInstall SWORD modules or start gsword with "
               "--library PATH."));
-        gtk_editable_set_text(GTK_EDITABLE(priv->key_entry), "");
         gsword_window_set_status(self, _("No modules found"));
+        gsword_window_sync_reference_chooser(self);
         gsword_window_update_index_label(self);
         return;
     }
@@ -2985,8 +3062,6 @@ gsword_window_refresh_reader(GswordWindow *self)
 
     if (display_key == NULL)
         display_key = g_strdup(gsw_module_get_key_text(priv->module));
-    gtk_editable_set_text(GTK_EDITABLE(priv->key_entry),
-                          display_key != NULL ? display_key : "");
 
     status = g_strdup_printf("%s  |  %s",
                              gsw_module_get_name(priv->module),
@@ -2999,6 +3074,7 @@ gsword_window_refresh_reader(GswordWindow *self)
     gsword_window_apply_active_verse(self);
     gsword_window_update_study(self);
     gsword_window_update_index_label(self);
+    gsword_window_sync_reference_chooser(self);
     gsword_window_workspace_sync_from_reader(self);
     gsword_window_save_last_position(self);
 }
@@ -3220,7 +3296,7 @@ gsword_window_update_reference_status(GswordWindow *self)
     reference = gsword_window_current_reference(self);
     if (reference == NULL)
         return;
-    gtk_editable_set_text(GTK_EDITABLE(priv->key_entry), reference);
+    gsword_window_sync_reference_chooser(self);
     status = g_strdup_printf("%s  |  %s",
                              gsw_module_get_name(priv->module), reference);
     gsword_window_set_status(self, status);
@@ -3533,6 +3609,7 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
 
     g_clear_object(&priv->module);
     priv->module = module;
+    gsword_window_sync_reference_context(self);
 
     if (priv->settings != NULL) {
         saved_module = g_settings_get_string(priv->settings, "last-module");
@@ -3854,91 +3931,29 @@ gsword_window_populate_modules(GswordWindow *self)
 }
 
 static void
-on_key_activate(GtkEntry *entry, gpointer user_data)
+on_reference_chooser_activate(GswordReferenceChooser *chooser,
+                              gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
-
-    gsword_window_set_key_text(self, gtk_editable_get_text(GTK_EDITABLE(entry)));
-}
-
-static void
-on_go_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-
-    (void)button;
-    gsword_window_set_key_text(
-        self, gtk_editable_get_text(GTK_EDITABLE(priv->key_entry)));
-}
-
-static void
-on_chapter_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    gint direction = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),
-                                                       "direction"));
-    GswVerseKey *key;
+    gint book;
     gint chapter;
-    gint maximum;
-    gint global_book;
-    GswVersification *versification;
-    GError *error = NULL;
+    gint verse;
+    gchar *osis;
+    gchar *text;
 
-    if (priv->module == NULL || direction == 0 ||
-        gsw_key_get_kind(gsw_module_get_key(priv->module)) !=
-            GSW_KEY_KIND_VERSE)
+    if (!gsword_reference_chooser_get_reference(chooser, &book, &chapter,
+                                                &verse))
         return;
-    key = (GswVerseKey *)gsw_module_get_key(priv->module);
-    chapter = gsw_verse_key_get_chapter(key);
-    maximum = gsw_verse_key_get_chapter_max(key);
-    if (chapter < 1 || maximum < 1)
-        return;
-
-    if ((direction < 0 && chapter > 1) ||
-        (direction > 0 && chapter < maximum)) {
-        gsw_verse_key_set_chapter(key, chapter + direction);
-        gsw_verse_key_set_verse(key, 1);
-        if (!gsw_module_set_key_text(priv->module,
-                                     gsw_module_get_key_text(priv->module),
-                                     &error)) {
-            gsword_window_show_error(self, _("Cannot change chapter"), error);
-            return;
-        }
-        gsword_window_refresh_reader(self);
+    osis = gsword_reference_chooser_dup_osis(chooser);
+    if (osis == NULL || *osis == '\0') {
+        g_free(osis);
         return;
     }
-
-    /*
-     * Crossing a book boundary: previous from chapter 1 goes to the last
-     * chapter of the previous book; next from the last chapter goes to
-     * chapter 1 of the next book.
-     */
-    global_book = gsw_verse_key_get_global_book_number(key);
-    versification = gsw_versification_mgr_get_system(
-        gsw_versification_mgr_get_default(),
-        gsw_verse_key_get_versification(key));
-    if (global_book < 0 || versification == NULL)
-        return;
-    global_book += direction;
-    if (global_book < 0 ||
-        global_book >= gsw_versification_get_book_count(versification))
-        return;
-
-    {
-        GswBook *book = gsw_versification_get_book(versification,
-                                                   global_book);
-        gchar *reference;
-
-        if (book == NULL)
-            return;
-        reference = g_strdup_printf(
-            "%s %d", gsw_book_get_name(book),
-            direction < 0 ? gsw_book_get_chapter_max(book) : 1);
-        gsword_window_set_key_text(self, reference);
-        g_free(reference);
-    }
+    text = g_strdup_printf("%s %d:%d", osis, chapter, verse);
+    if (!gsword_window_set_key_text(self, text))
+        gsword_window_sync_reference_chooser(self);
+    g_free(text);
+    g_free(osis);
 }
 
 static void
@@ -4116,7 +4131,8 @@ on_focus_key_action(GSimpleAction *action, GVariant *parameter,
 
     (void)action;
     (void)parameter;
-    gtk_widget_grab_focus(GTK_WIDGET(priv->key_entry));
+    if (priv->reference_chooser != NULL)
+        gsword_reference_chooser_begin_edit(priv->reference_chooser);
 }
 
 static void
@@ -4550,10 +4566,6 @@ gsword_window_make_reader(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GtkWidget *reader_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *previous = gtk_button_new_from_icon_name(
-        "go-previous-symbolic");
-    GtkWidget *next = gtk_button_new_from_icon_name("go-next-symbolic");
-    GtkWidget *go = gtk_button_new_with_label(_("Go"));
     GtkWidget *copy = gtk_button_new_from_icon_name("edit-copy-symbolic");
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *highlight = gtk_button_new_from_icon_name(
@@ -4570,20 +4582,16 @@ gsword_window_make_reader(GswordWindow *self)
     gtk_widget_set_margin_start(toolbar, 12);
     gtk_widget_set_margin_end(toolbar, 12);
 
-    priv->key_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->key_entry,
-                                   _("Genesis 1:1 / 启示录 1:1"));
-    gtk_editable_set_width_chars(GTK_EDITABLE(priv->key_entry), 24);
-    gtk_widget_set_hexpand(GTK_WIDGET(priv->key_entry), TRUE);
-    g_signal_connect(priv->key_entry, "activate",
-                     G_CALLBACK(on_key_activate), self);
-    g_signal_connect(go, "clicked", G_CALLBACK(on_go_clicked), self);
+    {
+        gchar *locale = gsword_window_locale_name();
 
-    g_object_set_data(G_OBJECT(previous), "direction", GINT_TO_POINTER(-1));
-    g_object_set_data(G_OBJECT(next), "direction", GINT_TO_POINTER(1));
-    g_signal_connect(previous, "clicked", G_CALLBACK(on_chapter_clicked),
-                     self);
-    g_signal_connect(next, "clicked", G_CALLBACK(on_chapter_clicked), self);
+        priv->reference_chooser = GSWORD_REFERENCE_CHOOSER(
+            gsword_reference_chooser_new("KJV", locale));
+        g_free(locale);
+    }
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->reference_chooser), TRUE);
+    g_signal_connect(priv->reference_chooser, "activate",
+                     G_CALLBACK(on_reference_chooser_activate), self);
     g_signal_connect(copy, "clicked", G_CALLBACK(on_copy_clicked), self);
     g_signal_connect(note, "clicked", G_CALLBACK(on_note_clicked), self);
     g_signal_connect(highlight, "clicked",
@@ -4598,17 +4606,12 @@ gsword_window_make_reader(GswordWindow *self)
     priv->study_toggle = GTK_TOGGLE_BUTTON(study_button);
     g_signal_connect(study_button, "toggled",
                      G_CALLBACK(on_study_toggled), self);
-    gtk_widget_set_tooltip_text(previous, _("Previous chapter"));
-    gtk_widget_set_tooltip_text(next, _("Next chapter"));
     gtk_widget_set_tooltip_text(copy, _("Copy entry"));
     gtk_widget_set_tooltip_text(note, _("Open note for this verse"));
     gtk_widget_set_tooltip_text(highlight, _("Toggle verse highlight"));
     gtk_widget_set_tooltip_text(study_button, _("Toggle study panel"));
 
-    gtk_box_append(GTK_BOX(toolbar), previous);
-    gtk_box_append(GTK_BOX(toolbar), next);
-    gtk_box_append(GTK_BOX(toolbar), GTK_WIDGET(priv->key_entry));
-    gtk_box_append(GTK_BOX(toolbar), go);
+    gtk_box_append(GTK_BOX(toolbar), GTK_WIDGET(priv->reference_chooser));
     gtk_box_append(GTK_BOX(toolbar), note);
     gtk_box_append(GTK_BOX(toolbar), highlight);
     gtk_box_append(GTK_BOX(toolbar), teaching);
@@ -4809,6 +4812,57 @@ gsword_window_workspace_pane_apply_active(GswordWorkspacePane *pane)
 }
 
 static void
+gsword_window_workspace_pane_set_context(GswordWorkspacePane *pane)
+{
+    GswModuleInfo *info;
+    const gchar *versification = NULL;
+
+    if (pane->reference_chooser == NULL || pane->module == NULL)
+        return;
+    info = gsw_module_get_info(pane->module);
+    if (info != NULL)
+        versification = gsw_module_info_get_versification(info);
+    if (versification == NULL || *versification == '\0')
+        versification = "KJV";
+    if (g_strcmp0(pane->versification, versification) == 0)
+        return;
+    g_free(pane->versification);
+    pane->versification = g_strdup(versification);
+    gsword_reference_chooser_set_versification(pane->reference_chooser,
+                                               versification);
+}
+
+static void
+gsword_window_workspace_pane_sync_chooser(GswordWorkspacePane *pane)
+{
+    GswKey *key;
+    GswVerseKey *verse_key;
+    gint book;
+    gint chapter;
+    gint verse;
+
+    if (pane->reference_chooser == NULL)
+        return;
+    gsword_window_workspace_pane_set_context(pane);
+    if (pane->module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(pane->module)) !=
+            GSW_KEY_KIND_VERSE) {
+        gtk_widget_set_sensitive(GTK_WIDGET(pane->reference_chooser), FALSE);
+        return;
+    }
+    gtk_widget_set_sensitive(GTK_WIDGET(pane->reference_chooser), TRUE);
+    key = gsw_module_get_key(pane->module);
+    verse_key = (GswVerseKey *)key;
+    book = gsw_verse_key_get_global_book_number(verse_key);
+    chapter = gsw_verse_key_get_chapter(verse_key);
+    verse = MAX(gsw_verse_key_get_verse(verse_key), 1);
+    if (book < 0 || chapter < 1)
+        return;
+    gsword_reference_chooser_set_reference(pane->reference_chooser,
+                                           book, chapter, verse);
+}
+
+static void
 gsword_window_workspace_pane_render(GswordWorkspacePane *pane)
 {
     GError *error = NULL;
@@ -4837,12 +4891,7 @@ gsword_window_workspace_pane_render(GswordWorkspacePane *pane)
     gsword_window_set_view_text(pane->view, text);
     g_free(text);
     g_clear_error(&error);
-    if (pane->key_entry != NULL) {
-        const gchar *key = gsw_module_get_key_text(pane->module);
-
-        gtk_editable_set_text(GTK_EDITABLE(pane->key_entry),
-                              key != NULL ? key : "");
-    }
+    gsword_window_workspace_pane_sync_chooser(pane);
     gsword_window_workspace_pane_apply_active(pane);
 }
 
@@ -4937,6 +4986,7 @@ gsword_window_workspace_pane_set_module(GswordWorkspacePane *pane,
             gtk_check_button_set_active(GTK_CHECK_BUTTON(pane->follow), FALSE);
     }
     pane->updating--;
+    gsword_window_workspace_pane_set_context(pane);
     gsword_window_workspace_pane_render(pane);
 }
 
@@ -4948,6 +4998,7 @@ gsword_window_workspace_pane_free(gpointer data)
     g_clear_object(&pane->module);
     g_clear_object(&pane->module_names);
     g_free(pane->module_name);
+    g_free(pane->versification);
     g_free(pane);
 }
 
@@ -5006,8 +5057,7 @@ gsword_window_workspace_save(GswordWindow *self)
     for (i = 0; i < priv->workspace_panes->len; i++) {
         GswordWorkspacePane *pane = g_ptr_array_index(priv->workspace_panes, i);
         const gchar *key = pane->module != NULL
-                         ? gsw_module_get_key_text(pane->module)
-                         : gtk_editable_get_text(GTK_EDITABLE(pane->key_entry));
+                         ? gsw_module_get_key_text(pane->module) : NULL;
 
         g_variant_builder_add(&builder, "(ssb)",
                               pane->module_name != NULL ? pane->module_name : "",
@@ -5029,39 +5079,54 @@ gsword_window_workspace_save(GswordWindow *self)
 }
 
 static void
-gsword_window_workspace_pane_key_activate(GtkEntry *entry, gpointer user_data)
+gsword_window_workspace_pane_note_reference(GswordWorkspacePane *pane)
+{
+    GswordWindow *self = g_object_get_data(G_OBJECT(pane->root),
+                                           "workspace-window");
+    gchar *reference = NULL;
+
+    if (self == NULL)
+        return;
+    if (pane->module != NULL &&
+        gsw_key_get_kind(gsw_module_get_key(pane->module)) ==
+            GSW_KEY_KIND_VERSE) {
+        GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(pane->module);
+
+        reference = g_strdup_printf(
+            "%s %d:%d", gsw_verse_key_get_book_name(key),
+            gsw_verse_key_get_chapter(key), gsw_verse_key_get_verse(key));
+    }
+    if (reference != NULL)
+        gsword_window_workspace_sync_reference(self, reference, pane);
+    g_free(reference);
+    gsword_window_workspace_save(self);
+}
+
+static void
+gsword_window_workspace_pane_reference_activate(
+    GswordReferenceChooser *chooser, gpointer user_data)
 {
     GswordWorkspacePane *pane = user_data;
-    const gchar *text = gtk_editable_get_text(GTK_EDITABLE(entry));
-    gchar *normalized;
+    gint book;
+    gint chapter;
+    gint verse;
+    gchar *osis;
+    gchar *text;
 
-    if (pane->module == NULL || text == NULL || *text == '\0')
+    if (pane->module == NULL ||
+        !gsword_reference_chooser_get_reference(chooser, &book, &chapter,
+                                                &verse))
         return;
-    normalized = gsword_window_normalize_reference(text);
-    gsword_window_workspace_pane_set_reference(
-        pane, normalized != NULL ? normalized : text);
-    g_free(normalized);
-    {
-        GswordWindow *self = g_object_get_data(G_OBJECT(pane->root),
-                                               "workspace-window");
-        gchar *reference = NULL;
-
-        if (self != NULL) {
-            if (gsw_key_get_kind(gsw_module_get_key(pane->module)) ==
-                GSW_KEY_KIND_VERSE) {
-                GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(
-                    pane->module);
-                reference = g_strdup_printf(
-                    "%s %d:%d", gsw_verse_key_get_book_name(key),
-                    gsw_verse_key_get_chapter(key),
-                    gsw_verse_key_get_verse(key));
-            }
-            if (reference != NULL)
-                gsword_window_workspace_sync_reference(self, reference, pane);
-            g_free(reference);
-            gsword_window_workspace_save(self);
-        }
+    osis = gsword_reference_chooser_dup_osis(chooser);
+    if (osis == NULL || *osis == '\0') {
+        g_free(osis);
+        return;
     }
+    text = g_strdup_printf("%s %d:%d", osis, chapter, verse);
+    gsword_window_workspace_pane_set_reference(pane, text);
+    g_free(text);
+    g_free(osis);
+    gsword_window_workspace_pane_note_reference(pane);
 }
 
 static void
@@ -5084,9 +5149,13 @@ gsword_window_workspace_pane_module_changed(GObject *object,
     if (name == NULL || g_strcmp0(name, pane->module_name) == 0)
         return;
     self = g_object_get_data(G_OBJECT(pane->root), "workspace-window");
-    gsword_window_workspace_pane_set_module(
-        pane, name,
-        gtk_editable_get_text(GTK_EDITABLE(pane->key_entry)));
+    {
+        gchar *key = pane->module != NULL
+                   ? g_strdup(gsw_module_get_key_text(pane->module)) : NULL;
+
+        gsword_window_workspace_pane_set_module(pane, name, key);
+        g_free(key);
+    }
     if (self != NULL)
         gsword_window_workspace_save(GSWORD_WINDOW(self));
 }
@@ -5459,13 +5528,22 @@ gsword_window_workspace_add_pane(GswordWindow *self, const gchar *module_name,
     gtk_widget_set_margin_start(key_box, 6);
     gtk_widget_set_margin_end(key_box, 6);
     gtk_widget_set_margin_bottom(key_box, 4);
-    pane->key_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(pane->key_entry, _("Reference"));
-    gtk_widget_set_hexpand(GTK_WIDGET(pane->key_entry), TRUE);
-    g_signal_connect(pane->key_entry, "activate",
-                     G_CALLBACK(gsword_window_workspace_pane_key_activate),
+    {
+        gchar *locale = gsword_window_locale_name();
+
+        pane->reference_chooser = GSWORD_REFERENCE_CHOOSER(
+            gsword_reference_chooser_new_compact("KJV", locale));
+        g_free(locale);
+    }
+    gtk_widget_set_hexpand(GTK_WIDGET(pane->reference_chooser), FALSE);
+    gtk_widget_set_halign(GTK_WIDGET(pane->reference_chooser),
+                          GTK_ALIGN_START);
+    g_signal_connect(pane->reference_chooser, "activate",
+                     G_CALLBACK(
+                         gsword_window_workspace_pane_reference_activate),
                      pane);
-    gtk_box_append(GTK_BOX(key_box), GTK_WIDGET(pane->key_entry));
+    gtk_box_append(GTK_BOX(key_box),
+                   GTK_WIDGET(pane->reference_chooser));
 
     pane->view = GTK_TEXT_VIEW(gtk_text_view_new());
     gtk_text_view_set_editable(pane->view, FALSE);

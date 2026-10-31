@@ -11,9 +11,10 @@ Current implementation:
 - `main.c`: application entry point
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
-- `window.c` / `window.h`: main window, module sidebar, reader, chapter
-  navigation, parallel Bible template, study panel, search/index UI, notes/tags/verse
-  lists/highlights/export, module install/update/remove UI, reading plans,
+- `window.c` / `window.h`: main window, module sidebar, reader, book/chapter/
+  verse reference picker, parallel Bible template, study panel, search/index
+  UI, notes/tags/verse lists/highlights/export, module install/update/remove UI,
+  reading plans,
   daily devotion, memory review, teaching layout, grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
   daily devotion viewers, Strong's/cross-reference navigation, range
@@ -30,6 +31,11 @@ Current implementation:
   multi-pane layout, columns and scroll sync, legacy parallel template modules,
   active plan, devotion
   module, font scale, theme
+
+The reader toolbar and each multi-pane workspace pane use
+`../widgets/gsword-reference-chooser.c`.  The reader uses the full path-bar
+form; panes use `gsword_reference_chooser_new_compact()` and open the same
+book/chapter/verse picker.
 
 Application UI strings use gettext. The `../po/` directory contains
 `POTFILES.in`, `LINGUAS`, and translated catalogs such as `zh_CN.po`.
