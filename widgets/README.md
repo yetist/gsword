@@ -99,9 +99,10 @@ argv[3]  initial reference
 - Clicking a book row focuses the book list; `Up` / `Down` then switches to
   the previous/next book.
 - Clicking a chapter number focuses it; `Left` / `Right` switches chapter.
-- Clicking a verse number focuses it; `Left` / `Right` switches verse.
-- From the chapter grid, `Down` moves focus to the verse grid; from the verse
-  grid, `Up` returns to the chapter grid.
+- From the chapter grid, `Down` moves focus to the verse grid; `Left` /
+  `Right` then switches verse without closing the picker.
+- From the verse grid, `Up` returns to the chapter grid. Clicking a verse
+  still confirms the reference and closes the picker.
 - The path bar itself remains fully mouse-driven; no text entry is shown until
   the edit button, `Ctrl+L`, or the pencil is used.
 
