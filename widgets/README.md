@@ -71,6 +71,13 @@ argv[3]  initial reference
 - The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
   the surrounding scrolled area is reserved at 452 px so the tenth column and
   the vertical scrollbar always have enough room.
+- For the KJV's 66 books, the chapter-count distribution is:
+  - 32 books need 1 row,
+  - 42 books need at most 2 rows,
+  - 54 books need at most 3 rows.
+  `54 / 66 = 81.8%`, so the chapter area is three rows high.
+- Three rows require `3 × 32 + 2 × 4 = 104 px`; both chapter and verse grids
+  use that height.
 - Select a book; the chapter and verse grids update.
 - Click a chapter; the verse grid updates while the picker stays open.
 - Click a verse; the reference is confirmed and the path bar returns.
