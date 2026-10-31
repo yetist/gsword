@@ -74,9 +74,10 @@ argv[3]  initial reference
 - For the KJV's 66 books, the chapter-count distribution is:
   - 32 books need 1 row,
   - 42 books need at most 2 rows,
-  - 54 books need at most 3 rows.
-  `54 / 66 = 81.8%`, so the chapter area is three rows high.
-- Three rows require `3 × 32 + 2 × 4 = 104 px`; both chapter and verse grids
+  - 54 books need at most 3 rows,
+  - 60 books need at most 4 rows.
+  `60 / 66 = 90.9%`, so the chapter area is four rows high.
+- Four rows require `4 × 32 + 3 × 4 = 140 px`; both chapter and verse grids
   use that height.
 - Select a book; the chapter and verse grids update.
 - Click a chapter; the verse grid updates while the picker stays open.
