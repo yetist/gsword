@@ -28,6 +28,7 @@ typedef struct {
     GtkWidget *study_panel;
     GtkToggleButton *study_toggle;
     GtkNotebook *study_notebook;
+    GtkLabel *commentary_context;
     GtkTextView *commentary_view;
     GtkTextView *strongs_view;
     GtkTextView *crossref_view;
@@ -137,6 +138,8 @@ typedef struct {
     GtkListBox *list_items;
     GtkEntry *new_list_entry;
     GtkTextTag *highlight_tag;
+    GtkTextTag *active_verse_tag;
+    gint active_verse;
     gchar *note_module;
     gchar *note_storage_key;
     gchar *note_display_key;
@@ -150,6 +153,10 @@ static void gsword_window_update_index_label(GswordWindow *self);
 static void gsword_window_parallel_load(GswordWindow *self);
 static void gsword_window_open_note_for_current(GswordWindow *self);
 static void gsword_window_refresh_notes(GswordWindow *self);
+static void gsword_window_apply_active_verse(GswordWindow *self);
+static void gsword_window_select_verse(GswordWindow *self, gint verse);
+static gchar *gsword_window_current_reference(GswordWindow *self);
+static void gsword_window_update_reference_status(GswordWindow *self);
 static gchar *gsword_window_current_storage_key(GswordWindow *self);
 static gchar *gsword_window_current_display_key(GswordWindow *self);
 static void gsword_window_apply_highlights(GswordWindow *self);
@@ -383,6 +390,17 @@ gsword_window_update_study(GswordWindow *self)
     if (priv->module == NULL)
         return;
     key_text = gsw_module_get_key_text(priv->module);
+    if (priv->commentary_context != NULL) {
+        gchar *reference = gsword_window_current_reference(self);
+        gchar *title = priv->commentary_name != NULL
+                     ? g_strdup_printf("%s — %s", priv->commentary_name,
+                                       reference != NULL ? reference : "")
+                     : g_strdup(_("Commentary"));
+
+        gtk_label_set_text(priv->commentary_context, title);
+        g_free(title);
+        g_free(reference);
+    }
 
     if (priv->commentary_module != NULL) {
         gchar *commentary = NULL;
@@ -2505,9 +2523,10 @@ gsword_window_refresh_reader(GswordWindow *self)
         if (gsw_verse_key_get_book(key) >= 1 &&
             gsw_verse_key_get_chapter(key) >= 1) {
             text = gsword_window_chapter_text_for_module(priv->module);
-            display_key = g_strdup_printf("%s %d",
-                                          gsw_verse_key_get_book_name(key),
-                                          gsw_verse_key_get_chapter(key));
+            display_key = g_strdup_printf(
+                "%s %d:%d", gsw_verse_key_get_book_name(key),
+                gsw_verse_key_get_chapter(key),
+                MAX(gsw_verse_key_get_verse(key), 1));
         } else {
             text = gsw_module_get_text(priv->module, &error);
         }
@@ -2537,6 +2556,7 @@ gsword_window_refresh_reader(GswordWindow *self)
 
     gtk_stack_set_visible_child_name(priv->content_stack, "reader");
     gsword_window_apply_highlights(self);
+    gsword_window_apply_active_verse(self);
     gsword_window_update_study(self);
     gsword_window_update_index_label(self);
     gsword_window_save_last_position(self);
@@ -2614,6 +2634,8 @@ gsword_window_apply_highlights(GswordWindow *self)
                                    &start, &finish);
     }
     gtk_text_buffer_get_start_iter(buffer, &iter);
+    if (!gtk_text_iter_forward_line(&iter))
+        return;
     while (TRUE) {
         GtkTextIter end = iter;
         gchar *line;
@@ -2650,6 +2672,184 @@ gsword_window_apply_highlights(GswordWindow *self)
             break;
     }
     g_free(reference);
+}
+
+static gint
+gsword_window_verse_number_from_line(const gchar *line)
+{
+    const gchar *p = line;
+
+    if (p == NULL)
+        return 0;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (!g_ascii_isdigit(*p))
+        return 0;
+    return (gint)g_ascii_strtoll(p, NULL, 10);
+}
+
+static gchar *
+gsword_window_current_reference(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswKey *key;
+
+    if (priv->module == NULL)
+        return NULL;
+    key = gsw_module_get_key(priv->module);
+    if (gsw_key_get_kind(key) == GSW_KEY_KIND_VERSE) {
+        GswVerseKey *verse_key = (GswVerseKey *)key;
+        gint book = gsw_verse_key_get_book(verse_key);
+        gint chapter = gsw_verse_key_get_chapter(verse_key);
+        gint verse = gsw_verse_key_get_verse(verse_key);
+
+        if (book >= 1 && chapter >= 1) {
+            return g_strdup_printf("%s %d:%d",
+                                   gsw_verse_key_get_book_name(verse_key),
+                                   chapter, verse > 0 ? verse : 1);
+        }
+    }
+    return g_strdup(gsw_module_get_key_text(priv->module));
+}
+
+static void
+gsword_window_update_reference_status(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gchar *reference;
+    gchar *status;
+
+    if (priv->module == NULL)
+        return;
+    reference = gsword_window_current_reference(self);
+    if (reference == NULL)
+        return;
+    gtk_editable_set_text(GTK_EDITABLE(priv->key_entry), reference);
+    status = g_strdup_printf("%s  |  %s",
+                             gsw_module_get_name(priv->module), reference);
+    gsword_window_set_status(self, status);
+    g_free(status);
+    g_free(reference);
+}
+
+static void
+gsword_window_apply_active_verse(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkTextBuffer *buffer;
+    GtkTextIter iter;
+    GtkTextIter finish;
+    gint active;
+    gint line_count;
+    gint line;
+
+    if (priv->reader == NULL || priv->active_verse_tag == NULL)
+        return;
+    buffer = gtk_text_view_get_buffer(priv->reader);
+    gtk_text_buffer_get_bounds(buffer, &iter, &finish);
+    gtk_text_buffer_remove_tag(buffer, priv->active_verse_tag, &iter, &finish);
+
+    if (priv->module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(priv->module)) !=
+            GSW_KEY_KIND_VERSE)
+        return;
+
+    active = gsw_verse_key_get_verse(
+        (GswVerseKey *)gsw_module_get_key(priv->module));
+    if (active < 1)
+        active = 1;
+    priv->active_verse = active;
+
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter line_start;
+        GtkTextIter line_end;
+        gchar *text;
+        gint verse;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &line_start, line);
+        line_end = line_start;
+        if (!gtk_text_iter_forward_line(&line_end))
+            gtk_text_buffer_get_end_iter(buffer, &line_end);
+        text = gtk_text_buffer_get_text(buffer, &line_start, &line_end, TRUE);
+        verse = gsword_window_verse_number_from_line(text);
+        g_free(text);
+        if (verse == active) {
+            gtk_text_buffer_apply_tag(buffer, priv->active_verse_tag,
+                                      &line_start, &line_end);
+            break;
+        }
+    }
+}
+
+static void
+gsword_window_select_verse(GswordWindow *self, gint verse)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswKey *key;
+    GError *error = NULL;
+    gchar *text;
+
+    if (priv->module == NULL)
+        return;
+    key = gsw_module_get_key(priv->module);
+    if (gsw_key_get_kind(key) != GSW_KEY_KIND_VERSE)
+        return;
+    if (verse < 1 || verse > gsw_verse_key_get_verse_max((GswVerseKey *)key))
+        return;
+
+    gsw_verse_key_set_verse((GswVerseKey *)key, verse);
+    text = g_strdup(gsw_module_get_key_text(priv->module));
+    if (!gsw_module_set_key_text(priv->module, text, &error)) {
+        gsword_window_show_error(self, _("Cannot set key"), error);
+        g_free(text);
+        return;
+    }
+    g_free(text);
+    priv->active_verse = verse;
+    gsword_window_update_reference_status(self);
+    gsword_window_update_study(self);
+    gsword_window_apply_active_verse(self);
+    gsword_window_save_last_position(self);
+}
+
+static void
+on_reader_clicked(GtkGestureClick *gesture, gint n_press, gdouble x,
+                  gdouble y, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GtkTextView *view;
+    GtkTextBuffer *buffer;
+    GtkTextIter iter;
+    GtkTextIter line_start;
+    GtkTextIter line_end;
+    gchar *line;
+    gint verse;
+    gint bx;
+    gint by;
+
+    (void)n_press;
+    if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
+        GDK_BUTTON_PRIMARY)
+        return;
+    view = GTK_TEXT_VIEW(gtk_event_controller_get_widget(
+        GTK_EVENT_CONTROLLER(gesture)));
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
+                                          (gint)x, (gint)y, &bx, &by);
+    gtk_text_view_get_iter_at_location(view, &iter, bx, by);
+    if (gtk_text_iter_get_line(&iter) == 0)
+        return;
+    buffer = gtk_text_view_get_buffer(view);
+    line_start = iter;
+    gtk_text_iter_set_line_offset(&line_start, 0);
+    line_end = line_start;
+    if (!gtk_text_iter_forward_line(&line_end))
+        gtk_text_buffer_get_end_iter(buffer, &line_end);
+    line = gtk_text_buffer_get_text(buffer, &line_start, &line_end, TRUE);
+    verse = gsword_window_verse_number_from_line(line);
+    g_free(line);
+    if (verse > 0)
+        gsword_window_select_verse(self, verse);
 }
 
 static void
@@ -2949,6 +3149,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     if ((direction < 0 && chapter > 1) ||
         (direction > 0 && chapter < maximum)) {
         gsw_verse_key_set_chapter(key, chapter + direction);
+        gsw_verse_key_set_verse(key, 1);
         if (!gsw_module_set_key_text(priv->module,
                                      gsw_module_get_key_text(priv->module),
                                      &error)) {
@@ -3265,7 +3466,8 @@ gsword_window_make_study_panel(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GtkWidget *notebook = gtk_notebook_new();
-    GtkWidget *commentary;
+    GtkWidget *commentary = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *commentary_scroll;
     GtkWidget *strongs;
     GtkWidget *crossrefs;
     GtkWidget *lexicon_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
@@ -3273,7 +3475,19 @@ gsword_window_make_study_panel(GswordWindow *self)
     GtkWidget *lexicon_button = gtk_button_new_with_label(_("Lookup"));
     GtkWidget *lexicon;
 
-    commentary = gsword_window_make_scrolled_text(&priv->commentary_view);
+    commentary_scroll = gsword_window_make_scrolled_text(
+        &priv->commentary_view);
+    gtk_widget_set_vexpand(commentary_scroll, TRUE);
+    priv->commentary_context = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->commentary_context, 0.0f);
+    gtk_label_set_ellipsize(priv->commentary_context, PANGO_ELLIPSIZE_END);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->commentary_context),
+                             "dim-label");
+    gtk_widget_set_margin_start(GTK_WIDGET(priv->commentary_context), 6);
+    gtk_widget_set_margin_end(GTK_WIDGET(priv->commentary_context), 6);
+    gtk_box_append(GTK_BOX(commentary),
+                   GTK_WIDGET(priv->commentary_context));
+    gtk_box_append(GTK_BOX(commentary), commentary_scroll);
     strongs = gsword_window_make_scrolled_text(&priv->strongs_view);
     crossrefs = gsword_window_make_scrolled_text(&priv->crossref_view);
     lexicon = gsword_window_make_scrolled_text(&priv->lexicon_view);
@@ -3323,6 +3537,7 @@ gsword_window_make_reader(GswordWindow *self)
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *scrolled = gtk_scrolled_window_new();
     GtkWidget *content_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    GtkGesture *reader_click;
     GtkWidget *study_panel = gsword_window_make_study_panel(self);
 
     gtk_widget_set_margin_top(toolbar, 8);
@@ -3386,6 +3601,15 @@ gsword_window_make_reader(GswordWindow *self)
     priv->highlight_tag = gtk_text_buffer_create_tag(
         gtk_text_view_get_buffer(priv->reader), "gsword-highlight",
         "background", "#fff0a8", NULL);
+    priv->active_verse_tag = gtk_text_buffer_create_tag(
+        gtk_text_view_get_buffer(priv->reader), "gsword-active-verse",
+        "background", "#dbeafe", "weight", PANGO_WEIGHT_SEMIBOLD, NULL);
+    gtk_text_tag_set_priority(priv->active_verse_tag, 1);
+    reader_click = gtk_gesture_click_new();
+    g_signal_connect(reader_click, "pressed",
+                     G_CALLBACK(on_reader_clicked), self);
+    gtk_widget_add_controller(GTK_WIDGET(priv->reader),
+                              GTK_EVENT_CONTROLLER(reader_click));
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(priv->reader));
     gtk_widget_set_vexpand(content_box, TRUE);
