@@ -27,8 +27,11 @@ typedef struct {
 
     GtkWidget *study_panel;
     GtkToggleButton *study_toggle;
+    GtkCheckButton *study_follow_toggle;
     GtkNotebook *study_notebook;
     GtkLabel *commentary_context;
+    gboolean commentary_follow;
+    gchar *pinned_commentary_key;
     GtkTextView *commentary_view;
     GtkTextView *strongs_view;
     GtkTextView *crossref_view;
@@ -87,6 +90,7 @@ typedef struct {
 
     GswordPlanStore *plans;
     GtkDropDown *plan_selector;
+    GtkNotebook *plan_notebook;
     GtkStringList *plan_names;
     GPtrArray *plan_items;
     GtkLabel *plan_summary;
@@ -384,14 +388,22 @@ gsword_window_update_study(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GError *error = NULL;
     const gchar *key_text;
+    const gchar *commentary_key;
     GString *text;
 
     gsword_window_ensure_study_modules(self);
     if (priv->module == NULL)
         return;
     key_text = gsw_module_get_key_text(priv->module);
+    commentary_key = key_text;
+    if (!priv->commentary_follow && priv->pinned_commentary_key != NULL &&
+        *priv->pinned_commentary_key != '\0')
+        commentary_key = priv->pinned_commentary_key;
+
     if (priv->commentary_context != NULL) {
-        gchar *reference = gsword_window_current_reference(self);
+        gchar *reference = priv->commentary_follow
+                         ? gsword_window_current_reference(self)
+                         : g_strdup(commentary_key);
         gchar *title = priv->commentary_name != NULL
                      ? g_strdup_printf("%s — %s", priv->commentary_name,
                                        reference != NULL ? reference : "")
@@ -405,7 +417,7 @@ gsword_window_update_study(GswordWindow *self)
     if (priv->commentary_module != NULL) {
         gchar *commentary = NULL;
 
-        if (gsw_module_set_key_text(priv->commentary_module, key_text,
+        if (gsw_module_set_key_text(priv->commentary_module, commentary_key,
                                     &error)) {
             commentary = gsw_module_get_text(priv->commentary_module, &error);
         }
@@ -2414,6 +2426,7 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), memory,
                              gtk_label_new(_("Memorize")));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+    priv->plan_notebook = GTK_NOTEBOOK(notebook);
     g_object_unref(modes);
     return notebook;
 }
@@ -2964,10 +2977,66 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
     if (row == NULL || priv->selecting_module)
         return;
     name = g_object_get_data(G_OBJECT(row), "module-name");
-    if (name != NULL) {
-        gsword_window_load_module(self, name);
-        gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+    if (name == NULL)
+        return;
+
+    {
+        gint type = GPOINTER_TO_INT(
+            g_object_get_data(G_OBJECT(row), "module-type"));
+
+        if (type == GSW_MODULE_TYPE_COMMENTARIES) {
+            g_free(priv->commentary_name);
+            priv->commentary_name = g_strdup(name);
+            g_clear_object(&priv->commentary_module);
+            priv->commentary_module = gsw_manager_create_module(
+                priv->manager, name);
+            if (priv->settings != NULL)
+                g_settings_set_string(priv->settings, "study-module", name);
+            gtk_widget_set_visible(priv->study_panel, TRUE);
+            if (priv->study_toggle != NULL)
+                gtk_toggle_button_set_active(priv->study_toggle, TRUE);
+            if (priv->study_notebook != NULL)
+                gtk_notebook_set_current_page(priv->study_notebook, 0);
+            gsword_window_update_study(self);
+            gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+            gsword_window_set_status(self, _("Commentary opened in study panel"));
+            return;
+        }
+        if (type == GSW_MODULE_TYPE_LEXDICTS) {
+            g_free(priv->lexicon_name);
+            priv->lexicon_name = g_strdup(name);
+            g_clear_object(&priv->lexicon_module);
+            priv->lexicon_module = gsw_manager_create_module(priv->manager,
+                                                             name);
+            if (priv->settings != NULL)
+                g_settings_set_string(priv->settings, "study-lexicon", name);
+            gtk_widget_set_visible(priv->study_panel, TRUE);
+            if (priv->study_toggle != NULL)
+                gtk_toggle_button_set_active(priv->study_toggle, TRUE);
+            if (priv->study_notebook != NULL)
+                gtk_notebook_set_current_page(priv->study_notebook, 3);
+            gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+            gsword_window_set_status(self, _("Lexicon opened in study panel"));
+            return;
+        }
+        if (type == GSW_MODULE_TYPE_DAILY_DEVOS) {
+            if (priv->settings != NULL)
+                g_settings_set_string(priv->settings, "devotion-module", name);
+            gtk_stack_set_visible_child_name(priv->content_stack, "plan");
+            if (priv->plan_notebook != NULL)
+                gtk_notebook_set_current_page(priv->plan_notebook, 2);
+            gsword_window_refresh_devotion(self);
+            return;
+        }
+        if (type == GSW_MODULE_TYPE_MAPS) {
+            gsword_window_set_status(
+                self, _("Map viewer will be added in a later phase"));
+            return;
+        }
     }
+
+    gsword_window_load_module(self, name);
+    gtk_stack_set_visible_child_name(priv->content_stack, "reader");
 }
 
 static const gchar *
@@ -2986,6 +3055,39 @@ gsword_window_module_type_display(GswModuleInfo *info)
         return gsw_module_info_get_type_string(info) != NULL
              ? gsw_module_info_get_type_string(info) : _("Unknown");
     }
+}
+
+static const gchar *
+gsword_window_module_group_title(GswModuleType type)
+{
+    switch (type) {
+    case GSW_MODULE_TYPE_BIBLES:       return _("Bibles");
+    case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
+    case GSW_MODULE_TYPE_LEXDICTS:     return _("Lexicons / Dictionaries");
+    case GSW_MODULE_TYPE_DAILY_DEVOS:  return _("Daily Devotions");
+    case GSW_MODULE_TYPE_GENBOOKS:     return _("General Books");
+    case GSW_MODULE_TYPE_MAPS:         return _("Maps");
+    case GSW_MODULE_TYPE_OTHER:
+    case GSW_MODULE_TYPE_UNKNOWN:
+    default:                           return _("Other Modules");
+    }
+}
+
+static GtkWidget *
+gsword_window_make_module_group_row(const gchar *title)
+{
+    GtkWidget *row = gtk_list_box_row_new();
+    GtkWidget *label = gtk_label_new(title);
+
+    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+    gtk_widget_add_css_class(label, "heading");
+    gtk_widget_set_margin_top(label, 10);
+    gtk_widget_set_margin_bottom(label, 2);
+    gtk_widget_set_margin_start(label, 10);
+    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+    gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
+    gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
+    return row;
 }
 
 static GtkWidget *
@@ -3025,6 +3127,11 @@ gsword_window_make_module_row(GswModuleInfo *info)
     gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
     g_object_set_data_full(G_OBJECT(row), "module-name", g_strdup(name),
                            g_free);
+    g_object_set_data(G_OBJECT(row), "module-type",
+                      GINT_TO_POINTER((gint)
+                          (module_info_is_devotional(info)
+                           ? GSW_MODULE_TYPE_DAILY_DEVOS
+                           : gsw_module_info_get_module_type(info))));
     return row;
 }
 
@@ -3032,11 +3139,26 @@ static void
 gsword_window_populate_modules(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    static const GswModuleType group_types[] = {
+        GSW_MODULE_TYPE_BIBLES,
+        GSW_MODULE_TYPE_COMMENTARIES,
+        GSW_MODULE_TYPE_LEXDICTS,
+        GSW_MODULE_TYPE_DAILY_DEVOS,
+        GSW_MODULE_TYPE_GENBOOKS,
+        GSW_MODULE_TYPE_MAPS,
+        GSW_MODULE_TYPE_OTHER,
+    };
     GPtrArray *infos;
     gchar *wanted = NULL;
     GtkListBoxRow *selected = NULL;
     GtkListBoxRow *first = NULL;
-    guint i;
+    GtkStringList *names;
+    gchar *parallel_a = NULL;
+    gchar *parallel_b = NULL;
+    guint selected_a = 0;
+    guint selected_b = 0;
+    guint bible_count = 0;
+    guint group;
 
     if (priv->manager == NULL) {
         gtk_stack_set_visible_child_name(priv->content_stack, "reader");
@@ -3045,8 +3167,11 @@ gsword_window_populate_modules(GswordWindow *self)
     }
 
     infos = gsw_manager_get_module_infos(priv->manager);
-    if (priv->settings != NULL)
+    if (priv->settings != NULL) {
         wanted = g_settings_get_string(priv->settings, "last-module");
+        parallel_a = g_settings_get_string(priv->settings, "parallel-a");
+        parallel_b = g_settings_get_string(priv->settings, "parallel-b");
+    }
 
     while (gtk_widget_get_first_child(GTK_WIDGET(priv->module_list)) != NULL) {
         GtkWidget *child = gtk_widget_get_first_child(
@@ -3055,43 +3180,61 @@ gsword_window_populate_modules(GswordWindow *self)
         gtk_list_box_remove(priv->module_list, child);
     }
 
-    {
-        GtkStringList *names = gtk_string_list_new(NULL);
-        gchar *parallel_a = priv->settings != NULL
-            ? g_settings_get_string(priv->settings, "parallel-a") : NULL;
-        gchar *parallel_b = priv->settings != NULL
-            ? g_settings_get_string(priv->settings, "parallel-b") : NULL;
-        guint selected_a = 0;
-        guint selected_b = infos->len > 1 ? 1 : 0;
+    names = gtk_string_list_new(NULL);
+    for (group = 0; group < G_N_ELEMENTS(group_types); group++) {
+        gboolean header_added = FALSE;
+        guint i;
 
         for (i = 0; i < infos->len; i++) {
             GswModuleInfo *info = g_ptr_array_index(infos, i);
-            GtkWidget *row = gsword_window_make_module_row(info);
+            GswModuleType type = module_info_is_devotional(info)
+                               ? GSW_MODULE_TYPE_DAILY_DEVOS
+                               : gsw_module_info_get_module_type(info);
+            GswModuleType effective_type = type == GSW_MODULE_TYPE_UNKNOWN
+                                         ? GSW_MODULE_TYPE_OTHER : type;
             const gchar *name = gsw_module_info_get_name(info);
+            GtkWidget *row;
 
-            gtk_string_list_append(names, name);
+            if (effective_type != group_types[group])
+                continue;
+            if (!header_added) {
+                gtk_list_box_append(
+                    priv->module_list,
+                    gsword_window_make_module_group_row(
+                        gsword_window_module_group_title(group_types[group])));
+                header_added = TRUE;
+            }
+            row = gsword_window_make_module_row(info);
             gtk_list_box_append(priv->module_list, row);
             if (first == NULL)
                 first = GTK_LIST_BOX_ROW(row);
+
+            if (type != GSW_MODULE_TYPE_BIBLES)
+                continue;
             if (wanted != NULL && g_strcmp0(wanted, name) == 0)
                 selected = GTK_LIST_BOX_ROW(row);
             if (parallel_a != NULL && g_strcmp0(parallel_a, name) == 0)
-                selected_a = i;
+                selected_a = bible_count;
             if (parallel_b != NULL && g_strcmp0(parallel_b, name) == 0)
-                selected_b = i;
+                selected_b = bible_count;
+            gtk_string_list_append(names, name);
+            bible_count++;
         }
-
-        g_clear_object(&priv->module_names);
-        priv->module_names = names;
-        gtk_drop_down_set_model(priv->parallel_a, G_LIST_MODEL(names));
-        gtk_drop_down_set_model(priv->parallel_b, G_LIST_MODEL(names));
-        gtk_drop_down_set_selected(priv->parallel_a, selected_a);
-        gtk_drop_down_set_selected(priv->parallel_b, selected_b);
-        g_free(parallel_a);
-        g_free(parallel_b);
     }
+
+    if (bible_count < 2)
+        selected_b = 0;
+    g_clear_object(&priv->module_names);
+    priv->module_names = names;
+    gtk_drop_down_set_model(priv->parallel_a, G_LIST_MODEL(names));
+    gtk_drop_down_set_model(priv->parallel_b, G_LIST_MODEL(names));
+    gtk_drop_down_set_selected(priv->parallel_a, selected_a);
+    gtk_drop_down_set_selected(priv->parallel_b, selected_b);
+
     g_ptr_array_unref(infos);
     g_free(wanted);
+    g_free(parallel_a);
+    g_free(parallel_b);
 
     if (selected == NULL)
         selected = first;
@@ -3396,6 +3539,35 @@ on_study_toggled(GtkToggleButton *button, gpointer user_data)
 
     gtk_widget_set_visible(priv->study_panel,
                            gtk_toggle_button_get_active(button));
+    if (priv->settings != NULL)
+        g_settings_set_boolean(priv->settings, "study-visible",
+                               gtk_toggle_button_get_active(button));
+}
+
+static void
+on_study_follow_toggled(GtkCheckButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gboolean follow = gtk_check_button_get_active(button);
+
+    priv->commentary_follow = follow;
+    g_clear_pointer(&priv->pinned_commentary_key, g_free);
+    if (!follow) {
+        if (priv->commentary_module != NULL)
+            priv->pinned_commentary_key = g_strdup(
+                gsw_module_get_key_text(priv->commentary_module));
+        else if (priv->module != NULL)
+            priv->pinned_commentary_key = g_strdup(
+                gsw_module_get_key_text(priv->module));
+    }
+    if (priv->settings != NULL) {
+        g_settings_set_boolean(priv->settings, "study-follow", follow);
+        g_settings_set_string(priv->settings, "study-pinned-key",
+                              priv->pinned_commentary_key != NULL
+                              ? priv->pinned_commentary_key : "");
+    }
+    gsword_window_update_study(self);
 }
 
 static void
@@ -3467,6 +3639,8 @@ gsword_window_make_study_panel(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GtkWidget *notebook = gtk_notebook_new();
     GtkWidget *commentary = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *commentary_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *study_follow = gtk_check_button_new_with_label(_("Follow"));
     GtkWidget *commentary_scroll;
     GtkWidget *strongs;
     GtkWidget *crossrefs;
@@ -3485,8 +3659,15 @@ gsword_window_make_study_panel(GswordWindow *self)
                              "dim-label");
     gtk_widget_set_margin_start(GTK_WIDGET(priv->commentary_context), 6);
     gtk_widget_set_margin_end(GTK_WIDGET(priv->commentary_context), 6);
-    gtk_box_append(GTK_BOX(commentary),
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->commentary_context), TRUE);
+    priv->study_follow_toggle = GTK_CHECK_BUTTON(study_follow);
+    gtk_check_button_set_active(priv->study_follow_toggle, TRUE);
+    g_signal_connect(study_follow, "toggled",
+                     G_CALLBACK(on_study_follow_toggled), self);
+    gtk_box_append(GTK_BOX(commentary_header),
                    GTK_WIDGET(priv->commentary_context));
+    gtk_box_append(GTK_BOX(commentary_header), study_follow);
+    gtk_box_append(GTK_BOX(commentary), commentary_header);
     gtk_box_append(GTK_BOX(commentary), commentary_scroll);
     strongs = gsword_window_make_scrolled_text(&priv->strongs_view);
     crossrefs = gsword_window_make_scrolled_text(&priv->crossref_view);
@@ -3570,6 +3751,7 @@ gsword_window_make_reader(GswordWindow *self)
     gtk_button_set_icon_name(GTK_BUTTON(study_button),
                              "dialog-information-symbolic");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), TRUE);
+    priv->study_toggle = GTK_TOGGLE_BUTTON(study_button);
     g_signal_connect(study_button, "toggled",
                      G_CALLBACK(on_study_toggled), self);
     gtk_widget_set_tooltip_text(previous, _("Previous chapter"));
@@ -4859,6 +5041,12 @@ gsword_window_load_settings(GswordWindow *self)
     priv->font_scale = 1.0;
     priv->theme = g_strdup("system");
     if (priv->settings != NULL) {
+        gchar *study_module;
+        gchar *study_lexicon;
+        gchar *pinned_key;
+        gboolean follow;
+        gboolean visible;
+
         priv->font_scale = g_settings_get_double(priv->settings, "font-scale");
         if (priv->font_scale <= 0.0)
             priv->font_scale = 1.0;
@@ -4868,6 +5056,35 @@ gsword_window_load_settings(GswordWindow *self)
             g_free(priv->theme);
             priv->theme = g_strdup("system");
         }
+
+        study_module = g_settings_get_string(priv->settings, "study-module");
+        if (study_module != NULL && *study_module != '\0') {
+            g_free(priv->commentary_name);
+            priv->commentary_name = g_strdup(study_module);
+        }
+        study_lexicon = g_settings_get_string(priv->settings, "study-lexicon");
+        if (study_lexicon != NULL && *study_lexicon != '\0') {
+            g_free(priv->lexicon_name);
+            priv->lexicon_name = g_strdup(study_lexicon);
+        }
+        follow = g_settings_get_boolean(priv->settings, "study-follow");
+        visible = g_settings_get_boolean(priv->settings, "study-visible");
+        pinned_key = g_settings_get_string(priv->settings,
+                                           "study-pinned-key");
+        priv->commentary_follow = follow;
+        if (priv->study_follow_toggle != NULL)
+            gtk_check_button_set_active(priv->study_follow_toggle, follow);
+        if (priv->study_toggle != NULL)
+            gtk_toggle_button_set_active(priv->study_toggle, visible);
+        if (!follow && pinned_key != NULL && *pinned_key != '\0') {
+            g_free(priv->pinned_commentary_key);
+            priv->pinned_commentary_key = g_strdup(pinned_key);
+            g_settings_set_string(priv->settings, "study-pinned-key",
+                                  pinned_key);
+        }
+        g_free(study_module);
+        g_free(study_lexicon);
+        g_free(pinned_key);
     }
     gsword_window_apply_css(self);
     gsword_window_apply_theme(self);
@@ -4889,6 +5106,7 @@ gsword_window_finalize(GObject *object)
     g_clear_object(&priv->plan_names);
     g_clear_object(&priv->devotion_names);
     g_clear_pointer(&priv->memory_items, g_ptr_array_unref);
+    g_clear_pointer(&priv->pinned_commentary_key, g_free);
     g_clear_pointer(&priv->memory_module, g_free);
     g_clear_pointer(&priv->memory_key, g_free);
     g_clear_pointer(&priv->memory_display, g_free);

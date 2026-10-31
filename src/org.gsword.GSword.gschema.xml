@@ -41,6 +41,31 @@
       <summary>Active reading plan</summary>
       <description>Identifier of the reading plan shown in the Plan workspace.</description>
     </key>
+    <key name="study-visible" type="b">
+      <default>true</default>
+      <summary>Study panel visibility</summary>
+      <description>Whether the study panel is shown in the reading workspace.</description>
+    </key>
+    <key name="study-follow" type="b">
+      <default>true</default>
+      <summary>Study panel follows the active verse</summary>
+      <description>Whether study resources follow the active Bible verse or stay pinned.</description>
+    </key>
+    <key name="study-pinned-key" type="s">
+      <default>''</default>
+      <summary>Pinned study reference</summary>
+      <description>The reference retained when the study panel is not following the active verse.</description>
+    </key>
+    <key name="study-module" type="s">
+      <default>''</default>
+      <summary>Selected commentary module</summary>
+      <description>Commentary module shown in the study panel.</description>
+    </key>
+    <key name="study-lexicon" type="s">
+      <default>''</default>
+      <summary>Selected lexicon module</summary>
+      <description>Lexicon module shown in the study panel.</description>
+    </key>
     <key name="devotion-module" type="s">
       <default>''</default>
       <summary>Daily devotional module</summary>

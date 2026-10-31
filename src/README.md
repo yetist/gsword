@@ -14,8 +14,8 @@ Current implementation:
 - `window.c` / `window.h`: main window, module sidebar, reader, chapter
   navigation, parallel reading, study panel, search/index UI, notes/tags/verse
   lists/highlights/export, module install/update/remove UI, reading plans,
-  daily devotion, memory review, teaching layout, workspace persistence,
-  preferences dialog
+  daily devotion, memory review, teaching layout, grouped resource sidebar,
+  linked/pinned study panel, workspace persistence, preferences dialog
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
