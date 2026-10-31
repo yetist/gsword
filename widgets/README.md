@@ -198,8 +198,8 @@ activate  user confirmed a reference
   `activate_text()`, avoiding two subtly different commit paths.
 - Path widths, number-grid columns, button sizes, row count, grid width, and
   scrolled-area width are named constants at the top of the C file.
-- The widget CSS provider is installed once per display instead of once per
-  widget instance.
+- The widget CSS provider is installed once per process for the default
+  display instead of once per widget instance.
 - The popover is parented to the entry, not to the enclosing box, so it does
   not affect the entry's layout.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
