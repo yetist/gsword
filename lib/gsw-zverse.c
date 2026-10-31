@@ -23,6 +23,7 @@ typedef struct {
     FILE *text[2];
     FILE *comp[2];
     GswBlockCache *cache[2];
+    gboolean available[2];
     gchar *cipher_key;
 } GswZVerseData;
 
@@ -36,6 +37,17 @@ gsw_zverse_letter(GswModuleInfo *info)
     if (block_type != NULL && g_ascii_strcasecmp(block_type, "BOOK") == 0)
         return 'b';
     return 'c';
+}
+
+static void
+gsw_zverse_close_one(GswZVerseData *data, gint index)
+{
+    if (data->index[index]) fclose(data->index[index]);
+    if (data->text[index]) fclose(data->text[index]);
+    if (data->comp[index]) fclose(data->comp[index]);
+    data->index[index] = data->text[index] = data->comp[index] = NULL;
+    gsw_block_cache_clear(data->cache[index]);
+    data->available[index] = FALSE;
 }
 
 static gboolean
@@ -75,9 +87,11 @@ gsw_zverse_open_one(GswModuleBackend *backend, gint testament, GError **error)
             goto fail;
     }
 
+    data->available[i] = TRUE;
     return TRUE;
 
 fail:
+    gsw_zverse_close_one(data, i);
     g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
                 "Cannot open compressed module data for %s", prefix);
     return FALSE;
@@ -99,10 +113,24 @@ gsw_zverse_open(GswModuleBackend *backend, GError **error)
         }
         data->cipher_key = g_strdup(key);
     }
-    if (!gsw_zverse_open_one(backend, 1, error))
-        return FALSE;
-    if (!gsw_zverse_open_one(backend, 2, error))
-        return FALSE;
+    {
+        GError *ot_error = NULL;
+        GError *nt_error = NULL;
+        gboolean ot = gsw_zverse_open_one(backend, 1, &ot_error);
+        gboolean nt = gsw_zverse_open_one(backend, 2, &nt_error);
+
+        if (!ot && !nt) {
+            g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
+                        "Cannot open compressed module data: %s; %s",
+                        ot_error != NULL ? ot_error->message : "ot missing",
+                        nt_error != NULL ? nt_error->message : "nt missing");
+            g_clear_error(&ot_error);
+            g_clear_error(&nt_error);
+            return FALSE;
+        }
+        g_clear_error(&ot_error);
+        g_clear_error(&nt_error);
+    }
     backend->opened = TRUE;
     return TRUE;
 }
@@ -113,13 +141,8 @@ gsw_zverse_close(GswModuleBackend *backend)
     GswZVerseData *data = backend->data;
     gint i;
 
-    for (i = 0; i < 2; i++) {
-        if (data->index[i]) fclose(data->index[i]);
-        if (data->text[i]) fclose(data->text[i]);
-        if (data->comp[i]) fclose(data->comp[i]);
-        data->index[i] = data->text[i] = data->comp[i] = NULL;
-        gsw_block_cache_clear(data->cache[i]);
-    }
+    for (i = 0; i < 2; i++)
+        gsw_zverse_close_one(data, i);
     g_free(data->cipher_key);
     data->cipher_key = NULL;
     backend->opened = FALSE;
@@ -214,6 +237,13 @@ gsw_zverse_find(GswModuleBackend *backend, GswKey *key,
     else {
         testament = 1;
         i = 0;
+    }
+
+    if (!data->available[i] || data->comp[i] == NULL) {
+        *block = 0;
+        *start = 0;
+        *size = 0;
+        return TRUE;
     }
 
     if (index < 0) {
@@ -311,8 +341,13 @@ gsw_zverse_set_position(GswModuleBackend *backend, GswKey *key,
     }
     if (!gsw_zverse_open(backend, error))
         return FALSE;
-    if (!gsw_find_last_nonempty(data->comp[0], rec_size, 8, data->is4,
-                                &ot_index, error) ||
+    ot_index = 1;
+    nt_index = 1;
+    if (data->available[0] && data->comp[0] != NULL &&
+        !gsw_find_last_nonempty(data->comp[0], rec_size, 8, data->is4,
+                                &ot_index, error))
+        return FALSE;
+    if (data->available[1] && data->comp[1] != NULL &&
         !gsw_find_last_nonempty(data->comp[1], rec_size, 8, data->is4,
                                 &nt_index, error))
         return FALSE;
