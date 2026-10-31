@@ -109,9 +109,8 @@ on_activate_app(GtkApplication *application, gpointer user_data)
         "输入示例：Gen 1 / Ge1 / 创 1 / 诗23 / 1 Cor 13:4 / 约 3:16。\n"
         "默认是路径栏：点击箭头切换上一卷/下一卷、上一章/下一章、"
         "上一节/下一节；点击书卷名、章节名或节号打开选择器。\n"
-        "点击铅笔或按 Ctrl+L 变成文本输入框；Enter 确认，Esc 取消。"
-        "选择器分为旧约 / OT 和新约 / NT 两个书卷分组，并包含章节和 "
-        "Verses / 节 网格。");
+        "按 Ctrl+L 变成文本输入框；Enter 确认，Esc 取消。"
+        "选择器分为旧约和新约两个书卷分组，并包含章和节网格。");
     gtk_widget_add_css_class(help, "dim-label");
 
     chooser = GSWORD_REFERENCE_CHOOSER(
