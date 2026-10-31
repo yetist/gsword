@@ -107,7 +107,9 @@ on_activate_app(GtkApplication *application, gpointer user_data)
     gtk_label_set_xalign(GTK_LABEL(help), 0.0f);
     gtk_label_set_text(GTK_LABEL(help),
         "输入示例：Gen 1 / Ge1 / 创 1 / 诗23 / 1 Cor 13:4 / 约 3:16。\n"
-        "鼠标点击右侧箭头可选择书卷和章节；回车确认输入，Esc 关闭面板。");
+        "顶部箭头可单击切换上一卷/下一卷、上一章/下一章；"
+        "点击书卷名、章节名或右侧箭头打开选择器。\n"
+        "选择器分为旧约 / OT 和新约 / NT 两个书卷分组。");
     gtk_widget_add_css_class(help, "dim-label");
 
     chooser = GSWORD_REFERENCE_CHOOSER(
