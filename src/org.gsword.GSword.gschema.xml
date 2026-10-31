@@ -24,7 +24,7 @@
     <key name="active-page" type="s">
       <default>'reader'</default>
       <summary>Active workspace page</summary>
-      <description>One of reader, panes, parallel, search, notes, plan, teaching, or library.</description>
+      <description>One of reader, panes, search, notes, plan, teaching, or library. Legacy parallel is migrated to a panes template.</description>
     </key>
     <key name="workspace-layout" type="s">
       <default>''</default>
@@ -36,15 +36,20 @@
       <summary>Multi-pane workspace column count</summary>
       <description>Number of columns used by the multi-pane workspace grid.</description>
     </key>
+    <key name="workspace-sync-scroll" type="b">
+      <default>false</default>
+      <summary>Synchronize pane scrolling</summary>
+      <description>Whether scrolling one workspace pane scrolls the other panes.</description>
+    </key>
     <key name="parallel-a" type="s">
       <default>''</default>
       <summary>First parallel module</summary>
-      <description>Module shown in the first parallel pane.</description>
+      <description>Legacy first module used to initialize the parallel pane template.</description>
     </key>
     <key name="parallel-b" type="s">
       <default>''</default>
       <summary>Second parallel module</summary>
-      <description>Module shown in the second parallel pane.</description>
+      <description>Legacy second module used to initialize the parallel pane template.</description>
     </key>
     <key name="active-plan-id" type="s">
       <default>''</default>
