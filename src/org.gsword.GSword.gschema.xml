@@ -24,7 +24,17 @@
     <key name="active-page" type="s">
       <default>'reader'</default>
       <summary>Active workspace page</summary>
-      <description>One of reader, parallel, search, notes, plan, teaching, or library.</description>
+      <description>One of reader, panes, parallel, search, notes, plan, teaching, or library.</description>
+    </key>
+    <key name="workspace-layout" type="s">
+      <default>''</default>
+      <summary>Multi-pane workspace layout</summary>
+      <description>Serialized list of workspace panes and their follow settings.</description>
+    </key>
+    <key name="workspace-columns" type="i">
+      <default>2</default>
+      <summary>Multi-pane workspace column count</summary>
+      <description>Number of columns used by the multi-pane workspace grid.</description>
     </key>
     <key name="parallel-a" type="s">
       <default>''</default>
