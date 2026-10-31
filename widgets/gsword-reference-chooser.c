@@ -69,6 +69,9 @@ static void set_edit_mode(GswordReferenceChooser *self, gboolean editing);
 static void on_entry_activate(GtkEntry *entry, gpointer user_data);
 static void populate_verse_buttons(GswordReferenceChooserPrivate *priv);
 static gint get_verse_max(GswordReferenceChooserPrivate *priv, gint chapter);
+static void update_grid_highlight(GtkGrid *grid, const gchar *key, gint value);
+static void set_reference_internal(GswordReferenceChooser *self, gint book,
+                                   gint chapter, gint verse, gboolean emit);
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswordReferenceChooser,
                            gsword_reference_chooser, GTK_TYPE_BOX)
@@ -256,6 +259,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     priv->updating = FALSE;
     g_free(text);
     populate_book_list(priv, NULL);
+    update_grid_highlight(priv->chapter_grid, "chapter", chapter);
     populate_verse_buttons(priv);
     update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
@@ -448,6 +452,207 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
 }
 
 static void
+update_grid_highlight(GtkGrid *grid, const gchar *key, gint value)
+{
+    GtkWidget *child;
+
+    for (child = gtk_widget_get_first_child(GTK_WIDGET(grid));
+         child != NULL;
+         child = gtk_widget_get_next_sibling(child)) {
+        gint candidate = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(child),
+                                                            key));
+
+        if (candidate == value)
+            gtk_widget_add_css_class(child, "suggested-action");
+        else
+            gtk_widget_remove_css_class(child, "suggested-action");
+    }
+}
+
+static GtkWidget *
+find_grid_button(GtkGrid *grid, const gchar *key, gint value)
+{
+    GtkWidget *child;
+
+    for (child = gtk_widget_get_first_child(GTK_WIDGET(grid));
+         child != NULL;
+         child = gtk_widget_get_next_sibling(child)) {
+        if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(child), key)) == value)
+            return child;
+    }
+    return NULL;
+}
+
+static gboolean
+on_book_list_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                         guint keycode, GdkModifierType state,
+                         gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GswordBookInfo *current;
+    gint target = -1;
+    gint page;
+    guint i;
+
+    (void)controller;
+    (void)keycode;
+    (void)state;
+    if (priv->books == NULL || priv->books->len == 0)
+        return FALSE;
+    if (keyval != GDK_KEY_Up && keyval != GDK_KEY_Down)
+        return FALSE;
+    current = g_ptr_array_index(priv->books, priv->book);
+    page = priv->book_notebook != NULL
+         ? gtk_notebook_get_current_page(priv->book_notebook) : 0;
+    if (current->testament - 1 != page) {
+        for (i = 0; i < priv->books->len; i++) {
+            GswordBookInfo *book = g_ptr_array_index(priv->books, i);
+
+            if (book->testament - 1 != page)
+                continue;
+            if (target < 0)
+                target = (gint)i;
+            if (keyval == GDK_KEY_Up)
+                target = (gint)i;
+        }
+    } else {
+        target = priv->book + (keyval == GDK_KEY_Down ? 1 : -1);
+    }
+    if (target < 0 || target >= (gint)priv->books->len) {
+        gtk_widget_grab_focus(GTK_WIDGET(
+            priv->book_lists[current->testament - 1]));
+        return TRUE;
+    }
+    set_reference_internal(self, target, priv->chapter, 1, FALSE);
+    g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+    {
+        GswordBookInfo *book = g_ptr_array_index(priv->books, target);
+
+        gtk_widget_grab_focus(GTK_WIDGET(
+            priv->book_lists[book->testament - 1]));
+    }
+    return TRUE;
+}
+
+static gboolean
+on_chapter_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                       guint keycode, GdkModifierType state,
+                       gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GtkRoot *root;
+    GtkWidget *focus;
+    gint chapter;
+    gint target;
+    GswordBookInfo *book;
+    gchar *text;
+
+    (void)controller;
+    (void)keycode;
+    (void)state;
+    if (keyval == GDK_KEY_Down) {
+        GtkWidget *button = find_grid_button(priv->verse_grid, "verse",
+                                             priv->verse);
+
+        if (button == NULL)
+            button = find_grid_button(priv->verse_grid, "verse", 1);
+        if (button != NULL)
+            gtk_widget_grab_focus(button);
+        return TRUE;
+    }
+    if (keyval != GDK_KEY_Left && keyval != GDK_KEY_Right)
+        return FALSE;
+    root = gtk_widget_get_root(GTK_WIDGET(priv->chapter_grid));
+    focus = root != NULL ? gtk_root_get_focus(root) : NULL;
+    if (focus == NULL)
+        return FALSE;
+    chapter = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(focus), "chapter"));
+    if (chapter < 1)
+        return FALSE;
+    target = chapter + (keyval == GDK_KEY_Right ? 1 : -1);
+    book = g_ptr_array_index(priv->books, priv->book);
+    if (target < 1 || target > book->chapter_max)
+        return TRUE;
+    priv->chapter = target;
+    priv->verse = 1;
+    text = g_strdup_printf("%s %d:1",
+                           book_display_name(priv, priv->book), target);
+    priv->updating = TRUE;
+    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
+    if (priv->filter_entry != NULL)
+        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
+    priv->updating = FALSE;
+    g_free(text);
+    update_grid_highlight(priv->chapter_grid, "chapter", target);
+    populate_verse_buttons(priv);
+    update_navigation_labels(self);
+    g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+    focus = find_grid_button(priv->chapter_grid, "chapter", target);
+    if (focus != NULL)
+        gtk_widget_grab_focus(focus);
+    return TRUE;
+}
+
+static gboolean
+on_verse_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                     guint keycode, GdkModifierType state,
+                     gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GtkRoot *root;
+    GtkWidget *focus;
+    gint verse;
+    gint target;
+    gint verse_max;
+    gchar *text;
+
+    (void)controller;
+    (void)keycode;
+    (void)state;
+    if (keyval == GDK_KEY_Up) {
+        GtkWidget *button = find_grid_button(priv->chapter_grid, "chapter",
+                                             priv->chapter);
+
+        if (button != NULL)
+            gtk_widget_grab_focus(button);
+        return TRUE;
+    }
+    if (keyval != GDK_KEY_Left && keyval != GDK_KEY_Right)
+        return FALSE;
+    root = gtk_widget_get_root(GTK_WIDGET(priv->verse_grid));
+    focus = root != NULL ? gtk_root_get_focus(root) : NULL;
+    if (focus == NULL)
+        return FALSE;
+    verse = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(focus), "verse"));
+    if (verse < 1)
+        return FALSE;
+    verse_max = get_verse_max(priv, priv->chapter);
+    target = verse + (keyval == GDK_KEY_Right ? 1 : -1);
+    if (target < 1 || target > verse_max)
+        return TRUE;
+    priv->verse = target;
+    text = g_strdup_printf("%s %d:%d",
+                           book_display_name(priv, priv->book),
+                           priv->chapter, target);
+    priv->updating = TRUE;
+    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
+    if (priv->filter_entry != NULL)
+        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
+    priv->updating = FALSE;
+    g_free(text);
+    update_grid_highlight(priv->verse_grid, "verse", target);
+    update_navigation_labels(self);
+    g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+    focus = find_grid_button(priv->verse_grid, "verse", target);
+    if (focus != NULL)
+        gtk_widget_grab_focus(focus);
+    return TRUE;
+}
+
+static void
 on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
@@ -483,8 +688,7 @@ on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         priv->updating = FALSE;
         g_free(text);
     }
-    if (priv->filter_entry != NULL)
-        gtk_widget_grab_focus(GTK_WIDGET(priv->filter_entry));
+    gtk_widget_grab_focus(GTK_WIDGET(list));
 }
 
 static void
@@ -1373,6 +1577,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     GtkWidget *verse_scroll;
     GtkWidget *popover_box;
     GtkWidget *paned;
+    GtkWidget *pane_separator;
     GtkWidget *book_page;
     GtkWidget *chapter_page;
     GtkWidget *nav_row;
@@ -1551,9 +1756,15 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_widget_set_parent(GTK_WIDGET(priv->popover),
                           GTK_WIDGET(priv->book_button));
 
-    paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    paned = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     book_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     chapter_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    pane_separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_widget_set_size_request(book_page, 240, -1);
+    gtk_widget_set_hexpand(book_page, FALSE);
+    gtk_widget_set_hexpand(chapter_page, TRUE);
+    gtk_widget_set_margin_end(book_page, 4);
+    gtk_widget_set_margin_start(chapter_page, 4);
     gtk_box_append(GTK_BOX(book_page),
                    gtk_label_new("Books"));
     gtk_box_append(GTK_BOX(chapter_page),
@@ -1578,6 +1789,16 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                                                       TRUE);
             g_signal_connect(priv->book_lists[i], "row-activated",
                              G_CALLBACK(on_book_selected), self);
+            {
+                GtkEventController *key = gtk_event_controller_key_new();
+
+                gtk_widget_set_focusable(GTK_WIDGET(priv->book_lists[i]), TRUE);
+                g_signal_connect(key, "key-pressed",
+                                 G_CALLBACK(on_book_list_key_pressed), self);
+                gtk_event_controller_set_propagation_phase(
+                    key, GTK_PHASE_CAPTURE);
+                gtk_widget_add_controller(GTK_WIDGET(priv->book_lists[i]), key);
+            }
             gtk_scrolled_window_set_child(
                 GTK_SCROLLED_WINDOW(book_scroll),
                 GTK_WIDGET(priv->book_lists[i]));
@@ -1604,6 +1825,14 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         GSWORD_NUMBER_COLUMNS * GSWORD_NUMBER_BUTTON_WIDTH +
         (GSWORD_NUMBER_COLUMNS - 1) * GSWORD_NUMBER_GRID_SPACING,
         GSWORD_NUMBER_GRID_HEIGHT);
+    {
+        GtkEventController *key = gtk_event_controller_key_new();
+
+        g_signal_connect(key, "key-pressed",
+                         G_CALLBACK(on_chapter_key_pressed), self);
+        gtk_event_controller_set_propagation_phase(key, GTK_PHASE_CAPTURE);
+        gtk_widget_add_controller(GTK_WIDGET(priv->chapter_grid), key);
+    }
     chapter_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(chapter_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -1632,6 +1861,14 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         GSWORD_NUMBER_COLUMNS * GSWORD_NUMBER_BUTTON_WIDTH +
         (GSWORD_NUMBER_COLUMNS - 1) * GSWORD_NUMBER_GRID_SPACING,
         GSWORD_NUMBER_GRID_HEIGHT);
+    {
+        GtkEventController *key = gtk_event_controller_key_new();
+
+        g_signal_connect(key, "key-pressed",
+                         G_CALLBACK(on_verse_key_pressed), self);
+        gtk_event_controller_set_propagation_phase(key, GTK_PHASE_CAPTURE);
+        gtk_widget_add_controller(GTK_WIDGET(priv->verse_grid), key);
+    }
     verse_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(verse_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -1641,9 +1878,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                                 GSWORD_NUMBER_GRID_HEIGHT);
     gtk_box_append(GTK_BOX(chapter_page), verse_scroll);
 
-    gtk_paned_set_start_child(GTK_PANED(paned), book_page);
-    gtk_paned_set_end_child(GTK_PANED(paned), chapter_page);
-    gtk_paned_set_position(GTK_PANED(paned), 230);
+    gtk_box_append(GTK_BOX(paned), book_page);
+    gtk_box_append(GTK_BOX(paned), pane_separator);
+    gtk_box_append(GTK_BOX(paned), chapter_page);
 
     priv->hint = GTK_LABEL(gtk_label_new(
         "Type a reference or choose a book."));
