@@ -251,6 +251,24 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
 }
 
+static GtkWidget *
+make_number_button(const gchar *text)
+{
+    GtkWidget *button = gtk_button_new();
+    GtkWidget *label = gtk_label_new(text);
+
+    gtk_label_set_width_chars(GTK_LABEL(label), 3);
+    gtk_label_set_xalign(GTK_LABEL(label), 0.5f);
+    gtk_button_set_child(GTK_BUTTON(button), label);
+    gtk_widget_add_css_class(button, "gsword-number-button");
+    gtk_widget_set_size_request(button, 40, 32);
+    gtk_widget_set_hexpand(button, FALSE);
+    gtk_widget_set_vexpand(button, FALSE);
+    gtk_widget_set_halign(button, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
+    return button;
+}
+
 static void
 populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
 {
@@ -265,10 +283,9 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
     clear_chapter_buttons(priv);
     for (chapter = 1; chapter <= book->chapter_max; chapter++) {
         gchar *label = g_strdup_printf("%d", chapter);
-        GtkWidget *button = gtk_button_new_with_label(label);
+        GtkWidget *button = make_number_button(label);
 
         g_free(label);
-        gtk_widget_set_size_request(button, 34, 30);
         g_object_set_data(G_OBJECT(button), "chapter",
                           GINT_TO_POINTER(chapter));
         g_signal_connect(button, "clicked",
@@ -401,10 +418,9 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
     clear_verse_buttons(priv);
     for (verse = 1; verse <= verse_max; verse++) {
         gchar *label = g_strdup_printf("%d", verse);
-        GtkWidget *button = gtk_button_new_with_label(label);
+        GtkWidget *button = make_number_button(label);
 
         g_free(label);
-        gtk_widget_set_size_request(button, 34, 30);
         g_object_set_data(G_OBJECT(button), "verse",
                           GINT_TO_POINTER(verse));
         g_signal_connect(button, "clicked",
@@ -1362,6 +1378,18 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     priv->chapter = 1;
     priv->verse = 1;
 
+    {
+        GtkCssProvider *provider = gtk_css_provider_new();
+
+        gtk_css_provider_load_from_string(provider,
+            ".gsword-number-button { padding: 0; min-width: 0;"
+            " min-height: 0; }");
+        gtk_style_context_add_provider_for_display(
+            gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        g_object_unref(provider);
+    }
+
     priv->entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->entry,
                                    "Gen 1:1 / 创 1:1 / 1 Cor 13");
@@ -1550,6 +1578,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     }
 
     priv->chapter_flow = GTK_FLOW_BOX(gtk_flow_box_new());
+    gtk_flow_box_set_homogeneous(priv->chapter_flow, FALSE);
     gtk_flow_box_set_selection_mode(priv->chapter_flow, GTK_SELECTION_NONE);
     gtk_flow_box_set_max_children_per_line(priv->chapter_flow, 8);
     gtk_flow_box_set_min_children_per_line(priv->chapter_flow, 8);
@@ -1572,6 +1601,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_box_append(GTK_BOX(chapter_page), verse_label);
     }
     priv->verse_flow = GTK_FLOW_BOX(gtk_flow_box_new());
+    gtk_flow_box_set_homogeneous(priv->verse_flow, FALSE);
     gtk_flow_box_set_selection_mode(priv->verse_flow, GTK_SELECTION_NONE);
     gtk_flow_box_set_max_children_per_line(priv->verse_flow, 8);
     gtk_flow_box_set_min_children_per_line(priv->verse_flow, 8);
