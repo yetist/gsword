@@ -39,7 +39,9 @@ typedef struct {
     gboolean commentary_follow;
     gchar *pinned_commentary_key;
     GtkTextView *commentary_view;
+    GtkListBox *strongs_list;
     GtkTextView *strongs_view;
+    GtkListBox *crossrefs_list;
     GtkTextView *crossref_view;
     GtkTextView *lexicon_view;
     GtkDropDown *lexicon_selector;
@@ -172,6 +174,7 @@ typedef struct {
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswordWindow, gsword_window, ADW_TYPE_APPLICATION_WINDOW)
 
+static void gsword_window_clear_list(GtkListBox *list);
 static void gsword_window_update_index_label(GswordWindow *self);
 static void gsword_window_parallel_load(GswordWindow *self);
 static void gsword_window_open_note_for_current(GswordWindow *self);
@@ -453,6 +456,7 @@ gsword_window_update_study(GswordWindow *self)
                                     _("No commentary module is installed."));
     }
 
+    gsword_window_clear_list(priv->strongs_list);
     text = g_string_new(NULL);
     {
         GPtrArray *keys = gsw_module_get_entry_attribute_keys(
@@ -467,6 +471,16 @@ gsword_window_update_study(GswordWindow *self)
                     priv->module, "Word", "Lemma", key, &error);
 
                 if (value != NULL) {
+                    GtkWidget *row = gtk_list_box_row_new();
+                    GtkWidget *label = gtk_label_new(key);
+
+                    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+                    gtk_widget_set_margin_top(label, 2);
+                    gtk_widget_set_margin_bottom(label, 2);
+                    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+                    g_object_set_data_full(G_OBJECT(row), "strongs-key",
+                                           g_strdup(key), g_free);
+                    gtk_list_box_append(priv->strongs_list, row);
                     g_string_append_printf(text, "%s: %s\n", key, value);
                     g_free(value);
                 }
@@ -480,6 +494,7 @@ gsword_window_update_study(GswordWindow *self)
     gsword_window_set_view_text(priv->strongs_view, text->str);
     g_string_free(text, TRUE);
 
+    gsword_window_clear_list(priv->crossrefs_list);
     text = g_string_new(NULL);
     {
         GPtrArray *keys = gsw_module_get_entry_attribute_keys(
@@ -494,6 +509,30 @@ gsword_window_update_study(GswordWindow *self)
                     priv->module, "Crossref", "body", key, &error);
 
                 if (value != NULL) {
+                    gchar **parts = g_strsplit(value, ";", -1);
+                    guint j;
+
+                    for (j = 0; parts[j] != NULL; j++) {
+                        gchar *reference = g_strstrip(parts[j]);
+
+                        if (*reference != '\0') {
+                            GtkWidget *row = gtk_list_box_row_new();
+                            GtkWidget *label = gtk_label_new(reference);
+
+                            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+                            gtk_label_set_ellipsize(GTK_LABEL(label),
+                                                     PANGO_ELLIPSIZE_END);
+                            gtk_widget_set_margin_top(label, 2);
+                            gtk_widget_set_margin_bottom(label, 2);
+                            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row),
+                                                       label);
+                            g_object_set_data_full(G_OBJECT(row),
+                                                   "crossref-key",
+                                                   g_strdup(reference), g_free);
+                            gtk_list_box_append(priv->crossrefs_list, row);
+                        }
+                    }
+                    g_strfreev(parts);
                     g_string_append_printf(text, "%s\n", value);
                     g_free(value);
                 }
@@ -2502,7 +2541,6 @@ gsword_window_make_plan_page(GswordWindow *self)
                              gtk_label_new(_("Memorize")));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
     priv->plan_notebook = GTK_NOTEBOOK(notebook);
-    g_object_unref(modes);
     return notebook;
 }
 
@@ -3851,6 +3889,78 @@ on_focus_key_action(GSimpleAction *action, GVariant *parameter,
     gtk_widget_grab_focus(GTK_WIDGET(priv->key_entry));
 }
 
+static void
+gsword_window_apply_workspace(GswordWindow *self, const gchar *workspace)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (g_strcmp0(workspace, "reading") == 0) {
+        if (priv->study_toggle != NULL)
+            gtk_toggle_button_set_active(priv->study_toggle, FALSE);
+        gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+    } else if (g_strcmp0(workspace, "study") == 0) {
+        if (priv->study_toggle != NULL)
+            gtk_toggle_button_set_active(priv->study_toggle, TRUE);
+        if (priv->study_follow_toggle != NULL)
+            gtk_check_button_set_active(priv->study_follow_toggle, TRUE);
+        if (priv->study_notebook != NULL)
+            gtk_notebook_set_current_page(priv->study_notebook, 0);
+        gsword_window_update_study(self);
+        gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+    } else if (g_strcmp0(workspace, "parallel") == 0) {
+        gtk_stack_set_visible_child_name(priv->content_stack, "parallel");
+    } else if (g_strcmp0(workspace, "teaching") == 0) {
+        gsword_window_teaching_load(self);
+        gtk_stack_set_visible_child_name(priv->content_stack, "teaching");
+    }
+}
+
+static void
+on_main_menu_response(AdwAlertDialog *dialog, const gchar *response,
+                      gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+
+    (void)dialog;
+    if (g_strcmp0(response, "reading") == 0 ||
+        g_strcmp0(response, "study") == 0 ||
+        g_strcmp0(response, "parallel") == 0 ||
+        g_strcmp0(response, "teaching") == 0) {
+        gsword_window_apply_workspace(self, response);
+    } else if (g_strcmp0(response, "preferences") == 0) {
+        gsword_window_show_preferences(self);
+    } else if (g_strcmp0(response, "quit") == 0) {
+        GtkApplication *application = gtk_window_get_application(
+            GTK_WINDOW(self));
+
+        if (application != NULL)
+            g_application_quit(G_APPLICATION(application));
+    }
+}
+
+static void
+on_main_menu_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    AdwDialog *dialog = adw_alert_dialog_new(_("Main menu"), NULL);
+
+    (void)button;
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "reading", _("Reading workspace"),
+                                   "study", _("Study workspace"),
+                                   "parallel", _("Parallel workspace"),
+                                   "teaching", _("Teaching workspace"),
+                                   "preferences", _("Preferences"),
+                                   "quit", _("Quit"),
+                                   "close", _("Close"),
+                                   NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "close");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "close");
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_main_menu_response), self);
+    adw_dialog_present(dialog, GTK_WIDGET(self));
+}
+
 static GtkWidget *
 gsword_window_make_sidebar(GswordWindow *self)
 {
@@ -4066,6 +4176,38 @@ gsword_window_refresh_lexicon_modules(GswordWindow *self)
     }
 }
 
+static void
+on_strongs_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *key;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    key = g_object_get_data(G_OBJECT(row), "strongs-key");
+    if (key == NULL)
+        return;
+    gtk_editable_set_text(GTK_EDITABLE(priv->lexicon_entry), key);
+    gsword_window_lexicon_lookup(self);
+    if (priv->study_notebook != NULL)
+        gtk_notebook_set_current_page(priv->study_notebook, 3);
+}
+
+static void
+on_crossref_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    const gchar *reference;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    reference = g_object_get_data(G_OBJECT(row), "crossref-key");
+    if (reference != NULL)
+        gsword_window_open_reference(GSWORD_WINDOW(user_data), reference);
+}
+
 static GtkWidget *
 gsword_window_make_study_panel(GswordWindow *self)
 {
@@ -4075,8 +4217,12 @@ gsword_window_make_study_panel(GswordWindow *self)
     GtkWidget *commentary_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *study_follow = gtk_check_button_new_with_label(_("Follow"));
     GtkWidget *commentary_scroll;
-    GtkWidget *strongs;
-    GtkWidget *crossrefs;
+    GtkWidget *strongs = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *strongs_scroll;
+    GtkWidget *strongs_list_scroll = gtk_scrolled_window_new();
+    GtkWidget *crossrefs = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *crossrefs_scroll;
+    GtkWidget *crossrefs_list_scroll = gtk_scrolled_window_new();
     GtkWidget *lexicon_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *lexicon_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *lexicon_module_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -4103,8 +4249,26 @@ gsword_window_make_study_panel(GswordWindow *self)
     gtk_box_append(GTK_BOX(commentary_header), study_follow);
     gtk_box_append(GTK_BOX(commentary), commentary_header);
     gtk_box_append(GTK_BOX(commentary), commentary_scroll);
-    strongs = gsword_window_make_scrolled_text(&priv->strongs_view);
-    crossrefs = gsword_window_make_scrolled_text(&priv->crossref_view);
+    strongs_scroll = gsword_window_make_scrolled_text(&priv->strongs_view);
+    gtk_widget_set_vexpand(strongs_scroll, TRUE);
+    priv->strongs_list = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->strongs_list, "row-selected",
+                     G_CALLBACK(on_strongs_selected), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(strongs_list_scroll),
+                                  GTK_WIDGET(priv->strongs_list));
+    gtk_widget_set_size_request(strongs_list_scroll, -1, 110);
+    gtk_box_append(GTK_BOX(strongs), strongs_list_scroll);
+    gtk_box_append(GTK_BOX(strongs), strongs_scroll);
+    crossrefs_scroll = gsword_window_make_scrolled_text(&priv->crossref_view);
+    gtk_widget_set_vexpand(crossrefs_scroll, TRUE);
+    priv->crossrefs_list = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->crossrefs_list, "row-selected",
+                     G_CALLBACK(on_crossref_selected), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(crossrefs_list_scroll),
+                                  GTK_WIDGET(priv->crossrefs_list));
+    gtk_widget_set_size_request(crossrefs_list_scroll, -1, 110);
+    gtk_box_append(GTK_BOX(crossrefs), crossrefs_list_scroll);
+    gtk_box_append(GTK_BOX(crossrefs), crossrefs_scroll);
     lexicon = gsword_window_make_scrolled_text(&priv->lexicon_view);
     priv->lexicon_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->lexicon_selector), TRUE);
@@ -5359,7 +5523,6 @@ gsword_window_build(GswordWindow *self)
     GtkWidget *switcher;
     GtkWidget *menu_button;
     GtkWidget *header_title;
-    GMenu *menu;
     GSimpleAction *preferences;
     GSimpleAction *focus_key;
     GtkWidget *status;
@@ -5377,17 +5540,12 @@ gsword_window_build(GswordWindow *self)
     header_title = adw_window_title_new("gsword", _("SWORD study"));
     adw_header_bar_set_title_widget(header, header_title);
 
-    menu = g_menu_new();
-    g_menu_append(menu, _("Preferences"), "win.preferences");
-    g_menu_append(menu, _("Quit"), "app.quit");
-    menu_button = gtk_menu_button_new();
-    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu_button),
-                                  "open-menu-symbolic");
-    gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(menu_button),
-                                   G_MENU_MODEL(menu));
+    menu_button = gtk_button_new_from_icon_name("open-menu-symbolic");
+    gtk_widget_add_css_class(menu_button, "flat");
+    g_signal_connect(menu_button, "clicked",
+                     G_CALLBACK(on_main_menu_clicked), self);
     gtk_widget_set_tooltip_text(menu_button, _("Main menu"));
     adw_header_bar_pack_end(header, menu_button);
-    g_object_unref(menu);
 
     split = ADW_NAVIGATION_SPLIT_VIEW(adw_navigation_split_view_new());
     adw_navigation_split_view_set_sidebar_width_fraction(split, 0.24);
@@ -5469,6 +5627,7 @@ gsword_window_build(GswordWindow *self)
                      G_CALLBACK(on_focus_key_action), self);
     g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(focus_key));
     g_object_unref(focus_key);
+
 
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.preferences",
