@@ -97,7 +97,8 @@ argv[3]  initial reference
 - The picker's filter entry accepts the same abbreviations as the main entry.
 - `Enter` in the filter entry confirms the reference.
 - Clicking a book row focuses the book list; `Up` / `Down` then switches to
-  the previous/next book.
+  the previous/next book. The current book stays highlighted and is scrolled
+  into view.
 - Clicking a chapter number focuses it; `Left` / `Right` switches chapter.
 - From the chapter grid, `Down` moves focus to the verse grid; `Left` /
   `Right` then switches verse without closing the picker.

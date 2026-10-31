@@ -70,6 +70,7 @@ static void on_entry_activate(GtkEntry *entry, gpointer user_data);
 static void populate_verse_buttons(GswordReferenceChooserPrivate *priv);
 static gint get_verse_max(GswordReferenceChooserPrivate *priv, gint chapter);
 static void update_grid_highlight(GtkGrid *grid, const gchar *key, gint value);
+static void update_book_highlight(GswordReferenceChooserPrivate *priv);
 static void set_reference_internal(GswordReferenceChooser *self, gint book,
                                    gint chapter, gint verse, gboolean emit);
 
@@ -211,6 +212,8 @@ populate_book_list(GswordReferenceChooserPrivate *priv, GPtrArray *filter)
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data(G_OBJECT(row), "book-index",
                           GINT_TO_POINTER(book->index + 1));
+        if (book->index == priv->book)
+            gtk_widget_add_css_class(row, "gsword-current-book");
         gtk_list_box_append(list, row);
         if (book->index == priv->book) {
             current_page = book->testament - 1;
@@ -483,6 +486,84 @@ find_grid_button(GtkGrid *grid, const gchar *key, gint value)
     return NULL;
 }
 
+static void
+update_book_highlight(GswordReferenceChooserPrivate *priv)
+{
+    guint i;
+
+    for (i = 0; i < 2; i++) {
+        GtkWidget *row;
+
+        for (row = gtk_widget_get_first_child(
+                    GTK_WIDGET(priv->book_lists[i]));
+             row != NULL;
+             row = gtk_widget_get_next_sibling(row)) {
+            gint index = GPOINTER_TO_INT(
+                g_object_get_data(G_OBJECT(row), "book-index")) - 1;
+
+            if (index == priv->book)
+                gtk_widget_add_css_class(row, "gsword-current-book");
+            else
+                gtk_widget_remove_css_class(row, "gsword-current-book");
+        }
+    }
+}
+
+static void
+scroll_book_into_view(GswordReferenceChooserPrivate *priv)
+{
+    GtkListBox *list;
+    GtkWidget *row = NULL;
+    GtkWidget *scrolled;
+    GtkAdjustment *adjustment;
+    graphene_rect_t bounds;
+
+    if (priv->books == NULL || priv->book < 0 ||
+        priv->book >= (gint)priv->books->len || priv->book_notebook == NULL)
+        return;
+    list = priv->book_lists[
+        ((GswordBookInfo *)g_ptr_array_index(priv->books, priv->book))
+        ->testament - 1];
+    if (list == NULL)
+        return;
+    {
+        GtkWidget *child;
+
+        for (child = gtk_widget_get_first_child(GTK_WIDGET(list));
+             child != NULL; child = gtk_widget_get_next_sibling(child)) {
+            if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(child),
+                                                  "book-index")) - 1 ==
+                priv->book) {
+                row = child;
+                break;
+            }
+        }
+    }
+    if (row == NULL)
+        return;
+    scrolled = gtk_widget_get_ancestor(GTK_WIDGET(list),
+                                       GTK_TYPE_SCROLLED_WINDOW);
+    if (scrolled == NULL)
+        return;
+    if (!gtk_widget_compute_bounds(row, GTK_WIDGET(list), &bounds))
+        return;
+    adjustment = gtk_scrolled_window_get_vadjustment(
+        GTK_SCROLLED_WINDOW(scrolled));
+    if (adjustment == NULL)
+        return;
+    {
+        gdouble value = gtk_adjustment_get_value(adjustment);
+        gdouble page = gtk_adjustment_get_page_size(adjustment);
+        gdouble top = bounds.origin.y;
+        gdouble bottom = bounds.origin.y + bounds.size.height;
+
+        if (top < value)
+            gtk_adjustment_set_value(adjustment, top);
+        else if (bottom > value + page)
+            gtk_adjustment_set_value(adjustment, bottom - page);
+    }
+}
+
 static gboolean
 on_book_list_key_pressed(GtkEventControllerKey *controller, guint keyval,
                          guint keycode, GdkModifierType state,
@@ -529,6 +610,8 @@ on_book_list_key_pressed(GtkEventControllerKey *controller, guint keyval,
     {
         GswordBookInfo *book = g_ptr_array_index(priv->books, target);
 
+        update_book_highlight(priv);
+        scroll_book_into_view(priv);
         gtk_widget_grab_focus(GTK_WIDGET(
             priv->book_lists[book->testament - 1]));
     }
@@ -727,6 +810,9 @@ set_reference_internal(GswordReferenceChooser *self, gint book,
     populate_chapter_buttons(priv);
     populate_verse_buttons(priv);
     update_navigation_labels(self);
+    update_book_highlight(priv);
+    if (gtk_widget_get_visible(GTK_WIDGET(priv->popover)))
+        scroll_book_into_view(priv);
     if (emit)
         g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
 }
@@ -1603,7 +1689,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
 
         gtk_css_provider_load_from_string(provider,
             ".gsword-number-button { padding: 0; min-width: 0;"
-            " min-height: 0; }");
+            " min-height: 0; }\n"
+            ".gsword-current-book { background-color:"
+            " alpha(currentColor, 0.12); border-radius: 6px; }");
         gtk_style_context_add_provider_for_display(
             gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
