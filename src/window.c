@@ -12,6 +12,12 @@ struct _GswordWindow {
 };
 
 typedef struct {
+    gchar *path;
+    gchar *name;
+    gint depth;
+} GswordResourceEntry;
+
+typedef struct {
     GswManager *manager;
     GSettings *settings;
     GswModule *module;
@@ -36,6 +42,8 @@ typedef struct {
     GtkTextView *strongs_view;
     GtkTextView *crossref_view;
     GtkTextView *lexicon_view;
+    GtkDropDown *lexicon_selector;
+    GtkStringList *lexicon_names;
     GtkEntry *lexicon_entry;
     gchar *commentary_name;
     gchar *lexicon_name;
@@ -106,6 +114,7 @@ typedef struct {
 
     GtkDropDown *devotion_selector;
     GtkStringList *devotion_names;
+    GDateTime *devotion_date;
     GtkTextView *devotion_view;
     GtkLabel *devotion_title;
 
@@ -122,6 +131,16 @@ typedef struct {
     gchar *memory_display;
     gchar *memory_text;
     gint64 memory_id;
+
+    GswModule *resource_module;
+    gchar *resource_data_dir;
+    gboolean resource_map_mode;
+    GtkLabel *resource_title;
+    GtkLabel *resource_path;
+    GtkListBox *resource_tree;
+    GtkStack *resource_content;
+    GtkTextView *resource_text;
+    GtkPicture *resource_picture;
 
     GtkTextView *teaching_view;
     GtkTextView *teaching_notes;
@@ -183,6 +202,9 @@ static void gsword_window_refresh_plans(GswordWindow *self);
 static void gsword_window_refresh_memory(GswordWindow *self);
 static void gsword_window_refresh_devotion(GswordWindow *self);
 static void gsword_window_teaching_load(GswordWindow *self);
+static void gsword_window_refresh_lexicon_modules(GswordWindow *self);
+static void gsword_window_open_resource(GswordWindow *self,
+                                        const gchar *name, gboolean map);
 
 static void
 gsword_window_set_status(GswordWindow *self, const gchar *message)
@@ -1581,6 +1603,18 @@ module_info_is_devotional(GswModuleInfo *info)
            g_ascii_strncasecmp(category, "Daily Devotional", 16) == 0;
 }
 
+static gboolean
+module_info_is_map(GswModuleInfo *info)
+{
+    const gchar *category;
+
+    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_MAPS)
+        return TRUE;
+    category = gsw_module_info_get_value(info, "Category");
+    return category != NULL &&
+           g_ascii_strncasecmp(category, "Maps", 4) == 0;
+}
+
 static void
 gsword_window_load_devotion(GswordWindow *self)
 {
@@ -1607,7 +1641,9 @@ gsword_window_load_devotion(GswordWindow *self)
     if (name == NULL || *name == '\0')
         return;
 
-    now = g_date_time_new_now_local();
+    if (priv->devotion_date == NULL)
+        priv->devotion_date = g_date_time_new_now_local();
+    now = g_date_time_ref(priv->devotion_date);
     date_text = g_date_time_format(now, "%B %-d, %Y");
     for (i = 0; formats[i] != NULL; i++) {
         gchar *key = g_date_time_format(now, formats[i]);
@@ -1710,6 +1746,28 @@ on_devotion_refresh(GtkButton *button, gpointer user_data)
 {
     (void)button;
     gsword_window_refresh_devotion(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_devotion_shift(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gint direction = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),
+                                                       "direction"));
+    GDateTime *date;
+
+    if (priv->devotion_date == NULL)
+        priv->devotion_date = g_date_time_new_now_local();
+    if (direction == 0) {
+        g_date_time_unref(priv->devotion_date);
+        priv->devotion_date = g_date_time_new_now_local();
+    } else {
+        date = g_date_time_add_days(priv->devotion_date, direction);
+        g_date_time_unref(priv->devotion_date);
+        priv->devotion_date = date;
+    }
+    gsword_window_load_devotion(self);
 }
 
 static gchar *
@@ -2224,6 +2282,10 @@ gsword_window_make_plan_page(GswordWindow *self)
     GtkWidget *again = gtk_button_new_with_label(_("Again"));
     GtkWidget *good = gtk_button_new_with_label(_("Good"));
     GtkWidget *refresh_devotion = gtk_button_new_with_label(_("Refresh"));
+    GtkWidget *previous_day = gtk_button_new_from_icon_name(
+        "go-previous-symbolic");
+    GtkWidget *next_day = gtk_button_new_from_icon_name("go-next-symbolic");
+    GtkWidget *today_button = gtk_button_new_with_label(_("Today"));
     GtkStringList *modes = gtk_string_list_new(
         (const gchar * const[]) { _("Full text"), _("First letters"), _("Hide words"),
                                   NULL });
@@ -2327,6 +2389,16 @@ gsword_window_make_plan_page(GswordWindow *self)
                      G_CALLBACK(on_devotion_changed), self);
     g_signal_connect(refresh_devotion, "clicked",
                      G_CALLBACK(on_devotion_refresh), self);
+    g_object_set_data(G_OBJECT(previous_day), "direction", GINT_TO_POINTER(-1));
+    g_object_set_data(G_OBJECT(next_day), "direction", GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(today_button), "direction", GINT_TO_POINTER(0));
+    g_signal_connect(previous_day, "clicked",
+                     G_CALLBACK(on_devotion_shift), self);
+    g_signal_connect(next_day, "clicked",
+                     G_CALLBACK(on_devotion_shift), self);
+    g_signal_connect(today_button, "clicked", G_CALLBACK(on_devotion_shift), self);
+    gtk_widget_set_tooltip_text(previous_day, _("Previous day"));
+    gtk_widget_set_tooltip_text(next_day, _("Next day"));
     priv->devotion_title = GTK_LABEL(gtk_label_new(_("Daily Devotion")));
     gtk_label_set_xalign(priv->devotion_title, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->devotion_title), "heading");
@@ -2340,6 +2412,9 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_text_view_set_bottom_margin(priv->devotion_view, 12);
     gtk_box_append(GTK_BOX(devotion_controls),
                    GTK_WIDGET(priv->devotion_selector));
+    gtk_box_append(GTK_BOX(devotion_controls), previous_day);
+    gtk_box_append(GTK_BOX(devotion_controls), today_button);
+    gtk_box_append(GTK_BOX(devotion_controls), next_day);
     gtk_box_append(GTK_BOX(devotion_controls), refresh_devotion);
     {
         GtkWidget *scroll = gtk_scrolled_window_new();
@@ -2505,6 +2580,286 @@ gsword_window_make_teaching_page(GswordWindow *self)
     gtk_paned_set_end_child(GTK_PANED(paned), notes_box);
     gtk_paned_set_position(GTK_PANED(paned), 660);
     gtk_box_append(GTK_BOX(box), toolbar);
+    gtk_box_append(GTK_BOX(box), paned);
+    return box;
+}
+
+static void
+gsword_resource_entry_free(gpointer data)
+{
+    GswordResourceEntry *entry = data;
+
+    if (entry == NULL)
+        return;
+    g_free(entry->path);
+    g_free(entry->name);
+    g_free(entry);
+}
+
+static void
+gsword_window_resource_collect(GswTreeKey *node, GPtrArray *entries,
+                               gint depth)
+{
+    GswKey *cursor;
+
+    if (!gsw_tree_key_has_children(node))
+        return;
+    cursor = gsw_key_clone((GswKey *)node);
+    if (cursor == NULL)
+        return;
+    if (!gsw_tree_key_first_child((GswTreeKey *)cursor)) {
+        gsw_key_unref(cursor);
+        return;
+    }
+    do {
+        GswordResourceEntry *entry = g_new0(GswordResourceEntry, 1);
+
+        entry->path = g_strdup(gsw_tree_key_get_text((GswTreeKey *)cursor));
+        entry->name = g_strdup(
+            gsw_tree_key_get_local_name((GswTreeKey *)cursor));
+        entry->depth = depth;
+        g_ptr_array_add(entries, entry);
+        if (gsw_tree_key_has_children((GswTreeKey *)cursor)) {
+            GswKey *descendant = gsw_key_clone(cursor);
+
+            if (descendant != NULL) {
+                gsword_window_resource_collect((GswTreeKey *)descendant,
+                                               entries, depth + 1);
+                gsw_key_unref(descendant);
+            }
+        }
+    } while (gsw_tree_key_next_sibling((GswTreeKey *)cursor));
+    gsw_key_unref(cursor);
+}
+
+static void
+gsword_window_resource_show_path(GswordWindow *self, const gchar *path)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GError *error = NULL;
+    gchar *text;
+    const gchar *raw;
+
+    if (priv->resource_module == NULL || path == NULL)
+        return;
+    if (!gsw_module_set_key_text(priv->resource_module, path, &error)) {
+        gsword_window_show_error(self, _("Cannot open resource entry"), error);
+        return;
+    }
+    gtk_label_set_text(priv->resource_path, path);
+    raw = gsw_module_peek_raw(priv->resource_module, NULL);
+    if (priv->resource_map_mode && raw != NULL) {
+        const gchar *image = strstr(raw, "<img");
+        const gchar *src = image != NULL ? strstr(image, "src=\"") : NULL;
+
+        if (src != NULL) {
+            const gchar *end = strchr(src + 5, '"');
+
+            if (end != NULL) {
+                gchar *relative = g_strndup(src + 5, (gsize)(end - (src + 5)));
+                gchar *file_path;
+                GFile *file;
+
+                while (g_str_has_prefix(relative, "/"))
+                    memmove(relative, relative + 1, strlen(relative));
+                file_path = g_build_filename(priv->resource_data_dir,
+                                             relative, NULL);
+                g_free(relative);
+                if (g_file_test(file_path, G_FILE_TEST_IS_REGULAR)) {
+                    file = g_file_new_for_path(file_path);
+                    gtk_picture_set_file(priv->resource_picture, file);
+                    g_object_unref(file);
+                    gtk_stack_set_visible_child_name(priv->resource_content,
+                                                     "picture");
+                    g_free(file_path);
+                    return;
+                }
+                g_free(file_path);
+            }
+        }
+    }
+
+    text = gsw_module_get_text(priv->resource_module, &error);
+    if (text == NULL) {
+        gsword_window_show_error(self, _("Cannot read resource entry"), error);
+        return;
+    }
+    gsword_window_set_view_text(priv->resource_text, text);
+    g_free(text);
+    gtk_stack_set_visible_child_name(priv->resource_content, "text");
+}
+
+static void
+on_resource_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    const gchar *path;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    path = g_object_get_data(G_OBJECT(row), "resource-path");
+    if (path != NULL)
+        gsword_window_resource_show_path(GSWORD_WINDOW(user_data), path);
+}
+
+static void
+gsword_window_resource_fill(GswordWindow *self, GPtrArray *entries)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkListBoxRow *first = NULL;
+    guint i;
+
+    gsword_window_clear_list(priv->resource_tree);
+    for (i = 0; i < entries->len; i++) {
+        GswordResourceEntry *entry = g_ptr_array_index(entries, i);
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *label;
+        gchar *indent = g_strnfill((gsize)(entry->depth * 2), ' ');
+        gchar *text = g_strconcat(indent, entry->name, NULL);
+
+        label = gtk_label_new(text);
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(label), TRUE);
+        gtk_widget_set_margin_top(label, 4);
+        gtk_widget_set_margin_bottom(label, 4);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        g_object_set_data_full(G_OBJECT(row), "resource-path",
+                               g_strdup(entry->path), g_free);
+        gtk_list_box_append(priv->resource_tree, row);
+        if (first == NULL)
+            first = GTK_LIST_BOX_ROW(row);
+        g_free(text);
+        g_free(indent);
+    }
+    if (first != NULL)
+        gtk_list_box_select_row(priv->resource_tree, first);
+}
+
+static void
+gsword_window_open_resource(GswordWindow *self, const gchar *name,
+                            gboolean map)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GswModuleInfo *info;
+    GPtrArray *entries;
+    gchar *root_text;
+    GError *error = NULL;
+
+    if (priv->manager == NULL || name == NULL)
+        return;
+    info = gsw_manager_lookup_module_info(priv->manager, name);
+    if (info == NULL) {
+        gsword_window_set_status(self, _("Cannot open module"));
+        return;
+    }
+    g_clear_object(&priv->resource_module);
+    priv->resource_module = gsw_manager_create_module(priv->manager, name);
+    if (priv->resource_module == NULL) {
+        gsword_window_set_status(self, _("Cannot open module"));
+        return;
+    }
+    g_free(priv->resource_data_dir);
+    priv->resource_data_dir = g_strdup(
+        gsw_module_info_get_absolute_data_path(info));
+    priv->resource_map_mode = map;
+    gtk_label_set_text(priv->resource_title, name);
+    gtk_label_set_text(priv->resource_path, "");
+
+    gsw_module_set_position(priv->resource_module, GSW_POSITION_TOP, NULL);
+    entries = g_ptr_array_new_with_free_func(gsword_resource_entry_free);
+    gsword_window_resource_collect(
+        (GswTreeKey *)gsw_module_get_key(priv->resource_module), entries, 0);
+
+    root_text = gsw_module_get_text(priv->resource_module, &error);
+    if (root_text != NULL) {
+        gsword_window_set_view_text(priv->resource_text, root_text);
+        gtk_stack_set_visible_child_name(priv->resource_content, "text");
+        g_free(root_text);
+    }
+    g_clear_error(&error);
+    gsword_window_resource_fill(self, entries);
+    g_ptr_array_unref(entries);
+    gtk_stack_set_visible_child_name(priv->content_stack, "resource");
+}
+
+static void
+on_resource_back(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)button;
+    gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+}
+
+static GtkWidget *
+gsword_window_make_resource_page(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    GtkWidget *tree_scroll = gtk_scrolled_window_new();
+    GtkWidget *content_scroll = gtk_scrolled_window_new();
+    GtkWidget *picture_scroll = gtk_scrolled_window_new();
+    GtkWidget *back = gtk_button_new_with_label(_("Back to reading"));
+    GtkWidget *text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+    gtk_widget_set_margin_top(header, 8);
+    gtk_widget_set_margin_bottom(header, 8);
+    gtk_widget_set_margin_start(header, 12);
+    gtk_widget_set_margin_end(header, 12);
+    priv->resource_title = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->resource_title, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->resource_title), "heading");
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->resource_title), TRUE);
+    priv->resource_path = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(priv->resource_path, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(priv->resource_path), "dim-label");
+    gtk_box_append(GTK_BOX(header), GTK_WIDGET(priv->resource_title));
+    gtk_box_append(GTK_BOX(header), GTK_WIDGET(priv->resource_path));
+    gtk_box_append(GTK_BOX(header), back);
+    g_signal_connect(back, "clicked", G_CALLBACK(on_resource_back), self);
+
+    priv->resource_tree = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->resource_tree, "row-selected",
+                     G_CALLBACK(on_resource_selected), self);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(tree_scroll),
+                                  GTK_WIDGET(priv->resource_tree));
+    gtk_widget_set_size_request(tree_scroll, 280, -1);
+
+    priv->resource_text = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_editable(priv->resource_text, FALSE);
+    gtk_text_view_set_cursor_visible(priv->resource_text, FALSE);
+    gtk_text_view_set_wrap_mode(priv->resource_text, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(priv->resource_text, 16);
+    gtk_text_view_set_right_margin(priv->resource_text, 16);
+    gtk_text_view_set_top_margin(priv->resource_text, 16);
+    gtk_text_view_set_bottom_margin(priv->resource_text, 16);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(content_scroll),
+                                  GTK_WIDGET(priv->resource_text));
+    gtk_widget_set_vexpand(content_scroll, TRUE);
+    gtk_box_append(GTK_BOX(text_box), content_scroll);
+
+    priv->resource_picture = GTK_PICTURE(gtk_picture_new());
+    gtk_picture_set_can_shrink(priv->resource_picture, TRUE);
+    gtk_picture_set_content_fit(priv->resource_picture,
+                                GTK_CONTENT_FIT_CONTAIN);
+    gtk_widget_set_vexpand(GTK_WIDGET(priv->resource_picture), TRUE);
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->resource_picture), TRUE);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(picture_scroll),
+                                  GTK_WIDGET(priv->resource_picture));
+
+    priv->resource_content = GTK_STACK(gtk_stack_new());
+    gtk_stack_add_named(priv->resource_content, text_box, "text");
+    gtk_stack_add_named(priv->resource_content, picture_scroll, "picture");
+    gtk_widget_set_vexpand(GTK_WIDGET(priv->resource_content), TRUE);
+
+    gtk_paned_set_start_child(GTK_PANED(paned), tree_scroll);
+    gtk_paned_set_end_child(GTK_PANED(paned), GTK_WIDGET(priv->resource_content));
+    gtk_paned_set_position(GTK_PANED(paned), 300);
+    gtk_widget_set_vexpand(paned, TRUE);
+    gtk_box_append(GTK_BOX(box), header);
     gtk_box_append(GTK_BOX(box), paned);
     return box;
 }
@@ -3010,6 +3365,7 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
                                                              name);
             if (priv->settings != NULL)
                 g_settings_set_string(priv->settings, "study-lexicon", name);
+            gsword_window_refresh_lexicon_modules(self);
             gtk_widget_set_visible(priv->study_panel, TRUE);
             if (priv->study_toggle != NULL)
                 gtk_toggle_button_set_active(priv->study_toggle, TRUE);
@@ -3028,9 +3384,10 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
             gsword_window_refresh_devotion(self);
             return;
         }
-        if (type == GSW_MODULE_TYPE_MAPS) {
-            gsword_window_set_status(
-                self, _("Map viewer will be added in a later phase"));
+        if (type == GSW_MODULE_TYPE_GENBOOKS ||
+            type == GSW_MODULE_TYPE_MAPS) {
+            gsword_window_open_resource(self, name,
+                                        type == GSW_MODULE_TYPE_MAPS);
             return;
         }
     }
@@ -3042,6 +3399,10 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
 static const gchar *
 gsword_window_module_type_display(GswModuleInfo *info)
 {
+    if (module_info_is_devotional(info))
+        return _("Daily Devotional");
+    if (module_info_is_map(info))
+        return _("Maps");
     switch (gsw_module_info_get_module_type(info)) {
     case GSW_MODULE_TYPE_BIBLES:       return _("Biblical Texts");
     case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
@@ -3055,6 +3416,16 @@ gsword_window_module_type_display(GswModuleInfo *info)
         return gsw_module_info_get_type_string(info) != NULL
              ? gsw_module_info_get_type_string(info) : _("Unknown");
     }
+}
+
+static GswModuleType
+gsword_window_resource_type(GswModuleInfo *info)
+{
+    if (module_info_is_devotional(info))
+        return GSW_MODULE_TYPE_DAILY_DEVOS;
+    if (module_info_is_map(info))
+        return GSW_MODULE_TYPE_MAPS;
+    return gsw_module_info_get_module_type(info);
 }
 
 static const gchar *
@@ -3129,9 +3500,7 @@ gsword_window_make_module_row(GswModuleInfo *info)
                            g_free);
     g_object_set_data(G_OBJECT(row), "module-type",
                       GINT_TO_POINTER((gint)
-                          (module_info_is_devotional(info)
-                           ? GSW_MODULE_TYPE_DAILY_DEVOS
-                           : gsw_module_info_get_module_type(info))));
+                          gsword_window_resource_type(info)));
     return row;
 }
 
@@ -3187,9 +3556,7 @@ gsword_window_populate_modules(GswordWindow *self)
 
         for (i = 0; i < infos->len; i++) {
             GswModuleInfo *info = g_ptr_array_index(infos, i);
-            GswModuleType type = module_info_is_devotional(info)
-                               ? GSW_MODULE_TYPE_DAILY_DEVOS
-                               : gsw_module_info_get_module_type(info);
+            GswModuleType type = gsword_window_resource_type(info);
             GswModuleType effective_type = type == GSW_MODULE_TYPE_UNKNOWN
                                          ? GSW_MODULE_TYPE_OTHER : type;
             const gchar *name = gsw_module_info_get_name(info);
@@ -3633,6 +4000,72 @@ on_lexicon_lookup(GtkButton *button, gpointer user_data)
     gsword_window_lexicon_lookup(GSWORD_WINDOW(user_data));
 }
 
+static void
+on_lexicon_selected(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    guint selected = gtk_drop_down_get_selected(priv->lexicon_selector);
+    const gchar *name;
+
+    (void)object;
+    (void)pspec;
+    if (priv->lexicon_names == NULL ||
+        selected == GTK_INVALID_LIST_POSITION)
+        return;
+    name = gtk_string_list_get_string(priv->lexicon_names, selected);
+    if (name == NULL || g_strcmp0(name, priv->lexicon_name) == 0)
+        return;
+    g_free(priv->lexicon_name);
+    priv->lexicon_name = g_strdup(name);
+    g_clear_object(&priv->lexicon_module);
+    priv->lexicon_module = gsw_manager_create_module(priv->manager, name);
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "study-lexicon", name);
+    gsword_window_set_view_text(priv->lexicon_view, "");
+}
+
+static void
+gsword_window_refresh_lexicon_modules(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    GPtrArray *infos;
+    GtkStringList *names;
+    guint selected = 0;
+    gboolean found = FALSE;
+    guint count = 0;
+    guint i;
+
+    if (priv->lexicon_selector == NULL || priv->manager == NULL)
+        return;
+    infos = gsw_manager_get_module_infos(priv->manager);
+    names = gtk_string_list_new(NULL);
+    for (i = 0; i < infos->len; i++) {
+        GswModuleInfo *info = g_ptr_array_index(infos, i);
+
+        if (gsw_module_info_get_module_type(info) != GSW_MODULE_TYPE_LEXDICTS ||
+            module_info_is_devotional(info) || module_info_is_map(info))
+            continue;
+        gtk_string_list_append(names, gsw_module_info_get_name(info));
+        if (priv->lexicon_name != NULL &&
+            g_strcmp0(priv->lexicon_name,
+                      gsw_module_info_get_name(info)) == 0) {
+            selected = count;
+            found = TRUE;
+        }
+        count++;
+    }
+    g_ptr_array_unref(infos);
+    g_clear_object(&priv->lexicon_names);
+    priv->lexicon_names = names;
+    gtk_drop_down_set_model(priv->lexicon_selector, G_LIST_MODEL(names));
+    if (count > 0) {
+        if (!found)
+            selected = 0;
+        gtk_drop_down_set_selected(priv->lexicon_selector, selected);
+    }
+}
+
 static GtkWidget *
 gsword_window_make_study_panel(GswordWindow *self)
 {
@@ -3646,6 +4079,7 @@ gsword_window_make_study_panel(GswordWindow *self)
     GtkWidget *crossrefs;
     GtkWidget *lexicon_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *lexicon_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *lexicon_module_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *lexicon_button = gtk_button_new_with_label(_("Lookup"));
     GtkWidget *lexicon;
 
@@ -3672,6 +4106,14 @@ gsword_window_make_study_panel(GswordWindow *self)
     strongs = gsword_window_make_scrolled_text(&priv->strongs_view);
     crossrefs = gsword_window_make_scrolled_text(&priv->crossref_view);
     lexicon = gsword_window_make_scrolled_text(&priv->lexicon_view);
+    priv->lexicon_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->lexicon_selector), TRUE);
+    g_signal_connect(priv->lexicon_selector, "notify::selected",
+                     G_CALLBACK(on_lexicon_selected), self);
+    gtk_box_append(GTK_BOX(lexicon_module_row), gtk_label_new(_("Lexicon")));
+    gtk_box_append(GTK_BOX(lexicon_module_row),
+                   GTK_WIDGET(priv->lexicon_selector));
+    gtk_box_append(GTK_BOX(lexicon_box), lexicon_module_row);
     priv->lexicon_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->lexicon_entry, _("Strong's / dictionary key"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->lexicon_entry), TRUE);
@@ -4971,6 +5413,9 @@ gsword_window_build(GswordWindow *self)
     gtk_stack_add_named(priv->content_stack,
                         gsword_window_make_teaching_page(self),
                         "teaching");
+    gtk_stack_add_named(priv->content_stack,
+                        gsword_window_make_resource_page(self),
+                        "resource");
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_library_page(self),
                          "library", _("Library"));
@@ -5105,6 +5550,8 @@ gsword_window_finalize(GObject *object)
     g_clear_pointer(&priv->plan_items, g_ptr_array_unref);
     g_clear_object(&priv->plan_names);
     g_clear_object(&priv->devotion_names);
+    g_clear_object(&priv->lexicon_names);
+    g_clear_pointer(&priv->devotion_date, g_date_time_unref);
     g_clear_pointer(&priv->memory_items, g_ptr_array_unref);
     g_clear_pointer(&priv->pinned_commentary_key, g_free);
     g_clear_pointer(&priv->memory_module, g_free);
@@ -5113,6 +5560,8 @@ gsword_window_finalize(GObject *object)
     g_clear_pointer(&priv->memory_text, g_free);
     g_clear_pointer(&priv->teaching_module, g_free);
     g_clear_pointer(&priv->teaching_reference, g_free);
+    g_clear_object(&priv->resource_module);
+    g_clear_pointer(&priv->resource_data_dir, g_free);
     g_clear_object(&priv->installer);
     g_clear_object(&priv->install_reporter);
     g_clear_pointer(&priv->install_sources, g_ptr_array_unref);
@@ -5196,6 +5645,7 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
 
     gsword_window_build(self);
     gsword_window_load_settings(self);
+    gsword_window_refresh_lexicon_modules(self);
     gsword_window_populate_modules(self);
     gsword_window_refresh_notes(self);
     gsword_window_refresh_install_sources(self);
