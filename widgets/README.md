@@ -65,9 +65,12 @@ argv[3]  initial reference
 - The picker also shows a `Verses / 节` grid for the selected chapter.
 - Chapter and verse buttons use a fixed 40x32 layout with a zero-padding
   numeric label, so 1-digit and 3-digit values do not change button size.
-- Chapters and verses are laid out in a `GtkGrid` with exactly 8 fixed
+- Chapters and verses are laid out in a `GtkGrid` with exactly 10 fixed
   columns; they are left-aligned and are not stretched evenly across the
   available width.
+- The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
+  the surrounding scrolled area is reserved at 452 px so the tenth column and
+  the vertical scrollbar always have enough room.
 - Select a book; the chapter and verse grids update.
 - Click a chapter; the verse grid updates while the picker stays open.
 - Click a verse; the reference is confirmed and the path bar returns.
@@ -167,7 +170,7 @@ activate  user confirmed a reference
 - The popover is parented to the entry, not to the enclosing box, so it does
   not affect the entry's layout.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
-  `GtkNotebook`, plus 8-column `GtkGrid` sections for chapters and verses.
+  `GtkNotebook`, plus 10-column `GtkGrid` sections for chapters and verses.
 - The path bar and the editor are two pages of a `GtkStack`; they share the
   same selection state and occupy the same single row.
 - Book aliases are resolved through `GswLocaleMgr`; the widget does not
