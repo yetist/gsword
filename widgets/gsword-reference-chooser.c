@@ -335,6 +335,14 @@ update_navigation_labels(GswordReferenceChooser *self)
         return;
     chinese = priv->locale != NULL &&
               g_str_has_prefix(priv->locale, "zh");
+    gtk_label_set_width_chars(priv->book_label, 12);
+    gtk_label_set_width_chars(priv->chapter_label, chinese ? 7 : 11);
+    gtk_label_set_width_chars(priv->verse_label, chinese ? 7 : 9);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->book_button), 140, 32);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->chapter_button),
+                                chinese ? 88 : 104, 32);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->verse_button),
+                                chinese ? 80 : 88, 32);
     gtk_label_set_text(priv->book_label,
                        book_display_name(priv, priv->book));
     chapter_text = chinese
@@ -1746,8 +1754,8 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_button_new_from_icon_name("go-next-symbolic"));
     priv->book_button = make_path_segment_button(&priv->book_label, 140, 12);
     priv->chapter_button = make_path_segment_button(&priv->chapter_label,
-                                                    120, 12);
-    priv->verse_button = make_path_segment_button(&priv->verse_label, 120, 12);
+                                                    88, 7);
+    priv->verse_button = make_path_segment_button(&priv->verse_label, 80, 7);
     priv->edit_button = GTK_BUTTON(
         gtk_button_new_from_icon_name("document-edit-symbolic"));
     gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
