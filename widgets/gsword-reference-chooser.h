@@ -1,5 +1,5 @@
 /*
- * gsword-reference-chooser.h: standalone book/chapter reference chooser
+ * gsword-reference-chooser.h: standalone book/chapter/verse reference chooser
  *
  * This widget is intentionally independent of the application window.  It can
  * be embedded in any GTK4 program that links libgsword.
