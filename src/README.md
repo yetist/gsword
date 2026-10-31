@@ -16,7 +16,8 @@ Current implementation:
   lists/highlights/export, module install/update/remove UI, reading plans,
   daily devotion, memory review, teaching layout, grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
-  daily devotion viewers, workspace persistence, preferences dialog
+  daily devotion viewers, Strong's/cross-reference navigation, workspace
+  templates and persistence, preferences dialog
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
