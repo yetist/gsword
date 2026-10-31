@@ -12,7 +12,7 @@ Current implementation:
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, chapter
-  navigation, parallel reading, study panel, search/index UI, notes/tags/verse
+  navigation, parallel Bible template, study panel, search/index UI, notes/tags/verse
   lists/highlights/export, module install/update/remove UI, reading plans,
   daily devotion, memory review, teaching layout, grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
@@ -27,7 +27,8 @@ Current implementation:
   (`~/.local/share/gsword`) and one-time migration from the old
   `~/.local/share/gsword-app` location
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
-  multi-pane layout and columns, parallel modules, active plan, devotion
+  multi-pane layout, columns and scroll sync, legacy parallel template modules,
+  active plan, devotion
   module, font scale, theme
 
 Application UI strings use gettext. The `../po/` directory contains
