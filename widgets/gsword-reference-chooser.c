@@ -22,10 +22,8 @@
      (GSWORD_CHAPTER_GRID_ROWS - 1) * GSWORD_NUMBER_GRID_SPACING)
 #define GSWORD_PATH_HEIGHT 32
 #define GSWORD_PATH_BOOK_WIDTH 140
-#define GSWORD_PATH_CHAPTER_WIDTH_ZH 88
-#define GSWORD_PATH_CHAPTER_WIDTH_EN 104
-#define GSWORD_PATH_VERSE_WIDTH_ZH 80
-#define GSWORD_PATH_VERSE_WIDTH_EN 88
+#define GSWORD_PATH_CHAPTER_WIDTH 88
+#define GSWORD_PATH_VERSE_WIDTH 80
 #define GSWORD_COMPACT_BOOK_WIDTH 96
 #define GSWORD_COMPACT_CHAPTER_WIDTH 64
 #define GSWORD_COMPACT_VERSE_WIDTH 52
@@ -45,7 +43,6 @@ typedef struct {
     GtkEntry *filter_entry;
     GtkWidget *path_row;
     GtkWidget *edit_row;
-    GtkButton *edit_button;
     GtkButton *apply_button;
     GtkButton *cancel_button;
     GtkButton *book_button;
@@ -339,7 +336,6 @@ static void
 update_navigation_labels(GswordReferenceChooser *self)
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
-    gboolean chinese;
     gchar *chapter_text;
     gchar *verse_text;
     gint verse_max;
@@ -348,13 +344,9 @@ update_navigation_labels(GswordReferenceChooser *self)
         priv->verse_button == NULL || priv->books == NULL ||
         priv->books->len == 0)
         return;
-    chinese = priv->locale != NULL &&
-              g_str_has_prefix(priv->locale, "zh");
     gtk_label_set_width_chars(priv->book_label, priv->compact ? 6 : 12);
-    gtk_label_set_width_chars(priv->chapter_label,
-                              priv->compact ? 4 : (chinese ? 7 : 11));
-    gtk_label_set_width_chars(priv->verse_label,
-                              priv->compact ? 3 : (chinese ? 7 : 9));
+    gtk_label_set_width_chars(priv->chapter_label, 4);
+    gtk_label_set_width_chars(priv->verse_label, 4);
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->book_button),
         priv->compact ? GSWORD_COMPACT_BOOK_WIDTH : GSWORD_PATH_BOOK_WIDTH,
@@ -362,23 +354,17 @@ update_navigation_labels(GswordReferenceChooser *self)
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->chapter_button),
         priv->compact ? GSWORD_COMPACT_CHAPTER_WIDTH
-                      : (chinese ? GSWORD_PATH_CHAPTER_WIDTH_ZH
-                                 : GSWORD_PATH_CHAPTER_WIDTH_EN),
+                      : GSWORD_PATH_CHAPTER_WIDTH,
         GSWORD_PATH_HEIGHT);
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->verse_button),
         priv->compact ? GSWORD_COMPACT_VERSE_WIDTH
-                      : (chinese ? GSWORD_PATH_VERSE_WIDTH_ZH
-                                 : GSWORD_PATH_VERSE_WIDTH_EN),
+                      : GSWORD_PATH_VERSE_WIDTH,
         GSWORD_PATH_HEIGHT);
     gtk_label_set_text(priv->book_label,
                        book_display_name(priv, priv->book));
-    chapter_text = chinese
-                 ? g_strdup_printf("第 %d 章", priv->chapter)
-                 : g_strdup_printf(_("Chapter %d"), priv->chapter);
-    verse_text = chinese
-               ? g_strdup_printf("第 %d 节", priv->verse)
-               : g_strdup_printf(_("Verse %d"), priv->verse);
+    chapter_text = g_strdup_printf("%d", priv->chapter);
+    verse_text = g_strdup_printf("%d", priv->verse);
     gtk_label_set_text(priv->chapter_label, chapter_text);
     gtk_label_set_text(priv->verse_label, verse_text);
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
@@ -1273,13 +1259,6 @@ set_edit_mode(GswordReferenceChooser *self, gboolean editing)
 }
 
 static void
-on_edit_clicked(GtkButton *button, gpointer user_data)
-{
-    (void)button;
-    set_edit_mode(GSWORD_REFERENCE_CHOOSER(user_data), TRUE);
-}
-
-static void
 on_apply_clicked(GtkButton *button, gpointer user_data)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
@@ -1704,7 +1683,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     GtkWidget *nav_row;
     GtkWidget *separator;
     GtkWidget *separator2;
-    GtkWidget *separator3;
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(self),
                                    GTK_ORIENTATION_VERTICAL);
@@ -1747,15 +1725,12 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     priv->book_button = make_path_segment_button(
         &priv->book_label, GSWORD_PATH_BOOK_WIDTH, 12);
     priv->chapter_button = make_path_segment_button(
-        &priv->chapter_label, GSWORD_PATH_CHAPTER_WIDTH_ZH, 7);
+        &priv->chapter_label, GSWORD_PATH_CHAPTER_WIDTH, 4);
     priv->verse_button = make_path_segment_button(
-        &priv->verse_label, GSWORD_PATH_VERSE_WIDTH_ZH, 7);
-    priv->edit_button = GTK_BUTTON(
-        gtk_button_new_from_icon_name("document-edit-symbolic"));
+        &priv->verse_label, GSWORD_PATH_VERSE_WIDTH, 4);
     gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->chapter_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->verse_button), "flat");
-    gtk_widget_add_css_class(GTK_WIDGET(priv->edit_button), "flat");
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_book_button),
                                 _("Previous book"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_book_button),
@@ -1774,8 +1749,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                                 _("Next verse"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->verse_button),
                                 _("Choose a verse"));
-    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->edit_button),
-                                _("Edit reference (Ctrl+L)"));
     g_signal_connect(priv->prev_book_button, "clicked",
                      G_CALLBACK(on_prev_book_clicked), self);
     g_signal_connect(priv->next_book_button, "clicked",
@@ -1794,11 +1767,8 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                      G_CALLBACK(on_button_clicked), self);
     g_signal_connect(priv->verse_button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
-    g_signal_connect(priv->edit_button, "clicked",
-                     G_CALLBACK(on_edit_clicked), self);
     separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     separator2 = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    separator3 = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     gtk_widget_set_margin_start(GTK_WIDGET(priv->book_button), 4);
     gtk_widget_set_margin_end(GTK_WIDGET(priv->book_button), 4);
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_book_button));
@@ -1812,8 +1782,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_verse_button));
-    gtk_box_append(GTK_BOX(nav_row), separator3);
-    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->edit_button));
 
     {
         GtkWidget *edit_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
@@ -1868,7 +1836,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_popover_set_position(priv->popover, GTK_POS_BOTTOM);
     gtk_widget_set_focusable(GTK_WIDGET(priv->popover), FALSE);
     gtk_widget_set_parent(GTK_WIDGET(priv->popover),
-                          GTK_WIDGET(priv->book_button));
+                          GTK_WIDGET(priv->chapter_button));
 
     paned = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     book_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);

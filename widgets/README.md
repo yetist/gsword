@@ -59,7 +59,7 @@ argv[3]  initial reference
   back to the last chapter of the previous book.
 - Previous/next verse crosses chapter and book boundaries as well.
 - The default state is a clickable Nautilus-style path bar:
-  `[◀] book [▶] [◀] chapter [▶] [◀] verse [▶] [edit]`.
+  `[◀] book [▶] [◀] chapter [▶] [◀] verse [▶]`.
 - Click the book, chapter, or verse label to open the picker.
 - The picker has separate Old Testament and New Testament tabs, so the New
   Testament group is always directly visible.
@@ -72,12 +72,12 @@ argv[3]  initial reference
 - The book pane and the chapter/verse pane are separated by a fixed-width
   `GtkBox` layout and a vertical separator, so long book names cannot overlap
   the numeric grids.
-- Path bar segments use the minimum fixed widths needed by the current
-  locale:
+- Path bar segments use fixed widths:
   - book: 140 px;
-  - chapter: 88 px in Chinese, 104 px in English;
-  - verse: 80 px in Chinese, 88 px in English.
-  Long names are ellipsized with a full tooltip.
+  - chapter: 88 px;
+  - verse: 80 px.
+  Chapter and verse segments show numbers only.  Long book names are
+  ellipsized with a full tooltip.
 - The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
   the surrounding scrolled area is reserved at 452 px so the tenth column and
   the vertical scrollbar always have enough room.
@@ -92,7 +92,7 @@ argv[3]  initial reference
 - Select a book; the chapter and verse grids update.
 - Click a chapter; the verse grid updates while the picker stays open.
 - Click a verse; the reference is confirmed and the path bar returns.
-- Click the pencil to replace the path bar with an editable text field.
+- Press `Ctrl+L` to replace the path bar with an editable text field.
 - The demo buttons exercise alternate references.
 
 The compact form used by workspace panes hides the previous/next arrows and
@@ -116,7 +116,7 @@ the same picker popover and parser are used without taking a full toolbar row.
 - From the verse grid, `Up` returns to the chapter grid. Clicking a verse
   still confirms the reference and closes the picker.
 - The path bar itself remains fully mouse-driven; no text entry is shown until
-  the edit button, `Ctrl+L`, or the pencil is used.
+  `Ctrl+L` or an application accelerator is used.
 
 Supported examples:
 
@@ -209,8 +209,8 @@ activate  user confirmed a reference
   scrolled-area width are named constants at the top of the C file.
 - The widget CSS provider is installed once per process for the default
   display instead of once per widget instance.
-- The popover is parented to the entry, not to the enclosing box, so it does
-  not affect the entry's layout.
+- The picker popover is parented to the chapter button so it opens at a stable
+  position below the path bar.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
   `GtkNotebook`, plus 10-column `GtkGrid` sections for chapters and verses.
 - The path bar and the editor are two pages of a `GtkStack`; they share the
