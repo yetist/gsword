@@ -44,8 +44,31 @@ typedef enum {
     GSWORD_REFERENCE_ERROR_INVALID_VERSE
 } GswordReferenceError;
 
+/**
+ * gsword_reference_chooser_new:
+ * @versification: versification name such as "KJV"
+ * @locale: locale name such as "en" or "zh-Hans"
+ *
+ * Creates a reference chooser with the full path bar and navigation arrows.
+ *
+ * Returns: (transfer full): a new #GswordReferenceChooser
+ */
 GtkWidget *gsword_reference_chooser_new(const gchar *versification,
                                         const gchar *locale);
+
+/**
+ * gsword_reference_chooser_new_compact:
+ * @versification: versification name such as "KJV"
+ * @locale: locale name such as "en" or "zh-Hans"
+ *
+ * Creates a compact chooser for narrow containers.  It keeps the book,
+ * chapter, and verse segments clickable but hides the navigation arrows and
+ * the text-edit button.
+ *
+ * Returns: (transfer full): a new #GswordReferenceChooser
+ */
+GtkWidget *gsword_reference_chooser_new_compact(const gchar *versification,
+                                                const gchar *locale);
 
 void gsword_reference_chooser_set_versification(
     GswordReferenceChooser *self, const gchar *versification);
@@ -56,6 +79,15 @@ void gsword_reference_chooser_set_reference(
 gboolean gsword_reference_chooser_get_reference(
     GswordReferenceChooser *self, gint *book, gint *chapter, gint *verse);
 gchar *gsword_reference_chooser_dup_osis(GswordReferenceChooser *self);
+
+/**
+ * gsword_reference_chooser_begin_edit:
+ * @self: a #GswordReferenceChooser
+ *
+ * Switches the full chooser to its text-entry state.  Intended for a window
+ * accelerator such as Ctrl+L.
+ */
+void gsword_reference_chooser_begin_edit(GswordReferenceChooser *self);
 
 /**
  * gsword_reference_parse:

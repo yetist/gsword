@@ -1,8 +1,9 @@
 # GswordReferenceChooser
 
-Standalone GTK4 widget for choosing a Bible book and chapter, with direct
-keyboard input and localized book abbreviations.  It is not wired into the
-main application yet.
+Reusable GTK4 widget for choosing a Bible book, chapter, and verse, with
+direct keyboard input and localized book abbreviations.  The gsword reader
+uses the full path-bar form, while each workspace pane uses a compact form
+with the same picker popover.
 
 ## Files
 
@@ -60,9 +61,9 @@ argv[3]  initial reference
 - The default state is a clickable Nautilus-style path bar:
   `[◀] book [▶] [◀] chapter [▶] [◀] verse [▶] [edit]`.
 - Click the book, chapter, or verse label to open the picker.
-- The picker has separate `旧约 / OT` and `新约 / NT` tabs, so the New
+- The picker has separate Old Testament and New Testament tabs, so the New
   Testament group is always directly visible.
-- The picker also shows a `Verses / 节` grid for the selected chapter.
+- The picker also shows a verse grid for the selected chapter.
 - Chapter and verse buttons use a fixed 40x32 layout with a zero-padding
   numeric label, so 1-digit and 3-digit values do not change button size.
 - Chapters and verses are laid out in a `GtkGrid` with exactly 10 fixed
@@ -93,6 +94,10 @@ argv[3]  initial reference
 - Click a verse; the reference is confirmed and the path bar returns.
 - Click the pencil to replace the path bar with an editable text field.
 - The demo buttons exercise alternate references.
+
+The compact form used by workspace panes hides the previous/next arrows and
+the edit button.  It keeps the book, chapter, and verse segments clickable, so
+the same picker popover and parser are used without taking a full toolbar row.
 
 ## Keyboard behavior
 
@@ -172,7 +177,11 @@ book/chapter boundaries instead of stopping at the end of a chapter/book.
 ```c
 GtkWidget *chooser = gsword_reference_chooser_new("KJV", "zh-Hans");
 
+/* Compact form for narrow containers such as workspace panes. */
+GtkWidget *compact = gsword_reference_chooser_new_compact("KJV", "zh-Hans");
+
 gsword_reference_chooser_set_reference(chooser, book, chapter, verse);
+gsword_reference_chooser_begin_edit(chooser);
 
 gint book, chapter, verse;
 gsword_reference_chooser_get_reference(chooser, &book, &chapter, &verse);
@@ -208,4 +217,6 @@ activate  user confirmed a reference
   same selection state and occupy the same single row.
 - Book aliases are resolved through `GswLocaleMgr`; the widget does not
   hard-code the 66 book names.
-- The main application is deliberately untouched.
+- The main reader and workspace panes share the widget source directly; there
+  is no second reference-entry implementation in the application.
+- UI labels and parser messages use the `gsword` gettext domain.

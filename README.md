@@ -8,6 +8,7 @@
 - `lib/`：`libgsword` 库实现
 - `include/gsword/`：`libgsword` 公共 API
 - `src/`：`gsword` GTK4 桌面应用
+- `widgets/`：可复用的书卷/章/节引用选择器及其 demo、测试
 - `data/locales.d/`：libgsword 自有 locale 数据
 - `tools/`：locale 导入、校验和 v11n 生成工具
 - `examples/`：库示例和 GTK4 前端原型
@@ -36,10 +37,11 @@ M0–M5 已实现并通过单元/集成测试：
 - LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
 - 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
 - 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
-- GTK4/libadwaita 桌面应用 `gsword`（`src/`），支持阅读、并行模板、研经面板、
-  搜索索引、笔记、标签、经文列表、高亮、Markdown 导出、模块安装/更新/删除、
-  阅读计划、每日灵修、背经复习、讲道/教学布局、Shift 范围选择、Strong's/交叉
-  引用跳转，以及可创建/编辑/拖拽/持久化并支持同步滚动的多窗格工作区
+- GTK4/libadwaita 桌面应用 `gsword`（`src/`），支持阅读、统一书卷/章/节引用
+  选择器、并行模板、研经面板、搜索索引、笔记、标签、经文列表、高亮、Markdown
+  导出、模块安装/更新/删除、阅读计划、每日灵修、背经复习、讲道/教学布局、Shift
+  范围选择、Strong's/交叉引用跳转，以及可创建/编辑/拖拽/持久化并支持同步滚动的
+  多窗格工作区
 
 ## 快速开始
 

@@ -4,6 +4,7 @@
 
 #include "gsword-reference-chooser.h"
 
+#include <glib/gi18n.h>
 #include <string.h>
 
 #define GSWORD_NUMBER_COLUMNS 10
@@ -25,6 +26,9 @@
 #define GSWORD_PATH_CHAPTER_WIDTH_EN 104
 #define GSWORD_PATH_VERSE_WIDTH_ZH 80
 #define GSWORD_PATH_VERSE_WIDTH_EN 88
+#define GSWORD_COMPACT_BOOK_WIDTH 96
+#define GSWORD_COMPACT_CHAPTER_WIDTH 64
+#define GSWORD_COMPACT_VERSE_WIDTH 52
 
 typedef struct {
     gint index;
@@ -71,6 +75,7 @@ typedef struct {
     gint verse;
     gboolean updating;
     gboolean editing;
+    gboolean compact;
 } GswordReferenceChooserPrivate;
 
 struct _GswordReferenceChooser {
@@ -345,28 +350,35 @@ update_navigation_labels(GswordReferenceChooser *self)
         return;
     chinese = priv->locale != NULL &&
               g_str_has_prefix(priv->locale, "zh");
-    gtk_label_set_width_chars(priv->book_label, 12);
-    gtk_label_set_width_chars(priv->chapter_label, chinese ? 7 : 11);
-    gtk_label_set_width_chars(priv->verse_label, chinese ? 7 : 9);
-    gtk_widget_set_size_request(GTK_WIDGET(priv->book_button),
-                                GSWORD_PATH_BOOK_WIDTH,
-                                GSWORD_PATH_HEIGHT);
-    gtk_widget_set_size_request(GTK_WIDGET(priv->chapter_button),
-                                chinese ? GSWORD_PATH_CHAPTER_WIDTH_ZH
-                                        : GSWORD_PATH_CHAPTER_WIDTH_EN,
-                                GSWORD_PATH_HEIGHT);
-    gtk_widget_set_size_request(GTK_WIDGET(priv->verse_button),
-                                chinese ? GSWORD_PATH_VERSE_WIDTH_ZH
-                                        : GSWORD_PATH_VERSE_WIDTH_EN,
-                                GSWORD_PATH_HEIGHT);
+    gtk_label_set_width_chars(priv->book_label, priv->compact ? 6 : 12);
+    gtk_label_set_width_chars(priv->chapter_label,
+                              priv->compact ? 4 : (chinese ? 7 : 11));
+    gtk_label_set_width_chars(priv->verse_label,
+                              priv->compact ? 3 : (chinese ? 7 : 9));
+    gtk_widget_set_size_request(
+        GTK_WIDGET(priv->book_button),
+        priv->compact ? GSWORD_COMPACT_BOOK_WIDTH : GSWORD_PATH_BOOK_WIDTH,
+        GSWORD_PATH_HEIGHT);
+    gtk_widget_set_size_request(
+        GTK_WIDGET(priv->chapter_button),
+        priv->compact ? GSWORD_COMPACT_CHAPTER_WIDTH
+                      : (chinese ? GSWORD_PATH_CHAPTER_WIDTH_ZH
+                                 : GSWORD_PATH_CHAPTER_WIDTH_EN),
+        GSWORD_PATH_HEIGHT);
+    gtk_widget_set_size_request(
+        GTK_WIDGET(priv->verse_button),
+        priv->compact ? GSWORD_COMPACT_VERSE_WIDTH
+                      : (chinese ? GSWORD_PATH_VERSE_WIDTH_ZH
+                                 : GSWORD_PATH_VERSE_WIDTH_EN),
+        GSWORD_PATH_HEIGHT);
     gtk_label_set_text(priv->book_label,
                        book_display_name(priv, priv->book));
     chapter_text = chinese
                  ? g_strdup_printf("第 %d 章", priv->chapter)
-                 : g_strdup_printf("Chapter %d", priv->chapter);
+                 : g_strdup_printf(_("Chapter %d"), priv->chapter);
     verse_text = chinese
                ? g_strdup_printf("第 %d 节", priv->verse)
-               : g_strdup_printf("Verse %d", priv->verse);
+               : g_strdup_printf(_("Verse %d"), priv->verse);
     gtk_label_set_text(priv->chapter_label, chapter_text);
     gtk_label_set_text(priv->verse_label, verse_text);
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
@@ -1057,7 +1069,7 @@ parse_internal(const gchar *text, const gchar *locale,
     if (text == NULL || *text == '\0') {
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_EMPTY,
-                            "Reference is empty");
+                            _("Reference is empty"));
         return FALSE;
     }
     work = g_strdup(text);
@@ -1066,7 +1078,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(work);
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_EMPTY,
-                            "Reference is empty");
+                            _("Reference is empty"));
         return FALSE;
     }
     colon = strchr(work, ':');
@@ -1080,7 +1092,7 @@ parse_internal(const gchar *text, const gchar *locale,
             g_free(right);
             g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                                 GSWORD_REFERENCE_ERROR_INVALID_VERSE,
-                                "Verse is empty");
+                                _("Verse is empty"));
             return FALSE;
         }
     } else {
@@ -1111,7 +1123,7 @@ parse_internal(const gchar *text, const gchar *locale,
             g_free(right);
             g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                                 GSWORD_REFERENCE_ERROR_INVALID_CHAPTER,
-                                "Chapter is invalid");
+                                _("Chapter is invalid"));
             return FALSE;
         }
     }
@@ -1122,7 +1134,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_UNKNOWN_BOOK,
-                            "Book is missing");
+                            _("Book is missing"));
         return FALSE;
     }
 
@@ -1136,7 +1148,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_UNKNOWN_BOOK,
-                            "No matching book");
+                            _("No matching book"));
         return FALSE;
     }
     if (candidates->len > 1) {
@@ -1144,7 +1156,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK,
-                            "Book abbreviation is ambiguous");
+                            _("Book abbreviation is ambiguous"));
         return FALSE;
     }
     {
@@ -1159,7 +1171,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_UNKNOWN_BOOK,
-                            "Book is not in this versification");
+                            _("Book is not in this versification"));
         return FALSE;
     }
     {
@@ -1173,7 +1185,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error(error, GSWORD_REFERENCE_ERROR,
                     GSWORD_REFERENCE_ERROR_INVALID_CHAPTER,
-                    "Chapter %d is out of range", chapter);
+                    _("Chapter %d is out of range"), chapter);
         return FALSE;
     }
     if (right != NULL) {
@@ -1184,7 +1196,7 @@ parse_internal(const gchar *text, const gchar *locale,
             g_free(right);
             g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                                 GSWORD_REFERENCE_ERROR_INVALID_VERSE,
-                                "Verse is invalid");
+                                _("Verse is invalid"));
             return FALSE;
         }
     }
@@ -1199,7 +1211,7 @@ parse_internal(const gchar *text, const gchar *locale,
         g_free(right);
         g_set_error(error, GSWORD_REFERENCE_ERROR,
                     GSWORD_REFERENCE_ERROR_INVALID_VERSE,
-                    "Verse %d is out of range", verse);
+                    _("Verse %d is out of range"), verse);
         return FALSE;
     }
     g_free(right);
@@ -1316,7 +1328,7 @@ update_from_text(GswordReferenceChooser *self, const gchar *text)
     if (text == NULL || *text == '\0') {
         populate_book_list(priv, NULL);
         gtk_label_set_text(priv->hint,
-                           "Type a reference or choose a book.");
+                           _("Type a reference or choose a book."));
         return;
     }
     if (parse_internal(text, priv->locale, priv->v11n, &reference,
@@ -1334,11 +1346,11 @@ update_from_text(GswordReferenceChooser *self, const gchar *text)
                candidates != NULL && candidates->len > 0) {
         populate_book_list(priv, candidates);
         gtk_label_set_text(priv->hint,
-                           "Multiple books match; choose one.");
+                           _("Multiple books match; choose one."));
     } else {
         gtk_label_set_text(priv->hint,
                            error != NULL ? error->message
-                                         : "Cannot parse reference");
+                                         : _("Cannot parse reference"));
     }
     g_clear_error(&error);
     g_clear_pointer(&candidates, g_ptr_array_unref);
@@ -1360,7 +1372,7 @@ activate_text(GswordReferenceChooser *self, const gchar *text)
             candidates != NULL && candidates->len > 1) {
             populate_book_list(priv, candidates);
             gtk_label_set_text(priv->hint,
-                               "Multiple books match; choose one.");
+                               _("Multiple books match; choose one."));
             priv->updating = TRUE;
             if (priv->filter_entry != NULL)
                 gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry),
@@ -1372,7 +1384,7 @@ activate_text(GswordReferenceChooser *self, const gchar *text)
         } else {
             gtk_label_set_text(priv->hint,
                                error != NULL ? error->message
-                                             : "Cannot parse reference");
+                                             : _("Cannot parse reference"));
         }
         g_clear_error(&error);
         g_clear_pointer(&candidates, g_ptr_array_unref);
@@ -1453,7 +1465,7 @@ on_button_clicked(GtkButton *button, gpointer user_data)
     populate_chapter_buttons(priv);
     populate_verse_buttons(priv);
     gtk_label_set_text(priv->hint,
-                       "Type a reference or choose a book.");
+                       _("Type a reference or choose a book."));
     gtk_popover_popup(priv->popover);
     schedule_filter_focus(self);
 }
@@ -1599,6 +1611,13 @@ gsword_reference_chooser_dup_osis(GswordReferenceChooser *self)
     return g_strdup(book_osis(priv, priv->book));
 }
 
+void
+gsword_reference_chooser_begin_edit(GswordReferenceChooser *self)
+{
+    g_return_if_fail(GSWORD_IS_REFERENCE_CHOOSER(self));
+    set_edit_mode(self, TRUE);
+}
+
 static void
 gsword_reference_chooser_finalize(GObject *object)
 {
@@ -1738,25 +1757,25 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_widget_add_css_class(GTK_WIDGET(priv->verse_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->edit_button), "flat");
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_book_button),
-                                "Previous book");
+                                _("Previous book"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_book_button),
-                                "Next book");
+                                _("Next book"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_chapter_button),
-                                "Previous chapter");
+                                _("Previous chapter"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_chapter_button),
-                                "Next chapter");
+                                _("Next chapter"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
-                                "Choose a book");
+                                _("Choose a book"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->chapter_button),
-                                "Choose a chapter");
+                                _("Choose a chapter"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_verse_button),
-                                "Previous verse");
+                                _("Previous verse"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_verse_button),
-                                "Next verse");
+                                _("Next verse"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->verse_button),
-                                "Choose a verse");
+                                _("Choose a verse"));
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->edit_button),
-                                "Edit reference (Ctrl+L)");
+                                _("Edit reference (Ctrl+L)"));
     g_signal_connect(priv->prev_book_button, "clicked",
                      G_CALLBACK(on_prev_book_clicked), self);
     g_signal_connect(priv->next_book_button, "clicked",
@@ -1806,9 +1825,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_widget_add_css_class(GTK_WIDGET(priv->apply_button), "flat");
         gtk_widget_add_css_class(GTK_WIDGET(priv->cancel_button), "flat");
         gtk_widget_set_tooltip_text(GTK_WIDGET(priv->apply_button),
-                                    "Apply reference");
+                                    _("Apply reference"));
         gtk_widget_set_tooltip_text(GTK_WIDGET(priv->cancel_button),
-                                    "Cancel editing");
+                                    _("Cancel editing"));
         g_signal_connect(priv->apply_button, "clicked",
                          G_CALLBACK(on_apply_clicked), self);
         g_signal_connect(priv->cancel_button, "clicked",
@@ -1837,7 +1856,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
 
     priv->filter_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->filter_entry,
-                                   "Type to filter books / references");
+                                   _("Type to filter books / references"));
     g_signal_connect(priv->filter_entry, "changed",
                      G_CALLBACK(on_popover_filter_changed), self);
     g_signal_connect(priv->filter_entry, "activate",
@@ -1861,9 +1880,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_widget_set_margin_end(book_page, 4);
     gtk_widget_set_margin_start(chapter_page, 4);
     gtk_box_append(GTK_BOX(book_page),
-                   gtk_label_new("Books"));
+                   gtk_label_new(_("Books")));
     gtk_box_append(GTK_BOX(chapter_page),
-                   gtk_label_new("Chapters"));
+                   gtk_label_new(_("Chapters")));
     gtk_widget_add_css_class(gtk_widget_get_last_child(book_page),
                              "heading");
     gtk_widget_add_css_class(gtk_widget_get_last_child(chapter_page),
@@ -1871,7 +1890,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
 
     {
         GtkWidget *book_notebook = gtk_notebook_new();
-        const gchar *tab_labels[2] = { "旧约 / OT", "新约 / NT" };
+        const gchar *tab_labels[2] = { _("Old Testament"), _("New Testament") };
         guint i;
 
         for (i = 0; i < 2; i++) {
@@ -1938,7 +1957,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(chapter_page), chapter_scroll);
 
     {
-        GtkWidget *verse_label = gtk_label_new("Verses / 节");
+        GtkWidget *verse_label = gtk_label_new(_("Verses"));
 
         gtk_widget_add_css_class(verse_label, "heading");
         gtk_box_append(GTK_BOX(chapter_page), verse_label);
@@ -1976,7 +1995,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(paned), chapter_page);
 
     priv->hint = GTK_LABEL(gtk_label_new(
-        "Type a reference or choose a book."));
+        _("Type a reference or choose a book.")));
     gtk_label_set_xalign(priv->hint, 0.0f);
     gtk_label_set_wrap(priv->hint, TRUE);
     gtk_widget_add_css_class(GTK_WIDGET(priv->hint), "dim-label");
@@ -2010,9 +2029,30 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     }
 }
 
-GtkWidget *
-gsword_reference_chooser_new(const gchar *versification,
-                             const gchar *locale)
+static void
+set_compact_internal(GswordReferenceChooser *self, gboolean compact)
+{
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    GtkWidget *child;
+
+    priv->compact = compact;
+    if (priv->path_row != NULL) {
+        child = gtk_widget_get_first_child(priv->path_row);
+        while (child != NULL) {
+            gboolean keep = child == GTK_WIDGET(priv->book_button) ||
+                            child == GTK_WIDGET(priv->chapter_button) ||
+                            child == GTK_WIDGET(priv->verse_button);
+
+            gtk_widget_set_visible(child, compact ? keep : TRUE);
+            child = gtk_widget_get_next_sibling(child);
+        }
+    }
+    update_navigation_labels(self);
+}
+
+static GtkWidget *
+new_chooser(const gchar *versification, const gchar *locale,
+            gboolean compact)
 {
     GswordReferenceChooser *self = g_object_new(
         GSWORD_TYPE_REFERENCE_CHOOSER, NULL);
@@ -2021,7 +2061,23 @@ gsword_reference_chooser_new(const gchar *versification,
         gsword_reference_chooser_set_versification(self, versification);
     if (locale != NULL && *locale != '\0')
         gsword_reference_chooser_set_locale(self, locale);
+    if (compact)
+        set_compact_internal(self, TRUE);
     return GTK_WIDGET(self);
+}
+
+GtkWidget *
+gsword_reference_chooser_new(const gchar *versification,
+                             const gchar *locale)
+{
+    return new_chooser(versification, locale, FALSE);
+}
+
+GtkWidget *
+gsword_reference_chooser_new_compact(const gchar *versification,
+                                     const gchar *locale)
+{
+    return new_chooser(versification, locale, TRUE);
 }
 
 gboolean
@@ -2040,7 +2096,7 @@ gsword_reference_parse(const gchar *text, const gchar *locale,
     if (v11n == NULL) {
         g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
                             GSWORD_REFERENCE_ERROR_UNKNOWN_BOOK,
-                            "Unknown versification");
+                            _("Unknown versification"));
         return FALSE;
     }
     result = parse_internal(text, locale, v11n, out, NULL, &local_error);
