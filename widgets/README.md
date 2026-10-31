@@ -63,6 +63,8 @@ argv[3]  initial reference
 - The picker has separate `旧约 / OT` and `新约 / NT` tabs, so the New
   Testament group is always directly visible.
 - The picker also shows a `Verses / 节` grid for the selected chapter.
+- Chapter and verse buttons use a fixed 40x32 layout with a zero-padding
+  numeric label, so 1-digit and 3-digit values do not change button size.
 - Select a book; the chapter and verse grids update.
 - Click a chapter; the verse grid updates while the picker stays open.
 - Click a verse; the reference is confirmed and the path bar returns.
