@@ -1086,9 +1086,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     GtkWidget *paned;
     GtkWidget *book_page;
     GtkWidget *chapter_page;
-    GtkWidget *entry_row;
     GtkWidget *nav_row;
     GtkWidget *separator;
+    GtkWidget *separator2;
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(self),
                                    GTK_ORIENTATION_VERTICAL);
@@ -1120,10 +1120,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                                 "Open book and chapter picker");
     g_signal_connect(priv->button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
-
-    entry_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-    gtk_box_append(GTK_BOX(entry_row), GTK_WIDGET(priv->entry));
-    gtk_box_append(GTK_BOX(entry_row), GTK_WIDGET(priv->button));
 
     nav_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     priv->prev_book_button = GTK_BUTTON(
@@ -1163,6 +1159,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     g_signal_connect(priv->chapter_button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
     separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    separator2 = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     gtk_widget_set_margin_start(GTK_WIDGET(priv->book_button), 4);
     gtk_widget_set_margin_end(GTK_WIDGET(priv->book_button), 4);
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_book_button));
@@ -1172,8 +1169,10 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_chapter_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->chapter_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_chapter_button));
+    gtk_box_append(GTK_BOX(nav_row), separator2);
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->entry));
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->button));
     gtk_box_append(GTK_BOX(self), nav_row);
-    gtk_box_append(GTK_BOX(self), entry_row);
 
     priv->filter_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->filter_entry,
