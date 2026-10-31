@@ -72,6 +72,13 @@ GSWORD_PREFIX=~/.sword ./build/src/gsword
 # 或指定模块库
 ./build/src/gsword --library ~/.sword
 
+# 开发时使用构建目录中的中文界面翻译
+LANG=zh_CN.UTF-8 GSW_LOCALEDIR=$PWD/build/po \
+  ./build/src/gsword --library ~/.sword
+
+# 安装后，应用文本翻译位于 ${prefix}/share/locale
+meson install -C build
+
 # 安装（需要预先配置 InstallMgr.conf）
 ./build/examples/gsword-install-sources ~/.sword/InstallMgr
 ./build/examples/gsword-install-module ~/.sword ~/.sword/InstallMgr CrossWire KJV

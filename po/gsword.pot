@@ -1,0 +1,933 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gsword package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: gsword\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-31 11:14+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/application.c:130
+#, c-format
+msgid "Cannot create library directory %s"
+msgstr ""
+
+#: src/application.c:165
+#, c-format
+msgid "gsword: cannot open module library: %s\n"
+msgstr ""
+
+#: src/application.c:166 src/window.c:197
+msgid "unknown error"
+msgstr ""
+
+#: src/application.c:196
+msgid "SWORD module library path"
+msgstr ""
+
+#: src/window.c:208
+msgid "Close"
+msgstr ""
+
+#: src/window.c:396
+msgid "No commentary for this verse."
+msgstr ""
+
+#: src/window.c:401
+msgid "No commentary module is installed."
+msgstr ""
+
+#: src/window.c:427
+msgid "No Strong's data for this verse."
+msgstr ""
+
+#: src/window.c:454
+msgid "No cross-references for this verse."
+msgstr ""
+
+#: src/window.c:470
+msgid "No lexicon module is installed."
+msgstr ""
+
+#: src/window.c:475
+msgid "Cannot look up lexicon entry"
+msgstr ""
+
+#: src/window.c:480
+msgid "Cannot read lexicon entry"
+msgstr ""
+
+#: src/window.c:669
+msgid "Cannot save note"
+msgstr ""
+
+#: src/window.c:681
+msgid "Note saved"
+msgstr ""
+
+#: src/window.c:695
+msgid "Cannot delete note"
+msgstr ""
+
+#: src/window.c:702
+msgid "Note deleted"
+msgstr ""
+
+#: src/window.c:750
+msgid "Export note"
+msgstr ""
+
+#: src/window.c:854
+msgid "Cannot create list"
+msgstr ""
+
+#: src/window.c:859
+msgid "Verse list created"
+msgstr ""
+
+#: src/window.c:872
+msgid "Select a verse list first"
+msgstr ""
+
+#: src/window.c:878
+msgid "Cannot add verse to list"
+msgstr ""
+
+#: src/window.c:882
+msgid "Verse added to list"
+msgstr ""
+
+#: src/window.c:897
+msgid "Add list"
+msgstr ""
+
+#: src/window.c:898 src/window.c:4561
+msgid "Notes"
+msgstr ""
+
+#: src/window.c:899
+msgid "Tags"
+msgstr ""
+
+#: src/window.c:900
+msgid "Verse lists"
+msgstr ""
+
+#: src/window.c:901
+msgid "List verses"
+msgstr ""
+
+#: src/window.c:904
+msgid "Save"
+msgstr ""
+
+#: src/window.c:905 src/window.c:1517 src/window.c:2192
+msgid "Delete"
+msgstr ""
+
+#: src/window.c:906
+msgid "Export"
+msgstr ""
+
+#: src/window.c:907
+msgid "Add to list"
+msgstr ""
+
+#: src/window.c:921
+msgid "Search notes"
+msgstr ""
+
+#: src/window.c:953
+msgid "New list"
+msgstr ""
+
+#: src/window.c:981
+msgid "Verse key"
+msgstr ""
+
+#: src/window.c:984
+msgid "Tags, separated by commas"
+msgstr ""
+
+#: src/window.c:986
+msgid "Tags:"
+msgstr ""
+
+#: src/window.c:1050
+msgid "No Bible text module is installed"
+msgstr ""
+
+#: src/window.c:1205
+msgid "Create a reading plan to get started."
+msgstr ""
+
+#: src/window.c:1219
+#, c-format
+msgid "%s  ·  %d/%d days (%.1f%%)  ·  streak %d"
+msgstr ""
+
+#: src/window.c:1227
+#, c-format
+msgid "Day %d: %s"
+msgstr ""
+
+#: src/window.c:1236
+msgid "Plan complete"
+msgstr ""
+
+#: src/window.c:1257
+#, c-format
+msgid "Day %d   %s"
+msgstr ""
+
+#: src/window.c:1263
+msgid "Done"
+msgstr ""
+
+#: src/window.c:1381 src/window.c:1425
+msgid "Cannot update plan"
+msgstr ""
+
+#: src/window.c:1384
+msgid "Reading plan updated"
+msgstr ""
+
+#: src/window.c:1428
+msgid "Day marked complete"
+msgstr ""
+
+#: src/window.c:1451
+msgid "Enter a plan name and start reference"
+msgstr ""
+
+#: src/window.c:1456 src/window.c:1466
+msgid "Cannot create plan"
+msgstr ""
+
+#: src/window.c:1458
+msgid "Invalid start reference or empty plan"
+msgstr ""
+
+#: src/window.c:1474
+msgid "Reading plan created"
+msgstr ""
+
+#: src/window.c:1491
+msgid "Cannot delete plan"
+msgstr ""
+
+#: src/window.c:1498
+msgid "Reading plan deleted"
+msgstr ""
+
+#: src/window.c:1511
+msgid "Delete reading plan?"
+msgstr ""
+
+#: src/window.c:1513
+#, c-format
+msgid "Delete “%s” and its reading progress? This cannot be undone."
+msgstr ""
+
+#: src/window.c:1516 src/window.c:4387
+msgid "Cancel"
+msgstr ""
+
+#: src/window.c:1605
+msgid "No devotional entry is available for today in this module."
+msgstr ""
+
+#: src/window.c:1610
+#, c-format
+msgid "Daily Devotion · %s · %s"
+msgstr ""
+
+#: src/window.c:1660 src/window.c:2300
+msgid "Daily Devotion"
+msgstr ""
+
+#: src/window.c:1663
+msgid ""
+"No daily devotional module is installed.\n"
+"\n"
+"Install a module such as Daily Light or Morning and Evening from the Library "
+"page."
+msgstr ""
+
+#: src/window.c:1764 src/window.c:2340
+msgid "Select a verse card"
+msgstr ""
+
+#: src/window.c:1804
+#, c-format
+msgid "Due %s  ·  box %d"
+msgstr ""
+
+#: src/window.c:1833
+#, c-format
+msgid ""
+"%s\n"
+"Due %s  ·  box %d"
+msgstr ""
+
+#: src/window.c:1892
+msgid "Cannot add memory verse"
+msgstr ""
+
+#: src/window.c:1901
+msgid "Cannot save memory verse"
+msgstr ""
+
+#: src/window.c:1922
+msgid "Verse added to memory review"
+msgstr ""
+
+#: src/window.c:1938
+msgid "Cannot schedule review"
+msgstr ""
+
+#: src/window.c:1943
+msgid "Review scheduled: nice work"
+msgstr ""
+
+#: src/window.c:1944
+msgid "Card will be shown again today"
+msgstr ""
+
+#: src/window.c:1964
+msgid "Correct"
+msgstr ""
+
+#: src/window.c:1965
+msgid "Memory verse recited correctly"
+msgstr ""
+
+#: src/window.c:1967
+msgid "Keep practicing"
+msgstr ""
+
+#: src/window.c:1985
+msgid "Cannot delete memory verse"
+msgstr ""
+
+#: src/window.c:1990
+msgid "Memory verse removed"
+msgstr ""
+
+#: src/window.c:2059
+msgid "Cannot read teaching passage"
+msgstr ""
+
+#: src/window.c:2113
+msgid "Cannot save teaching notes"
+msgstr ""
+
+#: src/window.c:2118
+msgid "Teaching notes saved"
+msgstr ""
+
+#: src/window.c:2135
+msgid "Exit fullscreen"
+msgstr ""
+
+#: src/window.c:2135 src/window.c:2148 src/window.c:2419
+msgid "Fullscreen"
+msgstr ""
+
+#: src/window.c:2187
+msgid "Open today's reading"
+msgstr ""
+
+#: src/window.c:2188
+msgid "Mark today complete"
+msgstr ""
+
+#: src/window.c:2189
+msgid "Create plan"
+msgstr ""
+
+#: src/window.c:2190
+msgid "Delete plan"
+msgstr ""
+
+#: src/window.c:2191
+msgid "Add current verse"
+msgstr ""
+
+#: src/window.c:2193
+msgid "Check answer"
+msgstr ""
+
+#: src/window.c:2194
+msgid "Again"
+msgstr ""
+
+#: src/window.c:2195
+msgid "Good"
+msgstr ""
+
+#: src/window.c:2196
+msgid "Refresh"
+msgstr ""
+
+#: src/window.c:2198
+msgid "Full text"
+msgstr ""
+
+#: src/window.c:2198
+msgid "First letters"
+msgstr ""
+
+#: src/window.c:2198
+msgid "Hide words"
+msgstr ""
+
+#: src/window.c:2244
+msgid "Schedule"
+msgstr ""
+
+#: src/window.c:2259
+msgid "Plan name"
+msgstr ""
+
+#: src/window.c:2261
+msgid "Start, e.g. Genesis 1"
+msgstr ""
+
+#: src/window.c:2275
+msgid "Days"
+msgstr ""
+
+#: src/window.c:2277
+msgid "Chapters/day"
+msgstr ""
+
+#: src/window.c:2285
+msgid ""
+"The plan advances through chapters from the start reference. Reading days "
+"can be opened by double-clicking a schedule row."
+msgstr ""
+
+#: src/window.c:2362
+msgid "Card mode"
+msgstr ""
+
+#: src/window.c:2365
+msgid "Type the verse"
+msgstr ""
+
+#: src/window.c:2391
+msgid "Today"
+msgstr ""
+
+#: src/window.c:2393
+msgid "Plans"
+msgstr ""
+
+#: src/window.c:2395
+msgid "Devotion"
+msgstr ""
+
+#: src/window.c:2397
+msgid "Memorize"
+msgstr ""
+
+#: src/window.c:2414
+msgid "Scripture"
+msgstr ""
+
+#: src/window.c:2415
+msgid "Teaching notes"
+msgstr ""
+
+#: src/window.c:2416
+msgid "Load current passage"
+msgstr ""
+
+#: src/window.c:2417
+msgid "Save notes"
+msgstr ""
+
+#: src/window.c:2418
+msgid "Back to reading"
+msgstr ""
+
+#: src/window.c:2428
+msgid "Current passage"
+msgstr ""
+
+#: src/window.c:2492
+msgid ""
+"No modules found.\n"
+"\n"
+"Install SWORD modules or start gsword with --library PATH."
+msgstr ""
+
+#: src/window.c:2495
+msgid "No modules found"
+msgstr ""
+
+#: src/window.c:2519
+msgid "Cannot read entry"
+msgstr ""
+
+#: src/window.c:2554
+msgid "Cannot set key"
+msgstr ""
+
+#: src/window.c:2672
+msgid "Highlight removed"
+msgstr ""
+
+#: src/window.c:2677
+msgid "Verse highlighted"
+msgstr ""
+
+#: src/window.c:2680
+msgid "Cannot update highlight"
+msgstr ""
+
+#: src/window.c:2714
+msgid "Cannot open module"
+msgstr ""
+
+#: src/window.c:2777
+msgid "Biblical Texts"
+msgstr ""
+
+#: src/window.c:2778
+msgid "Commentaries"
+msgstr ""
+
+#: src/window.c:2779
+msgid "Lexicons / Dictionaries"
+msgstr ""
+
+#: src/window.c:2780
+msgid "Generic Books"
+msgstr ""
+
+#: src/window.c:2781
+msgid "Daily Devotional"
+msgstr ""
+
+#: src/window.c:2782
+msgid "Maps"
+msgstr ""
+
+#: src/window.c:2783
+msgid "Other"
+msgstr ""
+
+#: src/window.c:2787
+msgid "Unknown"
+msgstr ""
+
+#: src/window.c:2955
+msgid "Cannot change chapter"
+msgstr ""
+
+#: src/window.c:3010
+msgid "Copied to clipboard"
+msgstr ""
+
+#: src/window.c:3075 src/window.c:4533
+msgid "Preferences"
+msgstr ""
+
+#: src/window.c:3080 src/window.c:4552
+msgid "Reading"
+msgstr ""
+
+#: src/window.c:3082
+msgid "Reading appearance is applied immediately."
+msgstr ""
+
+#: src/window.c:3086
+msgid "Font size"
+msgstr ""
+
+#: src/window.c:3087
+msgid "Scale the scripture text size"
+msgstr ""
+
+#: src/window.c:3098
+msgid "Color scheme"
+msgstr ""
+
+#: src/window.c:3100
+msgid "Follow the desktop or force light/dark mode"
+msgstr ""
+
+#: src/window.c:3102
+msgid "Follow system"
+msgstr ""
+
+#: src/window.c:3102
+msgid "Light"
+msgstr ""
+
+#: src/window.c:3102
+msgid "Dark"
+msgstr ""
+
+#: src/window.c:3148
+msgid "Modules"
+msgstr ""
+
+#: src/window.c:3273
+msgid "Lookup"
+msgstr ""
+
+#: src/window.c:3281
+msgid "Strong's / dictionary key"
+msgstr ""
+
+#: src/window.c:3294
+msgid "Commentary"
+msgstr ""
+
+#: src/window.c:3296
+msgid "Strong's"
+msgstr ""
+
+#: src/window.c:3298
+msgid "Cross-refs"
+msgstr ""
+
+#: src/window.c:3300
+msgid "Lexicon"
+msgstr ""
+
+#: src/window.c:3317
+msgid "Go"
+msgstr ""
+
+#: src/window.c:3322
+msgid "Teach"
+msgstr ""
+
+#: src/window.c:3335
+msgid "Genesis 1:1 / 启示录 1:1"
+msgstr ""
+
+#: src/window.c:3354
+msgid "Open teaching layout for this passage"
+msgstr ""
+
+#: src/window.c:3360
+msgid "Previous chapter"
+msgstr ""
+
+#: src/window.c:3361
+msgid "Next chapter"
+msgstr ""
+
+#: src/window.c:3362
+msgid "Copy entry"
+msgstr ""
+
+#: src/window.c:3363
+msgid "Open note for this verse"
+msgstr ""
+
+#: src/window.c:3364
+msgid "Toggle verse highlight"
+msgstr ""
+
+#: src/window.c:3365
+msgid "Toggle study panel"
+msgstr ""
+
+#: src/window.c:3437
+msgid "No module selected."
+msgstr ""
+
+#: src/window.c:3452
+msgid "Cannot read this entry."
+msgstr ""
+
+#: src/window.c:3559
+msgid "Load both"
+msgstr ""
+
+#: src/window.c:3573
+msgid "Shared chapter/key"
+msgstr ""
+
+#: src/window.c:3576
+msgid "Sync scroll"
+msgstr ""
+
+#: src/window.c:3621
+msgid "Open a module before searching"
+msgstr ""
+
+#: src/window.c:3643
+msgid "Search failed"
+msgstr ""
+
+#: src/window.c:3671
+#, c-format
+msgid "Search: %u result(s)"
+msgstr ""
+
+#: src/window.c:3720
+#, c-format
+msgid "Indexing %s: %u/%u"
+msgstr ""
+
+#: src/window.c:3735 src/window.c:3813
+msgid "Index: no module"
+msgstr ""
+
+#: src/window.c:3739
+msgid "Index: available"
+msgstr ""
+
+#: src/window.c:3739
+msgid "Index: not built"
+msgstr ""
+
+#: src/window.c:3755
+msgid "Cannot build index"
+msgstr ""
+
+#: src/window.c:3758
+msgid "Search index built"
+msgstr ""
+
+#: src/window.c:3773
+msgid "Cannot delete index"
+msgstr ""
+
+#: src/window.c:3776
+msgid "Search index deleted"
+msgstr ""
+
+#: src/window.c:3788 src/window.c:4558
+msgid "Search"
+msgstr ""
+
+#: src/window.c:3799
+msgid "Build search index"
+msgstr ""
+
+#: src/window.c:3800
+msgid "Delete search index"
+msgstr ""
+
+#: src/window.c:3804
+msgid "Search text"
+msgstr ""
+
+#: src/window.c:3808
+msgid "Phrase"
+msgstr ""
+
+#: src/window.c:3808
+msgid "Multiword"
+msgstr ""
+
+#: src/window.c:3808
+msgid "Regex"
+msgstr ""
+
+#: src/window.c:3812
+msgid "Case sensitive"
+msgstr ""
+
+#: src/window.c:3865
+msgid "Not installed"
+msgstr ""
+
+#: src/window.c:3867
+msgid "Update available"
+msgstr ""
+
+#: src/window.c:3869
+msgid "Installed - local version is newer"
+msgstr ""
+
+#: src/window.c:3871
+msgid "Installed - up to date"
+msgstr ""
+
+#: src/window.c:3872
+msgid "Installed"
+msgstr ""
+
+#: src/window.c:3905
+msgid "Install manager is not available"
+msgstr ""
+
+#: src/window.c:3919
+msgid "Source"
+msgstr ""
+
+#: src/window.c:3974 src/window.c:4444
+msgid "Select a module"
+msgstr ""
+
+#: src/window.c:3980
+msgid "No source selected. Refresh the source list first."
+msgstr ""
+
+#: src/window.c:3986
+msgid "Cannot read remote modules"
+msgstr ""
+
+#: src/window.c:4063
+msgid "Refreshing install sources..."
+msgstr ""
+
+#: src/window.c:4078
+msgid "Cannot refresh install sources"
+msgstr ""
+
+#: src/window.c:4080
+msgid "Install sources refreshed"
+msgstr ""
+
+#: src/window.c:4103
+msgid "Refreshing remote module list..."
+msgstr ""
+
+#: src/window.c:4142
+msgid "Cannot refresh remote modules"
+msgstr ""
+
+#: src/window.c:4144
+msgid "Remote module list refreshed"
+msgstr ""
+
+#: src/window.c:4170
+msgid "Installing module..."
+msgstr ""
+
+#: src/window.c:4188
+msgid "Module install failed"
+msgstr ""
+
+#: src/window.c:4206
+#, c-format
+msgid "Installed module %s"
+msgstr ""
+
+#: src/window.c:4235
+msgid "Removing module..."
+msgstr ""
+
+#: src/window.c:4250
+msgid "Module removal failed"
+msgstr ""
+
+#: src/window.c:4252
+msgid "Module removed"
+msgstr ""
+
+#: src/window.c:4274
+msgid "Cancelling..."
+msgstr ""
+
+#: src/window.c:4288
+msgid "Installing..."
+msgstr ""
+
+#: src/window.c:4306 src/window.c:4310
+msgid "Downloading"
+msgstr ""
+
+#: src/window.c:4306 src/window.c:4310
+msgid "bytes"
+msgstr ""
+
+#: src/window.c:4334
+msgid "Enter a local SWORD directory and module name"
+msgstr ""
+
+#: src/window.c:4339
+msgid "Local install failed"
+msgstr ""
+
+#: src/window.c:4351
+msgid "Module installed from local directory"
+msgstr ""
+
+#: src/window.c:4385
+msgid "Install / Update"
+msgstr ""
+
+#: src/window.c:4386
+msgid "Remove"
+msgstr ""
+
+#: src/window.c:4390
+msgid "Install from local directory"
+msgstr ""
+
+#: src/window.c:4399
+msgid "Filter modules"
+msgstr ""
+
+#: src/window.c:4402
+msgid "Refresh the install source list"
+msgstr ""
+
+#: src/window.c:4404
+msgid "Refresh modules from the selected source"
+msgstr ""
+
+#: src/window.c:4467
+msgid "Installed:"
+msgstr ""
+
+#: src/window.c:4476
+msgid "Local SWORD library directory"
+msgstr ""
+
+#: src/window.c:4478
+msgid "Module name"
+msgstr ""
+
+#: src/window.c:4480
+msgid "Install local module"
+msgstr ""
+
+#: src/window.c:4529
+msgid "SWORD study"
+msgstr ""
+
+#: src/window.c:4534
+msgid "Quit"
+msgstr ""
+
+#: src/window.c:4540
+msgid "Main menu"
+msgstr ""
+
+#: src/window.c:4547 src/window.c:4570
+msgid "Library"
+msgstr ""
+
+#: src/window.c:4555
+msgid "Parallel"
+msgstr ""
+
+#: src/window.c:4564
+msgid "Plan"
+msgstr ""
+
+#: src/window.c:4589
+msgid "Workspace"
+msgstr ""

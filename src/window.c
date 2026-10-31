@@ -3,6 +3,8 @@
 #include "plan-store.h"
 #include "app-paths.h"
 
+#include <glib/gi18n.h>
+
 #include <string.h>
 
 struct _GswordWindow {
@@ -192,7 +194,7 @@ static void
 gsword_window_show_error(GswordWindow *self, const gchar *prefix,
                          GError *error)
 {
-    const gchar *detail = error != NULL ? error->message : "unknown error";
+    const gchar *detail = error != NULL ? error->message : _("unknown error");
     gchar *message = g_strdup_printf("%s: %s", prefix, detail);
 
     gsword_window_set_status(self, message);
@@ -203,7 +205,7 @@ gsword_window_show_error(GswordWindow *self, const gchar *prefix,
 
         adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog), "%s", detail);
         adw_alert_dialog_add_response(ADW_ALERT_DIALOG(dialog),
-                                      "close", "Close");
+                                      "close", _("Close"));
         adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog),
                                               "close");
         adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog),
@@ -391,12 +393,12 @@ gsword_window_update_study(GswordWindow *self)
         }
         gsword_window_set_view_text(priv->commentary_view,
                                     commentary != NULL
-                                    ? commentary : "No commentary for this verse.");
+                                    ? commentary : _("No commentary for this verse."));
         g_free(commentary);
         g_clear_error(&error);
     } else {
         gsword_window_set_view_text(priv->commentary_view,
-                                    "No commentary module is installed.");
+                                    _("No commentary module is installed."));
     }
 
     text = g_string_new(NULL);
@@ -422,7 +424,7 @@ gsword_window_update_study(GswordWindow *self)
         g_clear_error(&error);
     }
     if (text->len == 0)
-        g_string_append(text, "No Strong's data for this verse.");
+        g_string_append(text, _("No Strong's data for this verse."));
     gsword_window_set_view_text(priv->strongs_view, text->str);
     g_string_free(text, TRUE);
 
@@ -449,7 +451,7 @@ gsword_window_update_study(GswordWindow *self)
         g_clear_error(&error);
     }
     if (text->len == 0)
-        g_string_append(text, "No cross-references for this verse.");
+        g_string_append(text, _("No cross-references for this verse."));
     gsword_window_set_view_text(priv->crossref_view, text->str);
     g_string_free(text, TRUE);
 }
@@ -465,17 +467,17 @@ gsword_window_lexicon_lookup(GswordWindow *self)
     gsword_window_ensure_study_modules(self);
     if (priv->lexicon_module == NULL) {
         gsword_window_set_view_text(priv->lexicon_view,
-                                    "No lexicon module is installed.");
+                                    _("No lexicon module is installed."));
         return;
     }
     key = gtk_editable_get_text(GTK_EDITABLE(priv->lexicon_entry));
     if (!gsw_module_set_key_text(priv->lexicon_module, key, &error)) {
-        gsword_window_show_error(self, "Cannot look up lexicon entry", error);
+        gsword_window_show_error(self, _("Cannot look up lexicon entry"), error);
         return;
     }
     text = gsw_module_get_text(priv->lexicon_module, &error);
     if (text == NULL) {
-        gsword_window_show_error(self, "Cannot read lexicon entry", error);
+        gsword_window_show_error(self, _("Cannot read lexicon entry"), error);
         return;
     }
     gsword_window_set_view_text(priv->lexicon_view, text);
@@ -664,7 +666,7 @@ on_note_save(GtkButton *button, gpointer user_data)
     if (!gsword_notes_store_save_note(
             priv->notes, priv->note_module, priv->note_storage_key,
             priv->note_display_key, text, tags, &error)) {
-        gsword_window_show_error(self, "Cannot save note", error);
+        gsword_window_show_error(self, _("Cannot save note"), error);
         g_free(text);
         return;
     }
@@ -676,7 +678,7 @@ on_note_save(GtkButton *button, gpointer user_data)
         gsword_note_free(saved);
     }
     gsword_window_refresh_notes(self);
-    gsword_window_set_status(self, "Note saved");
+    gsword_window_set_status(self, _("Note saved"));
 }
 
 static void
@@ -690,14 +692,14 @@ on_note_delete(GtkButton *button, gpointer user_data)
     if (priv->notes == NULL || priv->note_id == 0)
         return;
     if (!gsword_notes_store_delete_note(priv->notes, priv->note_id, &error)) {
-        gsword_window_show_error(self, "Cannot delete note", error);
+        gsword_window_show_error(self, _("Cannot delete note"), error);
         return;
     }
     priv->note_id = 0;
     gtk_text_buffer_set_text(gtk_text_view_get_buffer(priv->note_text), "", -1);
     gtk_editable_set_text(GTK_EDITABLE(priv->note_tags_entry), "");
     gsword_window_refresh_notes(self);
-    gsword_window_set_status(self, "Note deleted");
+    gsword_window_set_status(self, _("Note deleted"));
 }
 
 static void
@@ -745,7 +747,7 @@ on_note_export(GtkButton *button, gpointer user_data)
     g_free(text);
 
     dialog = gtk_file_dialog_new();
-    gtk_file_dialog_set_title(dialog, "Export note");
+    gtk_file_dialog_set_title(dialog, _("Export note"));
     gtk_file_dialog_set_initial_name(dialog, "gsword-note.md");
     g_object_set_data_full(G_OBJECT(dialog), "export-content", content, g_free);
     gtk_file_dialog_save(dialog, GTK_WINDOW(self), NULL, on_export_save, self);
@@ -849,12 +851,12 @@ on_create_list(GtkButton *button, gpointer user_data)
     if (priv->notes == NULL || name == NULL || *name == '\0')
         return;
     if (!gsword_notes_store_create_list(priv->notes, name, &error)) {
-        gsword_window_show_error(self, "Cannot create list", error);
+        gsword_window_show_error(self, _("Cannot create list"), error);
         return;
     }
     gtk_editable_set_text(GTK_EDITABLE(priv->new_list_entry), "");
     gsword_window_refresh_notes(self);
-    gsword_window_set_status(self, "Verse list created");
+    gsword_window_set_status(self, _("Verse list created"));
 }
 
 static void
@@ -867,17 +869,17 @@ on_add_to_list(GtkButton *button, gpointer user_data)
     (void)button;
     if (priv->notes == NULL || priv->selected_list_id == 0 ||
         priv->note_storage_key == NULL) {
-        gsword_window_set_status(self, "Select a verse list first");
+        gsword_window_set_status(self, _("Select a verse list first"));
         return;
     }
     if (!gsword_notes_store_add_to_list(
             priv->notes, priv->selected_list_id, priv->note_module,
             priv->note_storage_key, priv->note_display_key, &error)) {
-        gsword_window_show_error(self, "Cannot add verse to list", error);
+        gsword_window_show_error(self, _("Cannot add verse to list"), error);
         return;
     }
     gsword_window_refresh_notes(self);
-    gsword_window_set_status(self, "Verse added to list");
+    gsword_window_set_status(self, _("Verse added to list"));
 }
 
 static GtkWidget *
@@ -892,17 +894,17 @@ gsword_window_make_notes_page(GswordWindow *self)
     GtkWidget *lists_scroll = gtk_scrolled_window_new();
     GtkWidget *list_items_scroll = gtk_scrolled_window_new();
     GtkWidget *new_list_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *new_list_button = gtk_button_new_with_label("Add list");
-    GtkWidget *notes_label = gtk_label_new("Notes");
-    GtkWidget *tags_label = gtk_label_new("Tags");
-    GtkWidget *lists_label = gtk_label_new("Verse lists");
-    GtkWidget *list_items_label = gtk_label_new("List verses");
+    GtkWidget *new_list_button = gtk_button_new_with_label(_("Add list"));
+    GtkWidget *notes_label = gtk_label_new(_("Notes"));
+    GtkWidget *tags_label = gtk_label_new(_("Tags"));
+    GtkWidget *lists_label = gtk_label_new(_("Verse lists"));
+    GtkWidget *list_items_label = gtk_label_new(_("List verses"));
     GtkWidget *editor_scroll = gtk_scrolled_window_new();
     GtkWidget *buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *save = gtk_button_new_with_label("Save");
-    GtkWidget *delete = gtk_button_new_with_label("Delete");
-    GtkWidget *export = gtk_button_new_with_label("Export");
-    GtkWidget *add_to_list = gtk_button_new_with_label("Add to list");
+    GtkWidget *save = gtk_button_new_with_label(_("Save"));
+    GtkWidget *delete = gtk_button_new_with_label(_("Delete"));
+    GtkWidget *export = gtk_button_new_with_label(_("Export"));
+    GtkWidget *add_to_list = gtk_button_new_with_label(_("Add to list"));
     GtkWidget *tags_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
 
     gtk_widget_set_margin_top(left, 8);
@@ -916,7 +918,7 @@ gsword_window_make_notes_page(GswordWindow *self)
     gtk_widget_set_size_request(left, 260, -1);
 
     priv->note_search = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->note_search, "Search notes");
+    gtk_entry_set_placeholder_text(priv->note_search, _("Search notes"));
     g_signal_connect(priv->note_search, "changed",
                      G_CALLBACK(on_note_search_changed), self);
 
@@ -948,7 +950,7 @@ gsword_window_make_notes_page(GswordWindow *self)
                                   GTK_WIDGET(priv->list_items));
     gtk_widget_set_size_request(list_items_scroll, -1, 100);
     priv->new_list_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->new_list_entry, "New list");
+    gtk_entry_set_placeholder_text(priv->new_list_entry, _("New list"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->new_list_entry), TRUE);
     g_signal_connect(new_list_button, "clicked",
                      G_CALLBACK(on_create_list), self);
@@ -976,12 +978,12 @@ gsword_window_make_notes_page(GswordWindow *self)
 
     priv->note_key_entry = GTK_ENTRY(gtk_entry_new());
     gtk_editable_set_editable(GTK_EDITABLE(priv->note_key_entry), FALSE);
-    gtk_entry_set_placeholder_text(priv->note_key_entry, "Verse key");
+    gtk_entry_set_placeholder_text(priv->note_key_entry, _("Verse key"));
     priv->note_tags_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->note_tags_entry,
-                                   "Tags, separated by commas");
+                                   _("Tags, separated by commas"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->note_tags_entry), TRUE);
-    gtk_box_append(GTK_BOX(tags_row), gtk_label_new("Tags:"));
+    gtk_box_append(GTK_BOX(tags_row), gtk_label_new(_("Tags:")));
     gtk_box_append(GTK_BOX(tags_row), GTK_WIDGET(priv->note_tags_entry));
 
     priv->note_text = GTK_TEXT_VIEW(gtk_text_view_new());
@@ -1045,7 +1047,7 @@ gsword_window_ensure_verse_module(GswordWindow *self)
         }
     }
     g_ptr_array_unref(infos);
-    gsword_window_set_status(self, "No Bible text module is installed");
+    gsword_window_set_status(self, _("No Bible text module is installed"));
     return NULL;
 }
 
@@ -1200,7 +1202,7 @@ gsword_window_refresh_plan_views(GswordWindow *self)
 
     if (plan == NULL) {
         gtk_label_set_text(priv->plan_summary,
-                           "Create a reading plan to get started.");
+                           _("Create a reading plan to get started."));
         gtk_label_set_text(priv->plan_today, "");
         gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_open_button), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
@@ -1214,7 +1216,7 @@ gsword_window_refresh_plan_views(GswordWindow *self)
                         ? (gdouble)plan->completed_days * 100.0 /
                           plan->total_days : 0.0;
         gchar *summary = g_strdup_printf(
-            "%s  ·  %d/%d days (%.1f%%)  ·  streak %d",
+            _("%s  ·  %d/%d days (%.1f%%)  ·  streak %d"),
             plan->name, plan->completed_days, plan->total_days, percent,
             plan->streak);
 
@@ -1222,7 +1224,7 @@ gsword_window_refresh_plan_views(GswordWindow *self)
         g_free(summary);
     }
     if (plan->next_day > 0) {
-        gchar *today = g_strdup_printf("Day %d: %s", plan->next_day,
+        gchar *today = g_strdup_printf(_("Day %d: %s"), plan->next_day,
                                        plan->next_reference != NULL
                                        ? plan->next_reference : "");
         gtk_label_set_text(priv->plan_today, today);
@@ -1231,7 +1233,7 @@ gsword_window_refresh_plan_views(GswordWindow *self)
         gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
                                  TRUE);
     } else {
-        gtk_label_set_text(priv->plan_today, "Plan complete");
+        gtk_label_set_text(priv->plan_today, _("Plan complete"));
         gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_open_button), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(priv->plan_complete_button),
                                  FALSE);
@@ -1252,13 +1254,13 @@ gsword_window_refresh_plan_views(GswordWindow *self)
             gchar *plan_number = g_strdup_printf("%" G_GINT64_FORMAT,
                                                  plan->id);
 
-            text = g_strdup_printf("Day %d   %s", day->day,
+            text = g_strdup_printf(_("Day %d   %s"), day->day,
                                    day->reference != NULL ? day->reference : "");
 
             label = gtk_label_new(text);
             gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
             gtk_widget_set_hexpand(label, TRUE);
-            check = gtk_check_button_new_with_label("Done");
+            check = gtk_check_button_new_with_label(_("Done"));
             gtk_check_button_set_active(GTK_CHECK_BUTTON(check),
                                         day->completed_on != NULL);
             g_object_set_data_full(G_OBJECT(check), "plan-id", plan_number,
@@ -1376,10 +1378,10 @@ on_plan_day_toggled(GtkCheckButton *button, gpointer user_data)
             priv->plans, g_ascii_strtoll(plan_id, NULL, 10),
             (gint)g_ascii_strtoll(day, NULL, 10),
             gtk_check_button_get_active(button), &error)) {
-        gsword_window_show_error(self, "Cannot update plan", error);
+        gsword_window_show_error(self, _("Cannot update plan"), error);
         return;
     }
-    gsword_window_set_status(self, "Reading plan updated");
+    gsword_window_set_status(self, _("Reading plan updated"));
     gsword_window_schedule_plan_refresh(self);
 }
 
@@ -1420,10 +1422,10 @@ on_plan_complete_today(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_complete_day(priv->plans, plan->id, plan->next_day,
                                         TRUE, &error)) {
-        gsword_window_show_error(self, "Cannot update plan", error);
+        gsword_window_show_error(self, _("Cannot update plan"), error);
         return;
     }
-    gsword_window_set_status(self, "Day marked complete");
+    gsword_window_set_status(self, _("Day marked complete"));
     gsword_window_refresh_plans(self);
 }
 
@@ -1446,14 +1448,14 @@ on_plan_create(GtkButton *button, gpointer user_data)
         return;
     if (name == NULL || *name == '\0' ||
         start == NULL || *start == '\0') {
-        gsword_window_set_status(self, "Enter a plan name and start reference");
+        gsword_window_set_status(self, _("Enter a plan name and start reference"));
         return;
     }
     references = gsword_window_generate_plan_references(start, days, chapters);
     if (references->len == 0) {
-        gsword_window_show_error(self, "Cannot create plan",
+        gsword_window_show_error(self, _("Cannot create plan"),
             g_error_new_literal(G_FILE_ERROR, G_FILE_ERROR_INVAL,
-                                "Invalid start reference or empty plan"));
+                                _("Invalid start reference or empty plan")));
         g_ptr_array_unref(references);
         return;
     }
@@ -1461,7 +1463,7 @@ on_plan_create(GtkButton *button, gpointer user_data)
                                             references, &error);
     g_ptr_array_unref(references);
     if (plan_id == 0) {
-        gsword_window_show_error(self, "Cannot create plan", error);
+        gsword_window_show_error(self, _("Cannot create plan"), error);
         return;
     }
     id = g_strdup_printf("%" G_GINT64_FORMAT, plan_id);
@@ -1469,7 +1471,7 @@ on_plan_create(GtkButton *button, gpointer user_data)
         g_settings_set_string(priv->settings, "active-plan-id", id);
     g_free(id);
     gsword_window_refresh_plans(self);
-    gsword_window_set_status(self, "Reading plan created");
+    gsword_window_set_status(self, _("Reading plan created"));
 }
 
 static void
@@ -1486,14 +1488,14 @@ on_plan_delete_response(AdwAlertDialog *dialog, const gchar *response,
         priv->plans == NULL)
         return;
     if (!gsword_plan_store_delete_plan(priv->plans, plan->id, &error)) {
-        gsword_window_show_error(self, "Cannot delete plan", error);
+        gsword_window_show_error(self, _("Cannot delete plan"), error);
         return;
     }
     if (priv->settings != NULL)
         g_settings_set_string(priv->settings, "active-plan-id", "");
     priv->selected_plan_id = 0;
     gsword_window_refresh_plans(self);
-    gsword_window_set_status(self, "Reading plan deleted");
+    gsword_window_set_status(self, _("Reading plan deleted"));
 }
 
 static void
@@ -1506,13 +1508,13 @@ on_plan_delete(GtkButton *button, gpointer user_data)
     (void)button;
     if (plan == NULL)
         return;
-    dialog = adw_alert_dialog_new("Delete reading plan?", NULL);
+    dialog = adw_alert_dialog_new(_("Delete reading plan?"), NULL);
     adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog),
-        "Delete “%s” and its reading progress? This cannot be undone.",
+        _("Delete “%s” and its reading progress? This cannot be undone."),
         plan->name);
     adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
-                                   "cancel", "Cancel",
-                                   "delete", "Delete",
+                                   "cancel", _("Cancel"),
+                                   "delete", _("Delete"),
                                    NULL);
     adw_alert_dialog_set_response_appearance(ADW_ALERT_DIALOG(dialog),
                                              "delete",
@@ -1600,12 +1602,12 @@ gsword_window_load_devotion(GswordWindow *self)
     if (text == NULL) {
         gsword_window_set_view_text(
             priv->devotion_view,
-            "No devotional entry is available for today in this module.");
+            _("No devotional entry is available for today in this module."));
     } else {
         gsword_window_set_view_text(priv->devotion_view, text);
         g_free(text);
     }
-    title = g_strdup_printf("Daily Devotion · %s · %s", name,
+    title = g_strdup_printf(_("Daily Devotion · %s · %s"), name,
                             date_text != NULL ? date_text : "");
     gtk_label_set_text(priv->devotion_title, title);
     g_free(title);
@@ -1655,12 +1657,12 @@ gsword_window_refresh_devotion(GswordWindow *self)
         gtk_drop_down_set_selected(priv->devotion_selector, selected);
         gsword_window_load_devotion(self);
     } else {
-        gtk_label_set_text(priv->devotion_title, "Daily Devotion");
+        gtk_label_set_text(priv->devotion_title, _("Daily Devotion"));
         gsword_window_set_view_text(
             priv->devotion_view,
-            "No daily devotional module is installed.\n\n"
-            "Install a module such as Daily Light or Morning and Evening "
-            "from the Library page.");
+            _("No daily devotional module is installed.\n\n"
+              "Install a module such as Daily Light or Morning and Evening "
+              "from the Library page."));
     }
     g_free(wanted);
 }
@@ -1759,7 +1761,7 @@ gsword_window_clear_memory_selection(GswordWindow *self)
     g_clear_pointer(&priv->memory_key, g_free);
     g_clear_pointer(&priv->memory_display, g_free);
     g_clear_pointer(&priv->memory_text, g_free);
-    gtk_label_set_text(priv->memory_title, "Select a verse card");
+    gtk_label_set_text(priv->memory_title, _("Select a verse card"));
     gtk_label_set_text(priv->memory_due, "");
     gtk_editable_set_text(GTK_EDITABLE(priv->memory_input), "");
     gtk_label_set_text(priv->memory_result, "");
@@ -1799,7 +1801,7 @@ on_memory_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         priv->memory_key = g_strdup(verse->key);
         priv->memory_display = g_strdup(verse->display_key);
         priv->memory_text = g_strdup(verse->text);
-        due = g_strdup_printf("Due %s  ·  box %d", verse->due, verse->box);
+        due = g_strdup_printf(_("Due %s  ·  box %d"), verse->due, verse->box);
         gtk_label_set_text(priv->memory_title, verse->display_key);
         gtk_label_set_text(priv->memory_due, due);
         g_free(due);
@@ -1828,7 +1830,7 @@ gsword_window_refresh_memory(GswordWindow *self)
         GswordMemoryVerse *verse = g_ptr_array_index(priv->memory_items, i);
         GtkWidget *row = gtk_list_box_row_new();
         GtkWidget *label;
-        gchar *text = g_strdup_printf("%s\nDue %s  ·  box %d",
+        gchar *text = g_strdup_printf(_("%s\nDue %s  ·  box %d"),
                                       verse->display_key, verse->due,
                                       verse->box);
         gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, verse->id);
@@ -1887,7 +1889,7 @@ on_memory_add_current(GtkButton *button, gpointer user_data)
     display_key = gsword_window_current_display_key(self);
     text = gsw_module_get_text(module, &error);
     if (storage_key == NULL || display_key == NULL || text == NULL) {
-        gsword_window_show_error(self, "Cannot add memory verse", error);
+        gsword_window_show_error(self, _("Cannot add memory verse"), error);
         g_free(storage_key);
         g_free(display_key);
         g_free(text);
@@ -1896,7 +1898,7 @@ on_memory_add_current(GtkButton *button, gpointer user_data)
     if (!gsword_plan_store_add_memory_verse(
             priv->plans, gsw_module_get_name(module), storage_key,
             display_key, text, &error)) {
-        gsword_window_show_error(self, "Cannot save memory verse", error);
+        gsword_window_show_error(self, _("Cannot save memory verse"), error);
         g_free(storage_key);
         g_free(display_key);
         g_free(text);
@@ -1917,7 +1919,7 @@ on_memory_add_current(GtkButton *button, gpointer user_data)
     g_free(display_key);
     g_free(text);
     gsword_window_refresh_memory(self);
-    gsword_window_set_status(self, "Verse added to memory review");
+    gsword_window_set_status(self, _("Verse added to memory review"));
 }
 
 static void
@@ -1933,13 +1935,13 @@ on_memory_review(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_review_memory_verse(
             priv->plans, priv->memory_id, remembered, &error)) {
-        gsword_window_show_error(self, "Cannot schedule review", error);
+        gsword_window_show_error(self, _("Cannot schedule review"), error);
         return;
     }
     gsword_window_refresh_memory(self);
     gsword_window_set_status(self, remembered
-                             ? "Review scheduled: nice work"
-                             : "Card will be shown again today");
+                             ? _("Review scheduled: nice work")
+                             : _("Card will be shown again today"));
 }
 
 static void
@@ -1959,10 +1961,10 @@ on_memory_check(GtkButton *button, gpointer user_data)
     normalized_text = memory_normalized_text(priv->memory_text);
     if (*normalized_answer != '\0' &&
         g_strcmp0(normalized_answer, normalized_text) == 0) {
-        gtk_label_set_text(priv->memory_result, "Correct");
-        gsword_window_set_status(self, "Memory verse recited correctly");
+        gtk_label_set_text(priv->memory_result, _("Correct"));
+        gsword_window_set_status(self, _("Memory verse recited correctly"));
     } else {
-        gtk_label_set_text(priv->memory_result, "Keep practicing");
+        gtk_label_set_text(priv->memory_result, _("Keep practicing"));
     }
     g_free(normalized_answer);
     g_free(normalized_text);
@@ -1980,12 +1982,12 @@ on_memory_delete(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_delete_memory_verse(priv->plans, priv->memory_id,
                                                &error)) {
-        gsword_window_show_error(self, "Cannot delete memory verse", error);
+        gsword_window_show_error(self, _("Cannot delete memory verse"), error);
         return;
     }
     priv->memory_id = 0;
     gsword_window_refresh_memory(self);
-    gsword_window_set_status(self, "Memory verse removed");
+    gsword_window_set_status(self, _("Memory verse removed"));
 }
 
 static gchar *
@@ -2054,7 +2056,7 @@ gsword_window_teaching_load(GswordWindow *self)
     if (text == NULL)
         text = gsw_module_get_text(module, &error);
     if (text == NULL) {
-        gsword_window_show_error(self, "Cannot read teaching passage", error);
+        gsword_window_show_error(self, _("Cannot read teaching passage"), error);
         g_free(reference);
         g_free(display);
         return;
@@ -2108,12 +2110,12 @@ on_teaching_save(GtkButton *button, gpointer user_data)
     if (!gsword_plan_store_save_teaching_note(
             priv->plans, priv->teaching_module, priv->teaching_reference,
             notes, &error)) {
-        gsword_window_show_error(self, "Cannot save teaching notes", error);
+        gsword_window_show_error(self, _("Cannot save teaching notes"), error);
         g_free(notes);
         return;
     }
     g_free(notes);
-    gsword_window_set_status(self, "Teaching notes saved");
+    gsword_window_set_status(self, _("Teaching notes saved"));
 }
 
 static void
@@ -2130,7 +2132,7 @@ on_teaching_fullscreen(GtkButton *button, gpointer user_data)
         gtk_window_unfullscreen(GTK_WINDOW(self));
     gtk_button_set_label(priv->teaching_fullscreen_button,
                          priv->teaching_fullscreen
-                         ? "Exit fullscreen" : "Fullscreen");
+                         ? _("Exit fullscreen") : _("Fullscreen"));
 }
 
 static void
@@ -2143,7 +2145,7 @@ on_teaching_close(GtkButton *button, gpointer user_data)
     if (priv->teaching_fullscreen) {
         priv->teaching_fullscreen = FALSE;
         gtk_window_unfullscreen(GTK_WINDOW(self));
-        gtk_button_set_label(priv->teaching_fullscreen_button, "Fullscreen");
+        gtk_button_set_label(priv->teaching_fullscreen_button, _("Fullscreen"));
     }
     gtk_stack_set_visible_child_name(priv->content_stack, "reader");
 }
@@ -2182,18 +2184,18 @@ gsword_window_make_plan_page(GswordWindow *self)
     GtkWidget *memory_mode_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *memory_input_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *memory_review_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *open = gtk_button_new_with_label("Open today's reading");
-    GtkWidget *complete = gtk_button_new_with_label("Mark today complete");
-    GtkWidget *create = gtk_button_new_with_label("Create plan");
-    GtkWidget *delete_plan = gtk_button_new_with_label("Delete plan");
-    GtkWidget *add_current = gtk_button_new_with_label("Add current verse");
-    GtkWidget *delete_verse = gtk_button_new_with_label("Delete");
-    GtkWidget *check = gtk_button_new_with_label("Check answer");
-    GtkWidget *again = gtk_button_new_with_label("Again");
-    GtkWidget *good = gtk_button_new_with_label("Good");
-    GtkWidget *refresh_devotion = gtk_button_new_with_label("Refresh");
+    GtkWidget *open = gtk_button_new_with_label(_("Open today's reading"));
+    GtkWidget *complete = gtk_button_new_with_label(_("Mark today complete"));
+    GtkWidget *create = gtk_button_new_with_label(_("Create plan"));
+    GtkWidget *delete_plan = gtk_button_new_with_label(_("Delete plan"));
+    GtkWidget *add_current = gtk_button_new_with_label(_("Add current verse"));
+    GtkWidget *delete_verse = gtk_button_new_with_label(_("Delete"));
+    GtkWidget *check = gtk_button_new_with_label(_("Check answer"));
+    GtkWidget *again = gtk_button_new_with_label(_("Again"));
+    GtkWidget *good = gtk_button_new_with_label(_("Good"));
+    GtkWidget *refresh_devotion = gtk_button_new_with_label(_("Refresh"));
     GtkStringList *modes = gtk_string_list_new(
-        (const gchar * const[]) { "Full text", "First letters", "Hide words",
+        (const gchar * const[]) { _("Full text"), _("First letters"), _("Hide words"),
                                   NULL });
 
     gtk_widget_set_margin_top(today, 10);
@@ -2239,7 +2241,7 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_box_append(GTK_BOX(today), GTK_WIDGET(priv->plan_summary));
     gtk_box_append(GTK_BOX(today), GTK_WIDGET(priv->plan_today));
     {
-        GtkWidget *label = gtk_label_new("Schedule");
+        GtkWidget *label = gtk_label_new(_("Schedule"));
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_widget_add_css_class(label, "heading");
         gtk_box_append(GTK_BOX(today), label);
@@ -2254,9 +2256,9 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_box_append(GTK_BOX(today), days_scroll);
 
     priv->plan_name_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->plan_name_entry, "Plan name");
+    gtk_entry_set_placeholder_text(priv->plan_name_entry, _("Plan name"));
     priv->plan_start_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->plan_start_entry, "Start, e.g. Genesis 1");
+    gtk_entry_set_placeholder_text(priv->plan_start_entry, _("Start, e.g. Genesis 1"));
     gtk_editable_set_width_chars(GTK_EDITABLE(priv->plan_start_entry), 16);
     priv->plan_days_spin = GTK_SPIN_BUTTON(
         gtk_spin_button_new_with_range(1, 3650, 1));
@@ -2270,9 +2272,9 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_widget_set_hexpand(GTK_WIDGET(priv->plan_name_entry), TRUE);
     gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_name_entry));
     gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_start_entry));
-    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new("Days"));
+    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new(_("Days")));
     gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_days_spin));
-    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new("Chapters/day"));
+    gtk_box_append(GTK_BOX(plan_form_row1), gtk_label_new(_("Chapters/day")));
     gtk_box_append(GTK_BOX(plan_form_row1), GTK_WIDGET(priv->plan_chapters_spin));
     gtk_box_append(GTK_BOX(plan_form_row2), create);
     gtk_box_append(GTK_BOX(plan_form_row2), delete_plan);
@@ -2280,8 +2282,8 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_box_append(GTK_BOX(plan_form), plan_form_row2);
     {
         GtkWidget *hint = gtk_label_new(
-            "The plan advances through chapters from the start reference. "
-            "Reading days can be opened by double-clicking a schedule row.");
+            _("The plan advances through chapters from the start reference. "
+              "Reading days can be opened by double-clicking a schedule row."));
         gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
         gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
         gtk_widget_add_css_class(hint, "dim-label");
@@ -2295,7 +2297,7 @@ gsword_window_make_plan_page(GswordWindow *self)
                      G_CALLBACK(on_devotion_changed), self);
     g_signal_connect(refresh_devotion, "clicked",
                      G_CALLBACK(on_devotion_refresh), self);
-    priv->devotion_title = GTK_LABEL(gtk_label_new("Daily Devotion"));
+    priv->devotion_title = GTK_LABEL(gtk_label_new(_("Daily Devotion")));
     gtk_label_set_xalign(priv->devotion_title, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->devotion_title), "heading");
     priv->devotion_view = GTK_TEXT_VIEW(gtk_text_view_new());
@@ -2335,7 +2337,7 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_box_append(GTK_BOX(memory_left), memory_scroll);
     gtk_box_append(GTK_BOX(memory_left), memory_left_buttons);
 
-    priv->memory_title = GTK_LABEL(gtk_label_new("Select a verse card"));
+    priv->memory_title = GTK_LABEL(gtk_label_new(_("Select a verse card")));
     gtk_label_set_xalign(priv->memory_title, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->memory_title), "title-2");
     priv->memory_due = GTK_LABEL(gtk_label_new(""));
@@ -2357,10 +2359,10 @@ gsword_window_make_plan_page(GswordWindow *self)
         G_LIST_MODEL(modes), NULL));
     g_signal_connect(priv->memory_mode, "notify::selected",
                      G_CALLBACK(on_memory_mode_changed), self);
-    gtk_box_append(GTK_BOX(memory_mode_row), gtk_label_new("Card mode"));
+    gtk_box_append(GTK_BOX(memory_mode_row), gtk_label_new(_("Card mode")));
     gtk_box_append(GTK_BOX(memory_mode_row), GTK_WIDGET(priv->memory_mode));
     priv->memory_input = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->memory_input, "Type the verse");
+    gtk_entry_set_placeholder_text(priv->memory_input, _("Type the verse"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->memory_input), TRUE);
     g_signal_connect(check, "clicked", G_CALLBACK(on_memory_check), self);
     gtk_box_append(GTK_BOX(memory_input_row), GTK_WIDGET(priv->memory_input));
@@ -2386,13 +2388,13 @@ gsword_window_make_plan_page(GswordWindow *self)
     gtk_paned_set_position(GTK_PANED(memory), 280);
 
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), today,
-                             gtk_label_new("Today"));
+                             gtk_label_new(_("Today")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), plans,
-                             gtk_label_new("Plans"));
+                             gtk_label_new(_("Plans")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), devotion,
-                             gtk_label_new("Devotion"));
+                             gtk_label_new(_("Devotion")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), memory,
-                             gtk_label_new("Memorize"));
+                             gtk_label_new(_("Memorize")));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
     g_object_unref(modes);
     return notebook;
@@ -2409,12 +2411,12 @@ gsword_window_make_teaching_page(GswordWindow *self)
     GtkWidget *notes_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *scripture_scroll = gtk_scrolled_window_new();
     GtkWidget *notes_scroll = gtk_scrolled_window_new();
-    GtkWidget *scripture_label = gtk_label_new("Scripture");
-    GtkWidget *notes_label = gtk_label_new("Teaching notes");
-    GtkWidget *load = gtk_button_new_with_label("Load current passage");
-    GtkWidget *save = gtk_button_new_with_label("Save notes");
-    GtkWidget *back = gtk_button_new_with_label("Back to reading");
-    GtkWidget *fullscreen = gtk_button_new_with_label("Fullscreen");
+    GtkWidget *scripture_label = gtk_label_new(_("Scripture"));
+    GtkWidget *notes_label = gtk_label_new(_("Teaching notes"));
+    GtkWidget *load = gtk_button_new_with_label(_("Load current passage"));
+    GtkWidget *save = gtk_button_new_with_label(_("Save notes"));
+    GtkWidget *back = gtk_button_new_with_label(_("Back to reading"));
+    GtkWidget *fullscreen = gtk_button_new_with_label(_("Fullscreen"));
 
     gtk_widget_set_margin_top(toolbar, 8);
     gtk_widget_set_margin_bottom(toolbar, 8);
@@ -2423,7 +2425,7 @@ gsword_window_make_teaching_page(GswordWindow *self)
     priv->teaching_ref_entry = GTK_ENTRY(gtk_entry_new());
     gtk_editable_set_editable(GTK_EDITABLE(priv->teaching_ref_entry), FALSE);
     gtk_widget_set_hexpand(GTK_WIDGET(priv->teaching_ref_entry), TRUE);
-    gtk_entry_set_placeholder_text(priv->teaching_ref_entry, "Current passage");
+    gtk_entry_set_placeholder_text(priv->teaching_ref_entry, _("Current passage"));
     priv->teaching_view = GTK_TEXT_VIEW(gtk_text_view_new());
     gtk_text_view_set_editable(priv->teaching_view, FALSE);
     gtk_text_view_set_cursor_visible(priv->teaching_view, FALSE);
@@ -2487,10 +2489,10 @@ gsword_window_refresh_reader(GswordWindow *self)
 
     if (priv->module == NULL) {
         gsword_window_set_text(self,
-            "No modules found.\n\nInstall SWORD modules or start gsword with "
-            "--library PATH.");
+            _("No modules found.\n\nInstall SWORD modules or start gsword with "
+              "--library PATH."));
         gtk_editable_set_text(GTK_EDITABLE(priv->key_entry), "");
-        gsword_window_set_status(self, "No modules found");
+        gsword_window_set_status(self, _("No modules found"));
         gtk_stack_set_visible_child_name(priv->content_stack, "reader");
         gsword_window_update_index_label(self);
         return;
@@ -2514,7 +2516,7 @@ gsword_window_refresh_reader(GswordWindow *self)
     }
 
     if (text == NULL) {
-        gsword_window_show_error(self, "Cannot read entry", error);
+        gsword_window_show_error(self, _("Cannot read entry"), error);
         g_free(display_key);
         return;
     }
@@ -2549,7 +2551,7 @@ gsword_window_set_key_text(GswordWindow *self, const gchar *text)
     if (priv->module == NULL)
         return FALSE;
     if (!gsw_module_set_key_text(priv->module, text, &error)) {
-        gsword_window_show_error(self, "Cannot set key", error);
+        gsword_window_show_error(self, _("Cannot set key"), error);
         return FALSE;
     }
     gsword_window_refresh_reader(self);
@@ -2667,15 +2669,15 @@ gsword_window_toggle_highlight(GswordWindow *self)
         gsword_notes_store_clear_highlight(
             priv->notes, gsw_module_get_name(priv->module), storage_key,
             &error);
-        gsword_window_set_status(self, "Highlight removed");
+        gsword_window_set_status(self, _("Highlight removed"));
     } else {
         gsword_notes_store_set_highlight(
             priv->notes, gsw_module_get_name(priv->module), storage_key,
             "#fff0a8", &error);
-        gsword_window_set_status(self, "Verse highlighted");
+        gsword_window_set_status(self, _("Verse highlighted"));
     }
     if (error != NULL)
-        gsword_window_show_error(self, "Cannot update highlight", error);
+        gsword_window_show_error(self, _("Cannot update highlight"), error);
     g_free(storage_key);
     gsword_window_apply_highlights(self);
 }
@@ -2709,7 +2711,7 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
 
     module = gsw_manager_create_module(priv->manager, name);
     if (module == NULL) {
-        gsword_window_set_status(self, "Cannot open module");
+        gsword_window_set_status(self, _("Cannot open module"));
         return;
     }
 
@@ -2768,12 +2770,30 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
     }
 }
 
+static const gchar *
+gsword_window_module_type_display(GswModuleInfo *info)
+{
+    switch (gsw_module_info_get_module_type(info)) {
+    case GSW_MODULE_TYPE_BIBLES:       return _("Biblical Texts");
+    case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
+    case GSW_MODULE_TYPE_LEXDICTS:     return _("Lexicons / Dictionaries");
+    case GSW_MODULE_TYPE_GENBOOKS:     return _("Generic Books");
+    case GSW_MODULE_TYPE_DAILY_DEVOS:  return _("Daily Devotional");
+    case GSW_MODULE_TYPE_MAPS:         return _("Maps");
+    case GSW_MODULE_TYPE_OTHER:        return _("Other");
+    case GSW_MODULE_TYPE_UNKNOWN:
+    default:
+        return gsw_module_info_get_type_string(info) != NULL
+             ? gsw_module_info_get_type_string(info) : _("Unknown");
+    }
+}
+
 static GtkWidget *
 gsword_window_make_module_row(GswModuleInfo *info)
 {
     const gchar *name = gsw_module_info_get_name(info);
     const gchar *description = gsw_module_info_get_description(info);
-    const gchar *type = gsw_module_info_get_type_string(info);
+    const gchar *type = gsword_window_module_type_display(info);
     GtkWidget *row = gtk_list_box_row_new();
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     GtkWidget *name_label = gtk_label_new(name);
@@ -2932,7 +2952,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
         if (!gsw_module_set_key_text(priv->module,
                                      gsw_module_get_key_text(priv->module),
                                      &error)) {
-            gsword_window_show_error(self, "Cannot change chapter", error);
+            gsword_window_show_error(self, _("Cannot change chapter"), error);
             return;
         }
         gsword_window_refresh_reader(self);
@@ -2987,7 +3007,7 @@ on_copy_clicked(GtkButton *button, gpointer user_data)
     clipboard = gtk_widget_get_clipboard(GTK_WIDGET(self));
     gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
     g_free(text);
-    gsword_window_set_status(self, "Copied to clipboard");
+    gsword_window_set_status(self, _("Copied to clipboard"));
 }
 
 static void
@@ -3052,19 +3072,19 @@ gsword_window_show_preferences(GswordWindow *self)
     }
 
     dialog = ADW_PREFERENCES_DIALOG(adw_preferences_dialog_new());
-    adw_dialog_set_title(ADW_DIALOG(dialog), "Preferences");
+    adw_dialog_set_title(ADW_DIALOG(dialog), _("Preferences"));
     adw_dialog_set_content_width(ADW_DIALOG(dialog), 620);
 
     page = ADW_PREFERENCES_PAGE(adw_preferences_page_new());
     group = ADW_PREFERENCES_GROUP(adw_preferences_group_new());
-    adw_preferences_group_set_title(group, "Reading");
+    adw_preferences_group_set_title(group, _("Reading"));
     adw_preferences_group_set_description(
-        group, "Reading appearance is applied immediately.");
+        group, _("Reading appearance is applied immediately."));
 
     font_row = ADW_ACTION_ROW(adw_action_row_new());
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(font_row),
-                                  "Font size");
-    adw_action_row_set_subtitle(font_row, "Scale the scripture text size");
+                                  _("Font size"));
+    adw_action_row_set_subtitle(font_row, _("Scale the scripture text size"));
     adjustment = gtk_adjustment_new(priv->font_scale, 0.75, 2.5, 0.1, 0.25, 0);
     spin = gtk_spin_button_new(adjustment, 0.1, 1);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), TRUE);
@@ -3075,11 +3095,11 @@ gsword_window_show_preferences(GswordWindow *self)
 
     theme_row = ADW_COMBO_ROW(adw_combo_row_new());
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(theme_row),
-                                  "Color scheme");
+                                  _("Color scheme"));
     adw_action_row_set_subtitle(ADW_ACTION_ROW(theme_row),
-                                "Follow the desktop or force light/dark mode");
+                                _("Follow the desktop or force light/dark mode"));
     themes = gtk_string_list_new(
-        (const gchar *[]) { "Follow system", "Light", "Dark", NULL });
+        (const gchar *[]) { _("Follow system"), _("Light"), _("Dark"), NULL });
     adw_combo_row_set_model(theme_row, G_LIST_MODEL(themes));
     g_object_unref(themes);
     if (g_strcmp0(priv->theme, "light") == 0)
@@ -3125,7 +3145,7 @@ gsword_window_make_sidebar(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    GtkWidget *label = gtk_label_new("Modules");
+    GtkWidget *label = gtk_label_new(_("Modules"));
     GtkWidget *scrolled = gtk_scrolled_window_new();
 
     gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
@@ -3250,7 +3270,7 @@ gsword_window_make_study_panel(GswordWindow *self)
     GtkWidget *crossrefs;
     GtkWidget *lexicon_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *lexicon_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *lexicon_button = gtk_button_new_with_label("Lookup");
+    GtkWidget *lexicon_button = gtk_button_new_with_label(_("Lookup"));
     GtkWidget *lexicon;
 
     commentary = gsword_window_make_scrolled_text(&priv->commentary_view);
@@ -3258,7 +3278,7 @@ gsword_window_make_study_panel(GswordWindow *self)
     crossrefs = gsword_window_make_scrolled_text(&priv->crossref_view);
     lexicon = gsword_window_make_scrolled_text(&priv->lexicon_view);
     priv->lexicon_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->lexicon_entry, "Strong's / dictionary key");
+    gtk_entry_set_placeholder_text(priv->lexicon_entry, _("Strong's / dictionary key"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->lexicon_entry), TRUE);
     g_signal_connect(priv->lexicon_entry, "activate",
                      G_CALLBACK(on_lexicon_lookup), self);
@@ -3271,13 +3291,13 @@ gsword_window_make_study_panel(GswordWindow *self)
     gtk_box_append(GTK_BOX(lexicon_box), lexicon);
 
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), commentary,
-                             gtk_label_new("Commentary"));
+                             gtk_label_new(_("Commentary")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), strongs,
-                             gtk_label_new("Strong's"));
+                             gtk_label_new(_("Strong's")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), crossrefs,
-                             gtk_label_new("Cross-refs"));
+                             gtk_label_new(_("Cross-refs")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), lexicon_box,
-                             gtk_label_new("Lexicon"));
+                             gtk_label_new(_("Lexicon")));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
     gtk_widget_set_size_request(notebook, 300, -1);
     priv->study_notebook = GTK_NOTEBOOK(notebook);
@@ -3294,12 +3314,12 @@ gsword_window_make_reader(GswordWindow *self)
     GtkWidget *previous = gtk_button_new_from_icon_name(
         "go-previous-symbolic");
     GtkWidget *next = gtk_button_new_from_icon_name("go-next-symbolic");
-    GtkWidget *go = gtk_button_new_with_label("Go");
+    GtkWidget *go = gtk_button_new_with_label(_("Go"));
     GtkWidget *copy = gtk_button_new_from_icon_name("edit-copy-symbolic");
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *highlight = gtk_button_new_from_icon_name(
         "emblem-favorite-symbolic");
-    GtkWidget *teaching = gtk_button_new_with_label("Teach");
+    GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *scrolled = gtk_scrolled_window_new();
     GtkWidget *content_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -3312,7 +3332,7 @@ gsword_window_make_reader(GswordWindow *self)
 
     priv->key_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->key_entry,
-                                   "Genesis 1:1 / 启示录 1:1");
+                                   _("Genesis 1:1 / 启示录 1:1"));
     gtk_editable_set_width_chars(GTK_EDITABLE(priv->key_entry), 24);
     gtk_widget_set_hexpand(GTK_WIDGET(priv->key_entry), TRUE);
     g_signal_connect(priv->key_entry, "activate",
@@ -3331,18 +3351,18 @@ gsword_window_make_reader(GswordWindow *self)
     g_signal_connect(teaching, "clicked",
                      G_CALLBACK(on_teaching_clicked), self);
     gtk_widget_set_tooltip_text(teaching,
-                                "Open teaching layout for this passage");
+                                _("Open teaching layout for this passage"));
     gtk_button_set_icon_name(GTK_BUTTON(study_button),
                              "dialog-information-symbolic");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), TRUE);
     g_signal_connect(study_button, "toggled",
                      G_CALLBACK(on_study_toggled), self);
-    gtk_widget_set_tooltip_text(previous, "Previous chapter");
-    gtk_widget_set_tooltip_text(next, "Next chapter");
-    gtk_widget_set_tooltip_text(copy, "Copy entry");
-    gtk_widget_set_tooltip_text(note, "Open note for this verse");
-    gtk_widget_set_tooltip_text(highlight, "Toggle verse highlight");
-    gtk_widget_set_tooltip_text(study_button, "Toggle study panel");
+    gtk_widget_set_tooltip_text(previous, _("Previous chapter"));
+    gtk_widget_set_tooltip_text(next, _("Next chapter"));
+    gtk_widget_set_tooltip_text(copy, _("Copy entry"));
+    gtk_widget_set_tooltip_text(note, _("Open note for this verse"));
+    gtk_widget_set_tooltip_text(highlight, _("Toggle verse highlight"));
+    gtk_widget_set_tooltip_text(study_button, _("Toggle study panel"));
 
     gtk_box_append(GTK_BOX(toolbar), previous);
     gtk_box_append(GTK_BOX(toolbar), next);
@@ -3414,7 +3434,7 @@ gsword_window_parallel_set_text(GtkTextView *view, GswModule *module,
     gchar *text;
 
     if (module == NULL) {
-        gsword_window_set_view_text(view, "No module selected.");
+        gsword_window_set_view_text(view, _("No module selected."));
         return;
     }
     if (key_text != NULL && *key_text != '\0' &&
@@ -3429,7 +3449,7 @@ gsword_window_parallel_set_text(GtkTextView *view, GswModule *module,
     if (text == NULL)
         text = gsw_module_get_text(module, &error);
     if (text == NULL) {
-        gsword_window_set_view_text(view, "Cannot read this entry.");
+        gsword_window_set_view_text(view, _("Cannot read this entry."));
         g_clear_error(&error);
         return;
     }
@@ -3536,7 +3556,7 @@ gsword_window_make_parallel_page(GswordWindow *self)
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *module_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *key_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *load = gtk_button_new_with_label("Load both");
+    GtkWidget *load = gtk_button_new_with_label(_("Load both"));
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *scrolled_a;
     GtkWidget *scrolled_b;
@@ -3550,10 +3570,10 @@ gsword_window_make_parallel_page(GswordWindow *self)
     priv->parallel_b = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     priv->parallel_key = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->parallel_key,
-                                   "Shared chapter/key");
+                                   _("Shared chapter/key"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->parallel_key), TRUE);
     priv->parallel_sync = GTK_CHECK_BUTTON(
-        gtk_check_button_new_with_label("Sync scroll"));
+        gtk_check_button_new_with_label(_("Sync scroll")));
     gtk_check_button_set_active(priv->parallel_sync, TRUE);
     g_signal_connect(load, "clicked", G_CALLBACK(on_parallel_load), self);
     g_signal_connect(priv->parallel_key, "activate",
@@ -3598,7 +3618,7 @@ gsword_window_run_search(GswordWindow *self)
     guint selected = gtk_drop_down_get_selected(priv->search_type);
 
     if (priv->module == NULL) {
-        gsword_window_set_status(self, "Open a module before searching");
+        gsword_window_set_status(self, _("Open a module before searching"));
         return;
     }
     while (gtk_widget_get_first_child(GTK_WIDGET(priv->search_results)) != NULL)
@@ -3620,7 +3640,7 @@ gsword_window_run_search(GswordWindow *self)
                                      &error);
     gsw_search_options_unref(options);
     if (results == NULL) {
-        gsword_window_show_error(self, "Search failed", error);
+        gsword_window_show_error(self, _("Search failed"), error);
         return;
     }
 
@@ -3648,7 +3668,7 @@ gsword_window_run_search(GswordWindow *self)
         g_free(text);
     }
     {
-        gchar *message = g_strdup_printf("Search: %u result(s)", results->len);
+        gchar *message = g_strdup_printf(_("Search: %u result(s)"), results->len);
 
         gsword_window_set_status(self, message);
         g_free(message);
@@ -3697,7 +3717,7 @@ gsword_window_index_progress(const gchar *module_name, guint processed,
                              guint total, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
-    gchar *message = g_strdup_printf("Indexing %s: %u/%u",
+    gchar *message = g_strdup_printf(_("Indexing %s: %u/%u"),
                                      module_name, processed, total);
 
     gsword_window_set_status(self, message);
@@ -3712,11 +3732,11 @@ gsword_window_update_index_label(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     if (priv->module == NULL)
-        gtk_label_set_text(priv->index_label, "Index: no module");
+        gtk_label_set_text(priv->index_label, _("Index: no module"));
     else
         gtk_label_set_text(priv->index_label,
             gsw_module_has_search_index(priv->module)
-            ? "Index: available" : "Index: not built");
+            ? _("Index: available") : _("Index: not built"));
 }
 
 static void
@@ -3732,10 +3752,10 @@ on_build_index(GtkButton *button, gpointer user_data)
     if (!gsw_module_build_search_index(priv->module, NULL,
                                        gsword_window_index_progress, self,
                                        &error)) {
-        gsword_window_show_error(self, "Cannot build index", error);
+        gsword_window_show_error(self, _("Cannot build index"), error);
         return;
     }
-    gsword_window_set_status(self, "Search index built");
+    gsword_window_set_status(self, _("Search index built"));
     gsword_window_update_index_label(self);
 }
 
@@ -3750,10 +3770,10 @@ on_delete_index(GtkButton *button, gpointer user_data)
     if (priv->module == NULL)
         return;
     if (!gsw_module_delete_search_index(priv->module, &error)) {
-        gsword_window_show_error(self, "Cannot delete index", error);
+        gsword_window_show_error(self, _("Cannot delete index"), error);
         return;
     }
-    gsword_window_set_status(self, "Search index deleted");
+    gsword_window_set_status(self, _("Search index deleted"));
     gsword_window_update_index_label(self);
 }
 
@@ -3765,7 +3785,7 @@ gsword_window_make_search_page(GswordWindow *self)
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *search = gtk_button_new_with_label("Search");
+    GtkWidget *search = gtk_button_new_with_label(_("Search"));
     GtkWidget *build = gtk_button_new_from_icon_name(
         "document-save-symbolic");
     GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
@@ -3776,21 +3796,21 @@ gsword_window_make_search_page(GswordWindow *self)
     gtk_widget_set_margin_bottom(controls, 8);
     gtk_widget_set_margin_start(controls, 12);
     gtk_widget_set_margin_end(controls, 12);
-    gtk_widget_set_tooltip_text(build, "Build search index");
-    gtk_widget_set_tooltip_text(delete, "Delete search index");
+    gtk_widget_set_tooltip_text(build, _("Build search index"));
+    gtk_widget_set_tooltip_text(delete, _("Delete search index"));
 
     priv->search_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->search_entry,
-                                   "Search text");
+                                   _("Search text"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->search_entry), TRUE);
     priv->search_type = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     types = gtk_string_list_new(
-        (const gchar *[]) { "Phrase", "Multiword", "Regex", NULL });
+        (const gchar *[]) { _("Phrase"), _("Multiword"), _("Regex"), NULL });
     gtk_drop_down_set_model(priv->search_type, G_LIST_MODEL(types));
     g_object_unref(types);
     priv->search_case = GTK_CHECK_BUTTON(
-        gtk_check_button_new_with_label("Case sensitive"));
-    priv->index_label = GTK_LABEL(gtk_label_new("Index: no module"));
+        gtk_check_button_new_with_label(_("Case sensitive")));
+    priv->index_label = GTK_LABEL(gtk_label_new(_("Index: no module")));
     gtk_label_set_xalign(priv->index_label, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->index_label), "dim-label");
     gtk_widget_add_css_class(GTK_WIDGET(priv->index_label), "caption");
@@ -3842,14 +3862,14 @@ static const gchar *
 module_status_text(guint status)
 {
     if (status & GSW_MODULE_STATUS_NEW)
-        return "Not installed";
+        return _("Not installed");
     if (status & GSW_MODULE_STATUS_UPDATED)
-        return "Update available";
+        return _("Update available");
     if (status & GSW_MODULE_STATUS_OLDER)
-        return "Installed - local version is newer";
+        return _("Installed - local version is newer");
     if (status & GSW_MODULE_STATUS_SAME_VERSION)
-        return "Installed - up to date";
-    return "Installed";
+        return _("Installed - up to date");
+    return _("Installed");
 }
 
 static void
@@ -3882,7 +3902,7 @@ gsword_window_refresh_install_sources(GswordWindow *self)
     guint i;
 
     if (priv->installer == NULL) {
-        gsword_window_set_status(self, "Install manager is not available");
+        gsword_window_set_status(self, _("Install manager is not available"));
         return;
     }
     sources = gsw_install_manager_get_sources(priv->installer);
@@ -3896,7 +3916,7 @@ gsword_window_refresh_install_sources(GswordWindow *self)
         g_ptr_array_add(priv->install_sources, g_object_ref(source));
         gtk_string_list_append(names,
             gsw_install_source_get_caption(source) != NULL
-            ? gsw_install_source_get_caption(source) : "Source");
+            ? gsw_install_source_get_caption(source) : _("Source"));
     }
     g_ptr_array_unref(sources);
     g_clear_object(&priv->source_names);
@@ -3928,8 +3948,7 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
     details = g_strdup_printf("%s\n\n%s  |  %s  |  %" G_GUINT64_FORMAT " bytes",
         gsw_module_info_get_description(info) != NULL
         ? gsw_module_info_get_description(info) : "",
-        gsw_module_info_get_type_string(info) != NULL
-        ? gsw_module_info_get_type_string(info) : "Unknown",
+        gsword_window_module_type_display(info),
         gsw_module_info_get_version(info) != NULL
         ? gsw_module_info_get_version(info) : "?",
         gsw_module_info_get_install_size(info));
@@ -3952,19 +3971,19 @@ gsword_window_refresh_remote_modules(GswordWindow *self)
     guint i;
 
     gsword_window_clear_list(priv->remote_list);
-    gtk_label_set_text(priv->remote_title, "Select a module");
+    gtk_label_set_text(priv->remote_title, _("Select a module"));
     gtk_label_set_text(priv->remote_description, "");
     gtk_label_set_text(priv->remote_status, "");
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
     if (source == NULL) {
         gtk_label_set_text(priv->remote_status,
-                           "No source selected. Refresh the source list first.");
+                           _("No source selected. Refresh the source list first."));
         return;
     }
     infos = gsw_install_manager_get_remote_module_infos(
         priv->installer, source, &error);
     if (infos == NULL) {
-        gsword_window_show_error(self, "Cannot read remote modules", error);
+        gsword_window_show_error(self, _("Cannot read remote modules"), error);
         return;
     }
     query = gtk_editable_get_text(GTK_EDITABLE(priv->install_search));
@@ -4041,7 +4060,7 @@ on_refresh_sources_clicked(GtkButton *button, gpointer user_data)
     if (priv->installer == NULL)
         return;
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_sources_button), FALSE);
-    gsword_window_set_status(self, "Refreshing install sources...");
+    gsword_window_set_status(self, _("Refreshing install sources..."));
     gsw_install_manager_refresh_remote_source_configuration_async(
         priv->installer, NULL, on_refresh_sources_finished, self);
 }
@@ -4056,9 +4075,9 @@ on_refresh_sources_finished(GObject *source, GAsyncResult *result,
 
     if (!gsw_install_manager_refresh_remote_source_configuration_finish(
             GSW_INSTALL_MANAGER(source), result, &error)) {
-        gsword_window_show_error(self, "Cannot refresh install sources", error);
+        gsword_window_show_error(self, _("Cannot refresh install sources"), error);
     } else {
-        gsword_window_set_status(self, "Install sources refreshed");
+        gsword_window_set_status(self, _("Install sources refreshed"));
     }
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_sources_button), TRUE);
     gsword_window_refresh_install_sources(self);
@@ -4081,7 +4100,7 @@ on_refresh_remote_clicked(GtkButton *button, gpointer user_data)
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), FALSE);
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), TRUE);
     gtk_progress_bar_pulse(priv->install_progress);
-    gsword_window_set_status(self, "Refreshing remote module list...");
+    gsword_window_set_status(self, _("Refreshing remote module list..."));
     gsw_install_manager_refresh_remote_source_async(
         priv->installer, install_source, priv->install_cancellable,
         on_refresh_remote_finished, self);
@@ -4120,9 +4139,9 @@ on_refresh_remote_finished(GObject *source, GAsyncResult *result,
 
     if (!gsw_install_manager_refresh_remote_source_finish(
             GSW_INSTALL_MANAGER(source), result, &error)) {
-        gsword_window_show_error(self, "Cannot refresh remote modules", error);
+        gsword_window_show_error(self, _("Cannot refresh remote modules"), error);
     } else {
-        gsword_window_set_status(self, "Remote module list refreshed");
+        gsword_window_set_status(self, _("Remote module list refreshed"));
     }
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), TRUE);
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
@@ -4148,7 +4167,7 @@ on_install_clicked(GtkButton *button, gpointer user_data)
                                         priv->install_cancellable);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), TRUE);
-    gsword_window_set_status(self, "Installing module...");
+    gsword_window_set_status(self, _("Installing module..."));
     gsw_install_manager_install_module_async(
         priv->installer, priv->manager, source, priv->selected_remote_name,
         priv->install_cancellable, on_install_finished, self);
@@ -4166,7 +4185,7 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     installed = gsw_install_manager_install_module_finish(
         GSW_INSTALL_MANAGER(source), result, &error);
     if (!installed) {
-        gsword_window_show_error(self, "Module install failed", error);
+        gsword_window_show_error(self, _("Module install failed"), error);
     }
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
     gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
@@ -4184,7 +4203,7 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     gsword_window_refresh_remote_modules(self);
     gtk_stack_set_visible_child_name(priv->content_stack, "library");
     if (installed && installed_name != NULL) {
-        gchar *message = g_strdup_printf("Installed module %s",
+        gchar *message = g_strdup_printf(_("Installed module %s"),
                                          installed_name);
         gsword_window_set_status(self, message);
         g_free(message);
@@ -4213,7 +4232,7 @@ on_remove_clicked(GtkButton *button, gpointer user_data)
     gsw_install_manager_set_cancellable(priv->installer,
                                         priv->install_cancellable);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
-    gsword_window_set_status(self, "Removing module...");
+    gsword_window_set_status(self, _("Removing module..."));
     gsw_install_manager_remove_module_async(
         priv->installer, priv->manager, name, priv->install_cancellable,
         on_remove_finished, self);
@@ -4228,9 +4247,9 @@ on_remove_finished(GObject *source, GAsyncResult *result, gpointer user_data)
 
     if (!gsw_install_manager_remove_module_finish(
             GSW_INSTALL_MANAGER(source), result, &error)) {
-        gsword_window_show_error(self, "Module removal failed", error);
+        gsword_window_show_error(self, _("Module removal failed"), error);
     } else {
-        gsword_window_set_status(self, "Module removed");
+        gsword_window_set_status(self, _("Module removed"));
     }
     g_clear_object(&priv->install_cancellable);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), TRUE);
@@ -4252,7 +4271,7 @@ on_cancel_install_clicked(GtkButton *button, gpointer user_data)
 
     if (priv->install_cancellable != NULL)
         g_cancellable_cancel(priv->install_cancellable);
-    gsword_window_set_status(self, "Cancelling...");
+    gsword_window_set_status(self, _("Cancelling..."));
 }
 
 static void
@@ -4266,7 +4285,7 @@ on_install_pre_status(GswStatusReporter *reporter, guint64 total, guint64 done,
     gtk_progress_bar_set_fraction(priv->install_progress,
                                   total > 0 ? (gdouble)done / total : 0.0);
     gtk_label_set_text(priv->install_status,
-                       message != NULL ? message : "Installing...");
+                       message != NULL ? message : _("Installing..."));
     (void)self;
 }
 
@@ -4282,13 +4301,13 @@ on_install_progress(GswStatusReporter *reporter, guint64 total, guint64 done,
     if (total > 0) {
         gtk_progress_bar_set_fraction(priv->install_progress,
                                       (gdouble)done / total);
-        status = g_strdup_printf("Downloading: %" G_GUINT64_FORMAT
-                                 " / %" G_GUINT64_FORMAT " bytes",
-                                 done, total);
+        status = g_strdup_printf("%s: %" G_GUINT64_FORMAT
+                                 " / %" G_GUINT64_FORMAT " %s",
+                                 _("Downloading"), done, total, _("bytes"));
     } else {
         gtk_progress_bar_pulse(priv->install_progress);
-        status = g_strdup_printf("Downloading: %" G_GUINT64_FORMAT " bytes",
-                                 done);
+        status = g_strdup_printf("%s: %" G_GUINT64_FORMAT " %s",
+                                 _("Downloading"), done, _("bytes"));
     }
     gtk_label_set_text(priv->install_status, status);
     g_free(status);
@@ -4312,12 +4331,12 @@ on_local_install_clicked(GtkButton *button, gpointer user_data)
     if (directory == NULL || *directory == '\0' ||
         name == NULL || *name == '\0') {
         gsword_window_set_status(self,
-            "Enter a local SWORD directory and module name");
+            _("Enter a local SWORD directory and module name"));
         return;
     }
     if (!gsw_install_manager_install_module_from_directory(
             priv->installer, priv->manager, directory, name, &error)) {
-        gsword_window_show_error(self, "Local install failed", error);
+        gsword_window_show_error(self, _("Local install failed"), error);
         return;
     }
     gsw_manager_reload(priv->manager, NULL);
@@ -4329,7 +4348,7 @@ on_local_install_clicked(GtkButton *button, gpointer user_data)
     gsword_window_refresh_installed_dropdown(self);
     gsword_window_refresh_remote_modules(self);
     gtk_stack_set_visible_child_name(priv->content_stack, "library");
-    gsword_window_set_status(self, "Module installed from local directory");
+    gsword_window_set_status(self, _("Module installed from local directory"));
 }
 
 static void
@@ -4363,12 +4382,12 @@ gsword_window_make_library_page(GswordWindow *self)
         "view-refresh-symbolic");
     GtkWidget *refresh_remote = gtk_button_new_from_icon_name(
         "network-transmit-receive-symbolic");
-    GtkWidget *install = gtk_button_new_with_label("Install / Update");
-    GtkWidget *remove = gtk_button_new_with_label("Remove");
-    GtkWidget *cancel = gtk_button_new_with_label("Cancel");
+    GtkWidget *install = gtk_button_new_with_label(_("Install / Update"));
+    GtkWidget *remove = gtk_button_new_with_label(_("Remove"));
+    GtkWidget *cancel = gtk_button_new_with_label(_("Cancel"));
     GtkWidget *installed_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *local_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    GtkWidget *local_label = gtk_label_new("Install from local directory");
+    GtkWidget *local_label = gtk_label_new(_("Install from local directory"));
 
     gtk_widget_set_margin_top(controls, 8);
     gtk_widget_set_margin_bottom(controls, 8);
@@ -4377,12 +4396,12 @@ gsword_window_make_library_page(GswordWindow *self)
 
     priv->source_dropdown = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     priv->install_search = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->install_search, "Filter modules");
+    gtk_entry_set_placeholder_text(priv->install_search, _("Filter modules"));
     gtk_widget_set_hexpand(GTK_WIDGET(priv->install_search), TRUE);
     gtk_widget_set_tooltip_text(refresh_sources,
-                                "Refresh the install source list");
+                                _("Refresh the install source list"));
     gtk_widget_set_tooltip_text(refresh_remote,
-                                "Refresh modules from the selected source");
+                                _("Refresh modules from the selected source"));
     g_signal_connect(refresh_sources, "clicked",
                      G_CALLBACK(on_refresh_sources_clicked), self);
     g_signal_connect(refresh_remote, "clicked",
@@ -4422,7 +4441,7 @@ gsword_window_make_library_page(GswordWindow *self)
                                   GTK_WIDGET(priv->remote_list));
     gtk_widget_set_size_request(left_scroll, 300, -1);
 
-    priv->remote_title = GTK_LABEL(gtk_label_new("Select a module"));
+    priv->remote_title = GTK_LABEL(gtk_label_new(_("Select a module")));
     gtk_label_set_xalign(priv->remote_title, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->remote_title), "title-2");
     priv->remote_description = GTK_LABEL(gtk_label_new(""));
@@ -4445,7 +4464,7 @@ gsword_window_make_library_page(GswordWindow *self)
     gtk_widget_set_hexpand(GTK_WIDGET(priv->installed_dropdown), TRUE);
     g_signal_connect(remove, "clicked", G_CALLBACK(on_remove_clicked), self);
     priv->remove_button = GTK_BUTTON(remove);
-    gtk_box_append(GTK_BOX(installed_row), gtk_label_new("Installed:"));
+    gtk_box_append(GTK_BOX(installed_row), gtk_label_new(_("Installed:")));
     gtk_box_append(GTK_BOX(installed_row), GTK_WIDGET(priv->installed_dropdown));
     gtk_box_append(GTK_BOX(installed_row), remove);
     gtk_box_append(GTK_BOX(right), installed_row);
@@ -4454,11 +4473,11 @@ gsword_window_make_library_page(GswordWindow *self)
     gtk_widget_add_css_class(local_label, "heading");
     priv->local_dir_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->local_dir_entry,
-                                   "Local SWORD library directory");
+                                   _("Local SWORD library directory"));
     priv->local_name_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->local_name_entry, "Module name");
+    gtk_entry_set_placeholder_text(priv->local_name_entry, _("Module name"));
     priv->local_install_button = GTK_BUTTON(
-        gtk_button_new_with_label("Install local module"));
+        gtk_button_new_with_label(_("Install local module")));
     g_signal_connect(priv->local_install_button, "clicked",
                      G_CALLBACK(on_local_install_clicked), self);
     gtk_box_append(GTK_BOX(local_box), local_label);
@@ -4507,48 +4526,48 @@ gsword_window_build(GswordWindow *self)
 
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     header = ADW_HEADER_BAR(adw_header_bar_new());
-    header_title = adw_window_title_new("gsword", "SWORD study");
+    header_title = adw_window_title_new("gsword", _("SWORD study"));
     adw_header_bar_set_title_widget(header, header_title);
 
     menu = g_menu_new();
-    g_menu_append(menu, "Preferences", "win.preferences");
-    g_menu_append(menu, "Quit", "app.quit");
+    g_menu_append(menu, _("Preferences"), "win.preferences");
+    g_menu_append(menu, _("Quit"), "app.quit");
     menu_button = gtk_menu_button_new();
     gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu_button),
                                   "open-menu-symbolic");
     gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(menu_button),
                                    G_MENU_MODEL(menu));
-    gtk_widget_set_tooltip_text(menu_button, "Main menu");
+    gtk_widget_set_tooltip_text(menu_button, _("Main menu"));
     adw_header_bar_pack_end(header, menu_button);
     g_object_unref(menu);
 
     split = ADW_NAVIGATION_SPLIT_VIEW(adw_navigation_split_view_new());
     adw_navigation_split_view_set_sidebar_width_fraction(split, 0.24);
     sidebar_page = adw_navigation_page_new(gsword_window_make_sidebar(self),
-                                           "Library");
+                                           _("Library"));
 
     priv->content_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_reader(self),
-                         "reader", "Reading");
+                         "reader", _("Reading"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_parallel_page(self),
-                         "parallel", "Parallel");
+                         "parallel", _("Parallel"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_search_page(self),
-                         "search", "Search");
+                         "search", _("Search"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_notes_page(self),
-                         "notes", "Notes");
+                         "notes", _("Notes"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_plan_page(self),
-                         "plan", "Plan");
+                         "plan", _("Plan"));
     gtk_stack_add_named(priv->content_stack,
                         gsword_window_make_teaching_page(self),
                         "teaching");
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_library_page(self),
-                         "library", "Library");
+                         "library", _("Library"));
     gtk_stack_set_visible_child_name(priv->content_stack, "reader");
     g_signal_connect(priv->content_stack, "notify::visible-child",
                      G_CALLBACK(on_workspace_changed), self);
@@ -4567,7 +4586,7 @@ gsword_window_build(GswordWindow *self)
     gtk_box_append(GTK_BOX(workspace_box),
                    GTK_WIDGET(priv->content_stack));
 
-    content_page = adw_navigation_page_new(workspace_box, "Workspace");
+    content_page = adw_navigation_page_new(workspace_box, _("Workspace"));
     adw_navigation_split_view_set_sidebar(split, sidebar_page);
     adw_navigation_split_view_set_content(split, content_page);
 

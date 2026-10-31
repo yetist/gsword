@@ -10,6 +10,17 @@ project('gsword', 'c',
 
 add_project_arguments('-D_GNU_SOURCE', language: 'c')
 
+gsword_localedir = join_paths(
+  get_option('prefix'),
+  get_option('datadir'),
+  'locale',
+)
+add_project_arguments(
+  '-DGETTEXT_PACKAGE="gsword"',
+  '-DGSW_LOCALEDIR="' + gsword_localedir + '"',
+  language: 'c',
+)
+
 gsword_locale_dir = join_paths(
   get_option('prefix'),
   get_option('datadir'),
@@ -170,6 +181,7 @@ if get_option('docs')
 endif
 
 subdir('data')
+subdir('po')
 subdir('tests')
 subdir('examples')
 subdir('src')
