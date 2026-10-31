@@ -51,18 +51,21 @@ argv[3]  initial reference
 
 ## Mouse behavior
 
-- The top navigation row provides one-click previous/next book and
-  previous/next chapter buttons.
+- The top navigation row provides one-click previous/next book,
+  chapter, and verse buttons.
 - Previous/next chapter crosses book boundaries: the last chapter of a book
   advances to the first chapter of the next book, and the first chapter goes
   back to the last chapter of the previous book.
+- Previous/next verse crosses chapter and book boundaries as well.
 - The default state is a clickable Nautilus-style path bar:
-  `[◀] book [▶] [◀] chapter [▶] [edit]`.
-- Click the book or chapter label to open the picker.
+  `[◀] book [▶] [◀] chapter [▶] [◀] verse [▶] [edit]`.
+- Click the book, chapter, or verse label to open the picker.
 - The picker has separate `旧约 / OT` and `新约 / NT` tabs, so the New
   Testament group is always directly visible.
-- Select a book; the chapter grid updates.
-- Click a chapter; the reference is confirmed and the path bar returns.
+- The picker also shows a `Verses / 节` grid for the selected chapter.
+- Select a book; the chapter and verse grids update.
+- Click a chapter; the verse grid updates while the picker stays open.
+- Click a verse; the reference is confirmed and the path bar returns.
 - Click the pencil to replace the path bar with an editable text field.
 - The demo buttons exercise alternate references.
 
@@ -119,9 +122,15 @@ Run the Chinese demo above, then check:
 | At Genesis 50:1, next-chapter | Exodus 1:1 |
 | Open picker | 旧约 / OT and 新约 / NT tabs are both visible |
 | Select 新约 / NT | New Testament books are shown directly |
+| Click next-verse | 创世记 1:1 → 创世记 1:2 |
+| Click previous-verse | 创世记 1:2 → 创世记 1:1 |
+| At 创世记 1:1, previous-verse | button disabled |
+| At 创世记 1:31, next-verse | 创世记 2:1 |
+| Click chapter, then verse | chapter changes, picker remains for verse selection |
+| Open picker | the `Verses / 节` grid shows the current chapter's verses |
 
-The chapter boundary behavior is intentional: chapter navigation crosses
-book boundaries instead of stopping at the end of a book.
+The chapter and verse boundary behavior is intentional: navigation crosses
+book/chapter boundaries instead of stopping at the end of a chapter/book.
 
 ## Public API
 
