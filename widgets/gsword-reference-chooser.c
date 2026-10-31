@@ -6,6 +6,16 @@
 
 #include <string.h>
 
+#define GSWORD_NUMBER_COLUMNS 10
+#define GSWORD_NUMBER_BUTTON_WIDTH 40
+#define GSWORD_NUMBER_BUTTON_HEIGHT 32
+#define GSWORD_NUMBER_GRID_SPACING 4
+/* 54 of 66 KJV books have at most 30 chapters: ceil(30/10) == 3 rows. */
+#define GSWORD_CHAPTER_GRID_ROWS 3
+#define GSWORD_NUMBER_GRID_HEIGHT \
+    (GSWORD_CHAPTER_GRID_ROWS * GSWORD_NUMBER_BUTTON_HEIGHT + \
+     (GSWORD_CHAPTER_GRID_ROWS - 1) * GSWORD_NUMBER_GRID_SPACING)
+
 typedef struct {
     gint index;
     gint testament;
@@ -261,7 +271,8 @@ make_number_button(const gchar *text)
     gtk_label_set_xalign(GTK_LABEL(label), 0.5f);
     gtk_button_set_child(GTK_BUTTON(button), label);
     gtk_widget_add_css_class(button, "gsword-number-button");
-    gtk_widget_set_size_request(button, 40, 32);
+    gtk_widget_set_size_request(button, GSWORD_NUMBER_BUTTON_WIDTH,
+                               GSWORD_NUMBER_BUTTON_HEIGHT);
     gtk_widget_set_hexpand(button, FALSE);
     gtk_widget_set_vexpand(button, FALSE);
     gtk_widget_set_halign(button, GTK_ALIGN_CENTER);
@@ -293,7 +304,8 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
         if (chapter == priv->chapter)
             gtk_widget_add_css_class(button, "suggested-action");
         gtk_grid_attach(priv->chapter_grid, button,
-                        (chapter - 1) % 10, (chapter - 1) / 10, 1, 1);
+                        (chapter - 1) % GSWORD_NUMBER_COLUMNS,
+                        (chapter - 1) / GSWORD_NUMBER_COLUMNS, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -429,7 +441,8 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
         if (verse == priv->verse)
             gtk_widget_add_css_class(button, "suggested-action");
         gtk_grid_attach(priv->verse_grid, button,
-                        (verse - 1) % 10, (verse - 1) / 10, 1, 1);
+                        (verse - 1) % GSWORD_NUMBER_COLUMNS,
+                        (verse - 1) / GSWORD_NUMBER_COLUMNS, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -1580,18 +1593,25 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     }
 
     priv->chapter_grid = GTK_GRID(gtk_grid_new());
-    gtk_grid_set_column_spacing(priv->chapter_grid, 4);
-    gtk_grid_set_row_spacing(priv->chapter_grid, 4);
+    gtk_grid_set_column_spacing(priv->chapter_grid,
+                                GSWORD_NUMBER_GRID_SPACING);
+    gtk_grid_set_row_spacing(priv->chapter_grid,
+                             GSWORD_NUMBER_GRID_SPACING);
     gtk_widget_set_halign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
-    gtk_widget_set_size_request(GTK_WIDGET(priv->chapter_grid), 436, -1);
+    gtk_widget_set_size_request(
+        GTK_WIDGET(priv->chapter_grid),
+        GSWORD_NUMBER_COLUMNS * GSWORD_NUMBER_BUTTON_WIDTH +
+        (GSWORD_NUMBER_COLUMNS - 1) * GSWORD_NUMBER_GRID_SPACING,
+        GSWORD_NUMBER_GRID_HEIGHT);
     chapter_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(chapter_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(chapter_scroll),
                                   GTK_WIDGET(priv->chapter_grid));
-    gtk_widget_set_size_request(chapter_scroll, 452, 320);
-    gtk_widget_set_vexpand(chapter_scroll, TRUE);
+    gtk_widget_set_size_request(chapter_scroll, 452,
+                                GSWORD_NUMBER_GRID_HEIGHT);
+    gtk_widget_set_vexpand(chapter_scroll, FALSE);
     gtk_box_append(GTK_BOX(chapter_page), chapter_scroll);
 
     {
@@ -1601,17 +1621,24 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_box_append(GTK_BOX(chapter_page), verse_label);
     }
     priv->verse_grid = GTK_GRID(gtk_grid_new());
-    gtk_grid_set_column_spacing(priv->verse_grid, 4);
-    gtk_grid_set_row_spacing(priv->verse_grid, 4);
+    gtk_grid_set_column_spacing(priv->verse_grid,
+                                GSWORD_NUMBER_GRID_SPACING);
+    gtk_grid_set_row_spacing(priv->verse_grid,
+                             GSWORD_NUMBER_GRID_SPACING);
     gtk_widget_set_halign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
-    gtk_widget_set_size_request(GTK_WIDGET(priv->verse_grid), 436, -1);
+    gtk_widget_set_size_request(
+        GTK_WIDGET(priv->verse_grid),
+        GSWORD_NUMBER_COLUMNS * GSWORD_NUMBER_BUTTON_WIDTH +
+        (GSWORD_NUMBER_COLUMNS - 1) * GSWORD_NUMBER_GRID_SPACING,
+        GSWORD_NUMBER_GRID_HEIGHT);
     verse_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(verse_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(verse_scroll),
                                   GTK_WIDGET(priv->verse_grid));
-    gtk_widget_set_size_request(verse_scroll, 452, 100);
+    gtk_widget_set_size_request(verse_scroll, 452,
+                                GSWORD_NUMBER_GRID_HEIGHT);
     gtk_box_append(GTK_BOX(chapter_page), verse_scroll);
 
     gtk_paned_set_start_child(GTK_PANED(paned), book_page);
