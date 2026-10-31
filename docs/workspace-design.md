@@ -139,7 +139,7 @@ split position
 始终显示模块和完整引用。阅读器使用可复用的路径栏引用选择器：
 
 ```text
-[KJV] [◀] Genesis [▶] [◀] 1 [▶] [◀] 5 [▶]
+[KJV] [◀] Genesis [▶] [◀] 1 [▶] : [◀] 5 [▶]
 KJV · Genesis 1:5
 ```
 

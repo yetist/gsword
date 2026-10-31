@@ -22,11 +22,11 @@
      (GSWORD_CHAPTER_GRID_ROWS - 1) * GSWORD_NUMBER_GRID_SPACING)
 #define GSWORD_PATH_HEIGHT 32
 #define GSWORD_PATH_BOOK_WIDTH 140
-#define GSWORD_PATH_CHAPTER_WIDTH 88
-#define GSWORD_PATH_VERSE_WIDTH 80
+#define GSWORD_PATH_CHAPTER_WIDTH 52
+#define GSWORD_PATH_VERSE_WIDTH 44
 #define GSWORD_COMPACT_BOOK_WIDTH 96
-#define GSWORD_COMPACT_CHAPTER_WIDTH 64
-#define GSWORD_COMPACT_VERSE_WIDTH 52
+#define GSWORD_COMPACT_CHAPTER_WIDTH 48
+#define GSWORD_COMPACT_VERSE_WIDTH 40
 
 typedef struct {
     gint index;
@@ -49,6 +49,7 @@ typedef struct {
     GtkLabel *book_label;
     GtkButton *chapter_button;
     GtkLabel *chapter_label;
+    GtkLabel *colon_label;
     GtkButton *verse_button;
     GtkLabel *verse_label;
     GtkButton *prev_book_button;
@@ -345,8 +346,8 @@ update_navigation_labels(GswordReferenceChooser *self)
         priv->books->len == 0)
         return;
     gtk_label_set_width_chars(priv->book_label, priv->compact ? 6 : 12);
-    gtk_label_set_width_chars(priv->chapter_label, 4);
-    gtk_label_set_width_chars(priv->verse_label, 4);
+    gtk_label_set_width_chars(priv->chapter_label, 3);
+    gtk_label_set_width_chars(priv->verse_label, 2);
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->book_button),
         priv->compact ? GSWORD_COMPACT_BOOK_WIDTH : GSWORD_PATH_BOOK_WIDTH,
@@ -1682,7 +1683,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     GtkWidget *chapter_page;
     GtkWidget *nav_row;
     GtkWidget *separator;
-    GtkWidget *separator2;
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(self),
                                    GTK_ORIENTATION_VERTICAL);
@@ -1725,9 +1725,11 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     priv->book_button = make_path_segment_button(
         &priv->book_label, GSWORD_PATH_BOOK_WIDTH, 12);
     priv->chapter_button = make_path_segment_button(
-        &priv->chapter_label, GSWORD_PATH_CHAPTER_WIDTH, 4);
+        &priv->chapter_label, GSWORD_PATH_CHAPTER_WIDTH, 3);
     priv->verse_button = make_path_segment_button(
-        &priv->verse_label, GSWORD_PATH_VERSE_WIDTH, 4);
+        &priv->verse_label, GSWORD_PATH_VERSE_WIDTH, 2);
+    priv->colon_label = GTK_LABEL(gtk_label_new(":"));
+    gtk_widget_set_valign(GTK_WIDGET(priv->colon_label), GTK_ALIGN_CENTER);
     gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->chapter_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->verse_button), "flat");
@@ -1768,7 +1770,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     g_signal_connect(priv->verse_button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
     separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    separator2 = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     gtk_widget_set_margin_start(GTK_WIDGET(priv->book_button), 4);
     gtk_widget_set_margin_end(GTK_WIDGET(priv->book_button), 4);
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_book_button));
@@ -1778,7 +1779,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_chapter_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->chapter_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_chapter_button));
-    gtk_box_append(GTK_BOX(nav_row), separator2);
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->colon_label));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_verse_button));
@@ -2009,6 +2010,7 @@ set_compact_internal(GswordReferenceChooser *self, gboolean compact)
         while (child != NULL) {
             gboolean keep = child == GTK_WIDGET(priv->book_button) ||
                             child == GTK_WIDGET(priv->chapter_button) ||
+                            child == GTK_WIDGET(priv->colon_label) ||
                             child == GTK_WIDGET(priv->verse_button);
 
             gtk_widget_set_visible(child, compact ? keep : TRUE);

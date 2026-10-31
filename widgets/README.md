@@ -59,7 +59,7 @@ argv[3]  initial reference
   back to the last chapter of the previous book.
 - Previous/next verse crosses chapter and book boundaries as well.
 - The default state is a clickable Nautilus-style path bar:
-  `[◀] book [▶] [◀] chapter [▶] [◀] verse [▶]`.
+  `[◀] book [▶] [◀] chapter [▶] : [◀] verse [▶]`.
 - Click the book, chapter, or verse label to open the picker.
 - The picker has separate Old Testament and New Testament tabs, so the New
   Testament group is always directly visible.
@@ -74,10 +74,10 @@ argv[3]  initial reference
   the numeric grids.
 - Path bar segments use fixed widths:
   - book: 140 px;
-  - chapter: 88 px;
-  - verse: 80 px.
-  Chapter and verse segments show numbers only.  Long book names are
-  ellipsized with a full tooltip.
+  - chapter: 52 px, sized for up to three digits;
+  - verse: 44 px, sized for up to two digits.
+  Chapter and verse segments show numbers only, separated by a read-only
+  colon label.  Long book names are ellipsized with a full tooltip.
 - The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
   the surrounding scrolled area is reserved at 452 px so the tenth column and
   the vertical scrollbar always have enough room.
@@ -158,14 +158,14 @@ Run the Chinese demo above, then check:
 | Click previous-chapter | 创世记 2:1 → 创世记 1:1 |
 | At 创世记 1:1, previous-book/previous-chapter | buttons disabled |
 | At Genesis 50:1, next-chapter | Exodus 1:1 |
-| Open picker | 旧约 / OT and 新约 / NT tabs are both visible |
-| Select 新约 / NT | New Testament books are shown directly |
+| Open picker | Old Testament and New Testament tabs are both visible |
+| Select New Testament | New Testament books are shown directly |
 | Click next-verse | 创世记 1:1 → 创世记 1:2 |
 | Click previous-verse | 创世记 1:2 → 创世记 1:1 |
 | At 创世记 1:1, previous-verse | button disabled |
 | At 创世记 1:31, next-verse | 创世记 2:1 |
 | Click chapter, then verse | chapter changes, picker remains for verse selection |
-| Open picker | the `Verses / 节` grid shows the current chapter's verses |
+| Open picker | the verse grid shows the current chapter's verses |
 
 The chapter and verse boundary behavior is intentional: navigation crosses
 book/chapter boundaries instead of stopping at the end of a chapter/book.
