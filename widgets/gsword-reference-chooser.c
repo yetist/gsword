@@ -19,7 +19,10 @@ typedef struct {
     GswordReferenceChooser *self;
     GtkEntry *entry;
     GtkEntry *filter_entry;
-    GtkButton *button;
+    GtkStack *mode_stack;
+    GtkButton *edit_button;
+    GtkButton *apply_button;
+    GtkButton *cancel_button;
     GtkButton *book_button;
     GtkButton *chapter_button;
     GtkButton *prev_book_button;
@@ -39,6 +42,7 @@ typedef struct {
     gint chapter;
     gint verse;
     gboolean updating;
+    gboolean editing;
 } GswordReferenceChooserPrivate;
 
 struct _GswordReferenceChooser {
@@ -46,6 +50,8 @@ struct _GswordReferenceChooser {
 };
 
 static void update_navigation_labels(GswordReferenceChooser *self);
+static void set_edit_mode(GswordReferenceChooser *self, gboolean editing);
+static void on_entry_activate(GtkEntry *entry, gpointer user_data);
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswordReferenceChooser,
                            gsword_reference_chooser, GTK_TYPE_BOX)
@@ -236,8 +242,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
     g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
-    gtk_popover_popdown(priv->popover);
-    gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
+    set_edit_mode(self, FALSE);
 }
 
 static void
@@ -710,6 +715,83 @@ schedule_filter_focus(GswordReferenceChooser *self)
 }
 
 static void
+set_edit_mode(GswordReferenceChooser *self, gboolean editing)
+{
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+    gchar *text;
+
+    priv->editing = editing;
+    if (priv->mode_stack == NULL)
+        return;
+    if (!editing) {
+        gtk_popover_popdown(priv->popover);
+        text = g_strdup_printf("%s %d:%d",
+            book_display_name(priv, priv->book), priv->chapter, priv->verse);
+        priv->updating = TRUE;
+        gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
+        priv->updating = FALSE;
+        g_free(text);
+        gtk_stack_set_visible_child_name(priv->mode_stack, "path");
+        update_navigation_labels(self);
+        return;
+    }
+    text = g_strdup_printf("%s %d:%d",
+        book_display_name(priv, priv->book), priv->chapter, priv->verse);
+    priv->updating = TRUE;
+    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
+    priv->updating = FALSE;
+    g_free(text);
+    gtk_stack_set_visible_child_name(priv->mode_stack, "edit");
+    gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
+    gtk_editable_select_region(GTK_EDITABLE(priv->entry), 0, -1);
+}
+
+static void
+on_edit_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    set_edit_mode(GSWORD_REFERENCE_CHOOSER(user_data), TRUE);
+}
+
+static void
+on_apply_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+
+    (void)button;
+    on_entry_activate(priv->entry, self);
+}
+
+static void
+on_cancel_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    set_edit_mode(GSWORD_REFERENCE_CHOOSER(user_data), FALSE);
+}
+
+static gboolean
+on_key_pressed(GtkEventControllerKey *controller, guint keyval,
+               guint keycode, GdkModifierType state, gpointer user_data)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+
+    (void)controller;
+    (void)keycode;
+    if ((state & GDK_CONTROL_MASK) != 0 &&
+        (keyval == GDK_KEY_l || keyval == GDK_KEY_L)) {
+        set_edit_mode(self, TRUE);
+        return GDK_EVENT_STOP;
+    }
+    if (priv->editing && keyval == GDK_KEY_Escape) {
+        set_edit_mode(self, FALSE);
+        return GDK_EVENT_STOP;
+    }
+    return GDK_EVENT_PROPAGATE;
+}
+
+static void
 on_entry_activate(GtkEntry *entry, gpointer user_data)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
@@ -733,6 +815,7 @@ on_entry_activate(GtkEntry *entry, gpointer user_data)
                     GTK_EDITABLE(priv->filter_entry),
                     gtk_editable_get_text(GTK_EDITABLE(entry)));
             priv->updating = FALSE;
+            set_edit_mode(self, FALSE);
             gtk_popover_popup(priv->popover);
             schedule_filter_focus(self);
         } else {
@@ -753,8 +836,7 @@ on_entry_activate(GtkEntry *entry, gpointer user_data)
     gtk_label_set_text(priv->hint, "");
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
     g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
-    gtk_popover_popdown(priv->popover);
-    gtk_widget_grab_focus(GTK_WIDGET(entry));
+    set_edit_mode(self, FALSE);
 }
 
 static void
@@ -879,8 +961,7 @@ on_popover_filter_activate(GtkEntry *entry, gpointer user_data)
     gtk_label_set_text(priv->hint, "");
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
     g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
-    gtk_popover_popdown(priv->popover);
-    gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
+    set_edit_mode(self, FALSE);
 }
 
 static void
@@ -1113,14 +1194,6 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     g_signal_connect(priv->entry, "changed",
                      G_CALLBACK(on_entry_changed), self);
 
-    priv->button = GTK_BUTTON(
-        gtk_button_new_from_icon_name("pan-down-symbolic"));
-    gtk_widget_add_css_class(GTK_WIDGET(priv->button), "flat");
-    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->button),
-                                "Open book and chapter picker");
-    g_signal_connect(priv->button, "clicked",
-                     G_CALLBACK(on_button_clicked), self);
-
     nav_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     priv->prev_book_button = GTK_BUTTON(
         gtk_button_new_from_icon_name("go-previous-symbolic"));
@@ -1132,8 +1205,11 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_button_new_from_icon_name("go-next-symbolic"));
     priv->book_button = GTK_BUTTON(gtk_button_new_with_label(""));
     priv->chapter_button = GTK_BUTTON(gtk_button_new_with_label(""));
+    priv->edit_button = GTK_BUTTON(
+        gtk_button_new_from_icon_name("document-edit-symbolic"));
     gtk_widget_add_css_class(GTK_WIDGET(priv->book_button), "flat");
     gtk_widget_add_css_class(GTK_WIDGET(priv->chapter_button), "flat");
+    gtk_widget_add_css_class(GTK_WIDGET(priv->edit_button), "flat");
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->prev_book_button),
                                 "Previous book");
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->next_book_button),
@@ -1146,6 +1222,8 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                                 "Choose a book");
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->chapter_button),
                                 "Choose a chapter");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->edit_button),
+                                "Edit reference (Ctrl+L)");
     g_signal_connect(priv->prev_book_button, "clicked",
                      G_CALLBACK(on_prev_book_clicked), self);
     g_signal_connect(priv->next_book_button, "clicked",
@@ -1158,6 +1236,8 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                      G_CALLBACK(on_button_clicked), self);
     g_signal_connect(priv->chapter_button, "clicked",
                      G_CALLBACK(on_button_clicked), self);
+    g_signal_connect(priv->edit_button, "clicked",
+                     G_CALLBACK(on_edit_clicked), self);
     separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     separator2 = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     gtk_widget_set_margin_start(GTK_WIDGET(priv->book_button), 4);
@@ -1170,9 +1250,47 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->chapter_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_chapter_button));
     gtk_box_append(GTK_BOX(nav_row), separator2);
-    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->entry));
-    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->button));
-    gtk_box_append(GTK_BOX(self), nav_row);
+    gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->edit_button));
+
+    {
+        GtkWidget *edit_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+
+        priv->apply_button = GTK_BUTTON(
+            gtk_button_new_from_icon_name("object-select-symbolic"));
+        priv->cancel_button = GTK_BUTTON(
+            gtk_button_new_from_icon_name("window-close-symbolic"));
+        gtk_widget_add_css_class(GTK_WIDGET(priv->apply_button), "flat");
+        gtk_widget_add_css_class(GTK_WIDGET(priv->cancel_button), "flat");
+        gtk_widget_set_tooltip_text(GTK_WIDGET(priv->apply_button),
+                                    "Apply reference");
+        gtk_widget_set_tooltip_text(GTK_WIDGET(priv->cancel_button),
+                                    "Cancel editing");
+        g_signal_connect(priv->apply_button, "clicked",
+                         G_CALLBACK(on_apply_clicked), self);
+        g_signal_connect(priv->cancel_button, "clicked",
+                         G_CALLBACK(on_cancel_clicked), self);
+        gtk_box_append(GTK_BOX(edit_box), GTK_WIDGET(priv->entry));
+        gtk_box_append(GTK_BOX(edit_box), GTK_WIDGET(priv->apply_button));
+        gtk_box_append(GTK_BOX(edit_box), GTK_WIDGET(priv->cancel_button));
+
+        priv->mode_stack = GTK_STACK(gtk_stack_new());
+        gtk_stack_set_transition_type(priv->mode_stack,
+                                      GTK_STACK_TRANSITION_TYPE_CROSSFADE);
+        gtk_stack_add_named(priv->mode_stack, nav_row, "path");
+        gtk_stack_add_named(priv->mode_stack, edit_box, "edit");
+        gtk_stack_set_visible_child_name(priv->mode_stack, "path");
+        gtk_box_append(GTK_BOX(self), GTK_WIDGET(priv->mode_stack));
+    }
+
+    {
+        GtkEventController *key_controller = gtk_event_controller_key_new();
+
+        g_signal_connect(key_controller, "key-pressed",
+                         G_CALLBACK(on_key_pressed), self);
+        gtk_event_controller_set_propagation_phase(
+            key_controller, GTK_PHASE_CAPTURE);
+        gtk_widget_add_controller(GTK_WIDGET(self), key_controller);
+    }
 
     priv->filter_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(priv->filter_entry,
@@ -1188,7 +1306,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_popover_set_position(priv->popover, GTK_POS_BOTTOM);
     gtk_widget_set_focusable(GTK_WIDGET(priv->popover), FALSE);
     gtk_widget_set_parent(GTK_WIDGET(priv->popover),
-                          GTK_WIDGET(priv->entry));
+                          GTK_WIDGET(priv->book_button));
 
     paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     book_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
