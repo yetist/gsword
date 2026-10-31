@@ -26,6 +26,11 @@ Current implementation:
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
   parallel modules, active plan, devotion module, font scale, theme
 
+Application UI strings use gettext. The `../po/` directory contains
+`POTFILES.in`, `LINGUAS`, and translated catalogs such as `zh_CN.po`.
+`GSW_LOCALEDIR` can point at a build or installed locale directory during
+development.
+
 The application design is documented in `../docs/app-design.md`.
 
 The earlier minimal GTK4 prototype remains in `../examples/gtk.c` for API

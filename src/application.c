@@ -4,6 +4,7 @@
 
 #include <gsword/gsword.h>
 #include <glib/gstdio.h>
+#include <glib/gi18n.h>
 
 struct _GswordApplication {
     AdwApplication parent_instance;
@@ -126,7 +127,7 @@ gsword_application_open_library(GswordApplication *self, GError **error)
 
     if (g_mkdir_with_parents(path, 0755) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
-                    "Cannot create library directory %s", path);
+                    _("Cannot create library directory %s"), path);
         g_free(path);
         return NULL;
     }
@@ -161,8 +162,8 @@ gsword_application_activate(GApplication *application)
 
     if (priv->manager == NULL &&
         gsword_application_open_library(self, &error) == NULL) {
-        g_printerr("gsword: cannot open module library: %s\n",
-                   error != NULL ? error->message : "unknown error");
+        g_printerr(_("gsword: cannot open module library: %s\n"),
+                   error != NULL ? error->message : _("unknown error"));
         g_clear_error(&error);
         g_application_quit(application);
         return;
@@ -192,7 +193,7 @@ gsword_application_init(GswordApplication *self)
 {
     g_application_add_main_option(
         G_APPLICATION(self), "library", 'l', G_OPTION_FLAG_NONE,
-        G_OPTION_ARG_STRING, "SWORD module library path", "PATH");
+        G_OPTION_ARG_STRING, _("SWORD module library path"), "PATH");
     g_signal_connect(self, "handle-local-options",
                      G_CALLBACK(gsword_application_handle_local_options),
                      NULL);
