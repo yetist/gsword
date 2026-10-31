@@ -56,23 +56,26 @@ argv[3]  initial reference
 - Previous/next chapter crosses book boundaries: the last chapter of a book
   advances to the first chapter of the next book, and the first chapter goes
   back to the last chapter of the previous book.
-- Click the book or chapter label, or the arrow, to open the picker.
+- The default state is a clickable Nautilus-style path bar:
+  `[◀] book [▶] [◀] chapter [▶] [edit]`.
+- Click the book or chapter label to open the picker.
 - The picker has separate `旧约 / OT` and `新约 / NT` tabs, so the New
   Testament group is always directly visible.
 - Select a book; the chapter grid updates.
-- Click a chapter; the reference is confirmed and the popover closes.
+- Click a chapter; the reference is confirmed and the path bar returns.
+- Click the pencil to replace the path bar with an editable text field.
 - The demo buttons exercise alternate references.
 
 ## Keyboard behavior
 
-- Type directly in the main entry when the picker is closed.
-- `Enter` parses and confirms.
-- `Escape` closes the popover.
-- The top navigation row also works with mouse clicks; it does not open the
-  popover unless the book or chapter label is clicked.
-- Clicking the arrow focuses the filter entry inside the picker.
-- The filter entry accepts the same abbreviations as the main entry.
+- `Ctrl+L` switches the path bar to the text-entry state.
+- In text-entry state, type a reference and press `Enter` to confirm.
+- `Escape` cancels editing and returns to the path bar.
+- The apply and cancel buttons provide the same actions with the mouse.
+- The picker's filter entry accepts the same abbreviations as the main entry.
 - `Enter` in the filter entry confirms the reference.
+- The path bar itself remains fully mouse-driven; no text entry is shown until
+  the edit button, `Ctrl+L`, or the pencil is used.
 
 Supported examples:
 
@@ -151,8 +154,8 @@ activate  user confirmed a reference
   not affect the entry's layout.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
   `GtkNotebook`, plus `GtkFlowBox` for chapter buttons.
-- The compact navigation controls and the text entry share one row; they
-  update the same selection state as the popover.
+- The path bar and the editor are two pages of a `GtkStack`; they share the
+  same selection state and occupy the same single row.
 - Book aliases are resolved through `GswLocaleMgr`; the widget does not
   hard-code the 66 book names.
 - The main application is deliberately untouched.
