@@ -293,7 +293,7 @@ populate_chapter_buttons(GswordReferenceChooserPrivate *priv)
         if (chapter == priv->chapter)
             gtk_widget_add_css_class(button, "suggested-action");
         gtk_grid_attach(priv->chapter_grid, button,
-                        (chapter - 1) % 8, (chapter - 1) / 8, 1, 1);
+                        (chapter - 1) % 10, (chapter - 1) / 10, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -429,7 +429,7 @@ populate_verse_buttons(GswordReferenceChooserPrivate *priv)
         if (verse == priv->verse)
             gtk_widget_add_css_class(button, "suggested-action");
         gtk_grid_attach(priv->verse_grid, button,
-                        (verse - 1) % 8, (verse - 1) / 8, 1, 1);
+                        (verse - 1) % 10, (verse - 1) / 10, 1, 1);
     }
     priv->updating = FALSE;
 }
@@ -1584,12 +1584,13 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_grid_set_row_spacing(priv->chapter_grid, 4);
     gtk_widget_set_halign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(priv->chapter_grid), GTK_ALIGN_START);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->chapter_grid), 436, -1);
     chapter_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(chapter_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(chapter_scroll),
                                   GTK_WIDGET(priv->chapter_grid));
-    gtk_widget_set_size_request(chapter_scroll, 360, 320);
+    gtk_widget_set_size_request(chapter_scroll, 452, 320);
     gtk_widget_set_vexpand(chapter_scroll, TRUE);
     gtk_box_append(GTK_BOX(chapter_page), chapter_scroll);
 
@@ -1604,12 +1605,13 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_grid_set_row_spacing(priv->verse_grid, 4);
     gtk_widget_set_halign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(priv->verse_grid), GTK_ALIGN_START);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->verse_grid), 436, -1);
     verse_scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(verse_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(verse_scroll),
                                   GTK_WIDGET(priv->verse_grid));
-    gtk_widget_set_size_request(verse_scroll, 360, 100);
+    gtk_widget_set_size_request(verse_scroll, 452, 100);
     gtk_box_append(GTK_BOX(chapter_page), verse_scroll);
 
     gtk_paned_set_start_child(GTK_PANED(paned), book_page);
