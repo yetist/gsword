@@ -71,9 +71,12 @@ argv[3]  initial reference
 - The book pane and the chapter/verse pane are separated by a fixed-width
   `GtkBox` layout and a vertical separator, so long book names cannot overlap
   the numeric grids.
-- Path bar segments use fixed widths: 140 px for the book, 120 px for the
-  chapter, and 120 px for the verse. Long names are ellipsized with a full
-  tooltip.
+- Path bar segments use the minimum fixed widths needed by the current
+  locale:
+  - book: 140 px;
+  - chapter: 88 px in Chinese, 104 px in English;
+  - verse: 80 px in Chinese, 88 px in English.
+  Long names are ellipsized with a full tooltip.
 - The grid's minimum width is 436 px (10 × 40 px plus 9 × 4 px spacing), and
   the surrounding scrolled area is reserved at 452 px so the tenth column and
   the vertical scrollbar always have enough room.
