@@ -1,5 +1,5 @@
 /*
- * workspace-pane.h: a single pane in the gsword multi-pane workspace
+ * workspace-pane.h: a single comparison pane in the gsword comparison workspace
  */
 
 #ifndef GSWORD_WORKSPACE_PANE_H

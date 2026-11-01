@@ -1,5 +1,5 @@
 /*
- * workspace-page.h: multi-pane workspace container for the gsword window
+ * workspace-page.h: comparison workspace container for the gsword window
  */
 
 #ifndef GSWORD_WORKSPACE_PAGE_H

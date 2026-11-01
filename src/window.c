@@ -455,8 +455,8 @@ on_main_menu_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
                                    "reading", _("Reading workspace"),
                                    "study", _("Study workspace"),
-                                   "panes", _("Multi-pane workspace"),
-                                   "parallel", _("Parallel workspace"),
+                                   "panes", _("Comparison workspace"),
+                                   "parallel", _("Parallel comparison"),
                                    "teaching", _("Teaching workspace"),
                                    "preferences", _("Preferences"),
                                    "quit", _("Quit"),
@@ -590,7 +590,7 @@ gsword_window_build(GswordWindow *self)
     priv->workspace_page = gsword_workspace_page_new(self);
     gtk_stack_add_titled(priv->content_stack,
                          gsword_workspace_page_widget(priv->workspace_page),
-                         "panes", _("Panes"));
+                         "panes", _("Compare"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_search_page_widget(priv->search_page),
                          "search", _("Search"));

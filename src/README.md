@@ -32,9 +32,9 @@ Current implementation:
   highlight, teaching and study-panel controls
 - `study-panel.c` / `study-panel.h`: commentary, Strong's, cross-reference and
   lexicon tabs, follow/pin state and study module selection
-- `workspace-page.c` / `workspace-page.h`: multi-pane container, 1–4 columns,
+- `workspace-page.c` / `workspace-page.h`: comparison container, 1–4 columns,
   sync scroll, layout persistence, add/remove/clear and parallel template
-- `workspace-pane.c` / `workspace-pane.h`: per-pane module selection, compact
+- `workspace-pane.c` / `workspace-pane.h`: per-comparison module selection, compact
   reference chooser, rendering, FOLLOW, active verse and drag reorder
 - `search-page.c` / `search-page.h`: search UI, result navigation and search
   index actions
@@ -62,12 +62,12 @@ Current implementation:
   (`~/.local/share/gsword`) and one-time migration from the old
   `~/.local/share/gsword-app` location
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
-  multi-pane layout, columns and scroll sync, legacy parallel template modules,
+  comparison layout, columns and scroll sync, legacy parallel template modules,
   active plan, devotion module, study panel state, font scale, theme
 
-The reader toolbar and each multi-pane workspace pane use
+The reader toolbar and each comparison pane uses
 `../widgets/gsword-reference-chooser.c`.  The reader uses the full path-bar
-form; panes use `gsword_reference_chooser_new_compact()` and open the same
+form; comparison panes use `gsword_reference_chooser_new_compact()` and open the same
 book/chapter/verse picker.
 
 Application UI strings use gettext. The `../po/` directory contains

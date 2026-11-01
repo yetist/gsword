@@ -28,18 +28,18 @@
     </key>
     <key name="workspace-layout" type="s">
       <default>''</default>
-      <summary>Multi-pane workspace layout</summary>
-      <description>Serialized list of workspace panes and their follow settings.</description>
+      <summary>Comparison workspace layout</summary>
+      <description>Serialized list of comparison panes and their follow settings.</description>
     </key>
     <key name="workspace-columns" type="i">
       <default>2</default>
-      <summary>Multi-pane workspace column count</summary>
-      <description>Number of columns used by the multi-pane workspace grid.</description>
+      <summary>Comparison workspace column count</summary>
+      <description>Number of columns used by the comparison workspace grid.</description>
     </key>
     <key name="workspace-sync-scroll" type="b">
       <default>false</default>
-      <summary>Synchronize pane scrolling</summary>
-      <description>Whether scrolling one workspace pane scrolls the other panes.</description>
+      <summary>Synchronize comparison scrolling</summary>
+      <description>Whether scrolling one comparison pane scrolls the other panes.</description>
     </key>
     <key name="parallel-a" type="s">
       <default>''</default>
