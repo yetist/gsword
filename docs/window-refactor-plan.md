@@ -2,7 +2,8 @@
 
 ## 文档状态
 
-- 状态：已确认，待实施
+- 状态：阶段 0 已完成，待开始阶段 1
+- 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
 - 目标规模：`src/window.c` 约 500–800 行
@@ -163,12 +164,21 @@ ASAN_OPTIONS=detect_leaks=0 meson test -C build-asan --timeout-multiplier 2
 
 ### 阶段 0：建立基线和验收矩阵
 
-- [ ] 记录当前测试基线。
-- [ ] 列出每个页面的手工验收项。
-- [ ] 确认笔记库、计划库、安装异步回调、工作区持久化等关键路径。
-- [ ] 冻结该阶段之外的新功能改动。
+- [x] 记录当前测试基线。
+- [x] 列出每个页面的手工验收项。
+- [x] 确认笔记库、计划库、安装异步回调、工作区持久化等关键路径。
+- [x] 冻结该阶段之外的新功能改动。
 
-产出：验收清单；不改变代码结构。
+产出：`docs/window-refactor-acceptance.md`；未改变代码结构。
+
+基线：
+
+```text
+普通测试：25/25
+ASan 测试：24/24
+UI 启动烟雾测试：通过
+src/window.c：7140 行
+```
 
 风险：低。
 
@@ -477,7 +487,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 
 | 阶段 | 状态 | 提交 | 备注 |
 |---|---|---|---|
-| 0 基线 | 待开始 | | |
+| 0 基线 | 完成 | `5760c3b` | `docs/window-refactor-acceptance.md` |
 | 1 共享服务 | 待开始 | | |
 | 2 搜索页 | 待开始 | | |
 | 3 资源页/教学页 | 待开始 | | |
