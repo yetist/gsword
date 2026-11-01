@@ -35,6 +35,7 @@ add_project_arguments(
 glib_dep = dependency('glib-2.0', version: '>=2.66')
 gobject_dep = dependency('gobject-2.0', version: '>=2.66')
 gio_dep = dependency('gio-2.0', version: '>=2.66')
+gtk4_dep = dependency('gtk4', required: false)
 curl_dep = dependency('libcurl', version: '>=7.68')
 zlib_dep = dependency('zlib')
 
@@ -184,5 +185,4 @@ subdir('data')
 subdir('po')
 subdir('tests')
 subdir('examples')
-subdir('widgets')
 subdir('src')

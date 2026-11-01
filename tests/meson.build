@@ -1,6 +1,20 @@
 tests = []
 python3 = find_program('python3')
 
+reference_chooser_sources = files(
+  '../src/gsword-reference-chooser.c',
+  '../src/gsword-reference-parser.c',
+)
+
+if gtk4_dep.found()
+  executable('gsword-reference-chooser-demo',
+    ['reference-chooser-demo.c'] + reference_chooser_sources,
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, gtk4_dep],
+    install: false,
+  )
+endif
+
 if get_option('tests')
   test_config = executable('test-config', 'test-config.c',
     dependencies: [gsword_dep, glib_dep])
@@ -113,4 +127,17 @@ if get_option('tests')
     args: [files('run-http-install-test.py'), test_install_http,
            test_install_http_async],
     timeout: 120)
+
+  if gtk4_dep.found()
+    test_reference_chooser = executable('test-reference-chooser',
+      ['test-reference-chooser.c'] + reference_chooser_sources,
+      include_directories: include_directories('../src'),
+      dependencies: [gsword_dep, gtk4_dep],
+      c_args: [
+        '-DGSW_TEST_LOCALE_DIR="' +
+        meson.project_source_root() + '/data/locales.d"',
+      ],
+    )
+    test('reference-chooser', test_reference_chooser, timeout: 30)
+  endif
 endif

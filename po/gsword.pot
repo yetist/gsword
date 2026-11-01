@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 20:53+0800\n"
+"POT-Creation-Date: 2026-11-01 20:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1208,132 +1208,129 @@ msgstr ""
 msgid "Current passage"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1056
-#: widgets/gsword-reference-chooser.c:1186
-#: widgets/gsword-reference-chooser.c:1690
+#: src/gsword-reference-chooser.c:1056 src/gsword-reference-chooser.c:1186
+#: src/gsword-reference-chooser.c:1690
 msgid "Type a reference or choose a book."
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1075
-#: widgets/gsword-reference-chooser.c:1104
+#: src/gsword-reference-chooser.c:1075 src/gsword-reference-chooser.c:1104
 msgid "Multiple books match; choose one."
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1079
-#: widgets/gsword-reference-chooser.c:1116
+#: src/gsword-reference-chooser.c:1079 src/gsword-reference-chooser.c:1116
 msgid "Cannot parse reference"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1458
+#: src/gsword-reference-chooser.c:1458
 msgid "Previous book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1460
+#: src/gsword-reference-chooser.c:1460
 msgid "Next book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1462
+#: src/gsword-reference-chooser.c:1462
 msgid "Previous chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1464
+#: src/gsword-reference-chooser.c:1464
 msgid "Next chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1466
+#: src/gsword-reference-chooser.c:1466
 msgid "Choose a book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1468
+#: src/gsword-reference-chooser.c:1468
 msgid "Choose a chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1470
+#: src/gsword-reference-chooser.c:1470
 msgid "Previous verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1472
+#: src/gsword-reference-chooser.c:1472
 msgid "Next verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1474
+#: src/gsword-reference-chooser.c:1474
 msgid "Choose a verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1518
+#: src/gsword-reference-chooser.c:1518
 msgid "Apply reference"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1520
+#: src/gsword-reference-chooser.c:1520
 msgid "Cancel editing"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1549
+#: src/gsword-reference-chooser.c:1549
 msgid "Type to filter books / references"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1573
+#: src/gsword-reference-chooser.c:1573
 msgid "Books"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1575
+#: src/gsword-reference-chooser.c:1575
 msgid "Chapters"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1583
+#: src/gsword-reference-chooser.c:1583
 msgid "Old Testament"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1583
+#: src/gsword-reference-chooser.c:1583
 msgid "New Testament"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1652
+#: src/gsword-reference-chooser.c:1652
 msgid "Verses"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:93 widgets/gsword-reference-parser.c:102
+#: src/gsword-reference-parser.c:93 src/gsword-reference-parser.c:102
 msgid "Reference is empty"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:116
+#: src/gsword-reference-parser.c:116
 msgid "Verse is empty"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:147
+#: src/gsword-reference-parser.c:147
 msgid "Chapter is invalid"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:158
+#: src/gsword-reference-parser.c:158
 msgid "Book is missing"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:172
+#: src/gsword-reference-parser.c:172
 msgid "No matching book"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:180
+#: src/gsword-reference-parser.c:180
 msgid "Book abbreviation is ambiguous"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:195
+#: src/gsword-reference-parser.c:195
 msgid "Book is not in this versification"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:209
+#: src/gsword-reference-parser.c:209
 #, c-format
 msgid "Chapter %d is out of range"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:220
+#: src/gsword-reference-parser.c:220
 msgid "Verse is invalid"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:235
+#: src/gsword-reference-parser.c:235
 #, c-format
 msgid "Verse %d is out of range"
 msgstr ""
 
-#: widgets/gsword-reference-parser.c:261
+#: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr ""
