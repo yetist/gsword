@@ -515,3 +515,30 @@ src/window.c：2954 -> 1636 行
 - 工作区通过 `gsword_window_current_start_reference()` 等共享服务与阅读器
   同步当前引用；
 - `GswordWindowPrivate` 不再保存工作区控件、窗格数组和布局状态。
+
+### 阶段 9：阅读器
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（启动阅读器、Ctrl+L 输入 John 3:16 与 Gen 1:1 跳转）
+新增文件：src/reader-page.c、src/reader-page.h、
+          src/reader-toolbar.c、src/reader-toolbar.h
+src/window.c：1636 -> 905 行
+已知警告是否有新增：无
+遗留问题：window.c 仍需阶段 10 清理到 800 行目标以内
+```
+
+已完成：
+
+- 阅读文本、活动节、范围选择、高亮和阅读器点击事件迁入阅读器页面；
+- 引用选择器、复制、笔记、高亮、教学和研究面板切换迁入阅读器工具栏；
+- 当前引用、当前起始引用、存储 key 和显示 key 由阅读器页面维护，
+  窗口仅保留共享服务包装；
+- 阅读器通过 `gsword_window_sync_workspace_from_reader()`、
+  `gsword_window_refresh_search_index()` 等共享服务通知其他页面；
+- 取消/范围选择、Shift 范围、复制范围、高亮切换和上次位置保存保持原行为；
+- `GswordWindowPrivate` 不再保存阅读器控件、标签或范围状态。

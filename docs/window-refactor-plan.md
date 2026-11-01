@@ -2,10 +2,10 @@
 
 ## 文档状态
 
-- 状态：阶段 8 完成（模块库、侧边栏、研究面板和多窗格工作区均已拆分）
+- 状态：阶段 9 完成（模块库、侧边栏、研究面板、多窗格工作区和阅读器均已拆分）
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
-- 当前规模：`src/window.c` 约 1636 行
+- 当前规模：`src/window.c` 约 905 行
 - 目标规模：`src/window.c` 约 500–800 行
 - 实施原则：行为不变、分阶段提交、每阶段可独立编译/测试/回滚
 
@@ -488,11 +488,28 @@ ASan 测试：24/24 通过
 
 ### 阶段 9：拆分阅读器
 
-- [ ] 新增 `reader-page.c` / `reader-page.h`。
-- [ ] 新增 `reader-toolbar.c` / `reader-toolbar.h`。
-- [ ] 迁阅读文本、活动节、范围选择、高亮、阅读器点击事件。
-- [ ] 迁移引用选择器、复制、笔记、高亮、教学、研究面板切换。
-- [ ] 阅读器通过共享上下文发布当前引用变化。
+- [x] 新增 `reader-page.c` / `reader-page.h`。
+- [x] 新增 `reader-toolbar.c` / `reader-toolbar.h`。
+- [x] 迁移阅读文本、活动节、范围选择、高亮、阅读器点击事件。
+- [x] 迁移引用选择器、复制、笔记、高亮、教学、研究面板切换。
+- [x] 阅读器通过共享上下文发布当前引用变化。
+
+产出：
+
+```text
+src/reader-page.c
+src/reader-page.h
+src/reader-toolbar.c
+src/reader-toolbar.h
+```
+
+结果：
+
+```text
+src/window.c：1636 -> 905 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -629,5 +646,5 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 6 模块库/侧边栏 | 完成 | 本阶段提交 | 新增 `library-page.*` / `module-sidebar.*` |
 | 7 研究面板 | 完成 | 本阶段提交 | 新增 `study-panel.c` / `study-panel.h` |
 | 8 工作区 | 完成 | 本阶段提交 | 新增 `workspace-page.*` / `workspace-pane.*` |
-| 9 阅读器 | 待开始 | | |
+| 9 阅读器 | 完成 | 本阶段提交 | 新增 `reader-page.*` / `reader-toolbar.*` |
 | 10 壳体清理 | 待开始 | | |
