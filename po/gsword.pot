@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 12:48+0800\n"
+"POT-Creation-Date: 2026-11-01 14:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -123,7 +123,8 @@ msgstr ""
 msgid "Daily Devotional"
 msgstr ""
 
-#: src/window-services.c:154 src/window-services.c:161 src/module-sidebar.c:27
+#: src/window-services.c:154 src/window-services.c:161 src/library-page.c:911
+#: src/module-sidebar.c:27
 msgid "Maps"
 msgstr ""
 
@@ -131,11 +132,11 @@ msgstr ""
 msgid "Biblical Texts"
 msgstr ""
 
-#: src/window-services.c:157 src/module-sidebar.c:23
+#: src/window-services.c:157 src/library-page.c:909 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr ""
 
-#: src/window-services.c:158 src/module-sidebar.c:24
+#: src/window-services.c:158 src/library-page.c:909 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr ""
 
@@ -147,7 +148,7 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: src/window-services.c:166
+#: src/window-services.c:166 src/library-page.c:88 src/library-page.c:122
 msgid "Unknown"
 msgstr ""
 
@@ -413,181 +414,258 @@ msgstr ""
 msgid "Type the verse"
 msgstr ""
 
-#: src/library-page.c:77
-msgid "Not installed"
+#: src/library-page.c:90
+msgid "Chinese"
 msgstr ""
 
-#: src/library-page.c:79
-msgid "Update available"
+#: src/library-page.c:92
+msgid "English"
 msgstr ""
 
-#: src/library-page.c:81
-msgid "Installed - local version is newer"
+#: src/library-page.c:94
+msgid "German"
 msgstr ""
 
-#: src/library-page.c:83
-msgid "Installed - up to date"
+#: src/library-page.c:96
+msgid "French"
 msgstr ""
 
-#: src/library-page.c:84
-msgid "Installed"
+#: src/library-page.c:98
+msgid "Spanish"
 msgstr ""
 
-#: src/library-page.c:117
-msgid "Install manager is not available"
+#: src/library-page.c:100
+msgid "Portuguese"
 msgstr ""
 
-#: src/library-page.c:131
-msgid "Source"
+#: src/library-page.c:102
+msgid "Russian"
 msgstr ""
 
-#: src/library-page.c:186 src/library-page.c:704
+#: src/library-page.c:104
+msgid "Korean"
+msgstr ""
+
+#: src/library-page.c:106
+msgid "Japanese"
+msgstr ""
+
+#: src/library-page.c:108
+msgid "Polish"
+msgstr ""
+
+#: src/library-page.c:110
+msgid "Ukrainian"
+msgstr ""
+
+#: src/library-page.c:112
+msgid "Arabic"
+msgstr ""
+
+#: src/library-page.c:205
+msgid "All languages"
+msgstr ""
+
+#: src/library-page.c:312 src/library-page.c:1029
 msgid "Select a module"
 msgstr ""
 
-#: src/library-page.c:192
+#: src/library-page.c:346
+msgid "No modules match the current filters."
+msgstr ""
+
+#: src/library-page.c:355
+#, c-format
+msgid "%u module(s)"
+msgstr ""
+
+#: src/library-page.c:365 src/library-page.c:913
+msgid "Not installed"
+msgstr ""
+
+#: src/library-page.c:367 src/library-page.c:914
+msgid "Update available"
+msgstr ""
+
+#: src/library-page.c:369 src/library-page.c:915
+msgid "Installed - local version is newer"
+msgstr ""
+
+#: src/library-page.c:371 src/library-page.c:916
+msgid "Installed - up to date"
+msgstr ""
+
+#: src/library-page.c:372 src/library-page.c:914
+msgid "Installed"
+msgstr ""
+
+#: src/library-page.c:405
+msgid "Install manager is not available"
+msgstr ""
+
+#: src/library-page.c:419
+msgid "Source"
+msgstr ""
+
+#: src/library-page.c:482
 msgid "No source selected. Refresh the source list first."
 msgstr ""
 
-#: src/library-page.c:198
+#: src/library-page.c:488
 msgid "Cannot read remote modules"
 msgstr ""
 
-#: src/library-page.c:275
+#: src/library-page.c:526
 msgid "Refreshing install sources..."
 msgstr ""
 
-#: src/library-page.c:290
+#: src/library-page.c:541
 msgid "Cannot refresh install sources"
 msgstr ""
 
-#: src/library-page.c:292
+#: src/library-page.c:543
 msgid "Install sources refreshed"
 msgstr ""
 
-#: src/library-page.c:315
+#: src/library-page.c:566
 msgid "Refreshing remote module list..."
 msgstr ""
 
-#: src/library-page.c:354
+#: src/library-page.c:605
 msgid "Cannot refresh remote modules"
 msgstr ""
 
-#: src/library-page.c:356
+#: src/library-page.c:607
 msgid "Remote module list refreshed"
 msgstr ""
 
-#: src/library-page.c:382
+#: src/library-page.c:633
 msgid "Installing module..."
 msgstr ""
 
-#: src/library-page.c:400
+#: src/library-page.c:651
 msgid "Module install failed"
 msgstr ""
 
-#: src/library-page.c:418
+#: src/library-page.c:669
 #, c-format
 msgid "Installed module %s"
 msgstr ""
 
-#: src/library-page.c:447
+#: src/library-page.c:698
 msgid "Removing module..."
 msgstr ""
 
-#: src/library-page.c:462
+#: src/library-page.c:713
 msgid "Module removal failed"
 msgstr ""
 
-#: src/library-page.c:464
+#: src/library-page.c:715
 msgid "Module removed"
 msgstr ""
 
-#: src/library-page.c:486
+#: src/library-page.c:737
 msgid "Cancelling..."
 msgstr ""
 
-#: src/library-page.c:500
+#: src/library-page.c:751
 msgid "Installing..."
 msgstr ""
 
-#: src/library-page.c:518 src/library-page.c:522
+#: src/library-page.c:769 src/library-page.c:773
 msgid "Downloading"
 msgstr ""
 
-#: src/library-page.c:518 src/library-page.c:522
+#: src/library-page.c:769 src/library-page.c:773
 msgid "bytes"
 msgstr ""
 
-#: src/library-page.c:546
+#: src/library-page.c:797
 msgid "Enter a local SWORD directory and module name"
 msgstr ""
 
-#: src/library-page.c:551
+#: src/library-page.c:802
 msgid "Local install failed"
 msgstr ""
 
-#: src/library-page.c:563
+#: src/library-page.c:814
 msgid "Module installed from local directory"
 msgstr ""
 
-#: src/library-page.c:614
+#: src/library-page.c:901
 msgid "Install / Update"
 msgstr ""
 
-#: src/library-page.c:615
+#: src/library-page.c:902
 msgid "Remove"
 msgstr ""
 
-#: src/library-page.c:616 src/plan-page.c:477
+#: src/library-page.c:903 src/plan-page.c:477
 msgid "Cancel"
 msgstr ""
 
-#: src/library-page.c:619
+#: src/library-page.c:906
 msgid "Install from local directory"
 msgstr ""
 
-#: src/library-page.c:659
-msgid "Filter modules"
+#: src/library-page.c:908
+msgid "All types"
 msgstr ""
 
-#: src/library-page.c:662
-msgid "Refresh the install source list"
-msgstr ""
-
-#: src/library-page.c:664
-msgid "Refresh modules from the selected source"
-msgstr ""
-
-#: src/library-page.c:727
-msgid "Installed:"
-msgstr ""
-
-#: src/library-page.c:736
-msgid "Local SWORD library directory"
-msgstr ""
-
-#: src/library-page.c:738
-msgid "Module name"
-msgstr ""
-
-#: src/library-page.c:740
-msgid "Install local module"
-msgstr ""
-
-#: src/module-sidebar.c:22
+#: src/library-page.c:908 src/module-sidebar.c:22
 msgid "Bibles"
 msgstr ""
 
-#: src/module-sidebar.c:25
+#: src/library-page.c:910 src/module-sidebar.c:25
 msgid "Daily Devotions"
 msgstr ""
 
-#: src/module-sidebar.c:26
+#: src/library-page.c:910 src/module-sidebar.c:26
 msgid "General Books"
 msgstr ""
 
-#: src/module-sidebar.c:30
+#: src/library-page.c:911 src/module-sidebar.c:30
 msgid "Other Modules"
+msgstr ""
+
+#: src/library-page.c:913
+msgid "All statuses"
+msgstr ""
+
+#: src/library-page.c:956
+msgid "Filter modules"
+msgstr ""
+
+#: src/library-page.c:964
+msgid "Clear filters"
+msgstr ""
+
+#: src/library-page.c:965
+msgid "0 module(s)"
+msgstr ""
+
+#: src/library-page.c:972
+msgid "Refresh the install source list"
+msgstr ""
+
+#: src/library-page.c:974
+msgid "Refresh modules from the selected source"
+msgstr ""
+
+#: src/library-page.c:1052
+msgid "Installed:"
+msgstr ""
+
+#: src/library-page.c:1061
+msgid "Local SWORD library directory"
+msgstr ""
+
+#: src/library-page.c:1063
+msgid "Module name"
+msgstr ""
+
+#: src/library-page.c:1065
+msgid "Install local module"
 msgstr ""
 
 #: src/module-sidebar.c:279
