@@ -25,6 +25,8 @@ struct _GswordReaderPage {
     gint range_start;
     gint range_end;
     gboolean range_active;
+    GswordReaderHistory *history;
+    gboolean history_navigating;
 };
 
 static void apply_active_verse(GswordReaderPage *page);
@@ -35,6 +37,7 @@ static void select_verse_range(GswordReaderPage *page, gint anchor,
                                gint verse);
 static void select_verse(GswordReaderPage *page, gint verse);
 static void update_reference_status(GswordReaderPage *page);
+static void record_current_history(GswordReaderPage *page);
 
 static void
 set_text(GswordReaderPage *page, const gchar *text)
@@ -60,6 +63,41 @@ save_last_position(GswordReaderPage *page)
         g_settings_set_string(settings, "last-module", name);
     if (key != NULL)
         g_settings_set_string(settings, "last-key", key);
+}
+
+static void
+record_current_history(GswordReaderPage *page)
+{
+    GswordWindow *self;
+    GswModule *module;
+    GswKey *key;
+    gchar *reference;
+    gchar *display;
+    GswVerseKey *verse_key;
+
+    if (page == NULL || page->history == NULL || page->history_navigating)
+        return;
+    self = page->window;
+    module = gsword_window_get_module(self);
+    if (module == NULL)
+        return;
+    key = gsw_module_get_key(module);
+    if (gsw_key_get_kind(key) != GSW_KEY_KIND_VERSE)
+        return;
+    verse_key = (GswVerseKey *)key;
+    reference = gsw_verse_key_get_osis_ref(verse_key);
+    if (reference == NULL)
+        return;
+    display = g_strdup_printf("%s %d:%d",
+                              gsw_verse_key_get_book_name(verse_key),
+                              gsw_verse_key_get_chapter(verse_key),
+                              MAX(gsw_verse_key_get_verse(verse_key), 1));
+    gsword_reader_history_push(page->history,
+                               gsw_module_get_name(module),
+                               reference, display);
+    gsword_reader_toolbar_update_history(page->toolbar);
+    g_free(display);
+    g_free(reference);
 }
 
 void
@@ -180,6 +218,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
     sync_reference_chooser(page);
     gsword_window_sync_workspace_from_reader(self);
     save_last_position(page);
+    record_current_history(page);
 }
 
 gboolean
@@ -597,6 +636,7 @@ select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
     apply_active_verse(page);
     gsword_window_sync_workspace_from_reader(page->window);
     save_last_position(page);
+    record_current_history(page);
 }
 
 static void
@@ -630,6 +670,7 @@ select_verse(GswordReaderPage *page, gint verse)
     apply_active_verse(page);
     gsword_window_sync_workspace_from_reader(page->window);
     save_last_position(page);
+    record_current_history(page);
 }
 
 static void
@@ -779,10 +820,140 @@ gsword_reader_page_widget(GswordReaderPage *page)
     return page->root;
 }
 
+static gboolean
+navigate_history_entry(GswordReaderPage *page,
+                       const GswordReaderHistoryEntry *entry)
+{
+    GswordWindow *self;
+    GswModule *module;
+
+    if (page == NULL || entry == NULL)
+        return FALSE;
+    self = page->window;
+    page->history_navigating = TRUE;
+    module = gsword_window_get_module(self);
+    if (module == NULL ||
+        g_strcmp0(gsw_module_get_name(module), entry->module) != 0)
+        gsword_window_load_module(self, entry->module);
+    module = gsword_window_get_module(self);
+    if (module == NULL ||
+        g_strcmp0(gsw_module_get_name(module), entry->module) != 0) {
+        page->history_navigating = FALSE;
+        return FALSE;
+    }
+    if (!gsword_window_set_key_text(self, entry->reference)) {
+        page->history_navigating = FALSE;
+        return FALSE;
+    }
+    page->history_navigating = FALSE;
+    return TRUE;
+}
+
+gboolean
+gsword_reader_page_history_can_back(GswordReaderPage *page)
+{
+    return page != NULL &&
+           gsword_reader_history_can_back(page->history);
+}
+
+gboolean
+gsword_reader_page_history_can_forward(GswordReaderPage *page)
+{
+    return page != NULL &&
+           gsword_reader_history_can_forward(page->history);
+}
+
+gboolean
+gsword_reader_page_history_back(GswordReaderPage *page)
+{
+    const GswordReaderHistoryEntry *entry;
+    gint previous;
+    gboolean result;
+
+    if (!gsword_reader_page_history_can_back(page))
+        return FALSE;
+    previous = gsword_reader_page_history_current(page);
+    entry = gsword_reader_history_back(page->history);
+    result = navigate_history_entry(page, entry);
+    if (!result)
+        gsword_reader_history_set_current(page->history, (guint)previous);
+    gsword_reader_toolbar_update_history(page->toolbar);
+    return result;
+}
+
+gboolean
+gsword_reader_page_history_forward(GswordReaderPage *page)
+{
+    const GswordReaderHistoryEntry *entry;
+    gint previous;
+    gboolean result;
+
+    if (!gsword_reader_page_history_can_forward(page))
+        return FALSE;
+    previous = gsword_reader_page_history_current(page);
+    entry = gsword_reader_history_forward(page->history);
+    result = navigate_history_entry(page, entry);
+    if (!result)
+        gsword_reader_history_set_current(page->history, (guint)previous);
+    gsword_reader_toolbar_update_history(page->toolbar);
+    return result;
+}
+
+gboolean
+gsword_reader_page_history_jump(GswordReaderPage *page, guint index)
+{
+    const GswordReaderHistoryEntry *entry;
+
+    if (page == NULL || page->history == NULL)
+        return FALSE;
+    entry = gsword_reader_history_get_entry(page->history, index);
+    if (entry == NULL)
+        return FALSE;
+    if (!navigate_history_entry(page, entry))
+        return FALSE;
+    gsword_reader_history_set_current(page->history, index);
+    gsword_reader_toolbar_update_history(page->toolbar);
+    return TRUE;
+}
+
+void
+gsword_reader_page_history_clear(GswordReaderPage *page)
+{
+    if (page == NULL || page->history == NULL)
+        return;
+    gsword_reader_history_clear(page->history);
+    gsword_reader_toolbar_update_history(page->toolbar);
+}
+
+guint
+gsword_reader_page_history_count(GswordReaderPage *page)
+{
+    return page != NULL ? gsword_reader_history_get_length(page->history) : 0;
+}
+
+gint
+gsword_reader_page_history_current(GswordReaderPage *page)
+{
+    return page != NULL
+         ? gsword_reader_history_get_current_index(page->history) : -1;
+}
+
+const GswordReaderHistoryEntry *
+gsword_reader_page_history_entry(GswordReaderPage *page, guint index)
+{
+    return page != NULL
+         ? gsword_reader_history_get_entry(page->history, index) : NULL;
+}
+
 static void
 reader_page_free(gpointer data)
 {
-    g_free(data);
+    GswordReaderPage *page = data;
+
+    if (page == NULL)
+        return;
+    gsword_reader_history_free(page->history);
+    g_free(page);
 }
 
 GswordReaderPage *
@@ -797,6 +968,8 @@ gsword_reader_page_new(GswordWindow *window)
 
     page->window = window;
     page->root = reader_box;
+    page->history = gsword_reader_history_new(
+        gsword_window_get_settings(window), 50);
     page->toolbar = gsword_reader_toolbar_new(window, page);
     page->reference_chooser = gsword_reader_toolbar_get_reference_chooser(
         page->toolbar);

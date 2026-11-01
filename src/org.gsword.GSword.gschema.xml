@@ -86,5 +86,15 @@
       <summary>Daily devotional module</summary>
       <description>Module used by the Daily Devotion tab.</description>
     </key>
+    <key name="reader-history" type="as">
+      <default>[]</default>
+      <summary>Recent Bible reading history</summary>
+      <description>Serialized recent reading entries: module, OSIS reference, display text, and timestamp.</description>
+    </key>
+    <key name="reader-history-index" type="i">
+      <default>0</default>
+      <summary>Current reading history position</summary>
+      <description>Index of the current entry in reader-history.</description>
+    </key>
   </schema>
 </schemalist>

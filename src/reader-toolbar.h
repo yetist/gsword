@@ -20,6 +20,7 @@ GswordReferenceChooser *gsword_reader_toolbar_get_reference_chooser(
     GswordReaderToolbar *toolbar);
 GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
     GswordReaderToolbar *toolbar);
+void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);
 
 G_END_DECLS
 

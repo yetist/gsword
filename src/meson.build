@@ -4,7 +4,7 @@ sqlite3_dep = dependency('sqlite3', required: false)
 
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
   gsword_app = executable('gsword',
-    ['main.c', 'application.c', 'window.c', 'window-services.c',
+    ['main.c', 'application.c', 'window.c', 'window-services.c', 'reader-history.c',
      'search-page.c', 'teaching-page.c', 'resource-page.c',
      'notes-page.c', 'plan-page.c', 'devotion-page.c',
      'memory-page.c', 'library-page.c', 'module-sidebar.c',
