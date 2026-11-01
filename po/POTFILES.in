@@ -9,6 +9,8 @@ src/module-sidebar.c
 src/study-panel.c
 src/workspace-page.c
 src/workspace-pane.c
+src/reader-page.c
+src/reader-toolbar.c
 src/devotion-page.c
 src/plan-page.c
 src/resource-page.c

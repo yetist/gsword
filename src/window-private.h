@@ -40,6 +40,11 @@ void gsword_window_clear_list(GtkListBox *list);
 
 void gsword_window_load_module(GswordWindow *self, const gchar *name);
 void gsword_window_refresh_reader(GswordWindow *self);
+void gsword_window_refresh_search_index(GswordWindow *self);
+void gsword_window_sync_workspace_from_reader(GswordWindow *self);
+void gsword_window_focus_reference(GswordWindow *self);
+void gsword_window_open_current_note(GswordWindow *self);
+void gsword_window_open_teaching(GswordWindow *self);
 void gsword_window_open_commentary_module(GswordWindow *self,
                                            const gchar *name);
 void gsword_window_open_lexicon_module(GswordWindow *self,
