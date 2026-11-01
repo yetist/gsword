@@ -12,8 +12,7 @@
 - `tools/`：locale 导入、校验和 v11n 生成工具
 - `examples/`：库示例和 GTK4 前端原型
 - `tests/`：库测试、引用选择器测试和 demo
-- `docs/app-design.md`：`gsword` 应用功能与界面设计
-- `docs/reference-chooser.md`：引用选择器的使用和设计说明
+- `docs/`：库设计、格式、里程碑、应用、引用选择器和窗口重构文档
 
 `gsword` 应用只依赖 `include/gsword/` 的公共接口。
 
@@ -21,27 +20,44 @@
 
 - 通过 HTTP/HTTPS/FTP 下载 SWORD 模块，并提供进度回调和取消能力；
 - 解析本地/远端 `mods.d/*.conf`，在数据文件不存在时也能列出模块元数据；
-- 读取常见 SWORD 模块（RawText、zText、RawCom、zCom、RawLD、zLD、RawGenBook）；
+- 读取常见 SWORD 模块（RawText、zText、RawCom、zCom、RawLD、zLD、RawGenBook、RawFiles、HREFCom）；
 - 提供 `GswManager`、`GswModule`、`GswModuleInfo`、`GswInstallManager`、`GswStatusReporter` 等 GObject API。
 
 ## 当前状态
 
-M0–M5 已实现并通过单元/集成测试：
+`libgsword` 的 M0–M13 和 `gsword` 桌面应用阶段 1–10 已完成，当前仓库可以构建、
+测试并运行完整桌面应用。
 
-- Meson 工程、GObject 公共 API、`pkg-config`
-- 本地模块发现、`mods.d` 配置解析、模块元数据
-- HTTP/HTTPS/FTP 传输、进度/取消、`mods.d.tar.gz` 安全解包、安装/卸载
-- `GswVerseKey` + 全部上游 versification 系统
-- RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4 读取
-- RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
-- LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU -> UTF-8
-- 基础渲染选项、内建英文 locale 与 XDG locale 包、本地化书名与缩写、LRU 块缓存、GI 与异步 API
-- 基础搜索 API（phrase/multiword/regex）、可选持久化倒排索引、大模块性能测试
-- GTK4/libadwaita 桌面应用 `gsword`（`src/`），支持阅读、统一书卷/章/节引用
-  选择器、并行对照模板、研经面板、搜索索引、笔记、标签、经文列表、高亮、Markdown
-  导出、模块安装/更新/删除、阅读计划、每日灵修、背经复习、讲道/教学布局、Shift
-  范围选择、Strong's/交叉引用跳转，以及可创建/编辑/拖拽/持久化并支持同步滚动的
-  多译本对照工作区
+### libgsword
+
+- Meson 工程、GObject 公共 API、`pkg-config`、GIR/typelib、Vala API 和 gi-docgen 文档
+- 本地模块发现、`mods.d` 配置解析、模块元数据、模块配置更新
+- HTTP/HTTPS/FTP 传输、进度/取消、`mods.d.tar.gz` 安全解包、安装/卸载、本地目录安装
+- `GswVerseKey` 和全部上游 versification 系统
+- 读取 RawText/RawText4/RawCom/RawCom4、zText/zText4/zCom/zCom4、
+  RawLD/RawLD4/zLD、RawGenBook、RawFiles、HREFCom
+- LZSS/ZIP/BZIP2/XZ、Sapphire 解密、SCSU 等编码转换
+- 基础渲染、Strong's/脚注/标题/red letter 等渲染选项、EntryAttributes、
+  OSIS/ThML/GBF 输出
+- phrase/multiword/regex/属性搜索、范围/多模块搜索、取消和进度、可选持久化倒排索引
+- RawFiles 和 RawGenBook 写入、树结构编辑、文件锁、失败回滚和崩溃恢复
+- zText/zCom/zLD LRU 块缓存、独立模块实例、并发读取测试
+- 常规测试、ASan 测试、本地 HTTP 安装集成测试、locale 校验和 introspection 测试
+
+### gsword 桌面应用
+
+- GTK4/libadwaita 应用，按页面对象拆分；包含阅读、搜索、笔记、计划、模块库工作区
+- 整章阅读、书卷/章/节选择器、键盘输入和本地化书名/缩写
+- 阅读历史前进/后退和最近阅读列表，跨重启保存
+- 1–4 栏多译本对照、同步滚动、独立滚动、锁定、拖拽和持久化工作区
+- 切换圣经版本时保持当前 passage；新版本缺少该经文时回到同一书卷首章首节
+- 研经面板：注释、词典、字典、Strong's、交叉引用、原文和笔记
+- 笔记、标签、经文列表、高亮、Markdown 导出，以及 SQLite 持久化
+- 阅读计划、每日灵修、背经复习、讲道/教学布局
+- 模块库筛选（类型、语言、状态）、模块详情、安装/更新/删除、进度和取消；
+  对照栏只列出圣经模块
+- 引用选择器拆分出独立的 `gsword-reference-parser.c`，路径栏和选择器 popover
+  由 reader 和对照栏共享
 
 ## 快速开始
 
@@ -74,6 +90,10 @@ meson test -C build
 GSWORD_PREFIX=~/.sword ./build/src/gsword
 # 或指定模块库
 ./build/src/gsword --library ~/.sword
+
+# 引用选择器 demo 和测试
+./build/tests/gsword-reference-chooser-demo en KJV "Gen 1:1"
+meson test -C build reference-chooser
 
 # 开发时使用构建目录中的中文界面翻译
 LANG=zh_CN.UTF-8 GSW_LOCALEDIR=$PWD/build/po \
@@ -132,32 +152,36 @@ print("%s\n", key.get_text());
 key.unref();
 ```
 
-M5–M13 已完成：GIR/typelib 与 Vala API（`-Dintrospection=true`）、GTask
-异步安装 API、Sapphire 解密、基础渲染选项（Strong's/脚注/标题/red letter）、
-`locales.d` 本地化书名与缩写、zText/zCom/zLD LRU 块缓存、独立模块实例、BOTTOM 导航、
-testament 识别、HTML 渲染片段、EntryAttributes、全局渲染选项、经文范围/OSIS、
-TreeKey 定位、本地 DIR 安装源、运行期 CipherKey、选项持久化、可取消/可限定范围
-的多模块搜索、持久化倒排搜索索引、RawFiles/RawGenBook 条目写入、RawGenBook
-创建、树结构编辑、跨进程文件锁、写失败回滚和树事务崩溃恢复，以及可选 GTK4
-前端原型和更多示例。
+## 构建选项
+
+- `-Dtests=true`：构建并注册测试（默认开启）
+- `-Ddocs=true`：启用 gi-docgen API 文档，同时启用 introspection
+- `-Dintrospection=true`：生成 GIR/typelib 和 Vala API
+- `-Dbzip2=auto` / `-Dlzma=auto`：自动检测可选压缩库
+- 检测到 GTK4、libadwaita 和 SQLite3 时构建桌面应用；检测到 GTK4 时构建引用选择器 demo，`-Dtests=true` 时同时注册其测试
 
 ## 文档
 
 - [`docs/design.md`](docs/design.md)：libgsword 总体架构、对象模型、API 草案、流程、里程碑、风险。
-- [`docs/app-design.md`](docs/app-design.md)：gsword GTK4 应用的功能与界面设计。
+- [`docs/milestones.md`](docs/milestones.md)：M0–M13 实现记录和验收条件。
 - [`docs/formats.md`](docs/formats.md)：配置文件、模块目录、Raw/z 存储格式、压缩、安装源等字节级说明。
 - [`docs/upstream-analysis.md`](docs/upstream-analysis.md)：上游 SWORD 1.9 源码分析与缺陷总结。
+- [`docs/app-design.md`](docs/app-design.md)：gsword GTK4 应用的功能与界面设计。
+- [`docs/workspace-design.md`](docs/workspace-design.md)：阅读工作区、活动经文和多资源协同设计。
+- [`docs/reference-chooser.md`](docs/reference-chooser.md)：书卷/章/节引用选择器的使用和设计说明。
+- [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md)：GTK4 窗口页面对象拆分计划。
+- [`docs/window-refactor-acceptance.md`](docs/window-refactor-acceptance.md)：窗口重构各阶段验收记录。
 
-上游源码位于 `sword-1.9.0/`，仅作为参考，不参与构建。旧 C++ wrap 位于 `gsword/`，可参考其 API 命名，但本项目从头实现。
+上游源码位于 `sword-1.9.0/`，仅作为参考，不参与构建。旧 C++ wrap 不包含在当前源码树中；本项目从头实现。
 
-## 计划中的依赖
+## 依赖
 
 - GLib / GObject / GIO（>= 2.66）
 - libcurl（>= 7.68）
 - zlib
 - 可选：libbz2、liblzma、gobject-introspection（GIR）、vala/vapigen（VAPI）、gi-docgen（API 文档）
 - GTK4 应用：GTK4、libadwaita、SQLite3
-- Meson / Ninja
+- Meson / Ninja、pkg-config
 
 ## 许可证
 
