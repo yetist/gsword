@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 12:26+0800\n"
+"POT-Creation-Date: 2026-11-01 12:48+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -62,12 +62,12 @@ msgid "Study workspace"
 msgstr "研经工作区"
 
 #: src/window.c:458
-msgid "Multi-pane workspace"
-msgstr "多窗格工作区"
+msgid "Comparison workspace"
+msgstr "对照阅读"
 
 #: src/window.c:459
-msgid "Parallel workspace"
-msgstr "并行工作区"
+msgid "Parallel comparison"
+msgstr "并行对照"
 
 #: src/window.c:460
 msgid "Teaching workspace"
@@ -98,8 +98,8 @@ msgid "Reading"
 msgstr "阅读"
 
 #: src/window.c:593
-msgid "Panes"
-msgstr "窗格"
+msgid "Compare"
+msgstr "对照"
 
 #: src/window.c:596 src/search-page.c:212
 msgid "Search"
@@ -651,20 +651,20 @@ msgid "Cross-refs"
 msgstr "交叉引用"
 
 #: src/workspace-page.c:375
-msgid "Parallel workspace ready"
-msgstr "并行工作区已就绪"
+msgid "Parallel comparison ready"
+msgstr "并行对照已就绪"
 
 #: src/workspace-page.c:540
-msgid "Pane order changed"
-msgstr "窗格顺序已更改"
+msgid "Comparison order changed"
+msgstr "对照栏顺序已更改"
 
 #: src/workspace-page.c:622
-msgid "Add pane"
-msgstr "添加窗格"
+msgid "Add comparison"
+msgstr "添加对照栏"
 
 #: src/workspace-page.c:623
-msgid "Clear panes"
-msgstr "清空窗格"
+msgid "Clear comparisons"
+msgstr "清空对照栏"
 
 #: src/workspace-page.c:624
 msgid "Columns"
@@ -675,12 +675,12 @@ msgid "Sync scroll"
 msgstr "同步滚动"
 
 #: src/workspace-page.c:626
-msgid "No panes yet. Add a pane to begin."
-msgstr "还没有窗格。添加一个窗格开始。"
+msgid "No comparisons yet. Add a comparison to begin."
+msgstr "还没有对照栏。添加一个对照栏开始。"
 
 #: src/workspace-page.c:647
-msgid "Keep pane scroll positions together"
-msgstr "保持多个窗格的滚动位置同步"
+msgid "Keep comparison scroll positions together"
+msgstr "保持多个对照栏的滚动位置同步"
 
 #: src/workspace-pane.c:192
 msgid "No module selected."
@@ -695,24 +695,24 @@ msgid "Cannot open module."
 msgstr "无法打开模块。"
 
 #: src/workspace-pane.c:456
-msgid "Workspace pane updated"
-msgstr "工作区窗格已更新"
+msgid "Comparison updated"
+msgstr "对照栏已更新"
 
 #: src/workspace-pane.c:483
-msgid "Drag to another pane to rearrange"
-msgstr "拖到另一个窗格以重新排列"
+msgid "Drag to another comparison to rearrange"
+msgstr "拖到另一个对照栏以重新排列"
 
 #: src/workspace-pane.c:558
-msgid "Drag to rearrange pane"
-msgstr "拖动以重新排列窗格"
+msgid "Drag to rearrange comparison"
+msgstr "拖动以重新排列对照栏"
 
 #: src/workspace-pane.c:575
 msgid "Follow the active passage"
 msgstr "跟随当前经文"
 
 #: src/workspace-pane.c:582
-msgid "Close pane"
-msgstr "关闭窗格"
+msgid "Close comparison"
+msgstr "关闭对照栏"
 
 #: src/reader-page.c:133
 msgid ""

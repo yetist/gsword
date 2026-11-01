@@ -1,5 +1,5 @@
 /*
- * workspace-pane.c: a single pane in the gsword multi-pane workspace
+ * workspace-pane.c: a single comparison pane in the gsword comparison workspace
  */
 
 #include "workspace-pane.h"
@@ -453,7 +453,7 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
         g_free(reference);
     }
     if (gsword_window_is_page_visible(pane->window, "panes"))
-        gsword_window_set_status(pane->window, _("Workspace pane updated"));
+        gsword_window_set_status(pane->window, _("Comparison updated"));
     gsword_workspace_page_save(pane->page);
 }
 
@@ -480,7 +480,7 @@ on_drag_update(GtkGestureDrag *gesture, gdouble x, gdouble y,
         return;
     gtk_widget_add_css_class(pane->root, "dragging");
     gsword_window_set_status(pane->window,
-                             _("Drag to another pane to rearrange"));
+                             _("Drag to another comparison to rearrange"));
 }
 
 static void
@@ -555,7 +555,7 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     pane->header = header;
 
     handle = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_widget_set_tooltip_text(handle, _("Drag to rearrange pane"));
+    gtk_widget_set_tooltip_text(handle, _("Drag to rearrange comparison"));
     gtk_widget_set_cursor_from_name(handle, "move");
     gtk_widget_set_size_request(handle, 20, -1);
     gtk_box_append(GTK_BOX(handle),
@@ -579,7 +579,7 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
 
     close = gtk_button_new_from_icon_name("window-close-symbolic");
     gtk_widget_add_css_class(close, "flat");
-    gtk_widget_set_tooltip_text(close, _("Close pane"));
+    gtk_widget_set_tooltip_text(close, _("Close comparison"));
     g_signal_connect(close, "clicked", G_CALLBACK(on_close_clicked), pane);
     gtk_box_append(GTK_BOX(header), close);
 

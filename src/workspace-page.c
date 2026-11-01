@@ -1,5 +1,5 @@
 /*
- * workspace-page.c: multi-pane workspace container for the gsword window
+ * workspace-page.c: comparison workspace container for the gsword window
  */
 
 #include "workspace-page.h"
@@ -372,7 +372,7 @@ gsword_workspace_page_apply_parallel_template(GswordWorkspacePage *page)
     gsword_workspace_page_save(page);
     gsword_window_show_page(page->window, "panes");
     gsword_workspace_page_sync_from_reader(page);
-    gsword_window_set_status(page->window, _("Parallel workspace ready"));
+    gsword_window_set_status(page->window, _("Parallel comparison ready"));
 
     g_free(saved_a);
     g_free(saved_b);
@@ -537,7 +537,7 @@ gsword_workspace_page_reorder_from_drag(GswordWorkspacePage *page,
     }
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
-    gsword_window_set_status(page->window, _("Pane order changed"));
+    gsword_window_set_status(page->window, _("Comparison order changed"));
 }
 
 static void
@@ -619,11 +619,11 @@ gsword_workspace_page_new(GswordWindow *window)
     GswordWorkspacePage *page = g_new0(GswordWorkspacePage, 1);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *add = gtk_button_new_with_label(_("Add pane"));
-    GtkWidget *clear = gtk_button_new_with_label(_("Clear panes"));
+    GtkWidget *add = gtk_button_new_with_label(_("Add comparison"));
+    GtkWidget *clear = gtk_button_new_with_label(_("Clear comparisons"));
     GtkWidget *columns_label = gtk_label_new(_("Columns"));
     GtkWidget *sync_scroll = gtk_check_button_new_with_label(_("Sync scroll"));
-    GtkWidget *hint = gtk_label_new(_("No panes yet. Add a pane to begin."));
+    GtkWidget *hint = gtk_label_new(_("No comparisons yet. Add a comparison to begin."));
     GtkWidget *scrolled = gtk_scrolled_window_new();
 
     page->window = window;
@@ -644,7 +644,7 @@ gsword_workspace_page_new(GswordWindow *window)
                      G_CALLBACK(on_columns_changed), page);
     page->sync_scroll_toggle = GTK_CHECK_BUTTON(sync_scroll);
     gtk_widget_set_tooltip_text(sync_scroll,
-                                _("Keep pane scroll positions together"));
+                                _("Keep comparison scroll positions together"));
     g_signal_connect(sync_scroll, "toggled",
                      G_CALLBACK(on_sync_scroll_toggled), page);
     gtk_box_append(GTK_BOX(toolbar), add);
