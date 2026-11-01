@@ -33,14 +33,10 @@ static guint workspace_pane_next_id = 1;
 gboolean
 gsword_workspace_pane_supports_module(GswModuleInfo *info)
 {
-    GswModuleType type;
-
-    if (info == NULL || gsword_window_module_info_is_map(info) ||
-        !gsw_module_info_is_supported(info))
-        return FALSE;
-    type = gsword_window_module_effective_type(info);
-    return type != GSW_MODULE_TYPE_MAPS &&
-           type != GSW_MODULE_TYPE_UNKNOWN;
+    return info != NULL &&
+           gsw_module_info_is_supported(info) &&
+           gsword_window_module_effective_type(info) ==
+               GSW_MODULE_TYPE_BIBLES;
 }
 
 static void
@@ -240,11 +236,15 @@ set_module(GswordWorkspacePane *pane, const gchar *name, const gchar *key)
             }
         }
     }
-    if (selected == GTK_INVALID_LIST_POSITION &&
-        pane->module_names != NULL) {
-        gtk_string_list_append(pane->module_names, name);
-        selected = g_list_model_get_n_items(
-                       G_LIST_MODEL(pane->module_names)) - 1;
+    if (selected == GTK_INVALID_LIST_POSITION) {
+        if (pane->module_names == NULL ||
+            g_list_model_get_n_items(G_LIST_MODEL(pane->module_names)) == 0) {
+            gsword_window_set_view_text(pane->view,
+                                        _("No Bible text module is installed"));
+            return;
+        }
+        name = gtk_string_list_get_string(pane->module_names, 0);
+        selected = 0;
     }
     pane->updating++;
     if (selected != GTK_INVALID_LIST_POSITION)

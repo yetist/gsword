@@ -47,8 +47,12 @@ default_module(GswordWorkspacePage *page)
     gchar *result = NULL;
     guint i;
 
-    if (module != NULL)
-        return g_strdup(gsw_module_get_name(module));
+    if (module != NULL) {
+        GswModuleInfo *info = gsw_module_get_info(module);
+
+        if (info != NULL && gsword_workspace_pane_supports_module(info))
+            return g_strdup(gsw_module_get_name(module));
+    }
     if (manager == NULL)
         return NULL;
     infos = gsw_manager_get_module_infos(manager);
