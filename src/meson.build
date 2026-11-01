@@ -5,7 +5,7 @@ sqlite3_dep = dependency('sqlite3', required: false)
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
   gsword_app = executable('gsword',
     ['main.c', 'application.c', 'window.c', 'window-services.c',
-     'notes-store.c', 'plan-store.c', 'app-paths.c',
+     'search-page.c', 'notes-store.c', 'plan-store.c', 'app-paths.c',
      '../widgets/gsword-reference-chooser.c'],
     include_directories: include_directories('../widgets'),
     dependencies: [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep],

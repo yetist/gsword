@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 11:00+0800\n"
+"POT-Creation-Date: 2026-11-01 11:07+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,228 +33,228 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:408 src/window.c:4429
+#: src/window.c:404 src/window.c:4449
 msgid "Commentary"
 msgstr "注释"
 
-#: src/window.c:424 src/window.c:4768
+#: src/window.c:420 src/window.c:4788
 msgid "No commentary for this verse."
 msgstr "本节没有注释。"
 
-#: src/window.c:429
+#: src/window.c:425
 msgid "No commentary module is installed."
 msgstr "未安装注释模块。"
 
-#: src/window.c:466
+#: src/window.c:462
 msgid "No Strong's data for this verse."
 msgstr "本节没有 Strong 原文数据。"
 
-#: src/window.c:518
+#: src/window.c:514
 msgid "No cross-references for this verse."
 msgstr "本节没有交叉引用。"
 
-#: src/window.c:534
+#: src/window.c:530
 msgid "No lexicon module is installed."
 msgstr "未安装词典模块。"
 
-#: src/window.c:539
+#: src/window.c:535
 msgid "Cannot look up lexicon entry"
 msgstr "无法查询词典条目"
 
-#: src/window.c:544
+#: src/window.c:540
 msgid "Cannot read lexicon entry"
 msgstr "无法读取词典条目"
 
-#: src/window.c:733
+#: src/window.c:729
 msgid "Cannot save note"
 msgstr "无法保存笔记"
 
-#: src/window.c:745
+#: src/window.c:741
 msgid "Note saved"
 msgstr "笔记已保存"
 
-#: src/window.c:759
+#: src/window.c:755
 msgid "Cannot delete note"
 msgstr "无法删除笔记"
 
-#: src/window.c:766
+#: src/window.c:762
 msgid "Note deleted"
 msgstr "笔记已删除"
 
-#: src/window.c:814
+#: src/window.c:810
 msgid "Export note"
 msgstr "导出笔记"
 
-#: src/window.c:918
+#: src/window.c:914
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/window.c:923
+#: src/window.c:919
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/window.c:936
+#: src/window.c:932
 msgid "Select a verse list first"
 msgstr "请先选择经文列表"
 
-#: src/window.c:942
+#: src/window.c:938
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/window.c:946
+#: src/window.c:942
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
-#: src/window.c:961
+#: src/window.c:957
 msgid "Add list"
 msgstr "添加列表"
 
-#: src/window.c:962 src/window.c:6770
+#: src/window.c:958 src/window.c:6555
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:963
+#: src/window.c:959
 msgid "Tags"
 msgstr "标签"
 
-#: src/window.c:964
+#: src/window.c:960
 msgid "Verse lists"
 msgstr "经文列表"
 
-#: src/window.c:965
+#: src/window.c:961
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/window.c:968
+#: src/window.c:964
 msgid "Save"
 msgstr "保存"
 
-#: src/window.c:969 src/window.c:1581 src/window.c:2291
+#: src/window.c:965 src/window.c:1598 src/window.c:2308
 msgid "Delete"
 msgstr "删除"
 
-#: src/window.c:970
+#: src/window.c:966
 msgid "Export"
 msgstr "导出"
 
-#: src/window.c:971
+#: src/window.c:967
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/window.c:985
+#: src/window.c:981
 msgid "Search notes"
 msgstr "搜索笔记"
 
-#: src/window.c:1017
+#: src/window.c:1013
 msgid "New list"
 msgstr "新列表"
 
-#: src/window.c:1045
+#: src/window.c:1041
 msgid "Verse key"
 msgstr "经文位置"
 
-#: src/window.c:1048
+#: src/window.c:1044
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/window.c:1050
+#: src/window.c:1046
 msgid "Tags:"
 msgstr "标签："
 
-#: src/window.c:1114 src/window.c:5590
+#: src/window.c:1110 src/window.c:5610
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:1269
+#: src/window.c:1286
 msgid "Create a reading plan to get started."
 msgstr "创建阅读计划以开始。"
 
-#: src/window.c:1283
+#: src/window.c:1300
 #, c-format
 msgid "%s  ·  %d/%d days (%.1f%%)  ·  streak %d"
 msgstr "%s  ·  %d/%d 天（%.1f%%）  ·  连续 %d 天"
 
-#: src/window.c:1291
+#: src/window.c:1308
 #, c-format
 msgid "Day %d: %s"
 msgstr "第 %d 天：%s"
 
-#: src/window.c:1300
+#: src/window.c:1317
 msgid "Plan complete"
 msgstr "计划已完成"
 
-#: src/window.c:1321
+#: src/window.c:1338
 #, c-format
 msgid "Day %d   %s"
 msgstr "第 %d 天   %s"
 
-#: src/window.c:1327
+#: src/window.c:1344
 msgid "Done"
 msgstr "完成"
 
-#: src/window.c:1445 src/window.c:1489
+#: src/window.c:1462 src/window.c:1506
 msgid "Cannot update plan"
 msgstr "无法更新计划"
 
-#: src/window.c:1448
+#: src/window.c:1465
 msgid "Reading plan updated"
 msgstr "阅读计划已更新"
 
-#: src/window.c:1492
+#: src/window.c:1509
 msgid "Day marked complete"
 msgstr "今日已标记完成"
 
-#: src/window.c:1515
+#: src/window.c:1532
 msgid "Enter a plan name and start reference"
 msgstr "请输入计划名称和起始经文"
 
-#: src/window.c:1520 src/window.c:1530
+#: src/window.c:1537 src/window.c:1547
 msgid "Cannot create plan"
 msgstr "无法创建计划"
 
-#: src/window.c:1522
+#: src/window.c:1539
 msgid "Invalid start reference or empty plan"
 msgstr "起始经文无效或计划为空"
 
-#: src/window.c:1538
+#: src/window.c:1555
 msgid "Reading plan created"
 msgstr "阅读计划已创建"
 
-#: src/window.c:1555
+#: src/window.c:1572
 msgid "Cannot delete plan"
 msgstr "无法删除计划"
 
-#: src/window.c:1562
+#: src/window.c:1579
 msgid "Reading plan deleted"
 msgstr "阅读计划已删除"
 
-#: src/window.c:1575
+#: src/window.c:1592
 msgid "Delete reading plan?"
 msgstr "删除阅读计划？"
 
-#: src/window.c:1577
+#: src/window.c:1594
 #, c-format
 msgid "Delete “%s” and its reading progress? This cannot be undone."
 msgstr "删除“%s”及其阅读进度？此操作无法撤销。"
 
-#: src/window.c:1580 src/window.c:6602
+#: src/window.c:1597 src/window.c:6386
 msgid "Cancel"
 msgstr "取消"
 
-#: src/window.c:1683
+#: src/window.c:1700
 msgid "No devotional entry is available for today in this module."
 msgstr "此模块今天没有灵修内容。"
 
-#: src/window.c:1688
+#: src/window.c:1705
 #, c-format
 msgid "Daily Devotion · %s · %s"
 msgstr "每日灵修 · %s · %s"
 
-#: src/window.c:1738 src/window.c:2413
+#: src/window.c:1755 src/window.c:2430
 msgid "Daily Devotion"
 msgstr "每日灵修"
 
-#: src/window.c:1741
+#: src/window.c:1758
 msgid ""
 "No daily devotional module is installed.\n"
 "\n"
@@ -265,16 +265,16 @@ msgstr ""
 "\n"
 "请从模块库安装 Daily Light 或 Morning and Evening 等灵修模块。"
 
-#: src/window.c:1864 src/window.c:2456
+#: src/window.c:1881 src/window.c:2473
 msgid "Select a verse card"
 msgstr "选择一张背经卡片"
 
-#: src/window.c:1904
+#: src/window.c:1921
 #, c-format
 msgid "Due %s  ·  box %d"
 msgstr "到期 %s  ·  记忆盒 %d"
 
-#: src/window.c:1933
+#: src/window.c:1950
 #, c-format
 msgid ""
 "%s\n"
@@ -283,213 +283,213 @@ msgstr ""
 "%s\n"
 "到期 %s  ·  记忆盒 %d"
 
-#: src/window.c:1992
+#: src/window.c:2009
 msgid "Cannot add memory verse"
 msgstr "无法添加背经经文"
 
-#: src/window.c:2001
+#: src/window.c:2018
 msgid "Cannot save memory verse"
 msgstr "无法保存背经经文"
 
-#: src/window.c:2022
+#: src/window.c:2039
 msgid "Verse added to memory review"
 msgstr "经文已加入背经复习"
 
-#: src/window.c:2038
+#: src/window.c:2055
 msgid "Cannot schedule review"
 msgstr "无法安排复习"
 
-#: src/window.c:2043
+#: src/window.c:2060
 msgid "Review scheduled: nice work"
 msgstr "已安排复习：做得好"
 
-#: src/window.c:2044
+#: src/window.c:2061
 msgid "Card will be shown again today"
 msgstr "卡片今天会再次出现"
 
-#: src/window.c:2064
+#: src/window.c:2081
 msgid "Correct"
 msgstr "正确"
 
-#: src/window.c:2065
+#: src/window.c:2082
 msgid "Memory verse recited correctly"
 msgstr "背经正确"
 
-#: src/window.c:2067
+#: src/window.c:2084
 msgid "Keep practicing"
 msgstr "继续练习"
 
-#: src/window.c:2085
+#: src/window.c:2102
 msgid "Cannot delete memory verse"
 msgstr "无法删除背经经文"
 
-#: src/window.c:2090
+#: src/window.c:2107
 msgid "Memory verse removed"
 msgstr "背经经文已删除"
 
-#: src/window.c:2159
+#: src/window.c:2176
 msgid "Cannot read teaching passage"
 msgstr "无法读取教学经文"
 
-#: src/window.c:2213
+#: src/window.c:2230
 msgid "Cannot save teaching notes"
 msgstr "无法保存教学笔记"
 
-#: src/window.c:2218
+#: src/window.c:2235
 msgid "Teaching notes saved"
 msgstr "教学笔记已保存"
 
-#: src/window.c:2235
+#: src/window.c:2252
 msgid "Exit fullscreen"
 msgstr "退出全屏"
 
-#: src/window.c:2235 src/window.c:2248 src/window.c:2535
+#: src/window.c:2252 src/window.c:2265 src/window.c:2552
 msgid "Fullscreen"
 msgstr "全屏"
 
-#: src/window.c:2286
+#: src/window.c:2303
 msgid "Open today's reading"
 msgstr "打开今日阅读"
 
-#: src/window.c:2287
+#: src/window.c:2304
 msgid "Mark today complete"
 msgstr "标记今日完成"
 
-#: src/window.c:2288
+#: src/window.c:2305
 msgid "Create plan"
 msgstr "创建计划"
 
-#: src/window.c:2289
+#: src/window.c:2306
 msgid "Delete plan"
 msgstr "删除计划"
 
-#: src/window.c:2290
+#: src/window.c:2307
 msgid "Add current verse"
 msgstr "添加当前经文"
 
-#: src/window.c:2292
+#: src/window.c:2309
 msgid "Check answer"
 msgstr "检查答案"
 
-#: src/window.c:2293
+#: src/window.c:2310
 msgid "Again"
 msgstr "再来一次"
 
-#: src/window.c:2294
+#: src/window.c:2311
 msgid "Good"
 msgstr "记住了"
 
-#: src/window.c:2295
+#: src/window.c:2312
 msgid "Refresh"
 msgstr "刷新"
 
-#: src/window.c:2299 src/window.c:2507
+#: src/window.c:2316 src/window.c:2524
 msgid "Today"
 msgstr "今天"
 
-#: src/window.c:2301
+#: src/window.c:2318
 msgid "Full text"
 msgstr "全文"
 
-#: src/window.c:2301
+#: src/window.c:2318
 msgid "First letters"
 msgstr "首字母"
 
-#: src/window.c:2301
+#: src/window.c:2318
 msgid "Hide words"
 msgstr "遮盖单词"
 
-#: src/window.c:2347
+#: src/window.c:2364
 msgid "Schedule"
 msgstr "进度安排"
 
-#: src/window.c:2362
+#: src/window.c:2379
 msgid "Plan name"
 msgstr "计划名称"
 
-#: src/window.c:2364
+#: src/window.c:2381
 msgid "Start, e.g. Genesis 1"
 msgstr "起始，例如 Genesis 1"
 
-#: src/window.c:2378
+#: src/window.c:2395
 msgid "Days"
 msgstr "天数"
 
-#: src/window.c:2380
+#: src/window.c:2397
 msgid "Chapters/day"
 msgstr "每日章节数"
 
-#: src/window.c:2388
+#: src/window.c:2405
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr "计划从起始经文开始按章节推进。双击进度行可打开对应阅读。"
 
-#: src/window.c:2411
+#: src/window.c:2428
 msgid "Previous day"
 msgstr "前一天"
 
-#: src/window.c:2412
+#: src/window.c:2429
 msgid "Next day"
 msgstr "后一天"
 
-#: src/window.c:2478
+#: src/window.c:2495
 msgid "Card mode"
 msgstr "卡片模式"
 
-#: src/window.c:2481
+#: src/window.c:2498
 msgid "Type the verse"
 msgstr "输入经文"
 
-#: src/window.c:2509
+#: src/window.c:2526
 msgid "Plans"
 msgstr "计划"
 
-#: src/window.c:2511
+#: src/window.c:2528
 msgid "Devotion"
 msgstr "灵修"
 
-#: src/window.c:2513
+#: src/window.c:2530
 msgid "Memorize"
 msgstr "背经"
 
-#: src/window.c:2530
+#: src/window.c:2547
 msgid "Scripture"
 msgstr "经文"
 
-#: src/window.c:2531
+#: src/window.c:2548
 msgid "Teaching notes"
 msgstr "教学笔记"
 
-#: src/window.c:2532
+#: src/window.c:2549
 msgid "Load current passage"
 msgstr "加载当前段落"
 
-#: src/window.c:2533
+#: src/window.c:2550
 msgid "Save notes"
 msgstr "保存笔记"
 
-#: src/window.c:2534 src/window.c:2814
+#: src/window.c:2551 src/window.c:2831
 msgid "Back to reading"
 msgstr "返回阅读"
 
-#: src/window.c:2544
+#: src/window.c:2561
 msgid "Current passage"
 msgstr "当前段落"
 
-#: src/window.c:2656
+#: src/window.c:2673
 msgid "Cannot open resource entry"
 msgstr "无法打开资源条目"
 
-#: src/window.c:2694
+#: src/window.c:2711
 msgid "Cannot read resource entry"
 msgstr "无法读取资源条目"
 
-#: src/window.c:2762 src/window.c:2768 src/window.c:3486
+#: src/window.c:2779 src/window.c:2785 src/window.c:3505
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:2940
+#: src/window.c:2957
 msgid ""
 "No modules found.\n"
 "\n"
@@ -499,532 +499,532 @@ msgstr ""
 "\n"
 "请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
-#: src/window.c:2942
+#: src/window.c:2959
 msgid "No modules found"
 msgstr "未找到模块"
 
-#: src/window.c:2967
+#: src/window.c:2985
 msgid "Cannot read entry"
 msgstr "无法读取条目"
 
-#: src/window.c:3004 src/window.c:3326 src/window.c:3363
+#: src/window.c:3023 src/window.c:3345 src/window.c:3382
 msgid "Cannot set key"
 msgstr "无法设置位置"
 
-#: src/window.c:3444
+#: src/window.c:3463
 msgid "Highlight removed"
 msgstr "高亮已移除"
 
-#: src/window.c:3449
+#: src/window.c:3468
 msgid "Verse highlighted"
 msgstr "经文已高亮"
 
-#: src/window.c:3452
+#: src/window.c:3471
 msgid "Cannot update highlight"
 msgstr "无法更新高亮"
 
-#: src/window.c:3562
+#: src/window.c:3581
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:3580
+#: src/window.c:3599
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:3608 src/window.c:3616
+#: src/window.c:3627 src/window.c:3635
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window.c:3610 src/window.c:3617 src/window.c:3645
+#: src/window.c:3629 src/window.c:3636 src/window.c:3664
 msgid "Maps"
 msgstr "地图"
 
-#: src/window.c:3612
+#: src/window.c:3631
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window.c:3613 src/window.c:3641
+#: src/window.c:3632 src/window.c:3660
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window.c:3614 src/window.c:3642
+#: src/window.c:3633 src/window.c:3661
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
-#: src/window.c:3615
+#: src/window.c:3634
 msgid "Generic Books"
 msgstr "通用书籍"
 
-#: src/window.c:3618
+#: src/window.c:3637
 msgid "Other"
 msgstr "其他"
 
-#: src/window.c:3622
+#: src/window.c:3641
 msgid "Unknown"
 msgstr "未知"
 
-#: src/window.c:3640
+#: src/window.c:3659
 msgid "Bibles"
 msgstr "圣经"
 
-#: src/window.c:3643
+#: src/window.c:3662
 msgid "Daily Devotions"
 msgstr "每日灵修"
 
-#: src/window.c:3644
+#: src/window.c:3663
 msgid "General Books"
 msgstr "通用书籍"
 
-#: src/window.c:3648
+#: src/window.c:3667
 msgid "Other Modules"
 msgstr "其他模块"
 
-#: src/window.c:3884
+#: src/window.c:3903
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/window.c:3949 src/window.c:4084
+#: src/window.c:3968 src/window.c:4103
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:3954 src/window.c:6761
+#: src/window.c:3973 src/window.c:6546
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:3956
+#: src/window.c:3975
 msgid "Reading appearance is applied immediately."
 msgstr "阅读外观会立即应用。"
 
-#: src/window.c:3960
+#: src/window.c:3979
 msgid "Font size"
 msgstr "字体大小"
 
-#: src/window.c:3961
+#: src/window.c:3980
 msgid "Scale the scripture text size"
 msgstr "调整经文文字大小"
 
-#: src/window.c:3972
+#: src/window.c:3991
 msgid "Color scheme"
 msgstr "配色方案"
 
-#: src/window.c:3974
+#: src/window.c:3993
 msgid "Follow the desktop or force light/dark mode"
 msgstr "跟随桌面或强制浅色/深色模式"
 
-#: src/window.c:3976
+#: src/window.c:3995
 msgid "Follow system"
 msgstr "跟随系统"
 
-#: src/window.c:3976
+#: src/window.c:3995
 msgid "Light"
 msgstr "浅色"
 
-#: src/window.c:3976
+#: src/window.c:3995
 msgid "Dark"
 msgstr "深色"
 
-#: src/window.c:4075 src/window.c:6750
+#: src/window.c:4094 src/window.c:6534
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:4079
+#: src/window.c:4098
 msgid "Reading workspace"
 msgstr "阅读工作区"
 
-#: src/window.c:4080
+#: src/window.c:4099
 msgid "Study workspace"
 msgstr "研经工作区"
 
-#: src/window.c:4081
+#: src/window.c:4100
 msgid "Multi-pane workspace"
 msgstr "多窗格工作区"
 
-#: src/window.c:4082
+#: src/window.c:4101
 msgid "Parallel workspace"
 msgstr "并行工作区"
 
-#: src/window.c:4083
+#: src/window.c:4102
 msgid "Teaching workspace"
 msgstr "教学工作区"
 
-#: src/window.c:4085
+#: src/window.c:4104
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:4086 src/window-services.c:64
+#: src/window.c:4105 src/window-services.c:64
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:4100
+#: src/window.c:4119
 msgid "Modules"
 msgstr "模块"
 
-#: src/window.c:4352 src/window.c:5391
+#: src/window.c:4372 src/window.c:5411
 msgid "Follow"
 msgstr "跟随"
 
-#: src/window.c:4363
+#: src/window.c:4383
 msgid "Lookup"
 msgstr "查询"
 
-#: src/window.c:4411 src/window.c:4435
+#: src/window.c:4431 src/window.c:4455
 msgid "Lexicon"
 msgstr "词典"
 
-#: src/window.c:4416
+#: src/window.c:4436
 msgid "Strong's / dictionary key"
 msgstr "Strong 编号 / 词典键"
 
-#: src/window.c:4431
+#: src/window.c:4451
 msgid "Strong's"
 msgstr "Strong 原文"
 
-#: src/window.c:4433
+#: src/window.c:4453
 msgid "Cross-refs"
 msgstr "交叉引用"
 
-#: src/window.c:4453
+#: src/window.c:4473
 msgid "Teach"
 msgstr "教学"
 
-#: src/window.c:4482
+#: src/window.c:4502
 msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
-#: src/window.c:4489
+#: src/window.c:4509
 msgid "Copy entry"
 msgstr "复制条目"
 
-#: src/window.c:4490
+#: src/window.c:4510
 msgid "Open note for this verse"
 msgstr "打开本节笔记"
 
-#: src/window.c:4491
+#: src/window.c:4511
 msgid "Toggle verse highlight"
 msgstr "切换经文高亮"
 
-#: src/window.c:4492
+#: src/window.c:4512
 msgid "Toggle study panel"
 msgstr "切换研经面板"
 
-#: src/window.c:4755
+#: src/window.c:4775
 msgid "No module selected."
 msgstr "未选择模块。"
 
-#: src/window.c:4769
+#: src/window.c:4789
 msgid "No content for this reference."
 msgstr "此引用没有内容。"
 
-#: src/window.c:4847
+#: src/window.c:4867
 msgid "Cannot open module."
 msgstr "无法打开模块。"
 
-#: src/window.c:5134
+#: src/window.c:5154
 msgid "Workspace pane updated"
 msgstr "工作区窗格已更新"
 
-#: src/window.c:5197
+#: src/window.c:5217
 msgid "Drag to another pane to rearrange"
 msgstr "拖到另一个窗格以重新排列"
 
-#: src/window.c:5258
+#: src/window.c:5278
 msgid "Pane order changed"
 msgstr "窗格顺序已更改"
 
-#: src/window.c:5376
+#: src/window.c:5396
 msgid "Drag to rearrange pane"
 msgstr "拖动以重新排列窗格"
 
-#: src/window.c:5394
+#: src/window.c:5414
 msgid "Follow the active passage"
 msgstr "跟随当前经文"
 
-#: src/window.c:5402
+#: src/window.c:5422
 msgid "Close pane"
 msgstr "关闭窗格"
 
-#: src/window.c:5617
+#: src/window.c:5637
 msgid "Parallel workspace ready"
 msgstr "并行工作区已就绪"
 
-#: src/window.c:5766
+#: src/window.c:5786
 msgid "Add pane"
 msgstr "添加窗格"
 
-#: src/window.c:5767
+#: src/window.c:5787
 msgid "Clear panes"
 msgstr "清空窗格"
 
-#: src/window.c:5768
+#: src/window.c:5788
 msgid "Columns"
 msgstr "列数"
 
-#: src/window.c:5769
+#: src/window.c:5789
 msgid "Sync scroll"
 msgstr "同步滚动"
 
-#: src/window.c:5770
+#: src/window.c:5790
 msgid "No panes yet. Add a pane to begin."
 msgstr "还没有窗格。添加一个窗格开始。"
 
-#: src/window.c:5788
+#: src/window.c:5808
 msgid "Keep pane scroll positions together"
 msgstr "保持多个窗格的滚动位置同步"
 
-#: src/window.c:5836
-msgid "Open a module before searching"
-msgstr "搜索前请先打开模块"
-
-#: src/window.c:5858
-msgid "Search failed"
-msgstr "搜索失败"
-
-#: src/window.c:5886
-#, c-format
-msgid "Search: %u result(s)"
-msgstr "搜索：%u 个结果"
-
-#: src/window.c:5935
-#, c-format
-msgid "Indexing %s: %u/%u"
-msgstr "正在建立 %s 索引：%u/%u"
-
-#: src/window.c:5950 src/window.c:6028
-msgid "Index: no module"
-msgstr "索引：无模块"
-
-#: src/window.c:5954
-msgid "Index: available"
-msgstr "索引：可用"
-
-#: src/window.c:5954
-msgid "Index: not built"
-msgstr "索引：未建立"
-
-#: src/window.c:5970
-msgid "Cannot build index"
-msgstr "无法建立索引"
-
-#: src/window.c:5973
-msgid "Search index built"
-msgstr "搜索索引已建立"
-
-#: src/window.c:5988
-msgid "Cannot delete index"
-msgstr "无法删除索引"
-
-#: src/window.c:5991
-msgid "Search index deleted"
-msgstr "搜索索引已删除"
-
-#: src/window.c:6003 src/window.c:6767
-msgid "Search"
-msgstr "搜索"
-
-#: src/window.c:6014
-msgid "Build search index"
-msgstr "建立搜索索引"
-
-#: src/window.c:6015
-msgid "Delete search index"
-msgstr "删除搜索索引"
-
-#: src/window.c:6019
-msgid "Search text"
-msgstr "搜索文本"
-
-#: src/window.c:6023
-msgid "Phrase"
-msgstr "短语"
-
-#: src/window.c:6023
-msgid "Multiword"
-msgstr "多词"
-
-#: src/window.c:6023
-msgid "Regex"
-msgstr "正则"
-
-#: src/window.c:6027
-msgid "Case sensitive"
-msgstr "区分大小写"
-
-#: src/window.c:6080
+#: src/window.c:5864
 msgid "Not installed"
 msgstr "未安装"
 
-#: src/window.c:6082
+#: src/window.c:5866
 msgid "Update available"
 msgstr "有更新"
 
-#: src/window.c:6084
+#: src/window.c:5868
 msgid "Installed - local version is newer"
 msgstr "已安装 - 本地版本较新"
 
-#: src/window.c:6086
+#: src/window.c:5870
 msgid "Installed - up to date"
 msgstr "已安装 - 已是最新"
 
-#: src/window.c:6087
+#: src/window.c:5871
 msgid "Installed"
 msgstr "已安装"
 
-#: src/window.c:6120
+#: src/window.c:5904
 msgid "Install manager is not available"
 msgstr "安装管理器不可用"
 
-#: src/window.c:6134
+#: src/window.c:5918
 msgid "Source"
 msgstr "安装源"
 
-#: src/window.c:6189 src/window.c:6659
+#: src/window.c:5973 src/window.c:6443
 msgid "Select a module"
 msgstr "选择模块"
 
-#: src/window.c:6195
+#: src/window.c:5979
 msgid "No source selected. Refresh the source list first."
 msgstr "未选择安装源。请先刷新安装源列表。"
 
-#: src/window.c:6201
+#: src/window.c:5985
 msgid "Cannot read remote modules"
 msgstr "无法读取远程模块"
 
-#: src/window.c:6278
+#: src/window.c:6062
 msgid "Refreshing install sources..."
 msgstr "正在刷新安装源..."
 
-#: src/window.c:6293
+#: src/window.c:6077
 msgid "Cannot refresh install sources"
 msgstr "无法刷新安装源"
 
-#: src/window.c:6295
+#: src/window.c:6079
 msgid "Install sources refreshed"
 msgstr "安装源已刷新"
 
-#: src/window.c:6318
+#: src/window.c:6102
 msgid "Refreshing remote module list..."
 msgstr "正在刷新远程模块列表..."
 
-#: src/window.c:6357
+#: src/window.c:6141
 msgid "Cannot refresh remote modules"
 msgstr "无法刷新远程模块"
 
-#: src/window.c:6359
+#: src/window.c:6143
 msgid "Remote module list refreshed"
 msgstr "远程模块列表已刷新"
 
-#: src/window.c:6385
+#: src/window.c:6169
 msgid "Installing module..."
 msgstr "正在安装模块..."
 
-#: src/window.c:6403
+#: src/window.c:6187
 msgid "Module install failed"
 msgstr "模块安装失败"
 
-#: src/window.c:6421
+#: src/window.c:6205
 #, c-format
 msgid "Installed module %s"
 msgstr "已安装模块 %s"
 
-#: src/window.c:6450
+#: src/window.c:6234
 msgid "Removing module..."
 msgstr "正在删除模块..."
 
-#: src/window.c:6465
+#: src/window.c:6249
 msgid "Module removal failed"
 msgstr "模块删除失败"
 
-#: src/window.c:6467
+#: src/window.c:6251
 msgid "Module removed"
 msgstr "模块已删除"
 
-#: src/window.c:6489
+#: src/window.c:6273
 msgid "Cancelling..."
 msgstr "正在取消..."
 
-#: src/window.c:6503
+#: src/window.c:6287
 msgid "Installing..."
 msgstr "正在安装..."
 
-#: src/window.c:6521 src/window.c:6525
+#: src/window.c:6305 src/window.c:6309
 msgid "Downloading"
 msgstr "下载中"
 
-#: src/window.c:6521 src/window.c:6525
+#: src/window.c:6305 src/window.c:6309
 msgid "bytes"
 msgstr "字节"
 
-#: src/window.c:6549
+#: src/window.c:6333
 msgid "Enter a local SWORD directory and module name"
 msgstr "请输入本地 SWORD 目录和模块名称"
 
-#: src/window.c:6554
+#: src/window.c:6338
 msgid "Local install failed"
 msgstr "本地安装失败"
 
-#: src/window.c:6566
+#: src/window.c:6350
 msgid "Module installed from local directory"
 msgstr "已从本地目录安装模块"
 
-#: src/window.c:6600
+#: src/window.c:6384
 msgid "Install / Update"
 msgstr "安装 / 更新"
 
-#: src/window.c:6601
+#: src/window.c:6385
 msgid "Remove"
 msgstr "移除"
 
-#: src/window.c:6605
+#: src/window.c:6389
 msgid "Install from local directory"
 msgstr "从本地目录安装"
 
-#: src/window.c:6614
+#: src/window.c:6398
 msgid "Filter modules"
 msgstr "筛选模块"
 
-#: src/window.c:6617
+#: src/window.c:6401
 msgid "Refresh the install source list"
 msgstr "刷新安装源列表"
 
-#: src/window.c:6619
+#: src/window.c:6403
 msgid "Refresh modules from the selected source"
 msgstr "从所选安装源刷新模块"
 
-#: src/window.c:6682
+#: src/window.c:6466
 msgid "Installed:"
 msgstr "已安装："
 
-#: src/window.c:6691
+#: src/window.c:6475
 msgid "Local SWORD library directory"
 msgstr "本地 SWORD 模块库目录"
 
-#: src/window.c:6693
+#: src/window.c:6477
 msgid "Module name"
 msgstr "模块名称"
 
-#: src/window.c:6695
+#: src/window.c:6479
 msgid "Install local module"
 msgstr "安装本地模块"
 
-#: src/window.c:6743
+#: src/window.c:6527
 msgid "SWORD study"
 msgstr "SWORD 研经"
 
-#: src/window.c:6756 src/window.c:6782
+#: src/window.c:6540 src/window.c:6567
 msgid "Library"
 msgstr "模块库"
 
-#: src/window.c:6764
+#: src/window.c:6549
 msgid "Panes"
 msgstr "窗格"
 
-#: src/window.c:6773
+#: src/window.c:6552 src/search-page.c:212
+msgid "Search"
+msgstr "搜索"
+
+#: src/window.c:6558
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:6801
+#: src/window.c:6586
 msgid "Workspace"
 msgstr "工作区"
+
+#: src/search-page.c:41
+msgid "Open a module before searching"
+msgstr "搜索前请先打开模块"
+
+#: src/search-page.c:60
+msgid "Search failed"
+msgstr "搜索失败"
+
+#: src/search-page.c:88
+#, c-format
+msgid "Search: %u result(s)"
+msgstr "搜索：%u 个结果"
+
+#: src/search-page.c:132
+#, c-format
+msgid "Indexing %s: %u/%u"
+msgstr "正在建立 %s 索引：%u/%u"
+
+#: src/search-page.c:149 src/search-page.c:234
+msgid "Index: no module"
+msgstr "索引：无模块"
+
+#: src/search-page.c:153
+msgid "Index: available"
+msgstr "索引：可用"
+
+#: src/search-page.c:153
+msgid "Index: not built"
+msgstr "索引：未建立"
+
+#: src/search-page.c:168
+msgid "Cannot build index"
+msgstr "无法建立索引"
+
+#: src/search-page.c:171
+msgid "Search index built"
+msgstr "搜索索引已建立"
+
+#: src/search-page.c:186
+msgid "Cannot delete index"
+msgstr "无法删除索引"
+
+#: src/search-page.c:189
+msgid "Search index deleted"
+msgstr "搜索索引已删除"
+
+#: src/search-page.c:221
+msgid "Build search index"
+msgstr "建立搜索索引"
+
+#: src/search-page.c:222
+msgid "Delete search index"
+msgstr "删除搜索索引"
+
+#: src/search-page.c:225
+msgid "Search text"
+msgstr "搜索文本"
+
+#: src/search-page.c:229
+msgid "Phrase"
+msgstr "短语"
+
+#: src/search-page.c:229
+msgid "Multiword"
+msgstr "多词"
+
+#: src/search-page.c:229
+msgid "Regex"
+msgstr "正则"
+
+#: src/search-page.c:233
+msgid "Case sensitive"
+msgstr "区分大小写"
 
 #: widgets/gsword-reference-chooser.c:1059
 #: widgets/gsword-reference-chooser.c:1068

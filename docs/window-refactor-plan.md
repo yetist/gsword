@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 1 已完成，待开始阶段 2
+- 状态：阶段 2 已完成，待开始阶段 3
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -217,11 +217,26 @@ UI 烟雾测试：通过
 
 ### 阶段 2：拆分搜索页
 
-- [ ] 新增 `search-page.c` / `search-page.h`。
-- [ ] 迁移搜索输入、类型、大小写选项。
-- [ ] 迁移搜索结果列表和结果跳转。
-- [ ] 迁移索引构建/删除和索引状态。
-- [ ] 搜索页构建改为页面对象工厂。
+- [x] 新增 `search-page.c` / `search-page.h`。
+- [x] 迁移搜索输入、类型、大小写选项。
+- [x] 迁移搜索结果列表和结果跳转。
+- [x] 迁移索引构建/删除和索引状态。
+- [x] 搜索页构建改为页面对象工厂。
+
+产出：
+
+```text
+src/search-page.c
+src/search-page.h
+```
+
+结果：
+
+```text
+src/window.c：7021 -> 6806 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -507,7 +522,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 |---|---|---|---|
 | 0 基线 | 完成 | `5760c3b` | `docs/window-refactor-acceptance.md` |
 | 1 共享服务 | 完成 | 本阶段提交 | `window-services.c` + `window-private.h` |
-| 2 搜索页 | 待开始 | | |
+| 2 搜索页 | 完成 | 本阶段提交 | 新增 `search-page.c` / `search-page.h` |
 | 3 资源页/教学页 | 待开始 | | |
 | 4 笔记页 | 待开始 | | |
 | 5 计划/灵修/背经 | 待开始 | | |

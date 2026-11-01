@@ -32,6 +32,9 @@ GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
 gboolean gsword_window_set_key_text(GswordWindow *self, const gchar *text);
 gboolean gsword_window_open_reference(GswordWindow *self,
                                       const gchar *reference);
+gboolean gsword_window_open_module_reference(GswordWindow *self,
+                                             const gchar *module_name,
+                                             const gchar *reference);
 
 gchar *gsword_window_current_reference(GswordWindow *self);
 gchar *gsword_window_current_start_reference(GswordWindow *self);
