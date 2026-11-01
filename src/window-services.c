@@ -1,0 +1,202 @@
+/*
+ * window-services.c: shared services for the gsword window and its pages
+ */
+
+#include "window-private.h"
+
+#include <glib/gi18n.h>
+
+#include <string.h>
+
+typedef struct {
+    GtkLabel *status_label;
+    GtkStack *content_stack;
+} GswordWindowServices;
+
+static GswordWindowServices *
+get_services(GswordWindow *self)
+{
+    return g_object_get_data(G_OBJECT(self), "gsword-window-services");
+}
+
+void
+gsword_window_services_init(GswordWindow *self, GtkLabel *status_label,
+                            GtkStack *content_stack)
+{
+    GswordWindowServices *services;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    services = get_services(self);
+    if (services == NULL) {
+        services = g_new0(GswordWindowServices, 1);
+        g_object_set_data_full(G_OBJECT(self), "gsword-window-services",
+                               services, g_free);
+    }
+    services->status_label = status_label;
+    services->content_stack = content_stack;
+}
+
+void
+gsword_window_set_status(GswordWindow *self, const gchar *message)
+{
+    GswordWindowServices *services = get_services(self);
+
+    if (services == NULL || services->status_label == NULL)
+        return;
+    gtk_label_set_text(services->status_label, message != NULL ? message : "");
+}
+
+void
+gsword_window_show_error(GswordWindow *self, const gchar *prefix,
+                         GError *error)
+{
+    const gchar *detail = error != NULL ? error->message : _("unknown error");
+    gchar *message = g_strdup_printf("%s: %s", prefix, detail);
+
+    gsword_window_set_status(self, message);
+    g_free(message);
+
+    if (gtk_widget_get_mapped(GTK_WIDGET(self))) {
+        AdwDialog *dialog = adw_alert_dialog_new(prefix, NULL);
+
+        adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog), "%s", detail);
+        adw_alert_dialog_add_response(ADW_ALERT_DIALOG(dialog),
+                                      "close", _("Close"));
+        adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog),
+                                              "close");
+        adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog),
+                                            "close");
+        /* AdwDialog is floating; adw_dialog_present() takes ownership. */
+        adw_dialog_present(dialog, GTK_WIDGET(self));
+    }
+    g_clear_error(&error);
+}
+
+void
+gsword_window_show_page(GswordWindow *self, const gchar *page)
+{
+    GswordWindowServices *services = get_services(self);
+
+    if (services == NULL || services->content_stack == NULL || page == NULL)
+        return;
+    gtk_stack_set_visible_child_name(services->content_stack, page);
+}
+
+gchar *
+gsword_window_chapter_text_for_module(GswModule *module)
+{
+    GswVerseKey *key;
+    gchar *original;
+    gchar *book_name;
+    gint chapter;
+    gint maximum;
+    gint verse;
+    GString *result;
+
+    if (module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(module)) != GSW_KEY_KIND_VERSE)
+        return NULL;
+
+    key = (GswVerseKey *)gsw_module_get_key(module);
+    if (gsw_verse_key_get_book(key) < 1 ||
+        gsw_verse_key_get_chapter(key) < 1)
+        return NULL;
+
+    chapter = gsw_verse_key_get_chapter(key);
+    maximum = gsw_verse_key_get_verse_max(key);
+    if (maximum < 1)
+        return NULL;
+
+    original = g_strdup(gsw_module_get_key_text(module));
+    book_name = g_strdup(gsw_verse_key_get_book_name(key));
+    result = g_string_new(NULL);
+    g_string_append_printf(result, "%s %d\n\n", book_name, chapter);
+
+    for (verse = 1; verse <= maximum; verse++) {
+        GError *error = NULL;
+        gchar *text;
+
+        gsw_verse_key_set_verse(key, verse);
+        if (!gsw_module_set_key_text(module,
+                                     gsw_module_get_key_text(module),
+                                     &error)) {
+            g_clear_error(&error);
+            break;
+        }
+        text = gsw_module_get_text(module, &error);
+        if (text != NULL && *text != '\0') {
+            g_string_append_printf(result, "%d  %s\n\n", verse, text);
+        }
+        g_free(text);
+        g_clear_error(&error);
+    }
+
+    if (original != NULL) {
+        gsw_module_set_key_text(module, original, NULL);
+        g_free(original);
+    }
+    g_free(book_name);
+    return g_string_free(result, FALSE);
+}
+
+void
+gsword_window_set_view_text(GtkTextView *view, const gchar *text)
+{
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(view);
+
+    gtk_text_buffer_set_text(buffer, text != NULL ? text : "", -1);
+}
+
+gchar *
+gsword_window_normalize_reference(const gchar *text)
+{
+    const gchar *colon;
+    const gchar *dash;
+
+    if (text == NULL)
+        return NULL;
+    colon = strrchr(text, ':');
+    if (colon == NULL)
+        return g_strdup(text);
+    dash = strchr(colon, '-');
+    if (dash == NULL)
+        return g_strdup(text);
+    return g_strndup(text, (gsize)(dash - text));
+}
+
+gint
+gsword_window_verse_number_from_line(const gchar *line)
+{
+    const gchar *p = line;
+
+    if (p == NULL)
+        return 0;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (!g_ascii_isdigit(*p))
+        return 0;
+    return (gint)g_ascii_strtoll(p, NULL, 10);
+}
+
+gchar *
+gsword_window_locale_name(void)
+{
+    const gchar * const *names = g_get_language_names();
+    gchar *locale;
+    gchar *suffix;
+
+    if (names == NULL || names[0] == NULL || *names[0] == '\0')
+        return g_strdup("en");
+    locale = g_strdup(names[0]);
+    suffix = strchr(locale, '.');
+    if (suffix != NULL)
+        *suffix = '\0';
+    suffix = strchr(locale, '@');
+    if (suffix != NULL)
+        *suffix = '\0';
+    if (g_strcmp0(locale, "C") == 0 || g_strcmp0(locale, "POSIX") == 0) {
+        g_free(locale);
+        return g_strdup("en");
+    }
+    return locale;
+}

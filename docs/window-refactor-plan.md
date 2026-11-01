@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 0 已完成，待开始阶段 1
+- 状态：阶段 1 已完成，待开始阶段 2
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -186,12 +186,30 @@ src/window.c：7140 行
 
 ### 阶段 1：建立共享服务层
 
-- [ ] 新增 `window-services.c` / `window-services.h`。
-- [ ] 新增 `window-private.h`，仅放共享服务声明。
-- [ ] 迁移状态栏、错误显示、页面切换、当前模块/引用辅助函数。
-- [ ] 保留原有行为不变。
+- [x] 新增 `window-services.c`。
+- [x] 新增 `window-private.h`，仅放共享服务声明。
+- [x] 迁移状态栏、错误显示、页面切换、通用视图/格式化辅助函数。
+- [x] 暴露当前模块、设置、笔记库、计划库和当前引用访问接口。
+- [x] 保留原有行为不变。
 
-目标：先建立页面拆分的基础接口，不暴露整个 Private 结构。
+说明：当前引用相关函数仍暂时实现在 `window.c`，但已经通过
+`window-private.h` 暴露；具体实现随阅读器页面在阶段 9 迁移。
+
+产出：
+
+```text
+src/window-services.c
+src/window-private.h
+```
+
+结果：
+
+```text
+src/window.c：7140 -> 7021 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+UI 烟雾测试：通过
+```
 
 风险：低。
 
@@ -488,7 +506,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 阶段 | 状态 | 提交 | 备注 |
 |---|---|---|---|
 | 0 基线 | 完成 | `5760c3b` | `docs/window-refactor-acceptance.md` |
-| 1 共享服务 | 待开始 | | |
+| 1 共享服务 | 完成 | 本阶段提交 | `window-services.c` + `window-private.h` |
 | 2 搜索页 | 待开始 | | |
 | 3 资源页/教学页 | 待开始 | | |
 | 4 笔记页 | 待开始 | | |
