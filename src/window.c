@@ -262,6 +262,19 @@ gsword_window_open_teaching(GswordWindow *self)
         gsword_teaching_page_load(priv->teaching_page);
 }
 
+static gchar *
+reference_book_first_verse(const gchar *reference)
+{
+    const gchar *dot;
+
+    if (reference == NULL || *reference == '\0')
+        return NULL;
+    dot = strchr(reference, '.');
+    if (dot == NULL)
+        return NULL;
+    return g_strdup_printf("%.*s.1.1", (gint)(dot - reference), reference);
+}
+
 void
 gsword_window_load_module(GswordWindow *self, const gchar *name)
 {
@@ -269,10 +282,19 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
     GswModule *module;
     gchar *saved_module = NULL;
     gchar *saved_key = NULL;
+    gchar *previous_reference = NULL;
     gboolean restored = FALSE;
+
+    if (priv->module != NULL &&
+        g_strcmp0(gsw_module_get_name(priv->module), name) != 0 &&
+        gsw_key_get_kind(gsw_module_get_key(priv->module)) ==
+            GSW_KEY_KIND_VERSE)
+        previous_reference = gsw_verse_key_get_osis_ref(
+            (GswVerseKey *)gsw_module_get_key(priv->module));
 
     module = gsw_manager_create_module(priv->manager, name);
     if (module == NULL) {
+        g_free(previous_reference);
         gsword_window_set_status(self, _("Cannot open module"));
         return;
     }
@@ -282,17 +304,37 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
     if (priv->reader_page != NULL)
         gsword_reader_page_sync_context(priv->reader_page);
 
+    /*
+     * Switching Bible versions should keep the current passage when the new
+     * versification contains it.  If it does not, stay in the same book at
+     * its first chapter and verse.  The initial/saved key is only used when
+     * there is no previous reference (for example, application startup).
+     */
+    if (previous_reference != NULL) {
+        restored = gsw_module_set_key_text(priv->module, previous_reference,
+                                           NULL);
+        if (!restored) {
+            gchar *fallback = reference_book_first_verse(previous_reference);
+
+            restored = fallback != NULL &&
+                       gsw_module_set_key_text(priv->module, fallback, NULL);
+            g_free(fallback);
+        }
+    }
+
     if (priv->settings != NULL) {
         saved_module = g_settings_get_string(priv->settings, "last-module");
         saved_key = g_settings_get_string(priv->settings, "last-key");
     }
-    if (saved_module != NULL && *saved_module != '\0' &&
+    if (!restored && previous_reference == NULL &&
+        saved_module != NULL && *saved_module != '\0' &&
         g_strcmp0(saved_module, name) == 0 &&
         saved_key != NULL && *saved_key != '\0')
         restored = gsw_module_set_key_text(priv->module, saved_key, NULL);
     if (!restored && priv->reader_page != NULL)
         gsword_reader_page_set_initial_key(priv->reader_page);
 
+    g_free(previous_reference);
     g_free(saved_module);
     g_free(saved_key);
     if (priv->module_sidebar != NULL)
