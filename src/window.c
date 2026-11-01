@@ -433,6 +433,32 @@ on_focus_key_action(GSimpleAction *action, GVariant *parameter,
 }
 
 static void
+on_history_back_action(GSimpleAction *action, GVariant *parameter,
+                       gpointer user_data)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(
+        GSWORD_WINDOW(user_data));
+
+    (void)action;
+    (void)parameter;
+    if (priv->reader_page != NULL)
+        gsword_reader_page_history_back(priv->reader_page);
+}
+
+static void
+on_history_forward_action(GSimpleAction *action, GVariant *parameter,
+                          gpointer user_data)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(
+        GSWORD_WINDOW(user_data));
+
+    (void)action;
+    (void)parameter;
+    if (priv->reader_page != NULL)
+        gsword_reader_page_history_forward(priv->reader_page);
+}
+
+static void
 gsword_window_apply_workspace(GswordWindow *self, const gchar *workspace)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
@@ -593,6 +619,8 @@ gsword_window_build(GswordWindow *self)
     GtkWidget *header_title;
     GSimpleAction *preferences;
     GSimpleAction *focus_key;
+    GSimpleAction *history_back;
+    GSimpleAction *history_forward;
     GtkWidget *status;
 
     gsword_preferences_init(self);
@@ -703,6 +731,16 @@ gsword_window_build(GswordWindow *self)
     g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(focus_key));
     g_object_unref(focus_key);
 
+    history_back = g_simple_action_new("history-back", NULL);
+    g_signal_connect(history_back, "activate",
+                     G_CALLBACK(on_history_back_action), self);
+    g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(history_back));
+    g_object_unref(history_back);
+    history_forward = g_simple_action_new("history-forward", NULL);
+    g_signal_connect(history_forward, "activate",
+                     G_CALLBACK(on_history_forward_action), self);
+    g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(history_forward));
+    g_object_unref(history_forward);
 
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.preferences",
@@ -710,6 +748,12 @@ gsword_window_build(GswordWindow *self)
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.focus-key",
         (const gchar * const[]) { "<Control>l", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.history-back",
+        (const gchar * const[]) { "<Alt>Left", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.history-forward",
+        (const gchar * const[]) { "<Alt>Right", NULL });
 }
 
 static void
