@@ -5,6 +5,7 @@ src/search-page.c
 src/notes-page.c
 src/memory-page.c
 src/library-page.c
+src/module-sidebar.c
 src/devotion-page.c
 src/plan-page.c
 src/resource-page.c

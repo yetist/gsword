@@ -434,19 +434,21 @@ src/window.c：5734 -> 4508 行
 - 计划页通过共享服务打开阅读引用；
 - `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。
 
-### 阶段 6（进行中）：模块库页面
+### 阶段 6：模块库和模块侧边栏
 
 ```text
-提交：部分提交
+提交：本阶段提交
 普通构建：通过
 普通测试：25/25 通过
 ASan 构建：通过
 ASan 测试：24/24 通过
-UI 验收：通过（模块库页面、安装源、远程列表、已安装模块和本地安装表单）
-新增文件：src/library-page.c、src/library-page.h
-src/window.c：4508 -> 3785 行
+UI 验收：通过（模块库页面、安装源、远程列表、已安装模块、本地安装表单、
+          模块分组列表启动加载）
+新增文件：src/library-page.c、src/library-page.h、
+          src/module-sidebar.c、src/module-sidebar.h
+src/window.c：4508 -> 3490 行
 已知警告是否有新增：无
-遗留问题：module-sidebar.c / module-sidebar.h 尚未拆分
+遗留问题：无
 ```
 
 已完成：
@@ -454,4 +456,10 @@ src/window.c：4508 -> 3785 行
 - 安装源、远程模块列表、模块详情、安装/更新/删除；
 - 安装进度、取消和本地目录安装迁入库页面；
 - 安装管理器、状态报告器和安装 cancellable 迁入库页面；
-- 模块侧边栏尚未迁移，仍在 window.c。
+- 模块分组、模块行、列表填充和模块选择迁入侧边栏页面对象；
+- 模块选择行为保持不变：圣经进入阅读器，注释/词典打开研究面板，
+  灵修进入计划页灵修页，通用书/地图进入资源页，其他模块直接加载；
+- 侧边栏通过 `gsword_window_load_module()`、
+  `gsword_window_open_commentary_module()` 等共享服务协调窗口；
+- 安装完成通过 `gsword_window_populate_modules()` 统一刷新侧边栏；
+- `GswordWindowPrivate` 不再保存模块列表和选择状态。

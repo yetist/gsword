@@ -82,6 +82,79 @@ gsword_window_show_page(GswordWindow *self, const gchar *page)
     gtk_stack_set_visible_child_name(services->content_stack, page);
 }
 
+gboolean
+gsword_window_module_info_is_devotional(GswModuleInfo *info)
+{
+    gchar **features;
+    const gchar *category;
+    gboolean result = FALSE;
+    guint i;
+
+    if (info == NULL)
+        return FALSE;
+    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_DAILY_DEVOS)
+        return TRUE;
+    features = gsw_module_info_get_values(info, "Feature");
+    for (i = 0; features != NULL && features[i] != NULL; i++) {
+        if (g_ascii_strcasecmp(features[i], "DailyDevotion") == 0) {
+            result = TRUE;
+            break;
+        }
+    }
+    g_strfreev(features);
+    if (result)
+        return TRUE;
+    category = gsw_module_info_get_value(info, "Category");
+    return category != NULL &&
+           g_ascii_strncasecmp(category, "Daily Devotional", 16) == 0;
+}
+
+gboolean
+gsword_window_module_info_is_map(GswModuleInfo *info)
+{
+    const gchar *category;
+
+    if (info == NULL)
+        return FALSE;
+    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_MAPS)
+        return TRUE;
+    category = gsw_module_info_get_value(info, "Category");
+    return category != NULL &&
+           g_ascii_strncasecmp(category, "Maps", 4) == 0;
+}
+
+GswModuleType
+gsword_window_module_effective_type(GswModuleInfo *info)
+{
+    if (gsword_window_module_info_is_devotional(info))
+        return GSW_MODULE_TYPE_DAILY_DEVOS;
+    if (gsword_window_module_info_is_map(info))
+        return GSW_MODULE_TYPE_MAPS;
+    return gsw_module_info_get_module_type(info);
+}
+
+const gchar *
+gsword_window_module_type_display(GswModuleInfo *info)
+{
+    if (gsword_window_module_info_is_devotional(info))
+        return _("Daily Devotional");
+    if (gsword_window_module_info_is_map(info))
+        return _("Maps");
+    switch (gsw_module_info_get_module_type(info)) {
+    case GSW_MODULE_TYPE_BIBLES:       return _("Biblical Texts");
+    case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
+    case GSW_MODULE_TYPE_LEXDICTS:     return _("Lexicons / Dictionaries");
+    case GSW_MODULE_TYPE_GENBOOKS:     return _("Generic Books");
+    case GSW_MODULE_TYPE_DAILY_DEVOS:  return _("Daily Devotional");
+    case GSW_MODULE_TYPE_MAPS:         return _("Maps");
+    case GSW_MODULE_TYPE_OTHER:        return _("Other");
+    case GSW_MODULE_TYPE_UNKNOWN:
+    default:
+        return gsw_module_info_get_type_string(info) != NULL
+             ? gsw_module_info_get_type_string(info) : _("Unknown");
+    }
+}
+
 gchar *
 gsword_window_chapter_text_for_module(GswModule *module)
 {
