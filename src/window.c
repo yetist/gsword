@@ -9,6 +9,7 @@
 #include "notes-page.h"
 #include "plan-page.h"
 #include "library-page.h"
+#include "module-sidebar.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -40,7 +41,7 @@ typedef struct {
     GswManager *manager;
     GSettings *settings;
     GswModule *module;
-    GtkListBox *module_list;
+    GswordModuleSidebar *module_sidebar;
     GtkStack *content_stack;
     GtkStack *workspace_stack;
     GtkGrid *workspace_grid;
@@ -50,7 +51,6 @@ typedef struct {
     gboolean workspace_restoring;
     gboolean workspace_syncing;
     gboolean page_restored;
-    gboolean startup_selecting;
     GtkTextView *reader;
     GswordReferenceChooser *reference_chooser;
     GtkLabel *status_label;
@@ -88,8 +88,6 @@ typedef struct {
 
     GswordLibraryPage *library_page;
 
-    gboolean selecting_module;
-
     GswordPlanStore *plans;
     GswordPlanPage *plan_page;
 
@@ -117,7 +115,6 @@ static void gsword_window_select_verse_range(GswordWindow *self, gint anchor,
 static void gsword_window_select_verse(GswordWindow *self, gint verse);
 static void gsword_window_update_reference_status(GswordWindow *self);
 static void gsword_window_apply_highlights(GswordWindow *self);
-static void gsword_window_load_module(GswordWindow *self, const gchar *name);
 static void gsword_window_refresh_lexicon_modules(GswordWindow *self);
 static void gsword_window_workspace_save(GswordWindow *self);
 static void gsword_window_workspace_restore(GswordWindow *self);
@@ -512,43 +509,6 @@ gsword_window_open_module_reference(GswordWindow *self,
     return TRUE;
 }
 
-static gboolean
-module_info_is_devotional(GswModuleInfo *info)
-{
-    gchar **features;
-    const gchar *category;
-    gboolean result = FALSE;
-    guint i;
-
-    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_DAILY_DEVOS)
-        return TRUE;
-    features = gsw_module_info_get_values(info, "Feature");
-    for (i = 0; features != NULL && features[i] != NULL; i++) {
-        if (g_ascii_strcasecmp(features[i], "DailyDevotion") == 0) {
-            result = TRUE;
-            break;
-        }
-    }
-    g_strfreev(features);
-    if (result)
-        return TRUE;
-    category = gsw_module_info_get_value(info, "Category");
-    return category != NULL &&
-           g_ascii_strncasecmp(category, "Daily Devotional", 16) == 0;
-}
-
-static gboolean
-module_info_is_map(GswModuleInfo *info)
-{
-    const gchar *category;
-
-    if (gsw_module_info_get_module_type(info) == GSW_MODULE_TYPE_MAPS)
-        return TRUE;
-    category = gsw_module_info_get_value(info, "Category");
-    return category != NULL &&
-           g_ascii_strncasecmp(category, "Maps", 4) == 0;
-}
-
 static void
 on_teaching_clicked(GtkButton *button, gpointer user_data)
 {
@@ -612,7 +572,7 @@ gsword_window_sync_reference_chooser(GswordWindow *self)
                                            book, chapter, verse);
 }
 
-static void
+void
 gsword_window_refresh_reader(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
@@ -1161,7 +1121,7 @@ gsword_window_set_initial_key(GswordWindow *self)
     gsw_module_set_position(priv->module, GSW_POSITION_TOP, NULL);
 }
 
-static void
+void
 gsword_window_load_module(GswordWindow *self, const gchar *name)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
@@ -1193,309 +1153,81 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
 
     g_free(saved_module);
     g_free(saved_key);
-    if (priv->module_list != NULL) {
-        GtkWidget *child = gtk_widget_get_first_child(
-            GTK_WIDGET(priv->module_list));
-
-        priv->selecting_module = TRUE;
-        while (child != NULL) {
-            const gchar *row_name = g_object_get_data(G_OBJECT(child),
-                                                      "module-name");
-
-            if (row_name != NULL && g_strcmp0(row_name, name) == 0) {
-                gtk_list_box_select_row(priv->module_list,
-                                        GTK_LIST_BOX_ROW(child));
-                break;
-            }
-            child = gtk_widget_get_next_sibling(child);
-        }
-        priv->selecting_module = FALSE;
-    }
+    if (priv->module_sidebar != NULL)
+        gsword_module_sidebar_select(priv->module_sidebar, name);
     gsword_window_refresh_reader(self);
 }
 
-static void
-on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
-                       gpointer user_data)
+void
+gsword_window_open_commentary_module(GswordWindow *self, const gchar *name)
 {
-    GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *name;
 
-    (void)list;
-    if (row == NULL || priv->selecting_module)
-        return;
-    name = g_object_get_data(G_OBJECT(row), "module-name");
-    if (name == NULL || priv->startup_selecting)
-        return;
-
-    {
-        gint type = GPOINTER_TO_INT(
-            g_object_get_data(G_OBJECT(row), "module-type"));
-
-        if (type == GSW_MODULE_TYPE_COMMENTARIES) {
-            g_free(priv->commentary_name);
-            priv->commentary_name = g_strdup(name);
-            g_clear_object(&priv->commentary_module);
-            priv->commentary_module = gsw_manager_create_module(
-                priv->manager, name);
-            if (priv->settings != NULL)
-                g_settings_set_string(priv->settings, "study-module", name);
-            gtk_widget_set_visible(priv->study_panel, TRUE);
-            if (priv->study_toggle != NULL)
-                gtk_toggle_button_set_active(priv->study_toggle, TRUE);
-            if (priv->study_notebook != NULL)
-                gtk_notebook_set_current_page(priv->study_notebook, 0);
-            gsword_window_update_study(self);
-            gsword_window_show_page(self, "reader");
-            gsword_window_set_status(self, _("Commentary opened in study panel"));
-            return;
-        }
-        if (type == GSW_MODULE_TYPE_LEXDICTS) {
-            g_free(priv->lexicon_name);
-            priv->lexicon_name = g_strdup(name);
-            g_clear_object(&priv->lexicon_module);
-            priv->lexicon_module = gsw_manager_create_module(priv->manager,
-                                                             name);
-            if (priv->settings != NULL)
-                g_settings_set_string(priv->settings, "study-lexicon", name);
-            gsword_window_refresh_lexicon_modules(self);
-            gtk_widget_set_visible(priv->study_panel, TRUE);
-            if (priv->study_toggle != NULL)
-                gtk_toggle_button_set_active(priv->study_toggle, TRUE);
-            if (priv->study_notebook != NULL)
-                gtk_notebook_set_current_page(priv->study_notebook, 3);
-            gsword_window_show_page(self, "reader");
-            gsword_window_set_status(self, _("Lexicon opened in study panel"));
-            return;
-        }
-        if (type == GSW_MODULE_TYPE_DAILY_DEVOS) {
-            if (priv->settings != NULL)
-                g_settings_set_string(priv->settings, "devotion-module", name);
-            if (priv->plan_page != NULL)
-                gsword_plan_page_show_devotion(priv->plan_page);
-            return;
-        }
-        if (type == GSW_MODULE_TYPE_GENBOOKS ||
-            type == GSW_MODULE_TYPE_MAPS) {
-            if (priv->resource_page != NULL)
-                gsword_resource_page_open(priv->resource_page, name,
-                                          type == GSW_MODULE_TYPE_MAPS);
-            return;
-        }
-    }
-
-    gsword_window_load_module(self, name);
+    g_free(priv->commentary_name);
+    priv->commentary_name = g_strdup(name);
+    g_clear_object(&priv->commentary_module);
+    priv->commentary_module = gsw_manager_create_module(priv->manager, name);
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "study-module", name);
+    gtk_widget_set_visible(priv->study_panel, TRUE);
+    if (priv->study_toggle != NULL)
+        gtk_toggle_button_set_active(priv->study_toggle, TRUE);
+    if (priv->study_notebook != NULL)
+        gtk_notebook_set_current_page(priv->study_notebook, 0);
+    gsword_window_update_study(self);
     gsword_window_show_page(self, "reader");
+    gsword_window_set_status(self, _("Commentary opened in study panel"));
 }
 
-const gchar *
-gsword_window_module_type_display(GswModuleInfo *info)
+void
+gsword_window_open_lexicon_module(GswordWindow *self, const gchar *name)
 {
-    if (module_info_is_devotional(info))
-        return _("Daily Devotional");
-    if (module_info_is_map(info))
-        return _("Maps");
-    switch (gsw_module_info_get_module_type(info)) {
-    case GSW_MODULE_TYPE_BIBLES:       return _("Biblical Texts");
-    case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
-    case GSW_MODULE_TYPE_LEXDICTS:     return _("Lexicons / Dictionaries");
-    case GSW_MODULE_TYPE_GENBOOKS:     return _("Generic Books");
-    case GSW_MODULE_TYPE_DAILY_DEVOS:  return _("Daily Devotional");
-    case GSW_MODULE_TYPE_MAPS:         return _("Maps");
-    case GSW_MODULE_TYPE_OTHER:        return _("Other");
-    case GSW_MODULE_TYPE_UNKNOWN:
-    default:
-        return gsw_module_info_get_type_string(info) != NULL
-             ? gsw_module_info_get_type_string(info) : _("Unknown");
-    }
-}
-
-static GswModuleType
-gsword_window_resource_type(GswModuleInfo *info)
-{
-    if (module_info_is_devotional(info))
-        return GSW_MODULE_TYPE_DAILY_DEVOS;
-    if (module_info_is_map(info))
-        return GSW_MODULE_TYPE_MAPS;
-    return gsw_module_info_get_module_type(info);
-}
-
-static const gchar *
-gsword_window_module_group_title(GswModuleType type)
-{
-    switch (type) {
-    case GSW_MODULE_TYPE_BIBLES:       return _("Bibles");
-    case GSW_MODULE_TYPE_COMMENTARIES: return _("Commentaries");
-    case GSW_MODULE_TYPE_LEXDICTS:     return _("Lexicons / Dictionaries");
-    case GSW_MODULE_TYPE_DAILY_DEVOS:  return _("Daily Devotions");
-    case GSW_MODULE_TYPE_GENBOOKS:     return _("General Books");
-    case GSW_MODULE_TYPE_MAPS:         return _("Maps");
-    case GSW_MODULE_TYPE_OTHER:
-    case GSW_MODULE_TYPE_UNKNOWN:
-    default:                           return _("Other Modules");
-    }
-}
-
-static GtkWidget *
-gsword_window_make_module_group_row(const gchar *title)
-{
-    GtkWidget *row = gtk_list_box_row_new();
-    GtkWidget *label = gtk_label_new(title);
-
-    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-    gtk_widget_add_css_class(label, "heading");
-    gtk_widget_set_margin_top(label, 10);
-    gtk_widget_set_margin_bottom(label, 2);
-    gtk_widget_set_margin_start(label, 10);
-    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
-    gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
-    gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
-    return row;
-}
-
-static GtkWidget *
-gsword_window_make_module_row(GswModuleInfo *info)
-{
-    const gchar *name = gsw_module_info_get_name(info);
-    const gchar *description = gsw_module_info_get_description(info);
-    const gchar *type = gsword_window_module_type_display(info);
-    GtkWidget *row = gtk_list_box_row_new();
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-    GtkWidget *name_label = gtk_label_new(name);
-    GtkWidget *description_label = gtk_label_new(
-        description != NULL ? description : "");
-    GtkWidget *type_label = gtk_label_new(type != NULL ? type : "");
-
-    gtk_widget_add_css_class(box, "module-row");
-    gtk_widget_set_margin_top(box, 8);
-    gtk_widget_set_margin_bottom(box, 8);
-    gtk_widget_set_margin_start(box, 10);
-    gtk_widget_set_margin_end(box, 10);
-
-    gtk_label_set_xalign(GTK_LABEL(name_label), 0.0f);
-    gtk_widget_add_css_class(name_label, "heading");
-    gtk_label_set_xalign(GTK_LABEL(description_label), 0.0f);
-    gtk_label_set_ellipsize(GTK_LABEL(description_label), PANGO_ELLIPSIZE_END);
-    gtk_label_set_max_width_chars(GTK_LABEL(description_label), 28);
-    gtk_widget_add_css_class(description_label, "dim-label");
-    gtk_label_set_xalign(GTK_LABEL(type_label), 0.0f);
-    gtk_widget_add_css_class(type_label, "caption");
-    gtk_widget_add_css_class(type_label, "dim-label");
-
-    gtk_box_append(GTK_BOX(box), name_label);
-    if (description != NULL && *description != '\0')
-        gtk_box_append(GTK_BOX(box), description_label);
-    if (type != NULL && *type != '\0')
-        gtk_box_append(GTK_BOX(box), type_label);
-    gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
-    g_object_set_data_full(G_OBJECT(row), "module-name", g_strdup(name),
-                           g_free);
-    g_object_set_data(G_OBJECT(row), "module-type",
-                      GINT_TO_POINTER((gint)
-                          gsword_window_resource_type(info)));
-    return row;
-}
-
-static gboolean
-gsword_window_reset_startup_selecting(gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
-    priv->startup_selecting = FALSE;
-    return G_SOURCE_REMOVE;
+    g_free(priv->lexicon_name);
+    priv->lexicon_name = g_strdup(name);
+    g_clear_object(&priv->lexicon_module);
+    priv->lexicon_module = gsw_manager_create_module(priv->manager, name);
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "study-lexicon", name);
+    gsword_window_refresh_lexicon_modules(self);
+    gtk_widget_set_visible(priv->study_panel, TRUE);
+    if (priv->study_toggle != NULL)
+        gtk_toggle_button_set_active(priv->study_toggle, TRUE);
+    if (priv->study_notebook != NULL)
+        gtk_notebook_set_current_page(priv->study_notebook, 3);
+    gsword_window_show_page(self, "reader");
+    gsword_window_set_status(self, _("Lexicon opened in study panel"));
+}
+
+void
+gsword_window_open_devotion_module(GswordWindow *self, const gchar *name)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->settings != NULL)
+        g_settings_set_string(priv->settings, "devotion-module", name);
+    if (priv->plan_page != NULL)
+        gsword_plan_page_show_devotion(priv->plan_page);
+}
+
+void
+gsword_window_open_resource_module(GswordWindow *self, const gchar *name,
+                                   gboolean is_map)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->resource_page != NULL)
+        gsword_resource_page_open(priv->resource_page, name, is_map);
 }
 
 void
 gsword_window_populate_modules(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    static const GswModuleType group_types[] = {
-        GSW_MODULE_TYPE_BIBLES,
-        GSW_MODULE_TYPE_COMMENTARIES,
-        GSW_MODULE_TYPE_LEXDICTS,
-        GSW_MODULE_TYPE_DAILY_DEVOS,
-        GSW_MODULE_TYPE_GENBOOKS,
-        GSW_MODULE_TYPE_MAPS,
-        GSW_MODULE_TYPE_OTHER,
-    };
-    GPtrArray *infos;
-    gchar *wanted = NULL;
-    GtkListBoxRow *selected = NULL;
-    GtkListBoxRow *first = NULL;
-    guint group;
 
-    if (priv->manager == NULL) {
-        gsword_window_show_page(self, "reader");
-        gsword_window_refresh_reader(self);
-        return;
-    }
-
-    infos = gsw_manager_get_module_infos(priv->manager);
-    if (priv->settings != NULL)
-        wanted = g_settings_get_string(priv->settings, "last-module");
-
-    while (gtk_widget_get_first_child(GTK_WIDGET(priv->module_list)) != NULL) {
-        GtkWidget *child = gtk_widget_get_first_child(
-            GTK_WIDGET(priv->module_list));
-
-        gtk_list_box_remove(priv->module_list, child);
-    }
-
-    for (group = 0; group < G_N_ELEMENTS(group_types); group++) {
-        gboolean header_added = FALSE;
-        guint i;
-
-        for (i = 0; i < infos->len; i++) {
-            GswModuleInfo *info = g_ptr_array_index(infos, i);
-            GswModuleType type = gsword_window_resource_type(info);
-            GswModuleType effective_type = type == GSW_MODULE_TYPE_UNKNOWN
-                                         ? GSW_MODULE_TYPE_OTHER : type;
-            const gchar *name = gsw_module_info_get_name(info);
-            GtkWidget *row;
-
-            if (effective_type != group_types[group])
-                continue;
-            if (!header_added) {
-                gtk_list_box_append(
-                    priv->module_list,
-                    gsword_window_make_module_group_row(
-                        gsword_window_module_group_title(group_types[group])));
-                header_added = TRUE;
-            }
-            row = gsword_window_make_module_row(info);
-            gtk_list_box_append(priv->module_list, row);
-            if (first == NULL)
-                first = GTK_LIST_BOX_ROW(row);
-
-            if (type == GSW_MODULE_TYPE_BIBLES && wanted != NULL &&
-                g_strcmp0(wanted, name) == 0)
-                selected = GTK_LIST_BOX_ROW(row);
-        }
-    }
-
-    g_ptr_array_unref(infos);
-    g_free(wanted);
-
-    if (selected == NULL)
-        selected = first;
-    if (selected != NULL) {
-        const gchar *selected_name = g_object_get_data(G_OBJECT(selected),
-                                                       "module-name");
-
-        priv->startup_selecting = TRUE;
-        gtk_list_box_select_row(priv->module_list, selected);
-        if (selected_name != NULL)
-            gsword_window_load_module(self, selected_name);
-        gsword_window_show_page(self, "reader");
-        g_idle_add_full(G_PRIORITY_DEFAULT,
-                        gsword_window_reset_startup_selecting,
-                        g_object_ref(self), g_object_unref);
-    } else {
-        gsword_window_show_page(self, "reader");
-        gsword_window_refresh_reader(self);
-    }
+    if (priv->module_sidebar != NULL)
+        gsword_module_sidebar_populate(priv->module_sidebar);
 }
 
 static void
@@ -1785,35 +1517,6 @@ on_main_menu_clicked(GtkButton *button, gpointer user_data)
 }
 
 static GtkWidget *
-gsword_window_make_sidebar(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    GtkWidget *label = gtk_label_new(_("Modules"));
-    GtkWidget *scrolled = gtk_scrolled_window_new();
-
-    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-    gtk_widget_add_css_class(label, "heading");
-    gtk_widget_set_margin_top(label, 10);
-    gtk_widget_set_margin_start(label, 12);
-    gtk_widget_set_margin_end(label, 12);
-
-    priv->module_list = GTK_LIST_BOX(gtk_list_box_new());
-    gtk_widget_add_css_class(GTK_WIDGET(priv->module_list),
-                             "navigation-sidebar");
-    gtk_list_box_set_selection_mode(priv->module_list, GTK_SELECTION_SINGLE);
-    g_signal_connect(priv->module_list, "row-selected",
-                     G_CALLBACK(on_module_row_selected), self);
-
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
-                                  GTK_WIDGET(priv->module_list));
-    gtk_widget_set_vexpand(scrolled, TRUE);
-    gtk_box_append(GTK_BOX(box), label);
-    gtk_box_append(GTK_BOX(box), scrolled);
-    return box;
-}
-
-static GtkWidget *
 gsword_window_make_scrolled_text(GtkTextView **view)
 {
     GtkWidget *scrolled = gtk_scrolled_window_new();
@@ -1987,7 +1690,8 @@ gsword_window_refresh_lexicon_modules(GswordWindow *self)
         GswModuleInfo *info = g_ptr_array_index(infos, i);
 
         if (gsw_module_info_get_module_type(info) != GSW_MODULE_TYPE_LEXDICTS ||
-            module_info_is_devotional(info) || module_info_is_map(info))
+            gsword_window_module_info_is_devotional(info) ||
+            gsword_window_module_info_is_map(info))
             continue;
         gtk_string_list_append(names, gsw_module_info_get_name(info));
         if (priv->lexicon_name != NULL &&
@@ -2271,10 +1975,10 @@ gsword_window_workspace_pane_supported(GswModuleInfo *info)
 {
     GswModuleType type;
 
-    if (info == NULL || module_info_is_map(info) ||
+    if (info == NULL || gsword_window_module_info_is_map(info) ||
         !gsw_module_info_is_supported(info))
         return FALSE;
-    type = gsword_window_resource_type(info);
+    type = gsword_window_module_effective_type(info);
     return type != GSW_MODULE_TYPE_MAPS &&
            type != GSW_MODULE_TYPE_UNKNOWN;
 }
@@ -2300,7 +2004,7 @@ gsword_window_workspace_default_module(GswordWindow *self)
             continue;
         if (fallback == NULL)
             fallback = g_strdup(gsw_module_info_get_name(info));
-        if (gsword_window_resource_type(info) == GSW_MODULE_TYPE_BIBLES) {
+        if (gsword_window_module_effective_type(info) == GSW_MODULE_TYPE_BIBLES) {
             result = g_strdup(gsw_module_info_get_name(info));
             break;
         }
@@ -2455,7 +2159,7 @@ gsword_window_workspace_pane_render(GswordWorkspacePane *pane)
         return;
     }
     info = gsw_module_get_info(pane->module);
-    type = gsword_window_resource_type(info);
+    type = gsword_window_module_effective_type(info);
     if (type == GSW_MODULE_TYPE_BIBLES) {
         text = gsword_window_chapter_text_for_module(pane->module);
     }
@@ -2787,7 +2491,7 @@ gsword_window_workspace_pane_clicked(GtkGestureClick *gesture, gint n_press,
         GDK_BUTTON_PRIMARY)
         return;
     info = gsw_module_get_info(pane->module);
-    if (gsword_window_resource_type(info) != GSW_MODULE_TYPE_BIBLES)
+    if (gsword_window_module_effective_type(info) != GSW_MODULE_TYPE_BIBLES)
         return;
     view = GTK_TEXT_VIEW(gtk_event_controller_get_widget(
         GTK_EVENT_CONTROLLER(gesture)));
@@ -3226,7 +2930,7 @@ gsword_window_is_bible_module(GswordWindow *self, const gchar *name)
         GswModuleInfo *info = g_ptr_array_index(infos, i);
 
         if (g_strcmp0(gsw_module_info_get_name(info), name) == 0) {
-            result = gsword_window_resource_type(info) ==
+            result = gsword_window_module_effective_type(info) ==
                      GSW_MODULE_TYPE_BIBLES &&
                      gsword_window_workspace_pane_supported(info);
             break;
@@ -3254,7 +2958,7 @@ gsword_window_parallel_module(GswordWindow *self, const gchar *saved,
     for (i = 0; i < infos->len; i++) {
         GswModuleInfo *info = g_ptr_array_index(infos, i);
 
-        if (gsword_window_resource_type(info) != GSW_MODULE_TYPE_BIBLES ||
+        if (gsword_window_module_effective_type(info) != GSW_MODULE_TYPE_BIBLES ||
             !gsword_window_workspace_pane_supported(info))
             continue;
         if (position == index) {
@@ -3561,8 +3265,9 @@ gsword_window_build(GswordWindow *self)
 
     split = ADW_NAVIGATION_SPLIT_VIEW(adw_navigation_split_view_new());
     adw_navigation_split_view_set_sidebar_width_fraction(split, 0.24);
-    sidebar_page = adw_navigation_page_new(gsword_window_make_sidebar(self),
-                                           _("Library"));
+    priv->module_sidebar = gsword_module_sidebar_new(self);
+    sidebar_page = adw_navigation_page_new(
+        gsword_module_sidebar_widget(priv->module_sidebar), _("Library"));
 
     priv->search_page = gsword_search_page_new(self);
     priv->teaching_page = gsword_teaching_page_new(self);

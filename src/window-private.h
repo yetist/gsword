@@ -30,8 +30,23 @@ GswordNotesStore *gsword_window_get_notes_store(GswordWindow *self);
 GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
 GswModule *gsword_window_ensure_verse_module(GswordWindow *self);
 void gsword_window_populate_modules(GswordWindow *self);
+gboolean gsword_window_module_info_is_devotional(GswModuleInfo *info);
+gboolean gsword_window_module_info_is_map(GswModuleInfo *info);
+GswModuleType gsword_window_module_effective_type(GswModuleInfo *info);
 const gchar *gsword_window_module_type_display(GswModuleInfo *info);
 void gsword_window_clear_list(GtkListBox *list);
+
+void gsword_window_load_module(GswordWindow *self, const gchar *name);
+void gsword_window_refresh_reader(GswordWindow *self);
+void gsword_window_open_commentary_module(GswordWindow *self,
+                                           const gchar *name);
+void gsword_window_open_lexicon_module(GswordWindow *self,
+                                        const gchar *name);
+void gsword_window_open_devotion_module(GswordWindow *self,
+                                         const gchar *name);
+void gsword_window_open_resource_module(GswordWindow *self,
+                                         const gchar *name,
+                                         gboolean is_map);
 
 gboolean gsword_window_set_key_text(GswordWindow *self, const gchar *text);
 gboolean gsword_window_open_reference(GswordWindow *self,
