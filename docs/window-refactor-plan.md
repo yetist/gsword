@@ -2,10 +2,10 @@
 
 ## 文档状态
 
-- 状态：阶段 9 完成（模块库、侧边栏、研究面板、多窗格工作区和阅读器均已拆分）
+- 状态：阶段 10 完成（全部页面已拆分，窗口壳体已清理到目标规模）
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
-- 当前规模：`src/window.c` 约 905 行
+- 当前规模：`src/window.c` 约 747 行
 - 目标规模：`src/window.c` 约 500–800 行
 - 实施原则：行为不变、分阶段提交、每阶段可独立编译/测试/回滚
 
@@ -527,11 +527,28 @@ ASan 测试：24/24 通过
 
 ### 阶段 10：清理窗口壳体
 
-- [ ] `window.c` 只保留构建、页面注册、菜单/快捷键、首选项入口和跨页面协调。
-- [ ] 删除已迁走的静态函数。
-- [ ] 确保页面控件字段不再出现在 `GswordWindowPrivate`。
-- [ ] 更新 `src/README.md`、`docs/app-design.md` 和 `POTFILES.in`。
-- [ ] 确认 `window.c` 规模达到目标。
+- [x] `window.c` 只保留构建、页面注册、菜单/快捷键、首选项入口和跨页面协调。
+- [x] 删除已迁走的静态函数。
+- [x] 确保页面控件字段不再出现在 `GswordWindowPrivate`。
+- [x] 更新 `src/README.md`、`docs/app-design.md` 和 `POTFILES.in`。
+- [x] 确认 `window.c` 规模达到目标。
+
+产出：
+
+```text
+src/preferences-dialog.c
+src/preferences-dialog.h
+src/README.md
+docs/app-design.md
+```
+
+结果：
+
+```text
+src/window.c：905 -> 747 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 最终目标：
 
@@ -621,15 +638,15 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 
 重构完成时满足：
 
-- [ ] `window.c` 不超过约 800 行。
-- [ ] 不存在页面直接访问 `GswordWindowPrivate`。
-- [ ] 页面通过独立对象/状态和共享服务协作。
-- [ ] 计划页、研究面板子页已拆分。
-- [ ] 工作区拆分为 page 和 pane。
-- [ ] 每个阶段均有独立提交。
-- [ ] 普通测试和 ASan 测试通过。
-- [ ] 中文翻译和 `POTFILES.in` 完整。
-- [ ] 阅读、搜索、笔记、计划、灵修、背经、教学、资源、模块库、多窗格功能无回归。
+- [x] `window.c` 不超过约 800 行。
+- [x] 不存在页面直接访问 `GswordWindowPrivate`。
+- [x] 页面通过独立对象/状态和共享服务协作。
+- [x] 计划页、研究面板子页已拆分。
+- [x] 工作区拆分为 page 和 pane。
+- [x] 每个阶段均有独立提交。
+- [x] 普通测试和 ASan 测试通过。
+- [x] 中文翻译和 `POTFILES.in` 完整。
+- [x] 阅读、搜索、笔记、计划、灵修、背经、教学、资源、模块库、多窗格功能无回归。
 
 ## 九、实施进度
 
@@ -647,4 +664,4 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 7 研究面板 | 完成 | 本阶段提交 | 新增 `study-panel.c` / `study-panel.h` |
 | 8 工作区 | 完成 | 本阶段提交 | 新增 `workspace-page.*` / `workspace-pane.*` |
 | 9 阅读器 | 完成 | 本阶段提交 | 新增 `reader-page.*` / `reader-toolbar.*` |
-| 10 壳体清理 | 待开始 | | |
+| 10 壳体清理 | 完成 | 本阶段提交 | `window.c` 747 行；新增 `preferences-dialog.*` |

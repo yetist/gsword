@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 0 完成
+- 状态：阶段 10 完成（窗口重构完成）
 - 对应计划：`docs/window-refactor-plan.md`
 - 基线提交：`5760c3b Add window refactor plan`
 - 基线日期：2026-11-01
@@ -542,3 +542,43 @@ src/window.c：1636 -> 905 行
   `gsword_window_refresh_search_index()` 等共享服务通知其他页面；
 - 取消/范围选择、Shift 范围、复制范围、高亮切换和上次位置保存保持原行为；
 - `GswordWindowPrivate` 不再保存阅读器控件、标签或范围状态。
+
+### 阶段 10：窗口壳体清理
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（启动、Ctrl+L 引用跳转、Ctrl+, 首选项打开/关闭）
+新增文件：src/preferences-dialog.c、src/preferences-dialog.h
+src/window.c：905 -> 747 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- `window.c` 只保留窗口构建、页面注册、侧边栏/内容栈、菜单与快捷键、
+  全局模块/存储生命周期、共享服务包装和跨页面协调；
+- 删除已迁走的阅读器、研究面板、工作区、侧边栏和首选项静态函数；
+- `GswordWindowPrivate` 只保留窗口级状态：管理器、设置、当前模块、
+  页面对象指针、内容栈、状态栏和笔记/计划库；
+- 页面不再直接访问 `GswordWindowPrivate`，统一使用 `window-private.h`；
+- 字体缩放、主题和 CSS 迁入首选项模块；
+- 更新 `src/README.md`、`docs/app-design.md` 和 `po/POTFILES.in`；
+- 最终窗口规模 747 行，最大页面文件为 `reader-page.c` 852 行。
+
+## 九、重构完成结论
+
+- [x] `window.c` 不超过约 800 行（747 行）。
+- [x] 页面不直接访问 `GswordWindowPrivate`。
+- [x] 页面通过独立对象/状态和共享服务协作。
+- [x] 计划页、研究面板子页已拆分。
+- [x] 工作区拆分为 page 和 pane。
+- [x] 阅读器拆分为 page 和 toolbar。
+- [x] 模块库和模块侧边栏已拆分。
+- [x] 每个阶段均有独立提交。
+- [x] 普通测试 25/25、ASan 测试 24/24 通过。
+- [x] 中文翻译和 `POTFILES.in` 完整。
