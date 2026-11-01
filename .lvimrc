@@ -1,0 +1,96 @@
+" Project-local Vim settings for gsword.
+" This file is intended for vim-localrc / .lvimrc plugins.
+"
+" Style summary:
+"   C:        4 spaces, no tabs, GNU-style braces, 80-column guide
+"   Meson:    2 spaces
+"   Python:   4 spaces
+"   Markdown: 80-column guide, no hard wrapping
+"
+" The project uses spaces exclusively.  Do not add modelines that override
+" these values in individual source files.
+
+if exists('b:gsword_local_style_loaded')
+  finish
+endif
+let b:gsword_local_style_loaded = 1
+
+function! s:gsword_c_style() abort
+  setlocal expandtab
+  setlocal shiftwidth=4
+  setlocal softtabstop=4
+  setlocal tabstop=4
+  setlocal shiftround
+  setlocal autoindent
+  setlocal cindent
+  " GNU/libgsword style: braces at statement indent, case labels aligned
+  " with switch, and continuation indentation of four spaces.
+  setlocal cinoptions=(0,u0,:0,{0
+  setlocal textwidth=0
+  setlocal colorcolumn=80
+  setlocal formatoptions-=t
+  setlocal formatoptions+=cro
+  setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
+  setlocal commentstring=/*\ %s\ */
+  setlocal suffixesadd=.c,.h
+  setlocal nojoinspaces
+  setlocal backspace=indent,eol,start
+endfunction
+
+function! s:gsword_meson_style() abort
+  setlocal expandtab
+  setlocal shiftwidth=2
+  setlocal softtabstop=2
+  setlocal tabstop=2
+  setlocal shiftround
+  setlocal autoindent
+  setlocal textwidth=0
+  setlocal colorcolumn=80
+  setlocal formatoptions-=t
+  setlocal backspace=indent,eol,start
+endfunction
+
+function! s:gsword_python_style() abort
+  setlocal expandtab
+  setlocal shiftwidth=4
+  setlocal softtabstop=4
+  setlocal tabstop=4
+  setlocal shiftround
+  setlocal autoindent
+  setlocal textwidth=0
+  setlocal colorcolumn=80
+  setlocal formatoptions-=t
+  setlocal backspace=indent,eol,start
+endfunction
+
+function! s:gsword_markdown_style() abort
+  setlocal expandtab
+  setlocal shiftwidth=2
+  setlocal softtabstop=2
+  setlocal tabstop=2
+  setlocal textwidth=0
+  setlocal colorcolumn=80
+  setlocal wrap
+  setlocal linebreak
+  setlocal nolist
+endfunction
+
+augroup gsword_local_style
+  autocmd!
+  autocmd FileType c call s:gsword_c_style()
+  autocmd FileType meson call s:gsword_meson_style()
+  autocmd FileType python call s:gsword_python_style()
+  autocmd FileType markdown call s:gsword_markdown_style()
+augroup END
+
+" Apply immediately as well: some local-vimrc plugins source the file after
+" the FileType event has already fired.
+if &filetype ==# 'c'
+  call s:gsword_c_style()
+elseif &filetype ==# 'meson'
+  call s:gsword_meson_style()
+elseif &filetype ==# 'python'
+  call s:gsword_python_style()
+elseif &filetype ==# 'markdown'
+  call s:gsword_markdown_style()
+endif
