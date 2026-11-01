@@ -1,3 +1,4 @@
 src/application.c
 src/window.c
+src/window-services.c
 widgets/gsword-reference-chooser.c

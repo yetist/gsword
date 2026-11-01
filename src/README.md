@@ -20,6 +20,10 @@ Current implementation:
   daily devotion viewers, Strong's/cross-reference navigation, range
   selection, workspace templates, multi-pane editor and persistence,
   preferences dialog
+- `window-private.h`: internal shared service API for window pages; does not
+  expose `GswordWindowPrivate`
+- `window-services.c`: shared status/error/page navigation, module/store
+  accessors, reference normalization, chapter rendering and view helpers
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
