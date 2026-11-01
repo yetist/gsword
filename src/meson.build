@@ -9,7 +9,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'notes-page.c', 'plan-page.c', 'devotion-page.c',
      'memory-page.c', 'library-page.c', 'module-sidebar.c',
      'study-panel.c', 'workspace-page.c', 'workspace-pane.c',
-     'reader-page.c', 'reader-toolbar.c',
+     'reader-page.c', 'reader-toolbar.c', 'preferences-dialog.c',
      'notes-store.c', 'plan-store.c', 'app-paths.c',
      '../widgets/gsword-reference-chooser.c'],
     include_directories: include_directories('../widgets'),

@@ -1,8 +1,6 @@
 #include "window.h"
 #include "notes-store.h"
 #include "plan-store.h"
-#include "app-paths.h"
-#include "gsword-reference-chooser.h"
 #include "search-page.h"
 #include "teaching-page.h"
 #include "resource-page.h"
@@ -13,11 +11,10 @@
 #include "study-panel.h"
 #include "workspace-page.h"
 #include "reader-page.h"
+#include "preferences-dialog.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
-
-#include <string.h>
 
 struct _GswordWindow {
     AdwApplicationWindow parent_instance;
@@ -33,10 +30,6 @@ typedef struct {
     GtkStack *content_stack;
     gboolean page_restored;
     GtkLabel *status_label;
-    AdwDialog *preferences_dialog;
-    GtkCssProvider *css;
-    gchar *theme;
-    gdouble font_scale;
 
     GswordSearchPage *search_page;
 
@@ -92,41 +85,6 @@ gsword_window_get_plan_store(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     return priv->plans;
-}
-
-static void
-gsword_window_apply_css(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    gchar *css_text;
-    gdouble points = 14.0 * priv->font_scale;
-
-    if (priv->css == NULL)
-        return;
-    css_text = g_strdup_printf(
-        ".gsw-reader { font-size: %.1fpt; }\n"
-        ".memory-card { font-size: 16pt; }\n"
-        ".teaching-reader { font-size: 18pt; }\n"
-        ".workspace-pane { border: 1px solid alpha(currentColor, 0.16);"
-        " border-radius: 8px; }\n"
-        ".workspace-pane.dragging { opacity: 0.55; }\n"
-        ".workspace-pane-header { min-height: 34px; }", points);
-    gtk_css_provider_load_from_string(priv->css, css_text);
-    g_free(css_text);
-}
-
-static void
-gsword_window_apply_theme(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    AdwStyleManager *manager = adw_style_manager_get_default();
-    AdwColorScheme scheme = ADW_COLOR_SCHEME_DEFAULT;
-
-    if (g_strcmp0(priv->theme, "light") == 0)
-        scheme = ADW_COLOR_SCHEME_FORCE_LIGHT;
-    else if (g_strcmp0(priv->theme, "dark") == 0)
-        scheme = ADW_COLOR_SCHEME_FORCE_DARK;
-    adw_style_manager_set_color_scheme(manager, scheme);
 }
 
 void
@@ -413,107 +371,12 @@ gsword_window_populate_modules(GswordWindow *self)
 }
 
 static void
-on_font_scale_changed(GtkSpinButton *spin, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-
-    priv->font_scale = gtk_spin_button_get_value(spin);
-    if (priv->settings != NULL)
-        g_settings_set_double(priv->settings, "font-scale", priv->font_scale);
-    gsword_window_apply_css(self);
-}
-
-static void
-on_theme_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    guint selected = adw_combo_row_get_selected(ADW_COMBO_ROW(object));
-
-    (void)pspec;
-    g_free(priv->theme);
-    priv->theme = g_strdup(selected == 1 ? "light"
-                          : selected == 2 ? "dark" : "system");
-    if (priv->settings != NULL)
-        g_settings_set_string(priv->settings, "theme", priv->theme);
-    gsword_window_apply_theme(self);
-}
-
-static void
-gsword_window_show_preferences(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    AdwPreferencesDialog *dialog;
-    AdwPreferencesPage *page;
-    AdwPreferencesGroup *group;
-    AdwActionRow *font_row;
-    AdwComboRow *theme_row;
-    GtkAdjustment *adjustment;
-    GtkWidget *spin;
-    GtkStringList *themes;
-    guint selected = 0;
-
-    if (priv->preferences_dialog != NULL) {
-        adw_dialog_present(priv->preferences_dialog, GTK_WIDGET(self));
-        return;
-    }
-
-    dialog = ADW_PREFERENCES_DIALOG(adw_preferences_dialog_new());
-    adw_dialog_set_title(ADW_DIALOG(dialog), _("Preferences"));
-    adw_dialog_set_content_width(ADW_DIALOG(dialog), 620);
-
-    page = ADW_PREFERENCES_PAGE(adw_preferences_page_new());
-    group = ADW_PREFERENCES_GROUP(adw_preferences_group_new());
-    adw_preferences_group_set_title(group, _("Reading"));
-    adw_preferences_group_set_description(
-        group, _("Reading appearance is applied immediately."));
-
-    font_row = ADW_ACTION_ROW(adw_action_row_new());
-    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(font_row),
-                                  _("Font size"));
-    adw_action_row_set_subtitle(font_row, _("Scale the scripture text size"));
-    adjustment = gtk_adjustment_new(priv->font_scale, 0.75, 2.5, 0.1, 0.25, 0);
-    spin = gtk_spin_button_new(adjustment, 0.1, 1);
-    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), TRUE);
-    g_signal_connect(spin, "value-changed",
-                     G_CALLBACK(on_font_scale_changed), self);
-    adw_action_row_add_suffix(font_row, spin);
-    adw_action_row_set_activatable_widget(font_row, spin);
-
-    theme_row = ADW_COMBO_ROW(adw_combo_row_new());
-    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(theme_row),
-                                  _("Color scheme"));
-    adw_action_row_set_subtitle(ADW_ACTION_ROW(theme_row),
-                                _("Follow the desktop or force light/dark mode"));
-    themes = gtk_string_list_new(
-        (const gchar *[]) { _("Follow system"), _("Light"), _("Dark"), NULL });
-    adw_combo_row_set_model(theme_row, G_LIST_MODEL(themes));
-    g_object_unref(themes);
-    if (g_strcmp0(priv->theme, "light") == 0)
-        selected = 1;
-    else if (g_strcmp0(priv->theme, "dark") == 0)
-        selected = 2;
-    adw_combo_row_set_selected(theme_row, selected);
-    g_signal_connect(theme_row, "notify::selected",
-                     G_CALLBACK(on_theme_changed), self);
-
-    adw_preferences_group_add(group, GTK_WIDGET(font_row));
-    adw_preferences_group_add(group, GTK_WIDGET(theme_row));
-    adw_preferences_page_add(page, group);
-    adw_preferences_dialog_add(dialog, page);
-
-    priv->preferences_dialog = ADW_DIALOG(g_object_ref_sink(dialog));
-    adw_dialog_present(priv->preferences_dialog, GTK_WIDGET(self));
-}
-
-static void
 on_preferences_action(GSimpleAction *action, GVariant *parameter,
                       gpointer user_data)
 {
     (void)action;
     (void)parameter;
-    gsword_window_show_preferences(GSWORD_WINDOW(user_data));
+    gsword_preferences_show(GSWORD_WINDOW(user_data));
 }
 
 static void
@@ -572,7 +435,7 @@ on_main_menu_response(AdwAlertDialog *dialog, const gchar *response,
         g_strcmp0(response, "teaching") == 0) {
         gsword_window_apply_workspace(self, response);
     } else if (g_strcmp0(response, "preferences") == 0) {
-        gsword_window_show_preferences(self);
+        gsword_preferences_show(self);
     } else if (g_strcmp0(response, "quit") == 0) {
         GtkApplication *application = gtk_window_get_application(
             GTK_WINDOW(self));
@@ -690,10 +553,7 @@ gsword_window_build(GswordWindow *self)
     GSimpleAction *focus_key;
     GtkWidget *status;
 
-    priv->css = gtk_css_provider_new();
-    gtk_style_context_add_provider_for_display(
-        gdk_display_get_default(), GTK_STYLE_PROVIDER(priv->css),
-        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gsword_preferences_init(self);
 
     gtk_window_set_title(GTK_WINDOW(self), "gsword");
     gtk_window_set_default_size(GTK_WINDOW(self), 1100, 760);
@@ -815,24 +675,9 @@ gsword_window_load_settings(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
-    priv->font_scale = 1.0;
-    priv->theme = g_strdup("system");
-    if (priv->settings != NULL) {
-        priv->font_scale = g_settings_get_double(priv->settings, "font-scale");
-        if (priv->font_scale <= 0.0)
-            priv->font_scale = 1.0;
-        g_free(priv->theme);
-        priv->theme = g_settings_get_string(priv->settings, "theme");
-        if (priv->theme == NULL || *priv->theme == '\0') {
-            g_free(priv->theme);
-            priv->theme = g_strdup("system");
-        }
-    }
     if (priv->reader_page != NULL)
         gsword_study_panel_load_settings(
             gsword_reader_page_get_study_panel(priv->reader_page));
-    gsword_window_apply_css(self);
-    gsword_window_apply_theme(self);
 }
 
 static void
@@ -843,11 +688,8 @@ gsword_window_finalize(GObject *object)
 
     g_clear_object(&priv->module);
     g_clear_object(&priv->settings);
-    g_clear_object(&priv->preferences_dialog);
-    g_clear_pointer(&priv->css, g_object_unref);
     g_clear_pointer(&priv->notes, gsword_notes_store_free);
     g_clear_pointer(&priv->plans, gsword_plan_store_free);
-    g_free(priv->theme);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->finalize(object);
 }

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 12:23+0800\n"
+"POT-Creation-Date: 2026-11-01 12:26+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,119 +33,87 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:169 src/workspace-page.c:338
+#: src/window.c:127 src/workspace-page.c:338
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:318 src/resource-page.c:206 src/resource-page.c:212
+#: src/window.c:276 src/resource-page.c:206 src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:362
+#: src/window.c:320
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:382
+#: src/window.c:340
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:463 src/window.c:598
-msgid "Preferences"
-msgstr "首选项"
-
-#: src/window.c:468 src/window.c:729
-msgid "Reading"
-msgstr "阅读"
-
-#: src/window.c:470
-msgid "Reading appearance is applied immediately."
-msgstr "阅读外观会立即应用。"
-
-#: src/window.c:474
-msgid "Font size"
-msgstr "字体大小"
-
-#: src/window.c:475
-msgid "Scale the scripture text size"
-msgstr "调整经文文字大小"
-
-#: src/window.c:486
-msgid "Color scheme"
-msgstr "配色方案"
-
-#: src/window.c:488
-msgid "Follow the desktop or force light/dark mode"
-msgstr "跟随桌面或强制浅色/深色模式"
-
-#: src/window.c:490
-msgid "Follow system"
-msgstr "跟随系统"
-
-#: src/window.c:490
-msgid "Light"
-msgstr "浅色"
-
-#: src/window.c:490
-msgid "Dark"
-msgstr "深色"
-
-#: src/window.c:589 src/window.c:710
+#: src/window.c:452 src/window.c:570
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:593
+#: src/window.c:456
 msgid "Reading workspace"
 msgstr "阅读工作区"
 
-#: src/window.c:594
+#: src/window.c:457
 msgid "Study workspace"
 msgstr "研经工作区"
 
-#: src/window.c:595
+#: src/window.c:458
 msgid "Multi-pane workspace"
 msgstr "多窗格工作区"
 
-#: src/window.c:596
+#: src/window.c:459
 msgid "Parallel workspace"
 msgstr "并行工作区"
 
-#: src/window.c:597
+#: src/window.c:460
 msgid "Teaching workspace"
 msgstr "教学工作区"
 
-#: src/window.c:599
+#: src/window.c:461 src/preferences-dialog.c:108
+msgid "Preferences"
+msgstr "首选项"
+
+#: src/window.c:462
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:600 src/window-services.c:64
+#: src/window.c:463 src/window-services.c:64
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:703
+#: src/window.c:563
 msgid "SWORD study"
 msgstr "SWORD 研经"
 
-#: src/window.c:717 src/window.c:751
+#: src/window.c:577 src/window.c:611
 msgid "Library"
 msgstr "模块库"
 
-#: src/window.c:733
+#: src/window.c:589 src/preferences-dialog.c:113
+msgid "Reading"
+msgstr "阅读"
+
+#: src/window.c:593
 msgid "Panes"
 msgstr "窗格"
 
-#: src/window.c:736 src/search-page.c:212
+#: src/window.c:596 src/search-page.c:212
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:739 src/notes-page.c:483
+#: src/window.c:599 src/notes-page.c:483
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:742
+#: src/window.c:602
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:770
+#: src/window.c:630
 msgid "Workspace"
 msgstr "工作区"
 
@@ -807,6 +775,38 @@ msgstr "切换经文高亮"
 #: src/reader-toolbar.c:122
 msgid "Toggle study panel"
 msgstr "切换研经面板"
+
+#: src/preferences-dialog.c:115
+msgid "Reading appearance is applied immediately."
+msgstr "阅读外观会立即应用。"
+
+#: src/preferences-dialog.c:119
+msgid "Font size"
+msgstr "字体大小"
+
+#: src/preferences-dialog.c:120
+msgid "Scale the scripture text size"
+msgstr "调整经文文字大小"
+
+#: src/preferences-dialog.c:131
+msgid "Color scheme"
+msgstr "配色方案"
+
+#: src/preferences-dialog.c:133
+msgid "Follow the desktop or force light/dark mode"
+msgstr "跟随桌面或强制浅色/深色模式"
+
+#: src/preferences-dialog.c:135
+msgid "Follow system"
+msgstr "跟随系统"
+
+#: src/preferences-dialog.c:135
+msgid "Light"
+msgstr "浅色"
+
+#: src/preferences-dialog.c:135
+msgid "Dark"
+msgstr "深色"
 
 #: src/devotion-page.c:99
 msgid "No devotional entry is available for today in this module."
