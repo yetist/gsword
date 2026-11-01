@@ -691,6 +691,7 @@ gsword_window_build(GswordWindow *self)
     gtk_widget_set_margin_top(switcher, 4);
     gtk_widget_set_margin_bottom(switcher, 4);
     gtk_widget_set_halign(switcher, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(switcher_bar, GTK_ALIGN_CENTER);
     gtk_box_append(GTK_BOX(switcher_bar), switcher);
     gtk_widget_set_vexpand(GTK_WIDGET(priv->content_stack), TRUE);
     gtk_box_append(GTK_BOX(workspace_box), switcher_bar);
