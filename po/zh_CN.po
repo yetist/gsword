@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 18:13+0800\n"
+"POT-Creation-Date: 2026-11-01 20:48+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -113,7 +113,7 @@ msgstr "笔记"
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:700
+#: src/window.c:701
 msgid "Workspace"
 msgstr "工作区"
 
@@ -1223,133 +1223,132 @@ msgstr "保存笔记"
 msgid "Current passage"
 msgstr "当前段落"
 
-#: widgets/gsword-reference-chooser.c:1059
-#: widgets/gsword-reference-chooser.c:1068
+#: widgets/gsword-reference-chooser.c:1079
+#: widgets/gsword-reference-chooser.c:1218
+#: widgets/gsword-reference-chooser.c:1737
+msgid "Type a reference or choose a book."
+msgstr "输入引用或选择书卷。"
+
+#: widgets/gsword-reference-chooser.c:1098
+#: widgets/gsword-reference-chooser.c:1125
+msgid "Multiple books match; choose one."
+msgstr "匹配到多个书卷，请选择一个。"
+
+#: widgets/gsword-reference-chooser.c:1102
+#: widgets/gsword-reference-chooser.c:1137
+msgid "Cannot parse reference"
+msgstr "无法解析引用"
+
+#: widgets/gsword-reference-chooser.c:1507
+msgid "Previous book"
+msgstr "上一卷"
+
+#: widgets/gsword-reference-chooser.c:1509
+msgid "Next book"
+msgstr "下一卷"
+
+#: widgets/gsword-reference-chooser.c:1511
+msgid "Previous chapter"
+msgstr "上一章"
+
+#: widgets/gsword-reference-chooser.c:1513
+msgid "Next chapter"
+msgstr "下一章"
+
+#: widgets/gsword-reference-chooser.c:1515
+msgid "Choose a book"
+msgstr "选择书卷"
+
+#: widgets/gsword-reference-chooser.c:1517
+msgid "Choose a chapter"
+msgstr "选择章"
+
+#: widgets/gsword-reference-chooser.c:1519
+msgid "Previous verse"
+msgstr "上一节"
+
+#: widgets/gsword-reference-chooser.c:1521
+msgid "Next verse"
+msgstr "下一节"
+
+#: widgets/gsword-reference-chooser.c:1523
+msgid "Choose a verse"
+msgstr "选择节"
+
+#: widgets/gsword-reference-chooser.c:1567
+msgid "Apply reference"
+msgstr "应用引用"
+
+#: widgets/gsword-reference-chooser.c:1569
+msgid "Cancel editing"
+msgstr "取消编辑"
+
+#: widgets/gsword-reference-chooser.c:1598
+msgid "Type to filter books / references"
+msgstr "输入以筛选书卷或引用"
+
+#: widgets/gsword-reference-chooser.c:1622
+msgid "Books"
+msgstr "书卷"
+
+#: widgets/gsword-reference-chooser.c:1624
+msgid "Chapters"
+msgstr "章"
+
+#: widgets/gsword-reference-chooser.c:1632
+msgid "Old Testament"
+msgstr "旧约"
+
+#: widgets/gsword-reference-chooser.c:1632
+msgid "New Testament"
+msgstr "新约"
+
+#: widgets/gsword-reference-chooser.c:1699
+msgid "Verses"
+msgstr "节"
+
+#: widgets/gsword-reference-parser.c:93 widgets/gsword-reference-parser.c:102
 msgid "Reference is empty"
 msgstr "引用为空"
 
-#: widgets/gsword-reference-chooser.c:1082
+#: widgets/gsword-reference-parser.c:116
 msgid "Verse is empty"
 msgstr "节不能为空"
 
-#: widgets/gsword-reference-chooser.c:1113
+#: widgets/gsword-reference-parser.c:147
 msgid "Chapter is invalid"
 msgstr "章无效"
 
-#: widgets/gsword-reference-chooser.c:1124
+#: widgets/gsword-reference-parser.c:158
 msgid "Book is missing"
 msgstr "缺少书卷"
 
-#: widgets/gsword-reference-chooser.c:1138
+#: widgets/gsword-reference-parser.c:172
 msgid "No matching book"
 msgstr "没有匹配的书卷"
 
-#: widgets/gsword-reference-chooser.c:1146
+#: widgets/gsword-reference-parser.c:180
 msgid "Book abbreviation is ambiguous"
 msgstr "书卷缩写有歧义"
 
-#: widgets/gsword-reference-chooser.c:1161
+#: widgets/gsword-reference-parser.c:195
 msgid "Book is not in this versification"
 msgstr "该章节体系不包含此书卷"
 
-#: widgets/gsword-reference-chooser.c:1175
+#: widgets/gsword-reference-parser.c:209
 #, c-format
 msgid "Chapter %d is out of range"
 msgstr "第 %d 章超出范围"
 
-#: widgets/gsword-reference-chooser.c:1186
+#: widgets/gsword-reference-parser.c:220
 msgid "Verse is invalid"
 msgstr "节无效"
 
-#: widgets/gsword-reference-chooser.c:1201
+#: widgets/gsword-reference-parser.c:235
 #, c-format
 msgid "Verse %d is out of range"
 msgstr "第 %d 节超出范围"
 
-#: widgets/gsword-reference-chooser.c:1311
-#: widgets/gsword-reference-chooser.c:1448
-#: widgets/gsword-reference-chooser.c:1967
-msgid "Type a reference or choose a book."
-msgstr "输入引用或选择书卷。"
-
-#: widgets/gsword-reference-chooser.c:1329
-#: widgets/gsword-reference-chooser.c:1355
-msgid "Multiple books match; choose one."
-msgstr "匹配到多个书卷，请选择一个。"
-
-#: widgets/gsword-reference-chooser.c:1333
-#: widgets/gsword-reference-chooser.c:1367
-msgid "Cannot parse reference"
-msgstr "无法解析引用"
-
-#: widgets/gsword-reference-chooser.c:1737
-msgid "Previous book"
-msgstr "上一卷"
-
-#: widgets/gsword-reference-chooser.c:1739
-msgid "Next book"
-msgstr "下一卷"
-
-#: widgets/gsword-reference-chooser.c:1741
-msgid "Previous chapter"
-msgstr "上一章"
-
-#: widgets/gsword-reference-chooser.c:1743
-msgid "Next chapter"
-msgstr "下一章"
-
-#: widgets/gsword-reference-chooser.c:1745
-msgid "Choose a book"
-msgstr "选择书卷"
-
-#: widgets/gsword-reference-chooser.c:1747
-msgid "Choose a chapter"
-msgstr "选择章"
-
-#: widgets/gsword-reference-chooser.c:1749
-msgid "Previous verse"
-msgstr "上一节"
-
-#: widgets/gsword-reference-chooser.c:1751
-msgid "Next verse"
-msgstr "下一节"
-
-#: widgets/gsword-reference-chooser.c:1753
-msgid "Choose a verse"
-msgstr "选择节"
-
-#: widgets/gsword-reference-chooser.c:1797
-msgid "Apply reference"
-msgstr "应用引用"
-
-#: widgets/gsword-reference-chooser.c:1799
-msgid "Cancel editing"
-msgstr "取消编辑"
-
-#: widgets/gsword-reference-chooser.c:1828
-msgid "Type to filter books / references"
-msgstr "输入以筛选书卷或引用"
-
-#: widgets/gsword-reference-chooser.c:1852
-msgid "Books"
-msgstr "书卷"
-
-#: widgets/gsword-reference-chooser.c:1854
-msgid "Chapters"
-msgstr "章"
-
-#: widgets/gsword-reference-chooser.c:1862
-msgid "Old Testament"
-msgstr "旧约"
-
-#: widgets/gsword-reference-chooser.c:1862
-msgid "New Testament"
-msgstr "新约"
-
-#: widgets/gsword-reference-chooser.c:1929
-msgid "Verses"
-msgstr "节"
-
-#: widgets/gsword-reference-chooser.c:2069
+#: widgets/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"

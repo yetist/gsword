@@ -3,6 +3,7 @@ gtk4_dep = dependency('gtk4', required: false)
 if gtk4_dep.found()
   reference_chooser_sources = files(
     'gsword-reference-chooser.c',
+    'gsword-reference-parser.c',
   )
 
   executable('gsword-reference-chooser-demo',
