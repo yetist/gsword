@@ -463,3 +463,28 @@ src/window.c：4508 -> 3490 行
   `gsword_window_open_commentary_module()` 等共享服务协调窗口；
 - 安装完成通过 `gsword_window_populate_modules()` 统一刷新侧边栏；
 - `GswordWindowPrivate` 不再保存模块列表和选择状态。
+
+### 阶段 7：研究面板
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（启动加载注释面板、研究面板子页、模块切换路径）
+新增文件：src/study-panel.c、src/study-panel.h
+src/window.c：3490 -> 2954 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- 注释、Strong's、交叉引用、词典四个子页迁入研究面板对象；
+- 注释跟随/固定状态、固定 key、注释模块和词典模块选择迁入研究面板；
+- `study-visible`、`study-follow`、`study-pinned-key` 设置由研究面板读写；
+- 侧边栏注释/词典入口通过 `gsword_window_open_commentary_module()`、
+  `gsword_window_open_lexicon_module()` 协调研究面板；
+- 研究面板通过 `gsword_window_current_reference()` 等共享服务同步当前节；
+- `GswordWindowPrivate` 不再保存研究面板控件和模块状态。
