@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 3 已完成，待开始阶段 4
+- 状态：阶段 4 已完成，待开始阶段 5
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -294,11 +294,26 @@ ASan 测试：24/24 通过
 
 ### 阶段 4：拆分笔记页
 
-- [ ] 新增 `notes-page.c` / `notes-page.h`。
-- [ ] 迁移笔记搜索、笔记列表、标签列表、经文列表。
-- [ ] 迁移笔记保存、删除、列表创建、加入列表。
-- [ ] 迁移 Markdown 导出。
-- [ ] 页面通过共享服务获取当前模块/引用并打开阅读器。
+- [x] 新增 `notes-page.c` / `notes-page.h`。
+- [x] 迁移笔记搜索、笔记列表、标签列表、经文列表。
+- [x] 迁移笔记保存、删除、列表创建、加入列表。
+- [x] 迁移 Markdown 导出。
+- [x] 页面通过共享服务获取当前模块/引用并打开阅读器。
+
+产出：
+
+```text
+src/notes-page.c
+src/notes-page.h
+```
+
+结果：
+
+```text
+src/window.c：6268 -> 5734 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -541,7 +556,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 1 共享服务 | 完成 | 本阶段提交 | `window-services.c` + `window-private.h` |
 | 2 搜索页 | 完成 | 本阶段提交 | 新增 `search-page.c` / `search-page.h` |
 | 3 资源页/教学页 | 完成 | 本阶段提交 | 新增 `resource-page.*` / `teaching-page.*` |
-| 4 笔记页 | 待开始 | | |
+| 4 笔记页 | 完成 | 本阶段提交 | 新增 `notes-page.c` / `notes-page.h` |
 | 5 计划/灵修/背经 | 待开始 | | |
 | 6 模块库/侧边栏 | 待开始 | | |
 | 7 研究面板 | 待开始 | | |

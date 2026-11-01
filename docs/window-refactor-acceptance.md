@@ -380,3 +380,28 @@ src/window.c：6806 -> 6268 行
 - 模块侧边栏通过 `gsword_resource_page_open()` 打开资源；
 - `gsword_window_ensure_verse_module()` 已作为共享服务暴露；
 - `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。
+
+### 阶段 4：笔记页
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（笔记页、当前笔记、标签/列表/编辑区加载）
+新增文件：src/notes-page.c、src/notes-page.h
+src/window.c：6268 -> 5734 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- 笔记搜索、笔记列表、标签列表、经文列表迁入页面对象；
+- 笔记加载、保存、删除、列表创建、加入列表迁入页面对象；
+- Markdown 导出迁入页面对象；
+- 当前节笔记入口改为 `gsword_notes_page_open_current()`；
+- 经文列表条目打开阅读器改为共享服务
+  `gsword_window_open_module_reference()`；
+- `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。

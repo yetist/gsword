@@ -13,7 +13,7 @@ Current implementation:
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, book/chapter/
   verse reference picker, parallel Bible template, study panel,
-  notes/tags/verse lists/highlights/export, module install/update/remove UI,
+  highlights/export, module install/update/remove UI,
   reading plans,
   daily devotion, memory review, teaching layout, grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
@@ -30,6 +30,8 @@ Current implementation:
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource
   tree, text/picture rendering and resource navigation
+- `notes-page.c` / `notes-page.h`: notes, note search, tags, verse lists and
+  Markdown export
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
