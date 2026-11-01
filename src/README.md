@@ -26,6 +26,10 @@ Current implementation:
   accessors, reference normalization, chapter rendering and view helpers
 - `search-page.c` / `search-page.h`: search UI, result navigation and search
   index actions
+- `teaching-page.c` / `teaching-page.h`: teaching workspace, scripture view,
+  teaching notes and fullscreen mode
+- `resource-page.c` / `resource-page.h`: general book and map viewer, resource
+  tree, text/picture rendering and resource navigation
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
