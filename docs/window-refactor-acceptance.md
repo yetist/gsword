@@ -405,3 +405,31 @@ src/window.c：6268 -> 5734 行
 - 经文列表条目打开阅读器改为共享服务
   `gsword_window_open_module_reference()`；
 - `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。
+
+### 阶段 5：计划页、灵修页、背经页
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（计划页、灵修页、背经页渲染和副页切换）
+新增文件：src/plan-page.c、src/plan-page.h、
+          src/devotion-page.c、src/devotion-page.h、
+          src/memory-page.c、src/memory-page.h
+src/window.c：5734 -> 4508 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- 计划选择、摘要、今日计划、完成状态、创建、删除迁入计划页；
+- 计划页继续作为“今日 / 计划 / 灵修 / 背经”的 `GtkNotebook` 容器；
+- 灵修模块选择、日期切换、灵修正文迁入灵修页；
+- 背经列表、遮罩、答案检查和复习操作迁入背经页；
+- 模块侧边栏的每日灵修入口改为
+  `gsword_plan_page_show_devotion()`；
+- 计划页通过共享服务打开阅读引用；
+- `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。

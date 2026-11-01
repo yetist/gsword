@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 4 已完成，待开始阶段 5
+- 状态：阶段 5 已完成，待开始阶段 6
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -331,20 +331,39 @@ ASan 测试：24/24 通过
 
 #### 计划页
 
-- [ ] 新增 `plan-page.c` / `plan-page.h`。
-- [ ] 迁移计划选择、摘要、今日计划、完成状态、创建、删除。
-- [ ] 保留计划页的 `GtkNotebook` 容器。
-- [ ] 页面只通过共享服务打开引用。
+- [x] 新增 `plan-page.c` / `plan-page.h`。
+- [x] 迁移计划选择、摘要、今日计划、完成状态、创建、删除。
+- [x] 保留计划页的 `GtkNotebook` 容器。
+- [x] 页面只通过共享服务打开引用。
 
 #### 灵修页
 
-- [ ] 新增 `devotion-page.c` / `devotion-page.h`。
-- [ ] 迁移灵修模块选择、日期切换、灵修正文。
+- [x] 新增 `devotion-page.c` / `devotion-page.h`。
+- [x] 迁移灵修模块选择、日期切换、灵修正文。
 
 #### 背经页
 
-- [ ] 新增 `memory-page.c` / `memory-page.h`。
-- [ ] 迁移背经列表、遮罩、输入检查、复习、删除。
+- [x] 新增 `memory-page.c` / `memory-page.h`。
+- [x] 迁移背经列表、遮罩、输入检查、复习、删除。
+
+产出：
+
+```text
+src/plan-page.c
+src/plan-page.h
+src/devotion-page.c
+src/devotion-page.h
+src/memory-page.c
+src/memory-page.h
+```
+
+结果：
+
+```text
+src/window.c：5734 -> 4508 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -557,7 +576,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 2 搜索页 | 完成 | 本阶段提交 | 新增 `search-page.c` / `search-page.h` |
 | 3 资源页/教学页 | 完成 | 本阶段提交 | 新增 `resource-page.*` / `teaching-page.*` |
 | 4 笔记页 | 完成 | 本阶段提交 | 新增 `notes-page.c` / `notes-page.h` |
-| 5 计划/灵修/背经 | 待开始 | | |
+| 5 计划/灵修/背经 | 完成 | 本阶段提交 | 新增 `plan-page.*` / `devotion-page.*` / `memory-page.*` |
 | 6 模块库/侧边栏 | 待开始 | | |
 | 7 研究面板 | 待开始 | | |
 | 8 工作区 | 待开始 | | |
