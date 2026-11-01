@@ -12,8 +12,8 @@ Current implementation:
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
 - `window.c` / `window.h`: main window, module sidebar, reader, book/chapter/
-  verse reference picker, parallel Bible template, study panel, search/index
-  UI, notes/tags/verse lists/highlights/export, module install/update/remove UI,
+  verse reference picker, parallel Bible template, study panel,
+  notes/tags/verse lists/highlights/export, module install/update/remove UI,
   reading plans,
   daily devotion, memory review, teaching layout, grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
@@ -24,6 +24,8 @@ Current implementation:
   expose `GswordWindowPrivate`
 - `window-services.c`: shared status/error/page navigation, module/store
   accessors, reference normalization, chapter rendering and view helpers
+- `search-page.c` / `search-page.h`: search UI, result navigation and search
+  index actions
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,

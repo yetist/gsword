@@ -3,6 +3,7 @@
 #include "plan-store.h"
 #include "app-paths.h"
 #include "gsword-reference-chooser.h"
+#include "search-page.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -84,11 +85,7 @@ typedef struct {
     gboolean workspace_sync_scroll_enabled;
     gboolean workspace_syncing_scroll;
 
-    GtkEntry *search_entry;
-    GtkDropDown *search_type;
-    GtkCheckButton *search_case;
-    GtkListBox *search_results;
-    GtkLabel *index_label;
+    GswordSearchPage *search_page;
 
     GswInstallManager *installer;
     GswStatusReporter *install_reporter;
@@ -198,7 +195,6 @@ typedef struct {
 G_DEFINE_TYPE_WITH_PRIVATE(GswordWindow, gsword_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void gsword_window_clear_list(GtkListBox *list);
-static void gsword_window_update_index_label(GswordWindow *self);
 static void gsword_window_open_note_for_current(GswordWindow *self);
 static void gsword_window_refresh_notes(GswordWindow *self);
 static void gsword_window_apply_active_verse(GswordWindow *self);
@@ -1120,6 +1116,27 @@ gsword_window_open_reference(GswordWindow *self, const gchar *reference)
 {
     if (reference == NULL || *reference == '\0' ||
         gsword_window_ensure_verse_module(self) == NULL)
+        return FALSE;
+    if (!gsword_window_set_key_text(self, reference))
+        return FALSE;
+    gsword_window_show_page(self, "reader");
+    return TRUE;
+}
+
+gboolean
+gsword_window_open_module_reference(GswordWindow *self,
+                                    const gchar *module_name,
+                                    const gchar *reference)
+{
+    GswModule *module;
+
+    if (module_name != NULL && *module_name != '\0') {
+        module = gsword_window_get_module(self);
+        if (module == NULL ||
+            g_strcmp0(gsw_module_get_name(module), module_name) != 0)
+            gsword_window_load_module(self, module_name);
+    }
+    if (reference == NULL || *reference == '\0')
         return FALSE;
     if (!gsword_window_set_key_text(self, reference))
         return FALSE;
@@ -2941,7 +2958,8 @@ gsword_window_refresh_reader(GswordWindow *self)
               "--library PATH."));
         gsword_window_set_status(self, _("No modules found"));
         gsword_window_sync_reference_chooser(self);
-        gsword_window_update_index_label(self);
+        if (priv->search_page != NULL)
+            gsword_search_page_refresh_index(priv->search_page);
         return;
     }
 
@@ -2984,7 +3002,8 @@ gsword_window_refresh_reader(GswordWindow *self)
     gsword_window_apply_highlights(self);
     gsword_window_apply_active_verse(self);
     gsword_window_update_study(self);
-    gsword_window_update_index_label(self);
+    if (priv->search_page != NULL)
+        gsword_search_page_refresh_index(priv->search_page);
     gsword_window_sync_reference_chooser(self);
     gsword_window_workspace_sync_from_reader(self);
     gsword_window_save_last_position(self);
@@ -4192,7 +4211,8 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     if (g_strcmp0(name, "panes") == 0) {
         gsword_window_workspace_sync_from_reader(self);
     } else if (g_strcmp0(name, "search") == 0) {
-        gsword_window_update_index_label(self);
+        if (priv->search_page != NULL)
+            gsword_search_page_refresh_index(priv->search_page);
     } else if (g_strcmp0(name, "notes") == 0) {
         gsword_window_refresh_notes(self);
         if (priv->note_storage_key == NULL && priv->module != NULL)
@@ -5822,242 +5842,6 @@ gsword_window_make_workspace_page(GswordWindow *self)
     return box;
 }
 
-static void
-gsword_window_run_search(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    GswSearchOptions *options;
-    GPtrArray *results;
-    GError *error = NULL;
-    guint i;
-    guint selected = gtk_drop_down_get_selected(priv->search_type);
-
-    if (priv->module == NULL) {
-        gsword_window_set_status(self, _("Open a module before searching"));
-        return;
-    }
-    while (gtk_widget_get_first_child(GTK_WIDGET(priv->search_results)) != NULL)
-        gtk_list_box_remove(priv->search_results,
-                            gtk_widget_get_first_child(
-                                GTK_WIDGET(priv->search_results)));
-
-    options = gsw_search_options_new();
-    gsw_search_options_set_text(
-        options, gtk_editable_get_text(GTK_EDITABLE(priv->search_entry)));
-    gsw_search_options_set_search_type(
-        options, selected == 1 ? GSW_SEARCH_MULTIWORD
-                             : selected == 2 ? GSW_SEARCH_REGEX
-                                             : GSW_SEARCH_PHRASE);
-    gsw_search_options_set_case_sensitive(
-        options, gtk_check_button_get_active(priv->search_case));
-    gsw_search_options_set_max_results(options, 200);
-    results = gsw_module_search_full(priv->module, options, NULL, NULL, NULL,
-                                     &error);
-    gsw_search_options_unref(options);
-    if (results == NULL) {
-        gsword_window_show_error(self, _("Search failed"), error);
-        return;
-    }
-
-    for (i = 0; i < results->len; i++) {
-        GswSearchResult *result = g_ptr_array_index(results, i);
-        GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *label;
-        gchar *text = g_strdup_printf("%s\n%s",
-            gsw_search_result_get_key(result),
-            gsw_search_result_get_snippet(result));
-
-        label = gtk_label_new(text);
-        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-        gtk_label_set_wrap(GTK_LABEL(label), TRUE);
-        gtk_widget_set_margin_top(label, 4);
-        gtk_widget_set_margin_bottom(label, 4);
-        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
-        g_object_set_data_full(G_OBJECT(row), "result-module",
-                               g_strdup(gsw_search_result_get_module_name(result)),
-                               g_free);
-        g_object_set_data_full(G_OBJECT(row), "result-key",
-                               g_strdup(gsw_search_result_get_key(result)),
-                               g_free);
-        gtk_list_box_append(priv->search_results, row);
-        g_free(text);
-    }
-    {
-        gchar *message = g_strdup_printf(_("Search: %u result(s)"), results->len);
-
-        gsword_window_set_status(self, message);
-        g_free(message);
-    }
-    g_ptr_array_unref(results);
-}
-
-static void
-on_search_clicked(GtkButton *button, gpointer user_data)
-{
-    (void)button;
-    gsword_window_run_search(GSWORD_WINDOW(user_data));
-}
-
-static void
-on_search_activate(GtkEntry *entry, gpointer user_data)
-{
-    (void)entry;
-    gsword_window_run_search(GSWORD_WINDOW(user_data));
-}
-
-static void
-on_search_result_selected(GtkListBox *list, GtkListBoxRow *row,
-                          gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *module_name;
-    const gchar *key;
-
-    (void)list;
-    if (row == NULL)
-        return;
-    module_name = g_object_get_data(G_OBJECT(row), "result-module");
-    key = g_object_get_data(G_OBJECT(row), "result-key");
-    if (module_name != NULL && g_strcmp0(module_name,
-                                         gsw_module_get_name(priv->module)) != 0)
-        gsword_window_load_module(self, module_name);
-    if (key != NULL)
-        gsword_window_set_key_text(self, key);
-    gsword_window_show_page(self, "reader");
-}
-
-static void
-gsword_window_index_progress(const gchar *module_name, guint processed,
-                             guint total, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    gchar *message = g_strdup_printf(_("Indexing %s: %u/%u"),
-                                     module_name, processed, total);
-
-    gsword_window_set_status(self, message);
-    g_free(message);
-    while (g_main_context_iteration(NULL, FALSE))
-        ;
-}
-
-static void
-gsword_window_update_index_label(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-
-    if (priv->module == NULL)
-        gtk_label_set_text(priv->index_label, _("Index: no module"));
-    else
-        gtk_label_set_text(priv->index_label,
-            gsw_module_has_search_index(priv->module)
-            ? _("Index: available") : _("Index: not built"));
-}
-
-static void
-on_build_index(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    GError *error = NULL;
-
-    (void)button;
-    if (priv->module == NULL)
-        return;
-    if (!gsw_module_build_search_index(priv->module, NULL,
-                                       gsword_window_index_progress, self,
-                                       &error)) {
-        gsword_window_show_error(self, _("Cannot build index"), error);
-        return;
-    }
-    gsword_window_set_status(self, _("Search index built"));
-    gsword_window_update_index_label(self);
-}
-
-static void
-on_delete_index(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    GError *error = NULL;
-
-    (void)button;
-    if (priv->module == NULL)
-        return;
-    if (!gsw_module_delete_search_index(priv->module, &error)) {
-        gsword_window_show_error(self, _("Cannot delete index"), error);
-        return;
-    }
-    gsword_window_set_status(self, _("Search index deleted"));
-    gsword_window_update_index_label(self);
-}
-
-static GtkWidget *
-gsword_window_make_search_page(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    GtkWidget *search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *search = gtk_button_new_with_label(_("Search"));
-    GtkWidget *build = gtk_button_new_from_icon_name(
-        "document-save-symbolic");
-    GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
-    GtkWidget *scrolled = gtk_scrolled_window_new();
-    GtkStringList *types;
-
-    gtk_widget_set_margin_top(controls, 8);
-    gtk_widget_set_margin_bottom(controls, 8);
-    gtk_widget_set_margin_start(controls, 12);
-    gtk_widget_set_margin_end(controls, 12);
-    gtk_widget_set_tooltip_text(build, _("Build search index"));
-    gtk_widget_set_tooltip_text(delete, _("Delete search index"));
-
-    priv->search_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(priv->search_entry,
-                                   _("Search text"));
-    gtk_widget_set_hexpand(GTK_WIDGET(priv->search_entry), TRUE);
-    priv->search_type = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
-    types = gtk_string_list_new(
-        (const gchar *[]) { _("Phrase"), _("Multiword"), _("Regex"), NULL });
-    gtk_drop_down_set_model(priv->search_type, G_LIST_MODEL(types));
-    g_object_unref(types);
-    priv->search_case = GTK_CHECK_BUTTON(
-        gtk_check_button_new_with_label(_("Case sensitive")));
-    priv->index_label = GTK_LABEL(gtk_label_new(_("Index: no module")));
-    gtk_label_set_xalign(priv->index_label, 0.0f);
-    gtk_widget_add_css_class(GTK_WIDGET(priv->index_label), "dim-label");
-    gtk_widget_add_css_class(GTK_WIDGET(priv->index_label), "caption");
-
-    g_signal_connect(search, "clicked", G_CALLBACK(on_search_clicked), self);
-    g_signal_connect(priv->search_entry, "activate",
-                     G_CALLBACK(on_search_activate), self);
-    g_signal_connect(build, "clicked", G_CALLBACK(on_build_index), self);
-    g_signal_connect(delete, "clicked", G_CALLBACK(on_delete_index), self);
-
-    gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(priv->search_entry));
-    gtk_box_append(GTK_BOX(search_row), search);
-    gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(priv->search_type));
-    gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(priv->search_case));
-    gtk_box_append(GTK_BOX(options_row), build);
-    gtk_box_append(GTK_BOX(options_row), delete);
-    gtk_box_append(GTK_BOX(controls), search_row);
-    gtk_box_append(GTK_BOX(controls), options_row);
-    gtk_box_append(GTK_BOX(controls), GTK_WIDGET(priv->index_label));
-
-    priv->search_results = GTK_LIST_BOX(gtk_list_box_new());
-    g_signal_connect(priv->search_results, "row-selected",
-                     G_CALLBACK(on_search_result_selected), self);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
-                                  GTK_WIDGET(priv->search_results));
-    gtk_widget_set_vexpand(scrolled, TRUE);
-
-    gtk_box_append(GTK_BOX(box), controls);
-    gtk_box_append(GTK_BOX(box), scrolled);
-    return box;
-}
-
 static GswInstallSource *
 gsword_window_current_install_source(GswordWindow *self)
 {
@@ -6755,6 +6539,7 @@ gsword_window_build(GswordWindow *self)
     sidebar_page = adw_navigation_page_new(gsword_window_make_sidebar(self),
                                            _("Library"));
 
+    priv->search_page = gsword_search_page_new(self);
     priv->content_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_reader(self),
@@ -6763,7 +6548,7 @@ gsword_window_build(GswordWindow *self)
                          gsword_window_make_workspace_page(self),
                          "panes", _("Panes"));
     gtk_stack_add_titled(priv->content_stack,
-                         gsword_window_make_search_page(self),
+                         gsword_search_page_widget(priv->search_page),
                          "search", _("Search"));
     gtk_stack_add_titled(priv->content_stack,
                          gsword_window_make_notes_page(self),
