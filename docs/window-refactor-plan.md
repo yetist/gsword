@@ -2,10 +2,10 @@
 
 ## 文档状态
 
-- 状态：阶段 7 完成（模块库、侧边栏和研究面板均已拆分）
+- 状态：阶段 8 完成（模块库、侧边栏、研究面板和多窗格工作区均已拆分）
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
-- 当前规模：`src/window.c` 约 2954 行
+- 当前规模：`src/window.c` 约 1636 行
 - 目标规模：`src/window.c` 约 500–800 行
 - 实施原则：行为不变、分阶段提交、每阶段可独立编译/测试/回滚
 
@@ -450,10 +450,27 @@ ASan 测试：24/24 通过
 
 ### 阶段 8：拆分多窗格工作区
 
-- [ ] 新增 `workspace-page.c` / `workspace-page.h`。
-- [ ] 新增 `workspace-pane.c` / `workspace-pane.h`。
-- [ ] `workspace-page` 负责容器、列数、同步滚动、保存恢复、并行模板。
-- [ ] `workspace-pane` 负责单窗格模块选择、引用选择器、拖拽、渲染、FOLLOW。
+- [x] 新增 `workspace-page.c` / `workspace-page.h`。
+- [x] 新增 `workspace-pane.c` / `workspace-pane.h`。
+- [x] `workspace-page` 负责容器、列数、同步滚动、保存恢复、并行模板。
+- [x] `workspace-pane` 负责单窗格模块选择、引用选择器、拖拽、渲染、FOLLOW。
+
+产出：
+
+```text
+src/workspace-page.c
+src/workspace-page.h
+src/workspace-pane.c
+src/workspace-pane.h
+```
+
+结果：
+
+```text
+src/window.c：2954 -> 1636 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -611,6 +628,6 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 5 计划/灵修/背经 | 完成 | 本阶段提交 | 新增 `plan-page.*` / `devotion-page.*` / `memory-page.*` |
 | 6 模块库/侧边栏 | 完成 | 本阶段提交 | 新增 `library-page.*` / `module-sidebar.*` |
 | 7 研究面板 | 完成 | 本阶段提交 | 新增 `study-panel.c` / `study-panel.h` |
-| 8 工作区 | 待开始 | | |
+| 8 工作区 | 完成 | 本阶段提交 | 新增 `workspace-page.*` / `workspace-pane.*` |
 | 9 阅读器 | 待开始 | | |
 | 10 壳体清理 | 待开始 | | |

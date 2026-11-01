@@ -488,3 +488,30 @@ src/window.c：3490 -> 2954 行
   `gsword_window_open_lexicon_module()` 协调研究面板；
 - 研究面板通过 `gsword_window_current_reference()` 等共享服务同步当前节；
 - `GswordWindowPrivate` 不再保存研究面板控件和模块状态。
+
+### 阶段 8：多窗格工作区
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（启动时按持久化布局恢复默认窗格）
+新增文件：src/workspace-page.c、src/workspace-page.h、
+          src/workspace-pane.c、src/workspace-pane.h
+src/window.c：2954 -> 1636 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- 多窗格容器、空状态、1–4 列布局、同步滚动开关迁入工作区页面；
+- 工作区布局、列数、同步滚动设置保存和恢复迁入工作区页面；
+- 添加/删除/清空窗格、拖拽重排和并行模板迁入工作区页面；
+- 单窗格模块选择、紧凑引用选择器、渲染、FOLLOW、活动节和滚动同步
+  迁入窗格对象；
+- 工作区通过 `gsword_window_current_start_reference()` 等共享服务与阅读器
+  同步当前引用；
+- `GswordWindowPrivate` 不再保存工作区控件、窗格数组和布局状态。

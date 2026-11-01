@@ -7,6 +7,8 @@ src/memory-page.c
 src/library-page.c
 src/module-sidebar.c
 src/study-panel.c
+src/workspace-page.c
+src/workspace-pane.c
 src/devotion-page.c
 src/plan-page.c
 src/resource-page.c
