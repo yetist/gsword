@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 12:17+0800\n"
+"POT-Creation-Date: 2026-11-01 12:20+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,11 +33,11 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:246 src/window.c:2493
+#: src/window.c:213 src/workspace-page.c:338
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:358
+#: src/window.c:325
 msgid ""
 "No modules found.\n"
 "\n"
@@ -47,271 +47,199 @@ msgstr ""
 "\n"
 "请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
-#: src/window.c:360
+#: src/window.c:327
 msgid "No modules found"
 msgstr "未找到模块"
 
-#: src/window.c:386
+#: src/window.c:353
 msgid "Cannot read entry"
 msgstr "无法读取条目"
 
-#: src/window.c:424 src/window.c:746 src/window.c:783
+#: src/window.c:391 src/window.c:713 src/window.c:750
 msgid "Cannot set key"
 msgstr "无法设置位置"
 
-#: src/window.c:864
+#: src/window.c:831
 msgid "Highlight removed"
 msgstr "高亮已移除"
 
-#: src/window.c:869
+#: src/window.c:836
 msgid "Verse highlighted"
 msgstr "经文已高亮"
 
-#: src/window.c:872
+#: src/window.c:839
 msgid "Cannot update highlight"
 msgstr "无法更新高亮"
 
-#: src/window.c:906 src/resource-page.c:206 src/resource-page.c:212
+#: src/window.c:873 src/resource-page.c:206 src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:946
+#: src/window.c:913
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:963
+#: src/window.c:930
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:1067
+#: src/window.c:1034
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/window.c:1136 src/window.c:1267
+#: src/window.c:1103 src/window.c:1234
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:1141 src/window.c:2781
+#: src/window.c:1108 src/window.c:1464
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:1143
+#: src/window.c:1110
 msgid "Reading appearance is applied immediately."
 msgstr "阅读外观会立即应用。"
 
-#: src/window.c:1147
+#: src/window.c:1114
 msgid "Font size"
 msgstr "字体大小"
 
-#: src/window.c:1148
+#: src/window.c:1115
 msgid "Scale the scripture text size"
 msgstr "调整经文文字大小"
 
-#: src/window.c:1159
+#: src/window.c:1126
 msgid "Color scheme"
 msgstr "配色方案"
 
-#: src/window.c:1161
+#: src/window.c:1128
 msgid "Follow the desktop or force light/dark mode"
 msgstr "跟随桌面或强制浅色/深色模式"
 
-#: src/window.c:1163
+#: src/window.c:1130
 msgid "Follow system"
 msgstr "跟随系统"
 
-#: src/window.c:1163
+#: src/window.c:1130
 msgid "Light"
 msgstr "浅色"
 
-#: src/window.c:1163
+#: src/window.c:1130
 msgid "Dark"
 msgstr "深色"
 
-#: src/window.c:1258 src/window.c:2763
+#: src/window.c:1225 src/window.c:1446
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:1262
+#: src/window.c:1229
 msgid "Reading workspace"
 msgstr "阅读工作区"
 
-#: src/window.c:1263
+#: src/window.c:1230
 msgid "Study workspace"
 msgstr "研经工作区"
 
-#: src/window.c:1264
+#: src/window.c:1231
 msgid "Multi-pane workspace"
 msgstr "多窗格工作区"
 
-#: src/window.c:1265
+#: src/window.c:1232
 msgid "Parallel workspace"
 msgstr "并行工作区"
 
-#: src/window.c:1266
+#: src/window.c:1233
 msgid "Teaching workspace"
 msgstr "教学工作区"
 
-#: src/window.c:1268
+#: src/window.c:1235
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:1269 src/window-services.c:64
+#: src/window.c:1236 src/window-services.c:64
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:1354
+#: src/window.c:1321
 msgid "Teach"
 msgstr "教学"
 
-#: src/window.c:1386
+#: src/window.c:1353
 msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
-#: src/window.c:1392
+#: src/window.c:1359
 msgid "Copy entry"
 msgstr "复制条目"
 
-#: src/window.c:1393
+#: src/window.c:1360
 msgid "Open note for this verse"
 msgstr "打开本节笔记"
 
-#: src/window.c:1394
+#: src/window.c:1361
 msgid "Toggle verse highlight"
 msgstr "切换经文高亮"
 
-#: src/window.c:1395
+#: src/window.c:1362
 msgid "Toggle study panel"
 msgstr "切换研经面板"
 
-#: src/window.c:1658
-msgid "No module selected."
-msgstr "未选择模块。"
-
-#: src/window.c:1671 src/study-panel.c:119
-msgid "No commentary for this verse."
-msgstr "本节没有注释。"
-
-#: src/window.c:1672
-msgid "No content for this reference."
-msgstr "此引用没有内容。"
-
-#: src/window.c:1750
-msgid "Cannot open module."
-msgstr "无法打开模块。"
-
-#: src/window.c:2037
-msgid "Workspace pane updated"
-msgstr "工作区窗格已更新"
-
-#: src/window.c:2100
-msgid "Drag to another pane to rearrange"
-msgstr "拖到另一个窗格以重新排列"
-
-#: src/window.c:2161
-msgid "Pane order changed"
-msgstr "窗格顺序已更改"
-
-#: src/window.c:2279
-msgid "Drag to rearrange pane"
-msgstr "拖动以重新排列窗格"
-
-#: src/window.c:2294 src/study-panel.c:568
-msgid "Follow"
-msgstr "跟随"
-
-#: src/window.c:2297
-msgid "Follow the active passage"
-msgstr "跟随当前经文"
-
-#: src/window.c:2305
-msgid "Close pane"
-msgstr "关闭窗格"
-
-#: src/window.c:2520
-msgid "Parallel workspace ready"
-msgstr "并行工作区已就绪"
-
-#: src/window.c:2669
-msgid "Add pane"
-msgstr "添加窗格"
-
-#: src/window.c:2670
-msgid "Clear panes"
-msgstr "清空窗格"
-
-#: src/window.c:2671
-msgid "Columns"
-msgstr "列数"
-
-#: src/window.c:2672
-msgid "Sync scroll"
-msgstr "同步滚动"
-
-#: src/window.c:2673
-msgid "No panes yet. Add a pane to begin."
-msgstr "还没有窗格。添加一个窗格开始。"
-
-#: src/window.c:2691
-msgid "Keep pane scroll positions together"
-msgstr "保持多个窗格的滚动位置同步"
-
-#: src/window.c:2756
+#: src/window.c:1439
 msgid "SWORD study"
 msgstr "SWORD 研经"
 
-#: src/window.c:2770 src/window.c:2802
+#: src/window.c:1453 src/window.c:1486
 msgid "Library"
 msgstr "模块库"
 
-#: src/window.c:2784
+#: src/window.c:1468
 msgid "Panes"
 msgstr "窗格"
 
-#: src/window.c:2787 src/search-page.c:212
+#: src/window.c:1471 src/search-page.c:212
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:2790 src/notes-page.c:483
+#: src/window.c:1474 src/notes-page.c:483
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:2793
+#: src/window.c:1477
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:2821
+#: src/window.c:1505
 msgid "Workspace"
 msgstr "工作区"
 
-#: src/window-services.c:140 src/window-services.c:148
+#: src/window-services.c:152 src/window-services.c:160
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window-services.c:142 src/window-services.c:149 src/module-sidebar.c:27
+#: src/window-services.c:154 src/window-services.c:161 src/module-sidebar.c:27
 msgid "Maps"
 msgstr "地图"
 
-#: src/window-services.c:144
+#: src/window-services.c:156
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window-services.c:145 src/module-sidebar.c:23
+#: src/window-services.c:157 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window-services.c:146 src/module-sidebar.c:24
+#: src/window-services.c:158 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
-#: src/window-services.c:147
+#: src/window-services.c:159
 msgid "Generic Books"
 msgstr "通用书籍"
 
-#: src/window-services.c:150
+#: src/window-services.c:162
 msgid "Other"
 msgstr "其他"
 
-#: src/window-services.c:154
+#: src/window-services.c:166
 msgid "Unknown"
 msgstr "未知"
 
@@ -764,6 +692,10 @@ msgstr "模块"
 msgid "Commentary"
 msgstr "注释"
 
+#: src/study-panel.c:119 src/workspace-pane.c:205
+msgid "No commentary for this verse."
+msgstr "本节没有注释。"
+
 #: src/study-panel.c:124
 msgid "No commentary module is installed."
 msgstr "未安装注释模块。"
@@ -788,6 +720,10 @@ msgstr "无法查询词典条目"
 msgid "Cannot read lexicon entry"
 msgstr "无法读取词典条目"
 
+#: src/study-panel.c:568 src/workspace-pane.c:572
+msgid "Follow"
+msgstr "跟随"
+
 #: src/study-panel.c:579
 msgid "Lookup"
 msgstr "查询"
@@ -807,6 +743,70 @@ msgstr "Strong 原文"
 #: src/study-panel.c:653
 msgid "Cross-refs"
 msgstr "交叉引用"
+
+#: src/workspace-page.c:375
+msgid "Parallel workspace ready"
+msgstr "并行工作区已就绪"
+
+#: src/workspace-page.c:540
+msgid "Pane order changed"
+msgstr "窗格顺序已更改"
+
+#: src/workspace-page.c:622
+msgid "Add pane"
+msgstr "添加窗格"
+
+#: src/workspace-page.c:623
+msgid "Clear panes"
+msgstr "清空窗格"
+
+#: src/workspace-page.c:624
+msgid "Columns"
+msgstr "列数"
+
+#: src/workspace-page.c:625
+msgid "Sync scroll"
+msgstr "同步滚动"
+
+#: src/workspace-page.c:626
+msgid "No panes yet. Add a pane to begin."
+msgstr "还没有窗格。添加一个窗格开始。"
+
+#: src/workspace-page.c:647
+msgid "Keep pane scroll positions together"
+msgstr "保持多个窗格的滚动位置同步"
+
+#: src/workspace-pane.c:192
+msgid "No module selected."
+msgstr "未选择模块。"
+
+#: src/workspace-pane.c:206
+msgid "No content for this reference."
+msgstr "此引用没有内容。"
+
+#: src/workspace-pane.c:261
+msgid "Cannot open module."
+msgstr "无法打开模块。"
+
+#: src/workspace-pane.c:456
+msgid "Workspace pane updated"
+msgstr "工作区窗格已更新"
+
+#: src/workspace-pane.c:483
+msgid "Drag to another pane to rearrange"
+msgstr "拖到另一个窗格以重新排列"
+
+#: src/workspace-pane.c:558
+msgid "Drag to rearrange pane"
+msgstr "拖动以重新排列窗格"
+
+#: src/workspace-pane.c:575
+msgid "Follow the active passage"
+msgstr "跟随当前经文"
+
+#: src/workspace-pane.c:582
+msgid "Close pane"
+msgstr "关闭窗格"
 
 #: src/devotion-page.c:99
 msgid "No devotional entry is available for today in this module."

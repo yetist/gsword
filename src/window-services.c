@@ -83,6 +83,18 @@ gsword_window_show_page(GswordWindow *self, const gchar *page)
 }
 
 gboolean
+gsword_window_is_page_visible(GswordWindow *self, const gchar *page)
+{
+    GswordWindowServices *services = get_services(self);
+    const gchar *visible;
+
+    if (services == NULL || services->content_stack == NULL || page == NULL)
+        return FALSE;
+    visible = gtk_stack_get_visible_child_name(services->content_stack);
+    return g_strcmp0(visible, page) == 0;
+}
+
+gboolean
 gsword_window_module_info_is_devotional(GswModuleInfo *info)
 {
     gchar **features;
