@@ -11,6 +11,8 @@ with the same picker popover.
 widgets/
 ├── gsword-reference-chooser.c
 ├── gsword-reference-chooser.h
+├── gsword-reference-parser.c
+├── gsword-reference-parser.h
 ├── reference-chooser-demo.c
 ├── test-reference-chooser.c
 ├── meson.build
@@ -201,20 +203,29 @@ activate  user confirmed a reference
 
 ## Implementation notes
 
-- Reference parsing is independent of the widget; book candidate lookup takes
-  only (text, locale, versification).
+- Reference parsing is independent of the widget and lives in
+  `gsword-reference-parser.c`; book candidate lookup takes only (text, locale,
+  versification).
+- `gsword-reference-chooser.h` includes the parser header, so applications can
+  keep including only the chooser header.
 - Main-entry and filter-entry parsing share `update_from_text()` and
   `activate_text()`, avoiding two subtly different commit paths.
-- Path widths, number-grid columns, button sizes, row count, grid width, and
-  scrolled-area width are named constants at the top of the C file.
+- Path text updates go through `update_reference_text()`, keeping the entry,
+  filter entry, and `updating` guard in sync.
+- When the popover is hidden, `set_reference()` only updates the path bar; the
+  picker is refreshed when it is next opened.  This avoids rebuilding book rows
+  and number grids while the application synchronizes the reader position.
+- Path widths, number-grid columns, button sizes, row count, grid width,
+  scrolled-area width, and popover pane dimensions are named constants at the
+  top of the C file.
 - The widget CSS provider is installed once per process for the default
   display instead of once per widget instance.
 - The picker popover is parented to the chapter button so it opens at a stable
   position below the path bar.
 - The picker uses two `GtkListBox` pages (`旧约` / `新约`) inside a
   `GtkNotebook`, plus 10-column `GtkGrid` sections for chapters and verses.
-- The path bar and the editor are two pages of a `GtkStack`; they share the
-  same selection state and occupy the same single row.
+- The path bar and the editor are two rows whose visibility is toggled; they
+  share the same selection state and occupy the same single toolbar row.
 - Book aliases are resolved through `GswLocaleMgr`; the widget does not
   hard-code the 66 book names.
 - The main reader and workspace panes share the widget source directly; there
