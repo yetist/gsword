@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 2 已完成，待开始阶段 3
+- 状态：阶段 3 已完成，待开始阶段 4
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -254,15 +254,32 @@ ASan 测试：24/24 通过
 
 #### 资源页
 
-- [ ] 新增 `resource-page.c` / `resource-page.h`。
-- [ ] 迁移资源树、路径显示、文本/图片内容。
-- [ ] 迁移资源返回逻辑。
+- [x] 新增 `resource-page.c` / `resource-page.h`。
+- [x] 迁移资源树、路径显示、文本/图片内容。
+- [x] 迁移资源返回逻辑。
 
 #### 教学页
 
-- [ ] 新增 `teaching-page.c` / `teaching-page.h`。
-- [ ] 迁移教学经文、教学笔记、全屏、加载、保存、返回。
-- [ ] 保持教学笔记与计划库的关联。
+- [x] 新增 `teaching-page.c` / `teaching-page.h`。
+- [x] 迁移教学经文、教学笔记、全屏、加载、保存、返回。
+- [x] 保持教学笔记与计划库的关联。
+
+产出：
+
+```text
+src/resource-page.c
+src/resource-page.h
+src/teaching-page.c
+src/teaching-page.h
+```
+
+结果：
+
+```text
+src/window.c：6806 -> 6268 行
+普通测试：25/25 通过
+ASan 测试：24/24 通过
+```
 
 验收：
 
@@ -523,7 +540,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 0 基线 | 完成 | `5760c3b` | `docs/window-refactor-acceptance.md` |
 | 1 共享服务 | 完成 | 本阶段提交 | `window-services.c` + `window-private.h` |
 | 2 搜索页 | 完成 | 本阶段提交 | 新增 `search-page.c` / `search-page.h` |
-| 3 资源页/教学页 | 待开始 | | |
+| 3 资源页/教学页 | 完成 | 本阶段提交 | 新增 `resource-page.*` / `teaching-page.*` |
 | 4 笔记页 | 待开始 | | |
 | 5 计划/灵修/背经 | 待开始 | | |
 | 6 模块库/侧边栏 | 待开始 | | |

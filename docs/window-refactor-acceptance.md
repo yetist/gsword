@@ -355,3 +355,28 @@ src/window.c：7021 -> 6806 行
 - 新增 `gsword_window_open_module_reference()` 共享服务；
 - 搜索页在模块变化、阅读器刷新和切换到搜索页时独立刷新索引状态；
 - `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。
+
+### 阶段 3：资源页和教学页
+
+```text
+提交：本阶段提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（教学加载/保存/返回/全屏，通用书打开/章节读取）
+新增文件：src/resource-page.c、src/resource-page.h、
+          src/teaching-page.c、src/teaching-page.h
+src/window.c：6806 -> 6268 行
+已知警告是否有新增：无
+遗留问题：无
+```
+
+已完成：
+
+- 教学页经文、教学笔记、全屏、加载、保存、返回迁入页面对象；
+- 教学笔记继续使用 `GswordPlanStore`；
+- 通用书/地图资源树、路径、文本/图片显示和返回迁入页面对象；
+- 模块侧边栏通过 `gsword_resource_page_open()` 打开资源；
+- `gsword_window_ensure_verse_module()` 已作为共享服务暴露；
+- `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。

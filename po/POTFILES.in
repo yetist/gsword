@@ -2,4 +2,6 @@ src/application.c
 src/window.c
 src/window-services.c
 src/search-page.c
+src/resource-page.c
+src/teaching-page.c
 widgets/gsword-reference-chooser.c
