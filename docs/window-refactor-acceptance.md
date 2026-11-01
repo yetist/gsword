@@ -433,3 +433,25 @@ src/window.c：5734 -> 4508 行
   `gsword_plan_page_show_devotion()`；
 - 计划页通过共享服务打开阅读引用；
 - `src/meson.build`、`po/POTFILES.in`、`gsword.pot` 和 `zh_CN.po` 已更新。
+
+### 阶段 6（进行中）：模块库页面
+
+```text
+提交：部分提交
+普通构建：通过
+普通测试：25/25 通过
+ASan 构建：通过
+ASan 测试：24/24 通过
+UI 验收：通过（模块库页面、安装源、远程列表、已安装模块和本地安装表单）
+新增文件：src/library-page.c、src/library-page.h
+src/window.c：4508 -> 3785 行
+已知警告是否有新增：无
+遗留问题：module-sidebar.c / module-sidebar.h 尚未拆分
+```
+
+已完成：
+
+- 安装源、远程模块列表、模块详情、安装/更新/删除；
+- 安装进度、取消和本地目录安装迁入库页面；
+- 安装管理器、状态报告器和安装 cancellable 迁入库页面；
+- 模块侧边栏尚未迁移，仍在 window.c。

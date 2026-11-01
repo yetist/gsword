@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 状态：阶段 5 已完成，待开始阶段 6
+- 状态：阶段 6 进行中（库页面已拆分，模块侧边栏待拆分）
 - 验收基线：`docs/window-refactor-acceptance.md`
 - 基线提交：`46b4e81 Compact chapter and verse path segments`
 - 当前规模：`src/window.c` 约 7140 行
@@ -378,9 +378,9 @@ ASan 测试：24/24 通过
 
 ### 阶段 6：拆分模块库和模块侧边栏
 
-- [ ] 新增 `library-page.c` / `library-page.h`。
+- [x] 新增 `library-page.c` / `library-page.h`。
 - [ ] 新增 `module-sidebar.c` / `module-sidebar.h`。
-- [ ] 将安装源、远程模块、本地安装、安装进度、取消操作迁入库页面。
+- [x] 将安装源、远程模块、本地安装、安装进度、取消操作迁入库页面。
 - [ ] 将模块分组、模块列表、模块选择迁入侧边栏模块。
 - [ ] 安装完成统一通过窗口服务刷新模块和侧边栏。
 
@@ -577,7 +577,7 @@ xvfb-run -s '-screen 0 1500x1000x24' ...
 | 3 资源页/教学页 | 完成 | 本阶段提交 | 新增 `resource-page.*` / `teaching-page.*` |
 | 4 笔记页 | 完成 | 本阶段提交 | 新增 `notes-page.c` / `notes-page.h` |
 | 5 计划/灵修/背经 | 完成 | 本阶段提交 | 新增 `plan-page.*` / `devotion-page.*` / `memory-page.*` |
-| 6 模块库/侧边栏 | 待开始 | | |
+| 6 模块库/侧边栏 | 进行中 | 部分提交 | `library-page.*` 完成；侧边栏待完成 |
 | 7 研究面板 | 待开始 | | |
 | 8 工作区 | 待开始 | | |
 | 9 阅读器 | 待开始 | | |
