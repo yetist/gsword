@@ -3,6 +3,9 @@ src/window.c
 src/window-services.c
 src/search-page.c
 src/notes-page.c
+src/memory-page.c
+src/devotion-page.c
+src/plan-page.c
 src/resource-page.c
 src/teaching-page.c
 widgets/gsword-reference-chooser.c

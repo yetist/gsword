@@ -14,8 +14,7 @@ Current implementation:
 - `window.c` / `window.h`: main window, module sidebar, reader, book/chapter/
   verse reference picker, parallel Bible template, study panel,
   highlights/export, module install/update/remove UI,
-  reading plans,
-  daily devotion, memory review, teaching layout, grouped resource sidebar,
+  grouped resource sidebar,
   linked/pinned study panel, type-specific dictionary, general book, map and
   daily devotion viewers, Strong's/cross-reference navigation, range
   selection, workspace templates, multi-pane editor and persistence,
@@ -32,6 +31,12 @@ Current implementation:
   tree, text/picture rendering and resource navigation
 - `notes-page.c` / `notes-page.h`: notes, note search, tags, verse lists and
   Markdown export
+- `plan-page.c` / `plan-page.h`: reading plan notebook, plan selection,
+  schedule and plan creation/deletion
+- `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
+  and text display
+- `memory-page.c` / `memory-page.h`: memory verse list, card masking, answer
+  checking and review scheduling
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
   highlights in `~/.local/share/gsword/app.db`
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
