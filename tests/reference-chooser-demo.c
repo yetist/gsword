@@ -3,7 +3,7 @@
  *
  * Run with:
  *   GSW_LOCALE_PATH=$PWD/data/locales.d \
- *     ./build/widgets/gsword-reference-chooser-demo zh-Hans KJV "创 1:1"
+ *     ./build/tests/gsword-reference-chooser-demo zh-Hans KJV "创 1:1"
  */
 
 #include "gsword-reference-chooser.h"

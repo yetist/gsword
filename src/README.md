@@ -30,6 +30,10 @@ Current implementation:
   previous-position persistence
 - `reader-toolbar.c` / `reader-toolbar.h`: reference chooser, copy, note,
   highlight, teaching and study-panel controls
+- `gsword-reference-chooser.c` / `.h`: reusable full and compact
+  book/chapter/verse picker used by the reader toolbar and comparison panes
+- `gsword-reference-parser.c` / `.h`: locale-aware reference parsing and book
+  candidate lookup
 - `study-panel.c` / `study-panel.h`: commentary, Strong's, cross-reference and
   lexicon tabs, follow/pin state and study module selection
 - `workspace-page.c` / `workspace-page.h`: comparison container, 1–4 columns,
@@ -65,10 +69,10 @@ Current implementation:
   comparison layout, columns and scroll sync, legacy parallel template modules,
   active plan, devotion module, study panel state, font scale, theme
 
-The reader toolbar and each comparison pane uses
-`../widgets/gsword-reference-chooser.c`.  The reader uses the full path-bar
-form; comparison panes use `gsword_reference_chooser_new_compact()` and open the same
-book/chapter/verse picker.
+The reader toolbar and each comparison pane use
+`gsword-reference-chooser.c`.  The reader uses the full path-bar form;
+comparison panes use `gsword_reference_chooser_new_compact()` and open the
+same book/chapter/verse picker.
 
 Application UI strings use gettext. The `../po/` directory contains
 `POTFILES.in`, `LINGUAS`, and translated catalogs such as `zh_CN.po`.

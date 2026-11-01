@@ -1,4 +1,3 @@
-gtk4_dep = dependency('gtk4', required: false)
 adw_dep = dependency('libadwaita-1', required: false)
 sqlite3_dep = dependency('sqlite3', required: false)
 
@@ -11,9 +10,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'study-panel.c', 'workspace-page.c', 'workspace-pane.c',
      'reader-page.c', 'reader-toolbar.c', 'preferences-dialog.c',
      'notes-store.c', 'plan-store.c', 'app-paths.c',
-     '../widgets/gsword-reference-chooser.c',
-     '../widgets/gsword-reference-parser.c'],
-    include_directories: include_directories('../widgets'),
+     'gsword-reference-chooser.c', 'gsword-reference-parser.c'],
     dependencies: [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep],
     install: true,
   )

@@ -7,13 +7,13 @@
 
 - `lib/`：`libgsword` 库实现
 - `include/gsword/`：`libgsword` 公共 API
-- `src/`：`gsword` GTK4 桌面应用
-- `widgets/`：可复用的书卷/章/节引用选择器及其 demo、测试
+- `src/`：`gsword` GTK4 桌面应用和可复用的书卷/章/节引用选择器
 - `data/locales.d/`：libgsword 自有 locale 数据
 - `tools/`：locale 导入、校验和 v11n 生成工具
 - `examples/`：库示例和 GTK4 前端原型
-- `tests/`：库测试
+- `tests/`：库测试、引用选择器测试和 demo
 - `docs/app-design.md`：`gsword` 应用功能与界面设计
+- `docs/reference-chooser.md`：引用选择器的使用和设计说明
 
 `gsword` 应用只依赖 `include/gsword/` 的公共接口。
 

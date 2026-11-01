@@ -16,5 +16,5 @@ src/devotion-page.c
 src/plan-page.c
 src/resource-page.c
 src/teaching-page.c
-widgets/gsword-reference-chooser.c
-widgets/gsword-reference-parser.c
+src/gsword-reference-chooser.c
+src/gsword-reference-parser.c

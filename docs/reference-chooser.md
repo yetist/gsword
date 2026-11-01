@@ -8,15 +8,15 @@ with the same picker popover.
 ## Files
 
 ```text
-widgets/
+src/
 ├── gsword-reference-chooser.c
 ├── gsword-reference-chooser.h
 ├── gsword-reference-parser.c
-├── gsword-reference-parser.h
+└── gsword-reference-parser.h
+
+tests/
 ├── reference-chooser-demo.c
-├── test-reference-chooser.c
-├── meson.build
-└── README.md
+└── test-reference-chooser.c
 ```
 
 ## Build
@@ -32,7 +32,7 @@ English:
 
 ```sh
 GDK_BACKEND=x11 \
-  ./build/widgets/gsword-reference-chooser-demo en KJV "Gen 1:1"
+  ./build/tests/gsword-reference-chooser-demo en KJV "Gen 1:1"
 ```
 
 Chinese names and abbreviations:
@@ -41,7 +41,7 @@ Chinese names and abbreviations:
 GDK_BACKEND=x11 \
 GSW_LOCALE_PATH="$PWD/data/locales.d" \
 LANG=zh_CN.UTF-8 \
-  ./build/widgets/gsword-reference-chooser-demo zh-Hans KJV "创 1:1"
+  ./build/tests/gsword-reference-chooser-demo zh-Hans KJV "创 1:1"
 ```
 
 Demo arguments:
