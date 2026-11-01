@@ -29,6 +29,9 @@ GswModule *gsword_window_get_module(GswordWindow *self);
 GswordNotesStore *gsword_window_get_notes_store(GswordWindow *self);
 GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
 GswModule *gsword_window_ensure_verse_module(GswordWindow *self);
+void gsword_window_populate_modules(GswordWindow *self);
+const gchar *gsword_window_module_type_display(GswModuleInfo *info);
+void gsword_window_clear_list(GtkListBox *list);
 
 gboolean gsword_window_set_key_text(GswordWindow *self, const gchar *text);
 gboolean gsword_window_open_reference(GswordWindow *self,
