@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 20:48+0800\n"
+"POT-Creation-Date: 2026-11-01 20:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1208,87 +1208,87 @@ msgstr ""
 msgid "Current passage"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1079
-#: widgets/gsword-reference-chooser.c:1218
-#: widgets/gsword-reference-chooser.c:1737
+#: widgets/gsword-reference-chooser.c:1056
+#: widgets/gsword-reference-chooser.c:1186
+#: widgets/gsword-reference-chooser.c:1690
 msgid "Type a reference or choose a book."
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1098
-#: widgets/gsword-reference-chooser.c:1125
+#: widgets/gsword-reference-chooser.c:1075
+#: widgets/gsword-reference-chooser.c:1104
 msgid "Multiple books match; choose one."
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1102
-#: widgets/gsword-reference-chooser.c:1137
+#: widgets/gsword-reference-chooser.c:1079
+#: widgets/gsword-reference-chooser.c:1116
 msgid "Cannot parse reference"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1507
+#: widgets/gsword-reference-chooser.c:1458
 msgid "Previous book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1509
+#: widgets/gsword-reference-chooser.c:1460
 msgid "Next book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1511
+#: widgets/gsword-reference-chooser.c:1462
 msgid "Previous chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1513
+#: widgets/gsword-reference-chooser.c:1464
 msgid "Next chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1515
+#: widgets/gsword-reference-chooser.c:1466
 msgid "Choose a book"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1517
+#: widgets/gsword-reference-chooser.c:1468
 msgid "Choose a chapter"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1519
+#: widgets/gsword-reference-chooser.c:1470
 msgid "Previous verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1521
+#: widgets/gsword-reference-chooser.c:1472
 msgid "Next verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1523
+#: widgets/gsword-reference-chooser.c:1474
 msgid "Choose a verse"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1567
+#: widgets/gsword-reference-chooser.c:1518
 msgid "Apply reference"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1569
+#: widgets/gsword-reference-chooser.c:1520
 msgid "Cancel editing"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1598
+#: widgets/gsword-reference-chooser.c:1549
 msgid "Type to filter books / references"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1622
+#: widgets/gsword-reference-chooser.c:1573
 msgid "Books"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1624
+#: widgets/gsword-reference-chooser.c:1575
 msgid "Chapters"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1632
+#: widgets/gsword-reference-chooser.c:1583
 msgid "Old Testament"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1632
+#: widgets/gsword-reference-chooser.c:1583
 msgid "New Testament"
 msgstr ""
 
-#: widgets/gsword-reference-chooser.c:1699
+#: widgets/gsword-reference-chooser.c:1652
 msgid "Verses"
 msgstr ""
 

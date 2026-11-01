@@ -27,6 +27,10 @@
 #define GSWORD_COMPACT_BOOK_WIDTH 96
 #define GSWORD_COMPACT_CHAPTER_WIDTH 48
 #define GSWORD_COMPACT_VERSE_WIDTH 40
+#define GSWORD_POPOVER_MARGIN 8
+#define GSWORD_BOOK_PANE_WIDTH 240
+#define GSWORD_BOOK_NOTEBOOK_WIDTH 230
+#define GSWORD_BOOK_NOTEBOOK_HEIGHT 320
 
 typedef struct {
     gint index;
@@ -144,6 +148,22 @@ book_osis(GswordReferenceChooserPrivate *priv, gint book)
     return info->osis;
 }
 
+static void
+update_reference_text(GswordReferenceChooserPrivate *priv,
+                      gboolean update_filter)
+{
+    gchar *text = g_strdup_printf("%s %d:%d",
+                                  book_display_name(priv, priv->book),
+                                  priv->chapter, priv->verse);
+
+    priv->updating = TRUE;
+    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
+    if (update_filter && priv->filter_entry != NULL)
+        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
+    priv->updating = FALSE;
+    g_free(text);
+}
+
 static gboolean
 book_matches_filter(GswordBookInfo *book, GPtrArray *filter)
 {
@@ -245,20 +265,12 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
     gint chapter = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),
                                                       "chapter"));
-    gchar *text;
 
     if (priv->updating || chapter < 1)
         return;
     priv->chapter = chapter;
     priv->verse = 1;
-    text = g_strdup_printf("%s %d:1",
-                           book_display_name(priv, priv->book), chapter);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    if (priv->filter_entry != NULL)
-        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-    priv->updating = FALSE;
-    g_free(text);
+    update_reference_text(priv, TRUE);
     populate_book_list(priv, NULL);
     update_grid_highlight(priv->chapter_grid, "chapter", chapter);
     populate_verse_buttons(priv);
@@ -415,20 +427,11 @@ on_verse_clicked(GtkButton *button, gpointer user_data)
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
     gint verse = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),
                                                     "verse"));
-    gchar *text;
 
     if (priv->updating || verse < 1)
         return;
     priv->verse = verse;
-    text = g_strdup_printf("%s %d:%d",
-                           book_display_name(priv, priv->book),
-                           priv->chapter, verse);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    if (priv->filter_entry != NULL)
-        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-    priv->updating = FALSE;
-    g_free(text);
+    update_reference_text(priv, TRUE);
     update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
     g_signal_emit(self, signals[SIGNAL_ACTIVATE], 0);
@@ -574,6 +577,27 @@ scroll_book_into_view(GswordReferenceChooserPrivate *priv)
     }
 }
 
+static void
+refresh_picker(GswordReferenceChooserPrivate *priv, gboolean rebuild_books)
+{
+    if (rebuild_books)
+        populate_book_list(priv, NULL);
+    populate_chapter_buttons(priv);
+    populate_verse_buttons(priv);
+    update_book_highlight(priv);
+}
+
+static void
+refresh_visible_picker(GswordReferenceChooserPrivate *priv,
+                       gboolean rebuild_books)
+{
+    if (priv->popover == NULL ||
+        !gtk_widget_get_visible(GTK_WIDGET(priv->popover)))
+        return;
+    refresh_picker(priv, rebuild_books);
+    scroll_book_into_view(priv);
+}
+
 static gboolean
 on_book_list_key_pressed(GtkEventControllerKey *controller, guint keyval,
                          guint keycode, GdkModifierType state,
@@ -640,7 +664,6 @@ on_chapter_key_pressed(GtkEventControllerKey *controller, guint keyval,
     gint chapter;
     gint target;
     GswordBookInfo *book;
-    gchar *text;
 
     (void)controller;
     (void)keycode;
@@ -670,14 +693,7 @@ on_chapter_key_pressed(GtkEventControllerKey *controller, guint keyval,
         return TRUE;
     priv->chapter = target;
     priv->verse = 1;
-    text = g_strdup_printf("%s %d:1",
-                           book_display_name(priv, priv->book), target);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    if (priv->filter_entry != NULL)
-        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-    priv->updating = FALSE;
-    g_free(text);
+    update_reference_text(priv, TRUE);
     update_grid_highlight(priv->chapter_grid, "chapter", target);
     populate_verse_buttons(priv);
     update_navigation_labels(self);
@@ -700,7 +716,6 @@ on_verse_key_pressed(GtkEventControllerKey *controller, guint keyval,
     gint verse;
     gint target;
     gint verse_max;
-    gchar *text;
 
     (void)controller;
     (void)keycode;
@@ -727,15 +742,7 @@ on_verse_key_pressed(GtkEventControllerKey *controller, guint keyval,
     if (target < 1 || target > verse_max)
         return TRUE;
     priv->verse = target;
-    text = g_strdup_printf("%s %d:%d",
-                           book_display_name(priv, priv->book),
-                           priv->chapter, target);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    if (priv->filter_entry != NULL)
-        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-    priv->updating = FALSE;
-    g_free(text);
+    update_reference_text(priv, TRUE);
     update_grid_highlight(priv->verse_grid, "verse", target);
     update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
@@ -771,16 +778,7 @@ on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     populate_chapter_buttons(priv);
     populate_verse_buttons(priv);
     update_navigation_labels(self);
-    {
-        gchar *text = g_strdup_printf("%s %d:%d",
-            book_display_name(priv, priv->book), priv->chapter, priv->verse);
-        priv->updating = TRUE;
-        gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-        if (priv->filter_entry != NULL)
-            gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-        priv->updating = FALSE;
-        g_free(text);
-    }
+    update_reference_text(priv, TRUE);
     gtk_widget_grab_focus(GTK_WIDGET(list));
 }
 
@@ -790,7 +788,6 @@ set_reference_internal(GswordReferenceChooser *self, gint book,
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
     GswordBookInfo *info;
-    gchar *text;
 
     if (priv->books == NULL || priv->books->len == 0)
         return;
@@ -811,18 +808,9 @@ set_reference_internal(GswordReferenceChooser *self, gint book,
     priv->book = book;
     priv->chapter = chapter;
     priv->verse = verse;
-    text = g_strdup_printf("%s %d:%d",
-                           book_display_name(priv, book), chapter, verse);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    priv->updating = FALSE;
-    g_free(text);
-    populate_chapter_buttons(priv);
-    populate_verse_buttons(priv);
+    update_reference_text(priv, FALSE);
+    refresh_visible_picker(priv, FALSE);
     update_navigation_labels(self);
-    update_book_highlight(priv);
-    if (gtk_widget_get_visible(GTK_WIDGET(priv->popover)))
-        scroll_book_into_view(priv);
     if (emit)
         g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
 }
@@ -997,30 +985,19 @@ static void
 set_edit_mode(GswordReferenceChooser *self, gboolean editing)
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
-    gchar *text;
 
     priv->editing = editing;
     if (priv->path_row == NULL)
         return;
     if (!editing) {
         gtk_popover_popdown(priv->popover);
-        text = g_strdup_printf("%s %d:%d",
-            book_display_name(priv, priv->book), priv->chapter, priv->verse);
-        priv->updating = TRUE;
-        gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-        priv->updating = FALSE;
-        g_free(text);
+        update_reference_text(priv, FALSE);
         gtk_widget_set_visible(priv->path_row, TRUE);
         gtk_widget_set_visible(priv->edit_row, FALSE);
         update_navigation_labels(self);
         return;
     }
-    text = g_strdup_printf("%s %d:%d",
-        book_display_name(priv, priv->book), priv->chapter, priv->verse);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    priv->updating = FALSE;
-    g_free(text);
+    update_reference_text(priv, FALSE);
     gtk_widget_set_visible(priv->path_row, FALSE);
     gtk_widget_set_visible(priv->edit_row, TRUE);
     gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
@@ -1121,6 +1098,8 @@ activate_text(GswordReferenceChooser *self, const gchar *text)
                             GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK) &&
             candidates != NULL && candidates->len > 1) {
             populate_book_list(priv, candidates);
+            populate_chapter_buttons(priv);
+            populate_verse_buttons(priv);
             gtk_label_set_text(priv->hint,
                                _("Multiple books match; choose one."));
             priv->updating = TRUE;
@@ -1195,25 +1174,14 @@ on_button_clicked(GtkButton *button, gpointer user_data)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
-    gchar *text;
 
     (void)button;
     if (gtk_widget_get_visible(GTK_WIDGET(priv->popover))) {
         gtk_popover_popdown(priv->popover);
         return;
     }
-    text = g_strdup_printf("%s %d:%d",
-                           book_display_name(priv, priv->book),
-                           priv->chapter, priv->verse);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    if (priv->filter_entry != NULL)
-        gtk_editable_set_text(GTK_EDITABLE(priv->filter_entry), text);
-    priv->updating = FALSE;
-    g_free(text);
-    populate_book_list(priv, NULL);
-    populate_chapter_buttons(priv);
-    populate_verse_buttons(priv);
+    update_reference_text(priv, TRUE);
+    refresh_picker(priv, TRUE);
     gtk_label_set_text(priv->hint,
                        _("Type a reference or choose a book."));
     gtk_popover_popup(priv->popover);
@@ -1287,17 +1255,9 @@ gsword_reference_chooser_set_versification(
     g_free(priv->versification_name);
     priv->versification_name = g_strdup(versification);
     load_books(priv);
-    if (priv->books != NULL && priv->books->len > 0) {
-        gchar *text = g_strdup_printf("%s %d:%d",
-            book_display_name(priv, priv->book), priv->chapter, priv->verse);
-        priv->updating = TRUE;
-        gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-        priv->updating = FALSE;
-        g_free(text);
-    }
-    populate_book_list(priv, NULL);
-    populate_chapter_buttons(priv);
-    populate_verse_buttons(priv);
+    if (priv->books != NULL && priv->books->len > 0)
+        update_reference_text(priv, FALSE);
+    refresh_visible_picker(priv, TRUE);
     update_navigation_labels(self);
 }
 
@@ -1306,23 +1266,14 @@ gsword_reference_chooser_set_locale(GswordReferenceChooser *self,
                                     const gchar *locale)
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
-    gchar *text;
 
     g_free(priv->locale);
     priv->locale = g_strdup(locale != NULL && *locale != '\0' ? locale : "en");
     load_books(priv);
     if (priv->books == NULL || priv->books->len == 0)
         return;
-    text = g_strdup_printf("%s %d:%d",
-                           book_display_name(priv, priv->book),
-                           priv->chapter, priv->verse);
-    priv->updating = TRUE;
-    gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-    priv->updating = FALSE;
-    g_free(text);
-    populate_book_list(priv, NULL);
-    populate_chapter_buttons(priv);
-    populate_verse_buttons(priv);
+    update_reference_text(priv, FALSE);
+    refresh_visible_picker(priv, TRUE);
     update_navigation_labels(self);
 }
 
@@ -1613,7 +1564,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     book_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     chapter_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     pane_separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    gtk_widget_set_size_request(book_page, 240, -1);
+    gtk_widget_set_size_request(book_page, GSWORD_BOOK_PANE_WIDTH, -1);
     gtk_widget_set_hexpand(book_page, FALSE);
     gtk_widget_set_hexpand(chapter_page, TRUE);
     gtk_widget_set_margin_end(book_page, 4);
@@ -1660,7 +1611,9 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
                 GTK_NOTEBOOK(book_notebook), book_scroll,
                 gtk_label_new(tab_labels[i]));
         }
-        gtk_widget_set_size_request(book_notebook, 230, 320);
+        gtk_widget_set_size_request(book_notebook,
+                                    GSWORD_BOOK_NOTEBOOK_WIDTH,
+                                    GSWORD_BOOK_NOTEBOOK_HEIGHT);
         gtk_widget_set_vexpand(book_notebook, TRUE);
         priv->book_notebook = GTK_NOTEBOOK(book_notebook);
         gtk_box_append(GTK_BOX(book_page), book_notebook);
@@ -1744,28 +1697,24 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_widget_set_margin_bottom(GTK_WIDGET(priv->hint), 6);
 
     popover_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_margin_start(GTK_WIDGET(priv->filter_entry), 8);
-    gtk_widget_set_margin_end(GTK_WIDGET(priv->filter_entry), 8);
-    gtk_widget_set_margin_top(GTK_WIDGET(priv->filter_entry), 8);
-    gtk_widget_set_margin_bottom(GTK_WIDGET(priv->filter_entry), 8);
+    gtk_widget_set_margin_start(GTK_WIDGET(priv->filter_entry),
+                                GSWORD_POPOVER_MARGIN);
+    gtk_widget_set_margin_end(GTK_WIDGET(priv->filter_entry),
+                              GSWORD_POPOVER_MARGIN);
+    gtk_widget_set_margin_top(GTK_WIDGET(priv->filter_entry),
+                              GSWORD_POPOVER_MARGIN);
+    gtk_widget_set_margin_bottom(GTK_WIDGET(priv->filter_entry),
+                                 GSWORD_POPOVER_MARGIN);
     gtk_box_append(GTK_BOX(popover_box), GTK_WIDGET(priv->filter_entry));
     gtk_box_append(GTK_BOX(popover_box), paned);
     gtk_box_append(GTK_BOX(popover_box), GTK_WIDGET(priv->hint));
     gtk_popover_set_child(priv->popover, popover_box);
 
     load_books(priv);
-    populate_book_list(priv, NULL);
-    populate_chapter_buttons(priv);
-    populate_verse_buttons(priv);
+    refresh_picker(priv, TRUE);
     update_navigation_labels(self);
-    if (priv->books != NULL && priv->books->len > 0) {
-        gchar *text = g_strdup_printf("%s 1:1",
-            book_display_name(priv, priv->book));
-        priv->updating = TRUE;
-        gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
-        priv->updating = FALSE;
-        g_free(text);
-    }
+    if (priv->books != NULL && priv->books->len > 0)
+        update_reference_text(priv, FALSE);
 }
 
 static void
