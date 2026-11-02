@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 17:59+0800\n"
+"POT-Creation-Date: 2026-11-02 18:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -95,7 +95,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: src/window.c:808 src/search-page.c:222
+#: src/window.c:808 src/search-page.c:253
 msgid "Search"
 msgstr ""
 
@@ -155,82 +155,90 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: src/search-page.c:41
+#: src/search-page.c:49
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:60
+#: src/search-page.c:66
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:88
+#: src/search-page.c:95
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:141
+#: src/search-page.c:103
+msgid "No results."
+msgstr ""
+
+#: src/search-page.c:172
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:158 src/search-page.c:247
+#: src/search-page.c:189 src/search-page.c:278
 msgid "Index: no module"
 msgstr ""
 
-#: src/search-page.c:162
+#: src/search-page.c:193
 msgid "Index: available"
 msgstr ""
 
-#: src/search-page.c:162
+#: src/search-page.c:193
 msgid "Index: not built"
 msgstr ""
 
-#: src/search-page.c:177
+#: src/search-page.c:208
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:180
+#: src/search-page.c:211
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:195
+#: src/search-page.c:226
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:198
+#: src/search-page.c:229
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:233
+#: src/search-page.c:264
 msgid "Back"
 msgstr ""
 
-#: src/search-page.c:234
+#: src/search-page.c:265
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:235
+#: src/search-page.c:266
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:238
+#: src/search-page.c:269
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:242
+#: src/search-page.c:273
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:242
+#: src/search-page.c:273
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:242
+#: src/search-page.c:273
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:246
+#: src/search-page.c:277
 msgid "Case sensitive"
+msgstr ""
+
+#: src/search-page.c:313
+msgid "Enter a search term."
 msgstr ""
 
 #: src/notes-page.c:189

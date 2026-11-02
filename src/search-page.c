@@ -10,10 +10,14 @@
 struct _GswordSearchPage {
     GswordWindow *window;
     GtkWidget *root;
-    GtkEntry *entry;
+    GtkSearchEntry *entry;
     GtkDropDown *type;
     GtkCheckButton *case_sensitive;
     GtkListBox *results;
+    GtkLabel *results_label;
+    GtkLabel *empty_label;
+    GtkStack *results_stack;
+    GtkButton *search_button;
     GtkLabel *index_label;
 };
 
@@ -36,16 +40,18 @@ run_search(GswordSearchPage *page)
     guint i;
     guint selected = gtk_drop_down_get_selected(page->type);
 
+    const gchar *text = gtk_editable_get_text(GTK_EDITABLE(page->entry));
+
+    if (*text == '\0')
+        return;
     if (module == NULL) {
         gsword_window_set_status(page->window,
                                  _("Open a module before searching"));
         return;
     }
-    clear_results(page);
 
     options = gsw_search_options_new();
-    gsw_search_options_set_text(
-        options, gtk_editable_get_text(GTK_EDITABLE(page->entry)));
+    gsw_search_options_set_text(options, text);
     gsw_search_options_set_search_type(
         options, selected == 1 ? GSW_SEARCH_MULTIWORD
                              : selected == 2 ? GSW_SEARCH_REGEX
@@ -61,6 +67,7 @@ run_search(GswordSearchPage *page)
         return;
     }
 
+    clear_results(page);
     for (i = 0; i < results->len; i++) {
         GswSearchResult *result = g_ptr_array_index(results, i);
         GtkWidget *row = gtk_list_box_row_new();
@@ -88,9 +95,14 @@ run_search(GswordSearchPage *page)
         gchar *message = g_strdup_printf(_("Search: %u result(s)"),
                                          results->len);
 
+        gtk_label_set_text(page->results_label, message);
         gsword_window_set_status(page->window, message);
         g_free(message);
     }
+    if (results->len == 0)
+        gtk_label_set_text(page->empty_label, _("No results."));
+    gtk_stack_set_visible_child_name(page->results_stack,
+                                     results->len > 0 ? "results" : "empty");
     g_ptr_array_unref(results);
 }
 
@@ -99,6 +111,25 @@ on_search_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
     run_search(user_data);
+}
+
+static void
+on_search_changed(GtkSearchEntry *entry, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    gtk_widget_set_sensitive(
+        GTK_WIDGET(page->search_button),
+        *gtk_editable_get_text(GTK_EDITABLE(entry)) != '\0');
+}
+
+static void
+on_search_stop(GtkSearchEntry *entry, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)entry;
+    gsword_window_close_search(page->window);
 }
 
 static void
@@ -234,8 +265,8 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_set_tooltip_text(build, _("Build search index"));
     gtk_widget_set_tooltip_text(delete, _("Delete search index"));
 
-    page->entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(page->entry, _("Search text"));
+    page->entry = GTK_SEARCH_ENTRY(gtk_search_entry_new());
+    gtk_search_entry_set_placeholder_text(page->entry, _("Search text"));
     gtk_widget_set_hexpand(GTK_WIDGET(page->entry), TRUE);
     page->type = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     types = gtk_string_list_new(
@@ -249,8 +280,14 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "dim-label");
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "caption");
 
+    page->search_button = GTK_BUTTON(search);
+    gtk_widget_set_sensitive(search, FALSE);
     g_signal_connect(back, "clicked", G_CALLBACK(on_back_clicked), page);
     g_signal_connect(search, "clicked", G_CALLBACK(on_search_clicked), page);
+    g_signal_connect(page->entry, "search-changed",
+                     G_CALLBACK(on_search_changed), page);
+    g_signal_connect(page->entry, "stop-search",
+                     G_CALLBACK(on_search_stop), page);
     g_signal_connect(page->entry, "activate",
                      G_CALLBACK(on_search_activate), page);
     g_signal_connect(build, "clicked", G_CALLBACK(on_build_index), page);
@@ -267,15 +304,35 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(controls), options_row);
     gtk_box_append(GTK_BOX(controls), GTK_WIDGET(page->index_label));
 
+    page->results_label = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(page->results_label, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(page->results_label), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(page->results_label), "dim-label");
+    gtk_widget_set_margin_start(GTK_WIDGET(page->results_label), 12);
+    gtk_widget_set_margin_end(GTK_WIDGET(page->results_label), 12);
+    page->empty_label = GTK_LABEL(gtk_label_new(_("Enter a search term.")));
+    gtk_label_set_wrap(page->empty_label, TRUE);
+    gtk_label_set_xalign(page->empty_label, 0.0f);
+    gtk_widget_set_margin_top(GTK_WIDGET(page->empty_label), 24);
+    gtk_widget_set_margin_start(GTK_WIDGET(page->empty_label), 12);
+    gtk_widget_set_margin_end(GTK_WIDGET(page->empty_label), 12);
+    gtk_widget_add_css_class(GTK_WIDGET(page->empty_label), "dim-label");
+
     page->results = GTK_LIST_BOX(gtk_list_box_new());
     g_signal_connect(page->results, "row-selected",
                      G_CALLBACK(on_result_selected), page);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->results));
     gtk_widget_set_vexpand(scrolled, TRUE);
+    page->results_stack = GTK_STACK(gtk_stack_new());
+    gtk_stack_add_named(page->results_stack, GTK_WIDGET(page->empty_label),
+                        "empty");
+    gtk_stack_add_named(page->results_stack, scrolled, "results");
+    gtk_stack_set_visible_child_name(page->results_stack, "empty");
 
     gtk_box_append(GTK_BOX(box), controls);
-    gtk_box_append(GTK_BOX(box), scrolled);
+    gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_label));
+    gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_stack));
     page->root = box;
     g_object_set_data_full(G_OBJECT(box), "gsword-search-page", page, g_free);
     gsword_search_page_refresh_index(page);
