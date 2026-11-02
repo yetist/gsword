@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 18:26+0800\n"
+"POT-Creation-Date: 2026-11-02 18:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,7 +47,7 @@ msgstr ""
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:409 src/search-page.c:416 src/resource-page.c:206
+#: src/window.c:409 src/search-page.c:611 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr ""
@@ -96,7 +96,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: src/window.c:808 src/search-page.c:628
+#: src/window.c:808 src/search-page.c:848
 msgid "Search"
 msgstr ""
 
@@ -156,155 +156,189 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: src/search-page.c:79
+#: src/search-page.c:86
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:82
+#: src/search-page.c:89
 #, c-format
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:197 src/search-page.c:669
+#: src/search-page.c:215 src/search-page.c:927
 msgid "Index: no module"
 msgstr ""
 
-#: src/search-page.c:200
+#: src/search-page.c:218
 msgid "Index: not built (scan used)"
 msgstr ""
 
-#: src/search-page.c:203
+#: src/search-page.c:221
 msgid "Index: built (used for this search)"
 msgstr ""
 
-#: src/search-page.c:206
+#: src/search-page.c:224
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:302
+#: src/search-page.c:488
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:310
+#: src/search-page.c:496
 msgid "No results."
 msgstr ""
 
-#: src/search-page.c:321 src/search-page.c:322 src/search-page.c:441
+#: src/search-page.c:507 src/search-page.c:508 src/search-page.c:639
 msgid "Searching..."
 msgstr ""
 
-#: src/search-page.c:358
+#: src/search-page.c:544
 msgid "Search cancelled"
 msgstr ""
 
-#: src/search-page.c:360
+#: src/search-page.c:546
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:392
+#: src/search-page.c:581
+msgid "Enter both attribute levels or leave both empty"
+msgstr ""
+
+#: src/search-page.c:587
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:397
+#: src/search-page.c:592
 msgid "No active verse reference"
 msgstr ""
 
-#: src/search-page.c:518
+#: src/search-page.c:716
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:554
+#: src/search-page.c:768
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:558
+#: src/search-page.c:772
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:574
+#: src/search-page.c:788
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:578
+#: src/search-page.c:792
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:629 src/notes-page.c:749 src/notes-page.c:818
+#: src/search-page.c:849 src/notes-page.c:749 src/notes-page.c:818
 #: src/notes-page.c:869 src/notes-page.c:948 src/library-page.c:1044
 #: src/plan-page.c:477
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:641
+#: src/search-page.c:866
+msgid "Recent searches"
+msgstr ""
+
+#: src/search-page.c:867
 msgid "Back"
 msgstr ""
 
-#: src/search-page.c:643
+#: src/search-page.c:869
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:644
+#: src/search-page.c:870
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:647
+#: src/search-page.c:873
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:653
+#: src/search-page.c:880
 msgid "Whole module"
 msgstr ""
 
-#: src/search-page.c:653 src/gsword-reference-chooser.c:1583
+#: src/search-page.c:880 src/gsword-reference-chooser.c:1583
 msgid "Old Testament"
 msgstr ""
 
-#: src/search-page.c:654 src/gsword-reference-chooser.c:1583
+#: src/search-page.c:881 src/gsword-reference-chooser.c:1583
 msgid "New Testament"
 msgstr ""
 
-#: src/search-page.c:654
+#: src/search-page.c:881
 msgid "Current book"
 msgstr ""
 
-#: src/search-page.c:655
+#: src/search-page.c:882
 msgid "Current chapter"
 msgstr ""
 
-#: src/search-page.c:660
+#: src/search-page.c:887
 msgid "Module:"
 msgstr ""
 
-#: src/search-page.c:661
+#: src/search-page.c:888
 msgid "Range:"
 msgstr ""
 
-#: src/search-page.c:664
+#: src/search-page.c:891
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:664
+#: src/search-page.c:891
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:664
+#: src/search-page.c:891
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:668
+#: src/search-page.c:895
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:674
+#: src/search-page.c:898
+msgid "Word"
+msgstr ""
+
+#: src/search-page.c:899
+msgid "Lemma"
+msgstr ""
+
+#: src/search-page.c:902
+msgid "Attribute 1:"
+msgstr ""
+
+#: src/search-page.c:903
+msgid "Attribute 2:"
+msgstr ""
+
+#: src/search-page.c:904
+msgid "Advanced"
+msgstr ""
+
+#: src/search-page.c:906
+msgid ""
+"Search tags such as Word / Lemma. Leave both fields empty for normal text "
+"search."
+msgstr ""
+
+#: src/search-page.c:932
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr ""
 
-#: src/search-page.c:725
+#: src/search-page.c:989
 msgid "Enter a search term."
 msgstr ""
 

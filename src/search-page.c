@@ -17,6 +17,11 @@ struct _GswordSearchPage {
     GtkDropDown *scope_selector;
     GtkDropDown *type;
     GtkCheckButton *case_sensitive;
+    GtkEntry *attribute1;
+    GtkEntry *attribute2;
+    GtkMenuButton *history_button;
+    GtkListBox *history_list;
+    GtkStringList *history;
     GtkListBox *results;
     GtkLabel *results_label;
     GtkLabel *empty_label;
@@ -41,6 +46,8 @@ typedef struct {
     GswordWindow *window;
     gchar *message;
 } SearchProgressData;
+
+static void run_search(GswordSearchPage *page);
 
 static void
 search_job_free(gpointer data)
@@ -125,16 +132,18 @@ refresh_modules(GswordSearchPage *page)
     GswModule *current = gsword_window_get_module(page->window);
     GPtrArray *infos;
     GtkStringList *names;
-    const gchar *wanted = selected_module_name(page);
+    gchar *wanted = g_strdup(selected_module_name(page));
     const gchar *current_name = current != NULL
                               ? gsw_module_get_name(current) : NULL;
     guint i;
     guint selected = GTK_INVALID_LIST_POSITION;
 
-    if (manager == NULL || page->module_selector == NULL)
+    if (manager == NULL || page->module_selector == NULL) {
+        g_free(wanted);
         return;
+    }
     if (wanted == NULL)
-        wanted = current_name;
+        wanted = g_strdup(current_name);
     infos = gsw_manager_get_module_infos(manager);
     names = gtk_string_list_new(NULL);
     for (i = 0; i < infos->len; i++) {
@@ -146,7 +155,7 @@ refresh_modules(GswordSearchPage *page)
     }
     g_ptr_array_unref(infos);
     if (wanted == NULL && gtk_string_list_get_string(names, 0) != NULL)
-        wanted = gtk_string_list_get_string(names, 0);
+        wanted = g_strdup(gtk_string_list_get_string(names, 0));
     gtk_drop_down_set_model(page->module_selector, NULL);
     g_clear_object(&page->module_names);
     page->module_names = names;
@@ -159,6 +168,7 @@ refresh_modules(GswordSearchPage *page)
     }
     if (selected != GTK_INVALID_LIST_POSITION)
         gtk_drop_down_set_selected(page->module_selector, selected);
+    g_free(wanted);
 }
 
 static GswModule *
@@ -183,8 +193,16 @@ search_can_use_index(GswordSearchPage *page)
     guint type = gtk_drop_down_get_selected(page->type);
     guint scope = gtk_drop_down_get_selected(page->scope_selector);
 
+    const gchar *attribute1 = page->attribute1 != NULL
+                            ? gtk_editable_get_text(GTK_EDITABLE(
+                                  page->attribute1)) : "";
+    const gchar *attribute2 = page->attribute2 != NULL
+                            ? gtk_editable_get_text(GTK_EDITABLE(
+                                  page->attribute2)) : "";
+
     return !gtk_check_button_get_active(page->case_sensitive) &&
-           scope == 0 && (type == 0 || type == 1);
+           scope == 0 && *attribute1 == '\0' && *attribute2 == '\0' &&
+           (type == 0 || type == 1);
 }
 
 static void
@@ -261,6 +279,168 @@ build_scope(GswordSearchPage *page, GError **error)
 }
 
 static void
+on_history_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    const gchar *query = g_object_get_data(G_OBJECT(button), "history-query");
+    GtkPopover *popover;
+
+    if (query == NULL)
+        return;
+    gtk_editable_set_text(GTK_EDITABLE(page->entry), query);
+    popover = gtk_menu_button_get_popover(page->history_button);
+    if (popover != NULL)
+        gtk_popover_popdown(popover);
+    run_search(page);
+}
+
+static void
+rebuild_history_list(GswordSearchPage *page)
+{
+    GtkWidget *child;
+    guint i;
+
+    if (page->history_list == NULL)
+        return;
+    while ((child = gtk_widget_get_first_child(
+                GTK_WIDGET(page->history_list))) != NULL)
+        gtk_list_box_remove(page->history_list, child);
+    for (i = 0; page->history != NULL &&
+                i < g_list_model_get_n_items(G_LIST_MODEL(page->history));
+         i++) {
+        const gchar *text = gtk_string_list_get_string(page->history, i);
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *button = gtk_button_new_with_label(text);
+
+        gtk_widget_add_css_class(button, "flat");
+        gtk_widget_set_halign(button, GTK_ALIGN_START);
+        g_object_set_data_full(G_OBJECT(button), "history-query",
+                               g_strdup(text), g_free);
+        g_signal_connect(button, "clicked",
+                         G_CALLBACK(on_history_clicked), page);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), button);
+        gtk_list_box_append(page->history_list, row);
+    }
+    if (page->history_button != NULL)
+        gtk_widget_set_sensitive(
+            GTK_WIDGET(page->history_button),
+            page->history != NULL &&
+            g_list_model_get_n_items(G_LIST_MODEL(page->history)) > 0);
+}
+
+static void
+remember_search(GswordSearchPage *page, const gchar *text)
+{
+    GtkStringList *history;
+    guint i;
+    guint count = 0;
+
+    if (*text == '\0')
+        return;
+    history = gtk_string_list_new(NULL);
+    gtk_string_list_append(history, text);
+    if (page->history != NULL) {
+        for (i = 0; i < g_list_model_get_n_items(G_LIST_MODEL(page->history));
+             i++) {
+            const gchar *item = gtk_string_list_get_string(page->history, i);
+
+            if (g_strcmp0(item, text) == 0)
+                continue;
+            gtk_string_list_append(history, item);
+            if (++count >= 19)
+                break;
+        }
+    }
+    g_clear_object(&page->history);
+    page->history = history;
+    rebuild_history_list(page);
+}
+
+static gchar *
+highlight_matches(GswordSearchPage *page, const gchar *text,
+                  const gchar *query)
+{
+    gboolean case_sensitive = gtk_check_button_get_active(page->case_sensitive);
+    guint type = gtk_drop_down_get_selected(page->type);
+    gchar *trimmed;
+    gchar *pattern;
+    GRegex *regex;
+    GMatchInfo *match = NULL;
+    GString *markup;
+    gint last = 0;
+
+    if (text == NULL || query == NULL || (trimmed = g_strdup(query)) == NULL)
+        return g_markup_escape_text(text != NULL ? text : "", -1);
+    g_strstrip(trimmed);
+    if (*trimmed == '\0' || type == 2) {
+        g_free(trimmed);
+        return g_markup_escape_text(text, -1);
+    }
+    if (type == 1) {
+        gchar **words = g_strsplit_set(trimmed, " \t\n", -1);
+        GString *alternatives = g_string_new(NULL);
+        guint i;
+
+        for (i = 0; words[i] != NULL; i++) {
+            gchar *escaped;
+
+            if (*words[i] == '\0')
+                continue;
+            escaped = g_regex_escape_string(words[i], -1);
+            if (alternatives->len > 0)
+                g_string_append_c(alternatives, '|');
+            g_string_append(alternatives, escaped);
+            g_free(escaped);
+        }
+        pattern = g_string_free(alternatives, FALSE);
+        g_strfreev(words);
+    } else {
+        pattern = g_regex_escape_string(trimmed, -1);
+    }
+    g_free(trimmed);
+    regex = g_regex_new(pattern,
+                        G_REGEX_OPTIMIZE |
+                        (case_sensitive ? 0 : G_REGEX_CASELESS),
+                        G_REGEX_MATCH_DEFAULT, NULL);
+    g_free(pattern);
+    if (regex == NULL)
+        return g_markup_escape_text(text, -1);
+
+    markup = g_string_new(NULL);
+    g_regex_match(regex, text, 0, &match);
+    while (match != NULL && g_match_info_matches(match)) {
+        gint start;
+        gint end;
+        gchar *before;
+        gchar *hit;
+
+        g_match_info_fetch_pos(match, 0, &start, &end);
+        if (end <= start)
+            break;
+        before = g_markup_escape_text(text + last, start - last);
+        hit = g_markup_escape_text(text + start, end - start);
+        g_string_append(markup, before);
+        g_string_append(markup, "<b>");
+        g_string_append(markup, hit);
+        g_string_append(markup, "</b>");
+        g_free(before);
+        g_free(hit);
+        last = end;
+        g_match_info_next(match, NULL);
+    }
+    if (last < (gint)strlen(text)) {
+        gchar *tail = g_markup_escape_text(text + last, -1);
+
+        g_string_append(markup, tail);
+        g_free(tail);
+    }
+    if (match != NULL)
+        g_match_info_free(match);
+    g_regex_unref(regex);
+    return g_string_free(markup, FALSE);
+}
+
+static void
 clear_results(GswordSearchPage *page)
 {
     while (gtk_widget_get_first_child(GTK_WIDGET(page->results)) != NULL)
@@ -279,11 +459,15 @@ populate_results(GswordSearchPage *page, GPtrArray *results)
         GswSearchResult *result = g_ptr_array_index(results, i);
         GtkWidget *row = gtk_list_box_row_new();
         GtkWidget *label;
-        gchar *text = g_strdup_printf("%s\n%s",
-            gsw_search_result_get_key(result),
-            gsw_search_result_get_snippet(result));
+        const gchar *query = gtk_editable_get_text(GTK_EDITABLE(page->entry));
+        gchar *key = g_markup_escape_text(gsw_search_result_get_key(result),
+                                          -1);
+        gchar *snippet = highlight_matches(
+            page, gsw_search_result_get_snippet(result), query);
+        gchar *text = g_strdup_printf("<b>%s</b>\n%s", key, snippet);
 
-        label = gtk_label_new(text);
+        label = gtk_label_new(NULL);
+        gtk_label_set_markup(GTK_LABEL(label), text);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_label_set_wrap(GTK_LABEL(label), TRUE);
         gtk_widget_set_margin_top(label, 4);
@@ -296,6 +480,8 @@ populate_results(GswordSearchPage *page, GPtrArray *results)
                                g_strdup(gsw_search_result_get_key(result)),
                                g_free);
         gtk_list_box_append(page->results, row);
+        g_free(key);
+        g_free(snippet);
         g_free(text);
     }
     {
@@ -381,11 +567,20 @@ run_search(GswordSearchPage *page)
     SearchJob *job;
     GTask *task;
     const gchar *text = gtk_editable_get_text(GTK_EDITABLE(page->entry));
+    const gchar *attribute1 = gtk_editable_get_text(
+        GTK_EDITABLE(page->attribute1));
+    const gchar *attribute2 = gtk_editable_get_text(
+        GTK_EDITABLE(page->attribute2));
     const gchar *module_name = selected_module_name(page);
     guint selected = gtk_drop_down_get_selected(page->type);
 
     if (*text == '\0')
         return;
+    if ((*attribute1 == '\0') != (*attribute2 == '\0')) {
+        gsword_window_set_status(
+            window, _("Enter both attribute levels or leave both empty"));
+        return;
+    }
     if (module_name == NULL && current != NULL)
         module_name = gsw_module_get_name(current);
     if (module_name == NULL) {
@@ -424,6 +619,8 @@ run_search(GswordSearchPage *page)
                                              : GSW_SEARCH_PHRASE);
     gsw_search_options_set_case_sensitive(
         options, gtk_check_button_get_active(page->case_sensitive));
+    if (*attribute1 != '\0')
+        gsw_search_options_set_attribute(options, attribute1, attribute2);
     gsw_search_options_set_scope(options, scope);
     g_clear_pointer(&scope, gsw_verse_list_unref);
     gsw_search_options_set_max_results(options, 200);
@@ -437,6 +634,7 @@ run_search(GswordSearchPage *page)
     task = g_task_new(NULL, page->search_cancellable, on_search_done, NULL);
     g_task_set_task_data(task, job, search_job_free);
     page->search_task = task;
+    remember_search(page, text);
     set_searching(page, TRUE);
     gsword_window_set_status(window, _("Searching..."));
     g_task_run_in_thread(task, search_thread);
@@ -525,9 +723,25 @@ on_index_progress(const gchar *module_name, guint processed, guint total,
 }
 
 static void
+on_index_selection_changed(GObject *object, GParamSpec *pspec,
+                           gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    refresh_index_status(user_data);
+}
+
+static void
 on_index_option_changed(GtkWidget *widget, gpointer user_data)
 {
     (void)widget;
+    refresh_index_status(user_data);
+}
+
+static void
+on_attribute_changed(GtkEditable *editable, gpointer user_data)
+{
+    (void)editable;
     refresh_index_status(user_data);
 }
 
@@ -597,6 +811,7 @@ search_page_free(gpointer data)
         g_clear_object(&page->search_task);
     }
     g_clear_object(&page->search_cancellable);
+    g_clear_object(&page->history);
     g_free(page);
 }
 
@@ -609,10 +824,15 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *search_row;
     GtkWidget *range_row;
     GtkWidget *options_row;
+    GtkWidget *advanced;
+    GtkWidget *advanced_box;
     GtkWidget *module_label;
     GtkWidget *scope_label;
+    GtkWidget *attribute_label1;
+    GtkWidget *attribute_label2;
     GtkWidget *search;
     GtkWidget *cancel;
+    GtkWidget *history;
     GtkWidget *back;
     GtkWidget *build;
     GtkWidget *delete;
@@ -627,6 +847,7 @@ gsword_search_page_new(GswordWindow *window)
     options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     search = gtk_button_new_with_label(_("Search"));
     cancel = gtk_button_new_with_label(_("Cancel"));
+    history = gtk_menu_button_new();
     back = gtk_button_new_from_icon_name("go-previous-symbolic");
     build = gtk_button_new_from_icon_name("document-save-symbolic");
     delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
@@ -638,6 +859,11 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_set_margin_end(controls, 12);
     gtk_widget_add_css_class(back, "flat");
     gtk_widget_add_css_class(cancel, "flat");
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(history),
+                                  "document-open-recent-symbolic");
+    gtk_widget_add_css_class(history, "flat");
+    gtk_widget_set_sensitive(history, FALSE);
+    gtk_widget_set_tooltip_text(history, _("Recent searches"));
     gtk_widget_set_tooltip_text(back, _("Back"));
     gtk_widget_set_visible(cancel, FALSE);
     gtk_widget_set_tooltip_text(build, _("Build search index"));
@@ -646,6 +872,7 @@ gsword_search_page_new(GswordWindow *window)
     page->entry = GTK_SEARCH_ENTRY(gtk_search_entry_new());
     gtk_search_entry_set_placeholder_text(page->entry, _("Search text"));
     gtk_widget_set_hexpand(GTK_WIDGET(page->entry), TRUE);
+    page->history = gtk_string_list_new(NULL);
     page->module_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     page->scope_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     {
@@ -666,6 +893,37 @@ gsword_search_page_new(GswordWindow *window)
     g_object_unref(types);
     page->case_sensitive = GTK_CHECK_BUTTON(
         gtk_check_button_new_with_label(_("Case sensitive")));
+    page->attribute1 = GTK_ENTRY(gtk_entry_new());
+    page->attribute2 = GTK_ENTRY(gtk_entry_new());
+    gtk_entry_set_placeholder_text(page->attribute1, _("Word"));
+    gtk_entry_set_placeholder_text(page->attribute2, _("Lemma"));
+    gtk_widget_set_size_request(GTK_WIDGET(page->attribute1), 110, -1);
+    gtk_widget_set_size_request(GTK_WIDGET(page->attribute2), 110, -1);
+    attribute_label1 = gtk_label_new(_("Attribute 1:"));
+    attribute_label2 = gtk_label_new(_("Attribute 2:"));
+    advanced = gtk_expander_new(_("Advanced"));
+    gtk_widget_set_tooltip_text(advanced,
+        _("Search tags such as Word / Lemma. Leave both fields empty for "
+          "normal text search."));
+    advanced_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    gtk_widget_set_margin_top(advanced_box, 6);
+    gtk_box_append(GTK_BOX(advanced_box), attribute_label1);
+    gtk_box_append(GTK_BOX(advanced_box), GTK_WIDGET(page->attribute1));
+    gtk_box_append(GTK_BOX(advanced_box), attribute_label2);
+    gtk_box_append(GTK_BOX(advanced_box), GTK_WIDGET(page->attribute2));
+    gtk_expander_set_child(GTK_EXPANDER(advanced), advanced_box);
+    page->history_button = GTK_MENU_BUTTON(history);
+    page->history_list = GTK_LIST_BOX(gtk_list_box_new());
+    {
+        GtkWidget *popover = gtk_popover_new();
+        GtkWidget *history_scrolled = gtk_scrolled_window_new();
+
+        gtk_widget_set_size_request(history_scrolled, 280, 300);
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(history_scrolled),
+                                      GTK_WIDGET(page->history_list));
+        gtk_popover_set_child(GTK_POPOVER(popover), history_scrolled);
+        gtk_menu_button_set_popover(GTK_MENU_BUTTON(history), popover);
+    }
     page->index_label = GTK_LABEL(gtk_label_new(_("Index: no module")));
     gtk_label_set_xalign(page->index_label, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "dim-label");
@@ -691,16 +949,21 @@ gsword_search_page_new(GswordWindow *window)
     g_signal_connect(build, "clicked", G_CALLBACK(on_build_index), page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete_index), page);
     g_signal_connect(page->module_selector, "notify::selected",
-                     G_CALLBACK(on_index_option_changed), page);
+                     G_CALLBACK(on_index_selection_changed), page);
     g_signal_connect(page->scope_selector, "notify::selected",
-                     G_CALLBACK(on_index_option_changed), page);
+                     G_CALLBACK(on_index_selection_changed), page);
     g_signal_connect(page->type, "notify::selected",
-                     G_CALLBACK(on_index_option_changed), page);
+                     G_CALLBACK(on_index_selection_changed), page);
     g_signal_connect(page->case_sensitive, "toggled",
                      G_CALLBACK(on_index_option_changed), page);
+    g_signal_connect(page->attribute1, "changed",
+                     G_CALLBACK(on_attribute_changed), page);
+    g_signal_connect(page->attribute2, "changed",
+                     G_CALLBACK(on_attribute_changed), page);
 
     gtk_box_append(GTK_BOX(search_row), back);
     gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(page->entry));
+    gtk_box_append(GTK_BOX(search_row), history);
     gtk_box_append(GTK_BOX(search_row), search);
     gtk_box_append(GTK_BOX(search_row), cancel);
     gtk_box_append(GTK_BOX(range_row), module_label);
@@ -714,6 +977,7 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(controls), search_row);
     gtk_box_append(GTK_BOX(controls), range_row);
     gtk_box_append(GTK_BOX(controls), options_row);
+    gtk_box_append(GTK_BOX(controls), advanced);
     gtk_box_append(GTK_BOX(controls), GTK_WIDGET(page->index_label));
 
     page->results_label = GTK_LABEL(gtk_label_new(""));

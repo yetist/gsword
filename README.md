@@ -43,6 +43,7 @@
 - RawFiles 和 RawGenBook 写入、树结构编辑、文件锁、失败回滚和崩溃恢复
 - zText/zCom/zLD LRU 块缓存、独立模块实例、并发读取测试
 - 常规测试、ASan 测试、本地 HTTP 安装集成测试、locale 校验和 introspection 测试
+- 桌面搜索页：异步搜索/取消、模块与范围选择、属性搜索、最近搜索、匹配高亮，以及按模块建立/删除索引
 
 ### gsword 桌面应用
 
