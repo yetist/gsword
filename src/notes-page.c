@@ -71,17 +71,36 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     for (i = 0; i < notes->len; i++) {
         GswordNote *note = g_ptr_array_index(notes, i);
         GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *label;
-        gchar *text = g_strdup_printf("%s\n%s",
-            note->display_key, note->text != NULL ? note->text : "");
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *title = gtk_label_new(note->display_key);
+        GtkWidget *preview;
+        const gchar *note_text = note->text != NULL ? note->text : "";
+        gchar *text = g_strdup(note_text);
+        gchar *cursor;
 
-        label = gtk_label_new(text);
-        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-        gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
-        gtk_label_set_max_width_chars(GTK_LABEL(label), 32);
-        gtk_widget_set_margin_top(label, 4);
-        gtk_widget_set_margin_bottom(label, 4);
-        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        for (cursor = text; *cursor != '\0'; cursor++) {
+            if (*cursor == '\n' || *cursor == '\r' || *cursor == '\t')
+                *cursor = ' ';
+        }
+        g_strstrip(text);
+        preview = gtk_label_new(text);
+        gtk_label_set_xalign(GTK_LABEL(title), 0.0f);
+        gtk_label_set_ellipsize(GTK_LABEL(title), PANGO_ELLIPSIZE_END);
+        gtk_label_set_max_width_chars(GTK_LABEL(title), 32);
+        gtk_label_set_single_line_mode(GTK_LABEL(title), TRUE);
+        gtk_widget_add_css_class(title, "heading");
+        gtk_label_set_xalign(GTK_LABEL(preview), 0.0f);
+        gtk_label_set_ellipsize(GTK_LABEL(preview), PANGO_ELLIPSIZE_END);
+        gtk_label_set_max_width_chars(GTK_LABEL(preview), 32);
+        gtk_label_set_single_line_mode(GTK_LABEL(preview), TRUE);
+        gtk_label_set_lines(GTK_LABEL(preview), 1);
+        gtk_widget_add_css_class(preview, "dim-label");
+        gtk_widget_add_css_class(preview, "caption");
+        gtk_widget_set_margin_top(box, 4);
+        gtk_widget_set_margin_bottom(box, 4);
+        gtk_box_append(GTK_BOX(box), title);
+        gtk_box_append(GTK_BOX(box), preview);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data_full(G_OBJECT(row), "note-module",
                                g_strdup(note->module), g_free);
         g_object_set_data_full(G_OBJECT(row), "note-key",
