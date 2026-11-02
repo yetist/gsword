@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 15:43+0800\n"
+"POT-Creation-Date: 2026-11-02 15:53+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -307,7 +307,7 @@ msgstr "导出"
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/notes-page.c:559 src/notes-page.c:646
+#: src/notes-page.c:559 src/notes-page.c:647
 msgid "Open in reader"
 msgstr "在阅读器中打开"
 
@@ -319,19 +319,15 @@ msgstr "搜索笔记"
 msgid "New list"
 msgstr "新列表"
 
-#: src/notes-page.c:632
-msgid "Verse key"
-msgstr "经文位置"
-
-#: src/notes-page.c:635
+#: src/notes-page.c:636
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/notes-page.c:637
+#: src/notes-page.c:638
 msgid "Tags:"
 msgstr "标签："
 
-#: src/notes-page.c:640 src/teaching-page.c:222
+#: src/notes-page.c:641 src/teaching-page.c:222
 msgid "Scripture"
 msgstr "经文"
 
