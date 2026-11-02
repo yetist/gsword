@@ -12,6 +12,9 @@ struct _GswordSearchPage {
     GswordWindow *window;
     GtkWidget *root;
     GtkSearchEntry *entry;
+    GtkDropDown *module_selector;
+    GtkStringList *module_names;
+    GtkDropDown *scope_selector;
     GtkDropDown *type;
     GtkCheckButton *case_sensitive;
     GtkListBox *results;
@@ -98,6 +101,110 @@ search_thread(GTask *task, gpointer source_object, gpointer task_data,
     else
         g_task_return_pointer(task, results,
                               (GDestroyNotify)g_ptr_array_unref);
+}
+
+static const gchar *
+selected_module_name(GswordSearchPage *page)
+{
+    guint selected;
+
+    if (page->module_selector == NULL || page->module_names == NULL)
+        return NULL;
+    selected = gtk_drop_down_get_selected(page->module_selector);
+    if (selected == GTK_INVALID_LIST_POSITION)
+        return NULL;
+    return gtk_string_list_get_string(page->module_names, selected);
+}
+
+static void
+refresh_modules(GswordSearchPage *page)
+{
+    GswManager *manager = gsword_window_get_manager(page->window);
+    GswModule *current = gsword_window_get_module(page->window);
+    GPtrArray *infos;
+    GtkStringList *names;
+    const gchar *wanted = selected_module_name(page);
+    const gchar *current_name = current != NULL
+                              ? gsw_module_get_name(current) : NULL;
+    guint i;
+    guint selected = GTK_INVALID_LIST_POSITION;
+
+    if (manager == NULL || page->module_selector == NULL)
+        return;
+    if (wanted == NULL)
+        wanted = current_name;
+    infos = gsw_manager_get_module_infos(manager);
+    names = gtk_string_list_new(NULL);
+    for (i = 0; i < infos->len; i++) {
+        GswModuleInfo *info = g_ptr_array_index(infos, i);
+        const gchar *name = gsw_module_info_get_name(info);
+
+        if (name != NULL && *name != '\0')
+            gtk_string_list_append(names, name);
+    }
+    g_ptr_array_unref(infos);
+    if (wanted == NULL && gtk_string_list_get_string(names, 0) != NULL)
+        wanted = gtk_string_list_get_string(names, 0);
+    gtk_drop_down_set_model(page->module_selector, NULL);
+    g_clear_object(&page->module_names);
+    page->module_names = names;
+    gtk_drop_down_set_model(page->module_selector, G_LIST_MODEL(names));
+    for (i = 0; i < g_list_model_get_n_items(G_LIST_MODEL(names)); i++) {
+        if (g_strcmp0(gtk_string_list_get_string(names, i), wanted) == 0) {
+            selected = i;
+            break;
+        }
+    }
+    if (selected != GTK_INVALID_LIST_POSITION)
+        gtk_drop_down_set_selected(page->module_selector, selected);
+}
+
+static GswVerseList *
+build_scope(GswordSearchPage *page, GError **error)
+{
+    GswModule *module = gsword_window_get_module(page->window);
+    GswVerseKey *key;
+    gint selected;
+
+    if (page->scope_selector == NULL)
+        return NULL;
+    selected = gtk_drop_down_get_selected(page->scope_selector);
+    if (selected <= 0)
+        return NULL;
+    if (module == NULL || gsw_key_get_kind(gsw_module_get_key(module)) !=
+        GSW_KEY_KIND_VERSE) {
+        g_set_error_literal(error, GSW_ERROR, GSW_ERROR_INVALID_DATA,
+                            "No active verse reference");
+        return NULL;
+    }
+    key = (GswVerseKey *)gsw_module_get_key(module);
+    if (selected == 1)
+        return gsw_verse_list_parse("Gen 1:1-Mal 4:6", key, error);
+    if (selected == 2)
+        return gsw_verse_list_parse("Matt 1:1-Rev 22:21", key, error);
+    {
+        const gchar *book = gsw_verse_key_get_book_name(key);
+        gint chapter = gsw_verse_key_get_chapter(key);
+        gint chapter_max = gsw_verse_key_get_chapter_max(key);
+        GswVerseKey *last = (GswVerseKey *)gsw_key_clone((GswKey *)key);
+        gint last_verse;
+        gchar *text;
+        GswVerseList *scope;
+
+        gsw_verse_key_set_chapter(last, chapter_max);
+        last_verse = gsw_verse_key_get_verse_max(last);
+        if (selected == 3) {
+            text = g_strdup_printf("%s 1:1-%s %d:%d", book, book,
+                                   chapter_max, last_verse);
+        } else {
+            text = g_strdup_printf("%s %d:1-%s %d:%d", book, chapter, book,
+                                   chapter, gsw_verse_key_get_verse_max(key));
+        }
+        scope = gsw_verse_list_parse(text, key, error);
+        g_free(text);
+        gsw_key_unref((GswKey *)last);
+        return scope;
+    }
 }
 
 static void
@@ -216,15 +323,26 @@ run_search(GswordSearchPage *page)
     GswManager *manager;
     GswModule *module;
     GswSearchOptions *options;
+    GswVerseList *scope;
+    GError *scope_error = NULL;
     SearchJob *job;
     GTask *task;
     const gchar *text = gtk_editable_get_text(GTK_EDITABLE(page->entry));
+    const gchar *module_name = selected_module_name(page);
     guint selected = gtk_drop_down_get_selected(page->type);
 
     if (*text == '\0')
         return;
-    if (current == NULL) {
+    if (module_name == NULL && current != NULL)
+        module_name = gsw_module_get_name(current);
+    if (module_name == NULL) {
         gsword_window_set_status(window, _("Open a module before searching"));
+        return;
+    }
+    scope = build_scope(page, &scope_error);
+    if (scope == NULL && scope_error != NULL) {
+        gsword_window_set_status(window, _("No active verse reference"));
+        g_clear_error(&scope_error);
         return;
     }
     if (page->search_task != NULL) {
@@ -239,7 +357,7 @@ run_search(GswordSearchPage *page)
 
     manager = gsword_window_get_manager(window);
     module = manager != NULL
-           ? gsw_manager_create_module(manager, gsw_module_get_name(current))
+           ? gsw_manager_create_module(manager, module_name)
            : NULL;
     if (module == NULL) {
         gsword_window_set_status(window, _("Cannot open module"));
@@ -253,6 +371,8 @@ run_search(GswordSearchPage *page)
                                              : GSW_SEARCH_PHRASE);
     gsw_search_options_set_case_sensitive(
         options, gtk_check_button_get_active(page->case_sensitive));
+    gsw_search_options_set_scope(options, scope);
+    g_clear_pointer(&scope, gsw_verse_list_unref);
     gsw_search_options_set_max_results(options, 200);
 
     job = g_new0(SearchJob, 1);
@@ -357,6 +477,7 @@ gsword_search_page_refresh_index(GswordSearchPage *page)
     GswModule *module;
 
     g_return_if_fail(page != NULL);
+    refresh_modules(page);
     module = gsword_window_get_module(page->window);
     if (module == NULL)
         gtk_label_set_text(page->index_label, _("Index: no module"));
@@ -430,7 +551,10 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *box;
     GtkWidget *controls;
     GtkWidget *search_row;
+    GtkWidget *range_row;
     GtkWidget *options_row;
+    GtkWidget *module_label;
+    GtkWidget *scope_label;
     GtkWidget *search;
     GtkWidget *cancel;
     GtkWidget *back;
@@ -443,6 +567,7 @@ gsword_search_page_new(GswordWindow *window)
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    range_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     search = gtk_button_new_with_label(_("Search"));
     cancel = gtk_button_new_with_label(_("Cancel"));
@@ -465,6 +590,19 @@ gsword_search_page_new(GswordWindow *window)
     page->entry = GTK_SEARCH_ENTRY(gtk_search_entry_new());
     gtk_search_entry_set_placeholder_text(page->entry, _("Search text"));
     gtk_widget_set_hexpand(GTK_WIDGET(page->entry), TRUE);
+    page->module_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    page->scope_selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    {
+        GtkStringList *scopes = gtk_string_list_new(
+            (const gchar *[]) { _("Whole module"), _("Old Testament"),
+                                _("New Testament"), _("Current book"),
+                                _("Current chapter"), NULL });
+
+        gtk_drop_down_set_model(page->scope_selector, G_LIST_MODEL(scopes));
+        g_object_unref(scopes);
+    }
+    module_label = gtk_label_new(_("Module:"));
+    scope_label = gtk_label_new(_("Range:"));
     page->type = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     types = gtk_string_list_new(
         (const gchar *[]) { _("Phrase"), _("Multiword"), _("Regex"), NULL });
@@ -496,11 +634,16 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(page->entry));
     gtk_box_append(GTK_BOX(search_row), search);
     gtk_box_append(GTK_BOX(search_row), cancel);
+    gtk_box_append(GTK_BOX(range_row), module_label);
+    gtk_box_append(GTK_BOX(range_row), GTK_WIDGET(page->module_selector));
+    gtk_box_append(GTK_BOX(range_row), scope_label);
+    gtk_box_append(GTK_BOX(range_row), GTK_WIDGET(page->scope_selector));
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->type));
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->case_sensitive));
     gtk_box_append(GTK_BOX(options_row), build);
     gtk_box_append(GTK_BOX(options_row), delete);
     gtk_box_append(GTK_BOX(controls), search_row);
+    gtk_box_append(GTK_BOX(controls), range_row);
     gtk_box_append(GTK_BOX(controls), options_row);
     gtk_box_append(GTK_BOX(controls), GTK_WIDGET(page->index_label));
 
