@@ -25,8 +25,10 @@ struct _GswordNotesPage {
     GtkEntry *tags_entry;
     GtkListBox *notes_list;
     GtkListBox *tags_list;
+    GtkButton *rename_tag_button;
     GtkButton *delete_tag_button;
     GtkListBox *lists_list;
+    GtkButton *rename_list_button;
     GtkListBox *list_items;
     GtkEntry *new_list_entry;
     GtkButton *delete_list_button;
@@ -68,8 +70,14 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     clear_list(page->notes_list);
     clear_list(page->tags_list);
     clear_list(page->lists_list);
+    if (page->rename_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), FALSE);
     if (page->delete_tag_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), FALSE);
+    if (page->rename_list_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button), FALSE);
+    if (page->delete_list_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button), FALSE);
 
     for (i = 0; i < notes->len; i++) {
         GswordNote *note = g_ptr_array_index(notes, i);
@@ -407,6 +415,9 @@ on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 
     (void)list;
     if (row == NULL) {
+        if (page->rename_tag_button != NULL)
+            gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button),
+                                     FALSE);
         if (page->delete_tag_button != NULL)
             gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button),
                                      FALSE);
@@ -415,6 +426,8 @@ on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     tag = g_object_get_data(G_OBJECT(row), "tag-name");
     if (tag == NULL)
         return;
+    if (page->rename_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), TRUE);
     if (page->delete_tag_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), TRUE);
     current = gtk_editable_get_text(GTK_EDITABLE(page->tags_entry));
@@ -599,6 +612,9 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     (void)list;
     if (row == NULL) {
         page->selected_list_id = 0;
+        if (page->rename_list_button != NULL)
+            gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button),
+                                     FALSE);
         if (page->delete_list_button != NULL)
             gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button),
                                      FALSE);
@@ -607,6 +623,9 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     }
     id = g_object_get_data(G_OBJECT(row), "list-id");
     page->selected_list_id = id != NULL ? g_ascii_strtoll(id, NULL, 10) : 0;
+    if (page->rename_list_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button),
+                                 page->selected_list_id != 0);
     if (page->delete_list_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button),
                                  page->selected_list_id != 0);
@@ -631,6 +650,182 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         }
         g_ptr_array_unref(items);
     }
+}
+
+static void
+on_rename_entry_changed(GtkEditable *editable, gpointer user_data)
+{
+    AdwAlertDialog *dialog = user_data;
+    gchar *text = g_strdup(gtk_editable_get_text(editable));
+
+    g_strstrip(text);
+    adw_alert_dialog_set_response_enabled(dialog, "rename", *text != '\0');
+    g_free(text);
+}
+
+static void
+update_tags_entry_after_rename(GswordNotesPage *page, const gchar *old_name,
+                               const gchar *new_name)
+{
+    const gchar *current;
+    gchar **parts;
+    GString *result;
+    guint i;
+
+    if (page->tags_entry == NULL)
+        return;
+    current = gtk_editable_get_text(GTK_EDITABLE(page->tags_entry));
+    parts = g_strsplit(current, ",", -1);
+    result = g_string_new(NULL);
+    for (i = 0; parts[i] != NULL; i++) {
+        gchar *tag = g_strstrip(parts[i]);
+
+        if (*tag == '\0')
+            continue;
+        if (g_strcmp0(tag, old_name) == 0)
+            tag = (gchar *)new_name;
+        if (result->len > 0)
+            g_string_append(result, ", ");
+        g_string_append(result, tag);
+    }
+    gtk_editable_set_text(GTK_EDITABLE(page->tags_entry), result->str);
+    g_strfreev(parts);
+    g_string_free(result, TRUE);
+}
+
+static void
+on_rename_tag_response(AdwAlertDialog *dialog, const gchar *response,
+                       gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
+    GtkEntry *entry = g_object_get_data(G_OBJECT(dialog), "rename-entry");
+    const gchar *old_name = g_object_get_data(G_OBJECT(dialog), "old-name");
+    GError *error = NULL;
+    gchar *new_name;
+
+    if (g_strcmp0(response, "rename") != 0 || notes_store == NULL ||
+        entry == NULL || old_name == NULL)
+        return;
+    new_name = g_strdup(gtk_editable_get_text(GTK_EDITABLE(entry)));
+    g_strstrip(new_name);
+    if (*new_name == '\0' || g_strcmp0(new_name, old_name) == 0) {
+        g_free(new_name);
+        return;
+    }
+    if (!gsword_notes_store_rename_tag(notes_store, old_name, new_name,
+                                       &error)) {
+        gsword_window_show_error(page->window, _("Cannot rename tag"), error);
+        g_free(new_name);
+        return;
+    }
+    update_tags_entry_after_rename(page, old_name, new_name);
+    g_free(new_name);
+    gsword_notes_page_refresh(page);
+    gsword_window_set_status(page->window, _("Tag renamed"));
+}
+
+static void
+on_rename_tag(GtkButton *button, gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GtkListBoxRow *row;
+    const gchar *name;
+    GtkWidget *entry;
+    AdwDialog *dialog;
+
+    (void)button;
+    row = gtk_list_box_get_selected_row(page->tags_list);
+    name = row != NULL ? g_object_get_data(G_OBJECT(row), "tag-name") : NULL;
+    if (name == NULL)
+        return;
+    dialog = adw_alert_dialog_new(_("Rename tag"), NULL);
+    entry = gtk_entry_new();
+    gtk_editable_set_text(GTK_EDITABLE(entry), name);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_widget_set_hexpand(entry, TRUE);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), entry);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "rename", _("Rename"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "rename");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
+    g_object_set_data_full(G_OBJECT(dialog), "old-name", g_strdup(name), g_free);
+    g_signal_connect(entry, "changed", G_CALLBACK(on_rename_entry_changed),
+                     dialog);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_rename_tag_response), page);
+    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+}
+
+static void
+on_rename_list_response(AdwAlertDialog *dialog, const gchar *response,
+                        gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
+    GtkEntry *entry = g_object_get_data(G_OBJECT(dialog), "rename-entry");
+    const gchar *id_text = g_object_get_data(G_OBJECT(dialog), "list-id");
+    GError *error = NULL;
+    gchar *new_name;
+
+    if (g_strcmp0(response, "rename") != 0 || notes_store == NULL ||
+        entry == NULL || id_text == NULL)
+        return;
+    new_name = g_strdup(gtk_editable_get_text(GTK_EDITABLE(entry)));
+    g_strstrip(new_name);
+    if (*new_name == '\0') {
+        g_free(new_name);
+        return;
+    }
+    if (!gsword_notes_store_rename_list(notes_store,
+                                        g_ascii_strtoll(id_text, NULL, 10),
+                                        new_name, &error)) {
+        gsword_window_show_error(page->window,
+                                 _("Cannot rename verse list"), error);
+        g_free(new_name);
+        return;
+    }
+    g_free(new_name);
+    gsword_notes_page_refresh(page);
+    gsword_window_set_status(page->window, _("Verse list renamed"));
+}
+
+static void
+on_rename_list(GtkButton *button, gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GtkListBoxRow *row;
+    const gchar *name;
+    const gchar *id;
+    GtkWidget *entry;
+    AdwDialog *dialog;
+
+    (void)button;
+    row = gtk_list_box_get_selected_row(page->lists_list);
+    name = row != NULL ? g_object_get_data(G_OBJECT(row), "list-name") : NULL;
+    id = row != NULL ? g_object_get_data(G_OBJECT(row), "list-id") : NULL;
+    if (name == NULL || id == NULL)
+        return;
+    dialog = adw_alert_dialog_new(_("Rename verse list"), NULL);
+    entry = gtk_entry_new();
+    gtk_editable_set_text(GTK_EDITABLE(entry), name);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_widget_set_hexpand(entry, TRUE);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), entry);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "rename", _("Rename"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "rename");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
+    g_object_set_data_full(G_OBJECT(dialog), "list-id", g_strdup(id), g_free);
+    g_signal_connect(entry, "changed", G_CALLBACK(on_rename_entry_changed),
+                     dialog);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_rename_list_response), page);
+    adw_dialog_present(dialog, GTK_WIDGET(page->window));
 }
 
 static void
@@ -724,6 +919,8 @@ on_delete_list_response(AdwAlertDialog *dialog, const gchar *response,
     }
     page->selected_list_id = 0;
     clear_list(page->list_items);
+    if (page->rename_list_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button), FALSE);
     if (page->delete_list_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button), FALSE);
     gsword_notes_page_refresh(page);
@@ -814,7 +1011,10 @@ gsword_notes_page_new(GswordWindow *window)
     GtkWidget *notes_label;
     GtkWidget *tags_label;
     GtkWidget *tags_header;
+    GtkWidget *rename_tag;
     GtkWidget *delete_tag;
+    GtkWidget *lists_header;
+    GtkWidget *rename_list;
     GtkWidget *lists_label;
     GtkWidget *list_items_label;
     GtkWidget *editor_scroll;
@@ -845,8 +1045,13 @@ gsword_notes_page_new(GswordWindow *window)
     notes_label = gtk_label_new(_("Notes"));
     tags_label = gtk_label_new(_("Tags"));
     tags_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    rename_tag = gtk_button_new_from_icon_name("document-edit-symbolic");
+    page->rename_tag_button = GTK_BUTTON(rename_tag);
     delete_tag = gtk_button_new_from_icon_name("edit-delete-symbolic");
     page->delete_tag_button = GTK_BUTTON(delete_tag);
+    lists_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    rename_list = gtk_button_new_from_icon_name("document-edit-symbolic");
+    page->rename_list_button = GTK_BUTTON(rename_list);
     lists_label = gtk_label_new(_("Verse lists"));
     list_items_label = gtk_label_new(_("List verses"));
     editor_scroll = gtk_scrolled_window_new();
@@ -915,19 +1120,31 @@ gsword_notes_page_new(GswordWindow *window)
                      G_CALLBACK(on_delete_list), page);
     gtk_box_append(GTK_BOX(new_list_row), GTK_WIDGET(page->new_list_entry));
     gtk_box_append(GTK_BOX(new_list_row), new_list_button);
-    gtk_box_append(GTK_BOX(new_list_row), delete_list);
 
     gtk_label_set_xalign(GTK_LABEL(notes_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(tags_label), 0.0f);
     gtk_widget_set_hexpand(tags_label, TRUE);
+    gtk_widget_add_css_class(rename_tag, "flat");
+    gtk_widget_set_tooltip_text(rename_tag, _("Rename tag"));
+    gtk_widget_set_sensitive(rename_tag, FALSE);
+    g_signal_connect(rename_tag, "clicked", G_CALLBACK(on_rename_tag), page);
     gtk_widget_add_css_class(delete_tag, "flat");
     gtk_widget_add_css_class(delete_tag, "destructive-action");
     gtk_widget_set_tooltip_text(delete_tag, _("Delete tag"));
     gtk_widget_set_sensitive(delete_tag, FALSE);
     g_signal_connect(delete_tag, "clicked", G_CALLBACK(on_delete_tag), page);
     gtk_box_append(GTK_BOX(tags_header), tags_label);
+    gtk_box_append(GTK_BOX(tags_header), rename_tag);
     gtk_box_append(GTK_BOX(tags_header), delete_tag);
     gtk_label_set_xalign(GTK_LABEL(lists_label), 0.0f);
+    gtk_widget_set_hexpand(lists_label, TRUE);
+    gtk_widget_add_css_class(rename_list, "flat");
+    gtk_widget_set_tooltip_text(rename_list, _("Rename verse list"));
+    gtk_widget_set_sensitive(rename_list, FALSE);
+    g_signal_connect(rename_list, "clicked", G_CALLBACK(on_rename_list), page);
+    gtk_box_append(GTK_BOX(lists_header), lists_label);
+    gtk_box_append(GTK_BOX(lists_header), rename_list);
+    gtk_box_append(GTK_BOX(lists_header), delete_list);
     gtk_label_set_xalign(GTK_LABEL(list_items_label), 0.0f);
     gtk_widget_add_css_class(notes_label, "heading");
     gtk_widget_add_css_class(tags_label, "heading");
@@ -938,7 +1155,7 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(left), notes_scroll);
     gtk_box_append(GTK_BOX(left), tags_header);
     gtk_box_append(GTK_BOX(left), tags_scroll);
-    gtk_box_append(GTK_BOX(left), lists_label);
+    gtk_box_append(GTK_BOX(left), lists_header);
     gtk_box_append(GTK_BOX(left), lists_scroll);
     gtk_box_append(GTK_BOX(left), list_items_label);
     gtk_box_append(GTK_BOX(left), list_items_scroll);
