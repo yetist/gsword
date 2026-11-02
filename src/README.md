@@ -42,8 +42,8 @@ Current implementation:
   sync scroll, layout persistence, add/remove/clear and parallel template
 - `workspace-pane.c` / `workspace-pane.h`: per-comparison module selection, compact
   reference chooser, rendering, FOLLOW, active verse and drag reorder
-- `search-page.c` / `search-page.h`: search UI, result navigation and search
-  index actions
+- `search-page.c` / `search-page.h`: internal search page opened from the
+  header search button or `Ctrl+F`, with result navigation and index actions
 - `teaching-page.c` / `teaching-page.h`: teaching workspace, scripture view,
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource

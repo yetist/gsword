@@ -14,6 +14,7 @@ typedef struct _GswordSearchPage GswordSearchPage;
 GswordSearchPage *gsword_search_page_new(GswordWindow *window);
 GtkWidget *gsword_search_page_widget(GswordSearchPage *page);
 void gsword_search_page_refresh_index(GswordSearchPage *page);
+void gsword_search_page_focus(GswordSearchPage *page);
 
 G_END_DECLS
 
