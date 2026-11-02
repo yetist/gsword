@@ -21,6 +21,11 @@
       <summary>Color scheme</summary>
       <description>One of system, light, or dark.</description>
     </key>
+    <key name="sidebar-visible" type="b">
+      <default>true</default>
+      <summary>Module sidebar visibility</summary>
+      <description>Whether the module sidebar is shown in wide window layouts.</description>
+    </key>
     <key name="active-page" type="s">
       <default>'reader'</default>
       <summary>Active workspace page</summary>

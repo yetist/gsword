@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 11:09+0800\n"
+"POT-Creation-Date: 2026-11-02 11:29+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,88 +35,88 @@ msgstr ""
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:127 src/workspace-page.c:342 src/workspace-pane.c:243
+#: src/window.c:108 src/window.c:750
+msgid "Hide module sidebar"
+msgstr ""
+
+#: src/window.c:108
+msgid "Show module sidebar"
+msgstr ""
+
+#: src/window.c:235 src/workspace-page.c:342 src/workspace-pane.c:243
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:298 src/resource-page.c:206 src/resource-page.c:212
+#: src/window.c:406 src/resource-page.c:206 src/resource-page.c:212
 msgid "Cannot open module"
 msgstr ""
 
-#: src/window.c:362
+#: src/window.c:470
 msgid "Commentary opened in study panel"
 msgstr ""
 
-#: src/window.c:382
+#: src/window.c:490
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:520 src/window.c:641
+#: src/window.c:628 src/window.c:759
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:524
+#: src/window.c:632
 msgid "Reading workspace"
 msgstr ""
 
-#: src/window.c:525
+#: src/window.c:633
 msgid "Study workspace"
 msgstr ""
 
-#: src/window.c:526
+#: src/window.c:634
 msgid "Comparison workspace"
 msgstr ""
 
-#: src/window.c:527
+#: src/window.c:635
 msgid "Parallel comparison"
 msgstr ""
 
-#: src/window.c:528
+#: src/window.c:636
 msgid "Teaching workspace"
 msgstr ""
 
-#: src/window.c:529 src/preferences-dialog.c:108
+#: src/window.c:637 src/preferences-dialog.c:108
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:530
+#: src/window.c:638
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:531 src/window-services.c:64
+#: src/window.c:639 src/window-services.c:64
 msgid "Close"
 msgstr ""
 
-#: src/window.c:648 src/module-sidebar.c:279
-msgid "Modules"
-msgstr ""
-
-#: src/window.c:661 src/preferences-dialog.c:113
+#: src/window.c:784 src/preferences-dialog.c:113
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:667
+#: src/window.c:790
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:672 src/search-page.c:212
+#: src/window.c:795 src/search-page.c:212
 msgid "Search"
 msgstr ""
 
-#: src/window.c:677 src/notes-page.c:483
+#: src/window.c:800 src/notes-page.c:483
 msgid "Notes"
 msgstr ""
 
-#: src/window.c:682
+#: src/window.c:805
 msgid "Plan"
 msgstr ""
 
-#: src/window.c:701
+#: src/window.c:824
 msgid "Library"
-msgstr ""
-
-#: src/window.c:716
-msgid "Workspace"
 msgstr ""
 
 #: src/window-services.c:154 src/window-services.c:162
@@ -756,6 +756,10 @@ msgstr ""
 
 #: src/library-page.c:1256
 msgid "Install local module"
+msgstr ""
+
+#: src/module-sidebar.c:280
+msgid "Modules"
 msgstr ""
 
 #: src/study-panel.c:102 src/study-panel.c:649

@@ -105,6 +105,7 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
     if (name == NULL || sidebar->startup_selecting)
         return;
 
+    gsword_window_hide_sidebar_overlay(sidebar->window);
     {
         gint type = GPOINTER_TO_INT(
             g_object_get_data(G_OBJECT(row), "module-type"));

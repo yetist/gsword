@@ -274,7 +274,7 @@ gsword
 - `AdwViewStack`
 - `AdwViewSwitcher`
 - `AdwViewSwitcherBar` + `AdwBreakpoint`（窄窗口底部导航）
-- `AdwNavigationSplitView`
+- `AdwOverlaySplitView`（可隐藏/覆盖式模块侧栏）
 - `AdwToastOverlay`
 - `GtkPaned`
 - `GtkListView`
@@ -284,6 +284,10 @@ gsword
 主导航采用单行标题栏布局：宽窗口在 `AdwHeaderBar` 中显示
 `AdwViewSwitcher`；窗口宽度不超过 `700sp` 时隐藏标题栏导航，改用底部
 `AdwViewSwitcherBar`。模块侧栏与内容区都从标题栏下方开始。
+
+模块侧栏使用 `AdwOverlaySplitView`。宽窗口下可通过标题栏左侧按钮或 `F9`
+隐藏/显示；隐藏后内容占满宽度。窄窗口下侧栏变为覆盖层，默认关闭，选择模块
+后自动收起。宽窗口的侧栏可见状态由 `sidebar-visible` GSettings 键保存。
 
 ### 6.2 阅读工作区
 
@@ -433,7 +437,7 @@ About 使用独立折叠区，避免技术信息挤占主要阅读空间。
 书卷导航和研经面板通过抽屉打开
 ```
 
-使用 `AdwNavigationSplitView` 的 collapsed 状态自动适应。
+使用 `AdwOverlaySplitView` 的 collapsed 状态自动适应，并提供覆盖式模块侧栏。
 
 无障碍要求：
 
