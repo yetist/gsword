@@ -147,6 +147,7 @@ libsword/
 - 经文列表/收藏夹
 - 笔记搜索
 - 笔记编辑时显示对应经文的单节预览
+- Markdown 源文本编辑、基础格式工具栏和语法高亮
 - 从预览直接跳回阅读器
 - 导出 Markdown/HTML
 
@@ -503,7 +504,7 @@ About 使用独立折叠区，避免技术信息挤占主要阅读空间。
 渲染建议：
 
 - 经文区使用 WebKitGTK 6.0 渲染 `gsw_module_get_render_html()`；
-- 笔记使用 `GtkTextView` 或 `GtkSourceView`；
+- 笔记使用 `GtkSourceView` 提供 Markdown 语法高亮；未安装 GtkSourceView 时退回 `GtkTextView`；
 - 搜索结果使用 `GtkListView` + `GtkFilterListModel`；
 - 长任务使用 GTask，配合 `GCancellable` 和进度回调。
 
@@ -560,7 +561,7 @@ About 使用独立折叠区，避免技术信息挤占主要阅读空间。
 
 ### 阶段 3：个人内容
 
-- [x] 笔记（当前经文笔记、保存、删除、搜索）
+- [x] 笔记（当前经文笔记、保存、删除、搜索、Markdown 工具栏）
 - [x] 标签
 - [x] 经文列表
 - [x] 高亮（章节内高亮显示）

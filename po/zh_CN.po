@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 15:57+0800\n"
+"POT-Creation-Date: 2026-11-02 17:15+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -105,7 +105,7 @@ msgstr "阅读"
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:863 src/notes-page.c:616
+#: src/window.c:863 src/notes-page.c:765
 msgid "Notes"
 msgstr "笔记"
 
@@ -231,127 +231,163 @@ msgstr "正则"
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/notes-page.c:155
+#: src/notes-page.c:159
 msgid "Verse text unavailable"
 msgstr "经文内容不可用"
 
-#: src/notes-page.c:286
+#: src/notes-page.c:290
 msgid "Cannot save note"
 msgstr "无法保存笔记"
 
-#: src/notes-page.c:298
+#: src/notes-page.c:302
 msgid "Note saved"
 msgstr "笔记已保存"
 
-#: src/notes-page.c:312
+#: src/notes-page.c:316
 msgid "Cannot delete note"
 msgstr "无法删除笔记"
 
-#: src/notes-page.c:319
+#: src/notes-page.c:323
 msgid "Note deleted"
 msgstr "笔记已删除"
 
-#: src/notes-page.c:367
+#: src/notes-page.c:371
 msgid "Export note"
 msgstr "导出笔记"
 
-#: src/notes-page.c:474
+#: src/notes-page.c:621
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/notes-page.c:479
+#: src/notes-page.c:626
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/notes-page.c:497
+#: src/notes-page.c:644
 msgid "Cannot delete verse list"
 msgstr "无法删除经文列表"
 
-#: src/notes-page.c:505
+#: src/notes-page.c:652
 msgid "Verse list deleted"
 msgstr "经文列表已删除"
 
-#: src/notes-page.c:521 src/notes-page.c:680
+#: src/notes-page.c:668 src/notes-page.c:829
 msgid "Delete verse list"
 msgstr "删除经文列表"
 
-#: src/notes-page.c:523
+#: src/notes-page.c:670
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr "删除“%s”及其所有经文？"
 
-#: src/notes-page.c:526 src/library-page.c:1044 src/plan-page.c:477
+#: src/notes-page.c:673 src/library-page.c:1044 src/plan-page.c:477
 msgid "Cancel"
 msgstr "取消"
 
-#: src/notes-page.c:527 src/notes-page.c:623 src/memory-page.c:368
+#: src/notes-page.c:674 src/notes-page.c:772 src/memory-page.c:368
 #: src/plan-page.c:478
 msgid "Delete"
 msgstr "删除"
 
-#: src/notes-page.c:548
+#: src/notes-page.c:695
 msgid "Select a verse list first"
 msgstr "请先选择经文列表"
 
-#: src/notes-page.c:555
+#: src/notes-page.c:702
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:559
+#: src/notes-page.c:706
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
-#: src/notes-page.c:613
+#: src/notes-page.c:762
 msgid "Add list"
 msgstr "添加列表"
 
-#: src/notes-page.c:617
+#: src/notes-page.c:766
 msgid "Tags"
 msgstr "标签"
 
-#: src/notes-page.c:618
+#: src/notes-page.c:767
 msgid "Verse lists"
 msgstr "经文列表"
 
-#: src/notes-page.c:619
+#: src/notes-page.c:768
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/notes-page.c:622
+#: src/notes-page.c:771
 msgid "Save"
 msgstr "保存"
 
-#: src/notes-page.c:624
+#: src/notes-page.c:773
 msgid "Export"
 msgstr "导出"
 
-#: src/notes-page.c:625
+#: src/notes-page.c:774
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/notes-page.c:629 src/notes-page.c:724
+#: src/notes-page.c:778 src/notes-page.c:873
 msgid "Open in reader"
 msgstr "在阅读器中打开"
 
-#: src/notes-page.c:642
+#: src/notes-page.c:791
 msgid "Search notes"
 msgstr "搜索笔记"
 
-#: src/notes-page.c:674
+#: src/notes-page.c:823
 msgid "New list"
 msgstr "新列表"
 
-#: src/notes-page.c:713
+#: src/notes-page.c:862
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/notes-page.c:715
+#: src/notes-page.c:864
 msgid "Tags:"
 msgstr "标签："
 
-#: src/notes-page.c:718 src/teaching-page.c:222
+#: src/notes-page.c:867 src/teaching-page.c:222
 msgid "Scripture"
 msgstr "经文"
+
+#: src/notes-page.c:897
+msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
+msgstr "Markdown：**粗体**、*斜体*、# 标题、- 列表、> 引用"
+
+#: src/notes-page.c:904
+msgid "Bold"
+msgstr "粗体"
+
+#: src/notes-page.c:907
+msgid "Italic"
+msgstr "斜体"
+
+#: src/notes-page.c:910
+msgid "Heading"
+msgstr "标题"
+
+#: src/notes-page.c:913
+msgid "Bullet list"
+msgstr "无序列表"
+
+#: src/notes-page.c:916
+msgid "Numbered list"
+msgstr "有序列表"
+
+#: src/notes-page.c:919
+msgid "Quote"
+msgstr "引用"
+
+#: src/notes-page.c:922
+msgid "Link"
+msgstr "链接"
+
+#: src/notes-page.c:925
+msgid "Inline code"
+msgstr "行内代码"
 
 #: src/memory-page.c:103 src/memory-page.c:400
 msgid "Select a verse card"
