@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 10:57+0800\n"
+"POT-Creation-Date: 2026-11-02 11:09+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -49,7 +49,7 @@ msgstr "注释已在研经面板中打开"
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:520 src/window.c:639
+#: src/window.c:520 src/window.c:641
 msgid "Main menu"
 msgstr "主菜单"
 
@@ -85,31 +85,35 @@ msgstr "退出"
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:646 src/window.c:699
-msgid "Library"
-msgstr "模块库"
+#: src/window.c:648 src/module-sidebar.c:279
+msgid "Modules"
+msgstr "模块"
 
-#: src/window.c:659 src/preferences-dialog.c:113
+#: src/window.c:661 src/preferences-dialog.c:113
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:665
+#: src/window.c:667
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:670 src/search-page.c:212
+#: src/window.c:672 src/search-page.c:212
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:675 src/notes-page.c:483
+#: src/window.c:677 src/notes-page.c:483
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:680
+#: src/window.c:682
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:714
+#: src/window.c:701
+msgid "Library"
+msgstr "模块库"
+
+#: src/window.c:716
 msgid "Workspace"
 msgstr "工作区"
 
@@ -762,10 +766,6 @@ msgstr "模块名称"
 #: src/library-page.c:1256
 msgid "Install local module"
 msgstr "安装本地模块"
-
-#: src/module-sidebar.c:279
-msgid "Modules"
-msgstr "模块"
 
 #: src/study-panel.c:102 src/study-panel.c:649
 msgid "Commentary"

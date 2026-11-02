@@ -1,6 +1,7 @@
 # gsword 桌面应用设计
 
-- 状态：阶段 1–10 已实现（阅读器、研经工作区、个人内容、模块生态、进阶功能；窗口已按页面对象重构）
+- 状态：阶段 1–10 已实现（阅读器、研经工作区、个人内容、模块生态、进阶功能；
+  窗口已按页面对象重构，主导航使用 AdwHeaderBar + AdwViewSwitcher 自适应布局）
 - 日期：2026-11-01
 - 软件名称：`gsword`
 - 基础库：`libgsword`
@@ -248,7 +249,7 @@ gsword
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
-│ gsword     [阅读] [搜索] [笔记] [计划] [模块库]        🔍  ⌘K     ⚙  │
+│ 阅读  对照  搜索  笔记  计划  模块库                    [菜单]        │
 ├──────────────┬─────────────────────────────────────┬─────────────────┤
 │ 书卷导航      │  Genesis 1:1                        │ 研经面板         │
 │              │                                     │                 │
@@ -268,14 +269,21 @@ gsword
 推荐 GTK4 组件：
 
 - `AdwApplicationWindow`
-- `AdwNavigationSplitView`
-- `AdwTabView`
 - `AdwToolbarView`
+- `AdwHeaderBar`
+- `AdwViewStack`
+- `AdwViewSwitcher`
+- `AdwViewSwitcherBar` + `AdwBreakpoint`（窄窗口底部导航）
+- `AdwNavigationSplitView`
 - `AdwToastOverlay`
 - `GtkPaned`
 - `GtkListView`
 - `GtkPopover`
 - `WebKitWebView` 作为经文渲染区
+
+主导航采用单行标题栏布局：宽窗口在 `AdwHeaderBar` 中显示
+`AdwViewSwitcher`；窗口宽度不超过 `700sp` 时隐藏标题栏导航，改用底部
+`AdwViewSwitcherBar`。模块侧栏与内容区都从标题栏下方开始。
 
 ### 6.2 阅读工作区
 

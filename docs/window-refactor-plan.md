@@ -21,7 +21,7 @@
 4. 修改一个页面时容易影响其他页面。
 5. 翻译字符串、页面构建和业务逻辑混在一起。
 
-主内容区当前使用 `GtkStack` + `GtkStackSwitcher`，不是 `GtkNotebook`。内部使用 `GtkNotebook` 的部分是：
+主内容区在重构时使用 `GtkStack` + `GtkStackSwitcher`，不是 `GtkNotebook`；后续主导航已迁移为 `AdwViewStack` + `AdwViewSwitcher`，并在窄窗口使用 `AdwViewSwitcherBar`。内部使用 `GtkNotebook` 的部分是：
 
 - 计划页：今日 / 计划 / 灵修 / 背经
 - 研究面板：注释 / Strong's / 交叉引用 / 词典
@@ -75,7 +75,7 @@ src/
 
 `GswordWindow` 最终只保留：
 
-- HeaderBar、侧边栏、`GtkStack`、状态栏；
+- HeaderBar、侧边栏、`AdwViewStack`、状态栏；
 - 页面创建和页面切换；
 - 全局菜单和快捷键；
 - 持有 `GswManager`、`GSettings`、当前模块；
@@ -113,7 +113,7 @@ GswordWorkspacePage *workspace_page;
 GswordReaderPage *reader_page;
 ```
 
-页面根控件由窗口装配到 `GtkStack`，页面状态由页面自身管理并在销毁时释放。
+页面根控件由窗口装配到 `AdwViewStack`，页面状态由页面自身管理并在销毁时释放。
 
 ### 3.4 共享服务接口
 

@@ -17,8 +17,9 @@ Current implementation:
 - `main.c`: application entry point
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
-- `window.c` / `window.h`: window shell, page composition, sidebar/content stack,
-  main menu, shortcuts, shared module/reference coordination and page lifetime
+- `window.c` / `window.h`: window shell, page composition, single-row adaptive
+  navigation, sidebar/content stack, main menu, shortcuts, shared
+  module/reference coordination and page lifetime
 - `window-private.h`: internal shared service API for window pages; does not
   expose `GswordWindowPrivate`
 - `window-services.c`: shared status/error/page navigation, module metadata,
