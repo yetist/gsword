@@ -1,7 +1,15 @@
 adw_dep = dependency('libadwaita-1', version: '>=1.4', required: false)
 sqlite3_dep = dependency('sqlite3', required: false)
+gtksourceview_dep = dependency('gtksourceview-5', required: false)
 
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
+  app_deps = [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep]
+  app_c_args = []
+  if gtksourceview_dep.found()
+    app_deps += gtksourceview_dep
+    app_c_args += '-DHAVE_GTKSOURCEVIEW=1'
+  endif
+
   gsword_app = executable('gsword',
     ['main.c', 'application.c', 'window.c', 'window-services.c', 'reader-history.c',
      'search-page.c', 'teaching-page.c', 'resource-page.c',
@@ -11,7 +19,8 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'reader-page.c', 'reader-toolbar.c', 'preferences-dialog.c',
      'notes-store.c', 'plan-store.c', 'app-paths.c',
      'gsword-reference-chooser.c', 'gsword-reference-parser.c'],
-    dependencies: [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep],
+    dependencies: app_deps,
+    c_args: app_c_args,
     install: true,
   )
 

@@ -52,7 +52,7 @@
 - 1–4 栏多译本对照、同步滚动、独立滚动、锁定、拖拽和持久化工作区
 - 切换圣经版本时保持当前 passage；新版本缺少该经文时回到同一书卷首章首节
 - 研经面板：注释、词典、字典、Strong's、交叉引用、原文和笔记
-- 笔记、标签、经文列表、高亮、Markdown 导出，以及 SQLite 持久化
+- 笔记、标签、经文列表、高亮、Markdown 编辑/导出，以及 SQLite 持久化
 - 阅读计划、每日灵修、背经复习、讲道/教学布局
 - 模块库筛选（类型、语言、状态）、模块详情、安装/更新/删除、进度和取消；
   对照栏只列出圣经模块
@@ -180,7 +180,7 @@ key.unref();
 - libcurl（>= 7.68）
 - zlib
 - 可选：libbz2、liblzma、gobject-introspection（GIR）、vala/vapigen（VAPI）、gi-docgen（API 文档）
-- GTK4 应用：GTK4、libadwaita、SQLite3
+- GTK4 应用：GTK4、libadwaita、SQLite3、可选 GtkSourceView 5
 - Meson / Ninja、pkg-config
 
 ## 许可证
