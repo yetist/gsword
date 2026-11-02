@@ -613,7 +613,11 @@ gsword_window_build(GswordWindow *self)
     AdwNavigationPage *sidebar_page;
     AdwNavigationPage *content_page;
     GtkWidget *switcher;
+    GtkWidget *switcher_bar;
     GtkWidget *menu_button;
+    AdwBreakpoint *breakpoint;
+    AdwBreakpointCondition *condition;
+    GValue value = G_VALUE_INIT;
     GSimpleAction *preferences;
     GSimpleAction *focus_key;
     GSimpleAction *history_back;
@@ -714,6 +718,13 @@ gsword_window_build(GswordWindow *self)
     adw_toolbar_view_add_top_bar(toolbar_view, GTK_WIDGET(header));
     adw_toolbar_view_set_content(toolbar_view, GTK_WIDGET(split));
 
+    switcher_bar = adw_view_switcher_bar_new();
+    adw_view_switcher_bar_set_stack(ADW_VIEW_SWITCHER_BAR(switcher_bar),
+                                    priv->content_stack);
+    adw_view_switcher_bar_set_reveal(ADW_VIEW_SWITCHER_BAR(switcher_bar),
+                                     FALSE);
+    adw_toolbar_view_add_bottom_bar(toolbar_view, switcher_bar);
+
     status = gtk_label_new("");
     gtk_label_set_xalign(GTK_LABEL(status), 0.0f);
     gtk_widget_add_css_class(status, "caption");
@@ -728,6 +739,23 @@ gsword_window_build(GswordWindow *self)
 
     adw_application_window_set_content(ADW_APPLICATION_WINDOW(self),
                                        GTK_WIDGET(toolbar_view));
+
+    condition = adw_breakpoint_condition_parse("max-width: 700sp");
+    if (condition != NULL) {
+        breakpoint = adw_breakpoint_new(condition);
+        g_value_init(&value, G_TYPE_BOOLEAN);
+        g_value_set_boolean(&value, TRUE);
+        adw_breakpoint_add_setter(breakpoint, G_OBJECT(switcher_bar),
+                                  "reveal", &value);
+        g_value_unset(&value);
+        g_value_init(&value, GTK_TYPE_WIDGET);
+        g_value_set_object(&value, NULL);
+        adw_breakpoint_add_setter(breakpoint, G_OBJECT(header),
+                                  "title-widget", &value);
+        g_value_unset(&value);
+        adw_application_window_add_breakpoint(ADW_APPLICATION_WINDOW(self),
+                                              breakpoint);
+    }
 
     preferences = g_simple_action_new("preferences", NULL);
     g_signal_connect(preferences, "activate",
