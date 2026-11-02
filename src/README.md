@@ -18,8 +18,9 @@ Current implementation:
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
 - `window.c` / `window.h`: window shell, page composition, single-row adaptive
-  navigation, sidebar/content stack, main menu, shortcuts, shared
-  module/reference coordination and page lifetime
+  navigation, hideable module sidebar (header button and `F9`), sidebar/content
+  stack, main menu, shortcuts, shared module/reference coordination and page
+  lifetime
 - `window-private.h`: internal shared service API for window pages; does not
   expose `GswordWindowPrivate`
 - `window-services.c`: shared status/error/page navigation, module metadata,
@@ -67,8 +68,9 @@ Current implementation:
   (`~/.local/share/gsword`) and one-time migration from the old
   `~/.local/share/gsword-app` location
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
-  comparison layout, columns and scroll sync, legacy parallel template modules,
-  active plan, devotion module, study panel state, font scale, theme
+  module sidebar visibility, comparison layout, columns and scroll sync, legacy
+  parallel template modules, active plan, devotion module, study panel state,
+  font scale, theme
 
 The reader toolbar and each comparison pane use
 `gsword-reference-chooser.c`.  The reader uses the full path-bar form;

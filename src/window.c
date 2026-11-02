@@ -25,6 +25,10 @@ typedef struct {
     GSettings *settings;
     GswModule *module;
     GswordModuleSidebar *module_sidebar;
+    AdwOverlaySplitView *split_view;
+    GtkToggleButton *sidebar_button;
+    gboolean sidebar_visible;
+    gboolean sidebar_updating;
     GswordWorkspacePage *workspace_page;
     GswordReaderPage *reader_page;
     AdwViewStack *content_stack;
@@ -85,6 +89,110 @@ gsword_window_get_plan_store(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     return priv->plans;
+}
+
+static void
+update_sidebar_button(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gboolean visible;
+
+    if (priv->split_view == NULL || priv->sidebar_button == NULL)
+        return;
+    visible = adw_overlay_split_view_get_show_sidebar(priv->split_view);
+    priv->sidebar_updating = TRUE;
+    gtk_toggle_button_set_active(priv->sidebar_button, visible);
+    priv->sidebar_updating = FALSE;
+    gtk_widget_set_tooltip_text(
+        GTK_WIDGET(priv->sidebar_button),
+        visible ? _("Hide module sidebar") : _("Show module sidebar"));
+}
+
+static void
+set_sidebar_visible(GswordWindow *self, gboolean visible, gboolean persist)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->split_view == NULL)
+        return;
+    adw_overlay_split_view_set_show_sidebar(priv->split_view, visible);
+    if (persist &&
+        !adw_overlay_split_view_get_collapsed(priv->split_view)) {
+        priv->sidebar_visible = visible;
+        if (priv->settings != NULL)
+            g_settings_set_boolean(priv->settings, "sidebar-visible",
+                                   visible);
+    }
+    update_sidebar_button(self);
+}
+
+static void
+on_sidebar_visibility_changed(GObject *object, GParamSpec *pspec,
+                              gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    update_sidebar_button(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_sidebar_collapsed_changed(GObject *object, GParamSpec *pspec,
+                             gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    AdwOverlaySplitView *split = ADW_OVERLAY_SPLIT_VIEW(object);
+    gboolean collapsed = adw_overlay_split_view_get_collapsed(split);
+
+    (void)pspec;
+    if (collapsed)
+        set_sidebar_visible(self, FALSE, FALSE);
+    else
+        set_sidebar_visible(self, priv->sidebar_visible, FALSE);
+}
+
+static void
+on_sidebar_toggled(GtkToggleButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gboolean collapsed;
+
+    if (priv->sidebar_updating || priv->split_view == NULL)
+        return;
+    collapsed = adw_overlay_split_view_get_collapsed(priv->split_view);
+    set_sidebar_visible(self, gtk_toggle_button_get_active(button),
+                        !collapsed);
+}
+
+static void
+on_toggle_sidebar_action(GSimpleAction *action, GVariant *parameter,
+                         gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gboolean visible;
+    gboolean collapsed;
+
+    (void)action;
+    (void)parameter;
+    if (priv->split_view == NULL)
+        return;
+    visible = adw_overlay_split_view_get_show_sidebar(priv->split_view);
+    collapsed = adw_overlay_split_view_get_collapsed(priv->split_view);
+    set_sidebar_visible(self, !visible, !collapsed);
+}
+
+void
+gsword_window_hide_sidebar_overlay(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->split_view == NULL ||
+        !adw_overlay_split_view_get_collapsed(priv->split_view) ||
+        !adw_overlay_split_view_get_show_sidebar(priv->split_view))
+        return;
+    adw_overlay_split_view_set_show_sidebar(priv->split_view, FALSE);
 }
 
 void
@@ -611,9 +719,7 @@ gsword_window_build(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
     AdwToolbarView *toolbar_view;
     AdwHeaderBar *header;
-    AdwNavigationSplitView *split;
-    AdwNavigationPage *sidebar_page;
-    AdwNavigationPage *content_page;
+    AdwOverlaySplitView *split;
     GtkWidget *switcher;
     GtkWidget *switcher_bar;
     GtkWidget *menu_button;
@@ -624,15 +730,27 @@ gsword_window_build(GswordWindow *self)
     GSimpleAction *focus_key;
     GSimpleAction *history_back;
     GSimpleAction *history_forward;
+    GSimpleAction *toggle_sidebar;
     GtkWidget *status;
 
     gsword_preferences_init(self);
 
+    priv->sidebar_visible = TRUE;
     gtk_window_set_title(GTK_WINDOW(self), "gsword");
     gtk_window_set_default_size(GTK_WINDOW(self), 1100, 760);
 
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     header = ADW_HEADER_BAR(adw_header_bar_new());
+
+    priv->sidebar_button = GTK_TOGGLE_BUTTON(gtk_toggle_button_new());
+    gtk_button_set_icon_name(GTK_BUTTON(priv->sidebar_button),
+                             "sidebar-show-symbolic");
+    gtk_widget_add_css_class(GTK_WIDGET(priv->sidebar_button), "flat");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(priv->sidebar_button),
+                                _("Hide module sidebar"));
+    g_signal_connect(priv->sidebar_button, "toggled",
+                     G_CALLBACK(on_sidebar_toggled), self);
+    adw_header_bar_pack_start(header, GTK_WIDGET(priv->sidebar_button));
 
     menu_button = gtk_button_new_from_icon_name("open-menu-symbolic");
     gtk_widget_add_css_class(menu_button, "flat");
@@ -641,11 +759,16 @@ gsword_window_build(GswordWindow *self)
     gtk_widget_set_tooltip_text(menu_button, _("Main menu"));
     adw_header_bar_pack_end(header, menu_button);
 
-    split = ADW_NAVIGATION_SPLIT_VIEW(adw_navigation_split_view_new());
-    adw_navigation_split_view_set_sidebar_width_fraction(split, 0.24);
+    split = ADW_OVERLAY_SPLIT_VIEW(adw_overlay_split_view_new());
+    priv->split_view = split;
+    adw_overlay_split_view_set_sidebar_width_fraction(split, 0.24);
     priv->module_sidebar = gsword_module_sidebar_new(self);
-    sidebar_page = adw_navigation_page_new(
-        gsword_module_sidebar_widget(priv->module_sidebar), _("Modules"));
+    adw_overlay_split_view_set_sidebar(
+        split, gsword_module_sidebar_widget(priv->module_sidebar));
+    g_signal_connect(priv->split_view, "notify::collapsed",
+                     G_CALLBACK(on_sidebar_collapsed_changed), self);
+    g_signal_connect(priv->split_view, "notify::show-sidebar",
+                     G_CALLBACK(on_sidebar_visibility_changed), self);
 
     priv->search_page = gsword_search_page_new(self);
     priv->teaching_page = gsword_teaching_page_new(self);
@@ -712,10 +835,7 @@ gsword_window_build(GswordWindow *self)
     adw_header_bar_set_title_widget(header, switcher);
 
     gtk_widget_set_vexpand(GTK_WIDGET(priv->content_stack), TRUE);
-    content_page = adw_navigation_page_new(GTK_WIDGET(priv->content_stack),
-                                           _("Workspace"));
-    adw_navigation_split_view_set_sidebar(split, sidebar_page);
-    adw_navigation_split_view_set_content(split, content_page);
+    adw_overlay_split_view_set_content(split, GTK_WIDGET(priv->content_stack));
 
     adw_toolbar_view_add_top_bar(toolbar_view, GTK_WIDGET(header));
     adw_toolbar_view_set_content(toolbar_view, GTK_WIDGET(split));
@@ -749,6 +869,8 @@ gsword_window_build(GswordWindow *self)
         g_value_set_boolean(&value, TRUE);
         adw_breakpoint_add_setter(breakpoint, G_OBJECT(switcher_bar),
                                   "reveal", &value);
+        adw_breakpoint_add_setter(breakpoint, G_OBJECT(split),
+                                  "collapsed", &value);
         g_value_unset(&value);
         g_value_init(&value, GTK_TYPE_WIDGET);
         g_value_set_object(&value, NULL);
@@ -782,6 +904,14 @@ gsword_window_build(GswordWindow *self)
     g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(history_forward));
     g_object_unref(history_forward);
 
+    toggle_sidebar = g_simple_action_new("toggle-sidebar", NULL);
+    g_signal_connect(toggle_sidebar, "activate",
+                     G_CALLBACK(on_toggle_sidebar_action), self);
+    g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(toggle_sidebar));
+    g_object_unref(toggle_sidebar);
+
+    update_sidebar_button(self);
+
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.preferences",
         (const gchar * const[]) { "<Control>comma", NULL });
@@ -794,6 +924,9 @@ gsword_window_build(GswordWindow *self)
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.history-forward",
         (const gchar * const[]) { "<Alt>Right", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.toggle-sidebar",
+        (const gchar * const[]) { "F9", NULL });
 }
 
 static void
@@ -801,6 +934,20 @@ gsword_window_load_settings(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
+    if (priv->settings != NULL)
+        priv->sidebar_visible = g_settings_get_boolean(
+            priv->settings, "sidebar-visible");
+    else
+        priv->sidebar_visible = TRUE;
+    if (priv->split_view != NULL) {
+        gboolean collapsed = adw_overlay_split_view_get_collapsed(
+            priv->split_view);
+
+        adw_overlay_split_view_set_show_sidebar(
+            priv->split_view,
+            collapsed ? FALSE : priv->sidebar_visible);
+    }
+    update_sidebar_button(self);
     if (priv->reader_page != NULL)
         gsword_study_panel_load_settings(
             gsword_reader_page_get_study_panel(priv->reader_page));

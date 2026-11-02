@@ -24,6 +24,7 @@ void gsword_window_show_error(GswordWindow *self, const gchar *prefix,
 void gsword_window_show_page(GswordWindow *self, const gchar *page);
 gboolean gsword_window_is_page_visible(GswordWindow *self,
                                        const gchar *page);
+void gsword_window_hide_sidebar_overlay(GswordWindow *self);
 
 GswManager *gsword_window_get_manager(GswordWindow *self);
 GSettings *gsword_window_get_settings(GswordWindow *self);
