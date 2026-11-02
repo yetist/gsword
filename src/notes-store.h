@@ -49,12 +49,20 @@ void gsword_note_free(GswordNote *note);
 GPtrArray *gsword_notes_store_list_tags(GswordNotesStore *self);
 gboolean gsword_notes_store_delete_tag(GswordNotesStore *self,
                                        const gchar *name, GError **error);
+gboolean gsword_notes_store_rename_tag(GswordNotesStore *self,
+                                       const gchar *old_name,
+                                       const gchar *new_name,
+                                       GError **error);
 
 gboolean gsword_notes_store_create_list(GswordNotesStore *self,
                                         const gchar *name, GError **error);
 GPtrArray *gsword_notes_store_list_lists(GswordNotesStore *self);
 gboolean gsword_notes_store_delete_list(GswordNotesStore *self,
                                         gint64 list_id, GError **error);
+gboolean gsword_notes_store_rename_list(GswordNotesStore *self,
+                                        gint64 list_id,
+                                        const gchar *new_name,
+                                        GError **error);
 gboolean gsword_notes_store_add_to_list(GswordNotesStore *self, gint64 list_id,
                                         const gchar *module, const gchar *key,
                                         const gchar *display_key,

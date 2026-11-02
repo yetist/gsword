@@ -333,6 +333,104 @@ out:
 }
 
 gboolean
+gsword_notes_store_rename_tag(GswordNotesStore *self, const gchar *old_name,
+                              const gchar *new_name, GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gint64 old_id = 0;
+    gint64 new_id = 0;
+    gboolean begun = FALSE;
+    gboolean ok = FALSE;
+
+    if (g_strcmp0(old_name, new_name) == 0)
+        return TRUE;
+    if (old_name == NULL || new_name == NULL || *new_name == '\0')
+        return FALSE;
+    if (sqlite3_exec(self->db, "BEGIN IMMEDIATE", NULL, NULL, NULL) !=
+        SQLITE_OK) {
+        notes_store_error(self, error, "Cannot rename tag");
+        return FALSE;
+    }
+    begun = TRUE;
+
+    /* The target name may already exist; in that case merge into it. */
+    if (sqlite3_prepare_v2(self->db,
+            "INSERT OR IGNORE INTO tags(name) VALUES(?)", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_TRANSIENT) !=
+            SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot rename tag");
+        goto out;
+    }
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT id FROM tags WHERE name = ?", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, old_name, -1, SQLITE_TRANSIENT) !=
+            SQLITE_OK) {
+        notes_store_error(self, error, "Cannot rename tag");
+        goto out;
+    }
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        old_id = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT id FROM tags WHERE name = ?", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_TRANSIENT) !=
+            SQLITE_OK) {
+        notes_store_error(self, error, "Cannot rename tag");
+        goto out;
+    }
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        new_id = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+
+    if (old_id == 0 || new_id == 0 || old_id == new_id) {
+        ok = TRUE;
+        goto out;
+    }
+
+    if (sqlite3_prepare_v2(self->db,
+            "INSERT OR IGNORE INTO note_tags(note_id, tag_id)"
+            " SELECT note_id, ? FROM note_tags WHERE tag_id = ?",
+            -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, new_id) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 2, old_id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot rename tag");
+        goto out;
+    }
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+
+    if (sqlite3_prepare_v2(self->db,
+            "DELETE FROM tags WHERE id = ?", -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, old_id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot rename tag");
+        goto out;
+    }
+    ok = TRUE;
+
+out:
+    sqlite3_finalize(stmt);
+    if (begun) {
+        if (ok)
+            sqlite3_exec(self->db, "COMMIT", NULL, NULL, NULL);
+        else
+            sqlite3_exec(self->db, "ROLLBACK", NULL, NULL, NULL);
+    }
+    return ok;
+}
+
+gboolean
 gsword_notes_store_delete_tag(GswordNotesStore *self, const gchar *name,
                               GError **error)
 {
@@ -431,6 +529,32 @@ gsword_notes_store_add_to_list(GswordNotesStore *self, gint64 list_id,
         sqlite3_bind_text(stmt, 4, display_key, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
         sqlite3_step(stmt) != SQLITE_DONE) {
         notes_store_error(self, error, "Cannot add verse to list");
+        goto out;
+    }
+    ok = TRUE;
+
+out:
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+gboolean
+gsword_notes_store_rename_list(GswordNotesStore *self, gint64 list_id,
+                               const gchar *new_name, GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok = FALSE;
+
+    if (new_name == NULL || *new_name == '\0')
+        return FALSE;
+    if (sqlite3_prepare_v2(self->db,
+            "UPDATE verse_lists SET name = ? WHERE id = ?", -1, &stmt,
+            NULL) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_TRANSIENT) !=
+            SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 2, list_id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot rename verse list");
         goto out;
     }
     ok = TRUE;
