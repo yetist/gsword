@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 17:15+0800\n"
+"POT-Creation-Date: 2026-11-02 17:48+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,7 +107,7 @@ msgstr ""
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:863 src/notes-page.c:765
+#: src/window.c:863 src/notes-page.c:845
 msgid "Notes"
 msgstr ""
 
@@ -233,161 +233,179 @@ msgstr ""
 msgid "Case sensitive"
 msgstr ""
 
-#: src/notes-page.c:159
+#: src/notes-page.c:181
 msgid "Verse text unavailable"
 msgstr ""
 
-#: src/notes-page.c:290
+#: src/notes-page.c:312
 msgid "Cannot save note"
 msgstr ""
 
-#: src/notes-page.c:302
+#: src/notes-page.c:324
 msgid "Note saved"
 msgstr ""
 
-#: src/notes-page.c:316
+#: src/notes-page.c:338
 msgid "Cannot delete note"
 msgstr ""
 
-#: src/notes-page.c:323
+#: src/notes-page.c:345
 msgid "Note deleted"
 msgstr ""
 
-#: src/notes-page.c:371
+#: src/notes-page.c:393
 msgid "Export note"
 msgstr ""
 
-#: src/notes-page.c:621
+#: src/notes-page.c:649
+msgid "Cannot delete tag"
+msgstr ""
+
+#: src/notes-page.c:653
+msgid "Tag deleted"
+msgstr ""
+
+#: src/notes-page.c:669 src/notes-page.c:925
+msgid "Delete tag"
+msgstr ""
+
+#: src/notes-page.c:671
+#, c-format
+msgid "Delete tag “%s”? Notes will remain."
+msgstr ""
+
+#: src/notes-page.c:674 src/notes-page.c:751 src/library-page.c:1044
+#: src/plan-page.c:477
+msgid "Cancel"
+msgstr ""
+
+#: src/notes-page.c:675 src/notes-page.c:752 src/notes-page.c:855
+#: src/memory-page.c:368 src/plan-page.c:478
+msgid "Delete"
+msgstr ""
+
+#: src/notes-page.c:699
 msgid "Cannot create list"
 msgstr ""
 
-#: src/notes-page.c:626
+#: src/notes-page.c:704
 msgid "Verse list created"
 msgstr ""
 
-#: src/notes-page.c:644
+#: src/notes-page.c:722
 msgid "Cannot delete verse list"
 msgstr ""
 
-#: src/notes-page.c:652
+#: src/notes-page.c:730
 msgid "Verse list deleted"
 msgstr ""
 
-#: src/notes-page.c:668 src/notes-page.c:829
+#: src/notes-page.c:746 src/notes-page.c:912
 msgid "Delete verse list"
 msgstr ""
 
-#: src/notes-page.c:670
+#: src/notes-page.c:748
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr ""
 
-#: src/notes-page.c:673 src/library-page.c:1044 src/plan-page.c:477
-msgid "Cancel"
-msgstr ""
-
-#: src/notes-page.c:674 src/notes-page.c:772 src/memory-page.c:368
-#: src/plan-page.c:478
-msgid "Delete"
-msgstr ""
-
-#: src/notes-page.c:695
+#: src/notes-page.c:773
 msgid "Select a verse list first"
 msgstr ""
 
-#: src/notes-page.c:702
+#: src/notes-page.c:780
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/notes-page.c:706
+#: src/notes-page.c:784
 msgid "Verse added to list"
 msgstr ""
 
-#: src/notes-page.c:762
+#: src/notes-page.c:842
 msgid "Add list"
 msgstr ""
 
-#: src/notes-page.c:766
+#: src/notes-page.c:846
 msgid "Tags"
 msgstr ""
 
-#: src/notes-page.c:767
+#: src/notes-page.c:850
 msgid "Verse lists"
 msgstr ""
 
-#: src/notes-page.c:768
+#: src/notes-page.c:851
 msgid "List verses"
 msgstr ""
 
-#: src/notes-page.c:771
+#: src/notes-page.c:854
 msgid "Save"
 msgstr ""
 
-#: src/notes-page.c:773
+#: src/notes-page.c:856
 msgid "Export"
 msgstr ""
 
-#: src/notes-page.c:774
+#: src/notes-page.c:857
 msgid "Add to list"
 msgstr ""
 
-#: src/notes-page.c:778 src/notes-page.c:873
+#: src/notes-page.c:861 src/notes-page.c:964
 msgid "Open in reader"
 msgstr ""
 
-#: src/notes-page.c:791
+#: src/notes-page.c:874
 msgid "Search notes"
 msgstr ""
 
-#: src/notes-page.c:823
+#: src/notes-page.c:906
 msgid "New list"
 msgstr ""
 
-#: src/notes-page.c:862
+#: src/notes-page.c:953
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:864
+#: src/notes-page.c:955
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:867 src/teaching-page.c:222
+#: src/notes-page.c:958 src/teaching-page.c:222
 msgid "Scripture"
 msgstr ""
 
-#: src/notes-page.c:897
+#: src/notes-page.c:988
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr ""
 
-#: src/notes-page.c:904
+#: src/notes-page.c:995
 msgid "Bold"
 msgstr ""
 
-#: src/notes-page.c:907
+#: src/notes-page.c:998
 msgid "Italic"
 msgstr ""
 
-#: src/notes-page.c:910
+#: src/notes-page.c:1001
 msgid "Heading"
 msgstr ""
 
-#: src/notes-page.c:913
+#: src/notes-page.c:1004
 msgid "Bullet list"
 msgstr ""
 
-#: src/notes-page.c:916
+#: src/notes-page.c:1007
 msgid "Numbered list"
 msgstr ""
 
-#: src/notes-page.c:919
+#: src/notes-page.c:1010
 msgid "Quote"
 msgstr ""
 
-#: src/notes-page.c:922
+#: src/notes-page.c:1013
 msgid "Link"
 msgstr ""
 
-#: src/notes-page.c:925
+#: src/notes-page.c:1016
 msgid "Inline code"
 msgstr ""
 

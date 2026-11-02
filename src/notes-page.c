@@ -25,6 +25,7 @@ struct _GswordNotesPage {
     GtkEntry *tags_entry;
     GtkListBox *notes_list;
     GtkListBox *tags_list;
+    GtkButton *delete_tag_button;
     GtkListBox *lists_list;
     GtkListBox *list_items;
     GtkEntry *new_list_entry;
@@ -67,6 +68,8 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     clear_list(page->notes_list);
     clear_list(page->tags_list);
     clear_list(page->lists_list);
+    if (page->delete_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), FALSE);
 
     for (i = 0; i < notes->len; i++) {
         GswordNote *note = g_ptr_array_index(notes, i);
@@ -403,11 +406,17 @@ on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     const gchar *current;
 
     (void)list;
-    if (row == NULL)
+    if (row == NULL) {
+        if (page->delete_tag_button != NULL)
+            gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button),
+                                     FALSE);
         return;
+    }
     tag = g_object_get_data(G_OBJECT(row), "tag-name");
     if (tag == NULL)
         return;
+    if (page->delete_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), TRUE);
     current = gtk_editable_get_text(GTK_EDITABLE(page->tags_entry));
     if (current == NULL || *current == '\0') {
         gtk_editable_set_text(GTK_EDITABLE(page->tags_entry), tag);
@@ -625,6 +634,56 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 }
 
 static void
+on_delete_tag_response(AdwAlertDialog *dialog, const gchar *response,
+                       gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
+    const gchar *name = g_object_get_data(G_OBJECT(dialog), "tag-name");
+    GError *error = NULL;
+
+    if (g_strcmp0(response, "delete") != 0 || notes_store == NULL ||
+        name == NULL)
+        return;
+    if (!gsword_notes_store_delete_tag(notes_store, name, &error)) {
+        gsword_window_show_error(page->window, _("Cannot delete tag"), error);
+        return;
+    }
+    gsword_notes_page_refresh(page);
+    gsword_window_set_status(page->window, _("Tag deleted"));
+}
+
+static void
+on_delete_tag(GtkButton *button, gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+    GtkListBoxRow *row;
+    const gchar *name;
+    AdwDialog *dialog;
+
+    (void)button;
+    row = gtk_list_box_get_selected_row(page->tags_list);
+    name = row != NULL ? g_object_get_data(G_OBJECT(row), "tag-name") : NULL;
+    if (name == NULL)
+        return;
+    dialog = adw_alert_dialog_new(_("Delete tag"), NULL);
+    adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog),
+                                 _("Delete tag “%s”? Notes will remain."),
+                                 name);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "delete", _("Delete"), NULL);
+    adw_alert_dialog_set_response_appearance(
+        ADW_ALERT_DIALOG(dialog), "delete", ADW_RESPONSE_DESTRUCTIVE);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_object_set_data_full(G_OBJECT(dialog), "tag-name", g_strdup(name), g_free);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_delete_tag_response), page);
+    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+}
+
+static void
 on_create_list(GtkButton *button, gpointer user_data)
 {
     GswordNotesPage *page = user_data;
@@ -754,6 +813,8 @@ gsword_notes_page_new(GswordWindow *window)
     GtkWidget *delete_list;
     GtkWidget *notes_label;
     GtkWidget *tags_label;
+    GtkWidget *tags_header;
+    GtkWidget *delete_tag;
     GtkWidget *lists_label;
     GtkWidget *list_items_label;
     GtkWidget *editor_scroll;
@@ -783,6 +844,9 @@ gsword_notes_page_new(GswordWindow *window)
     page->delete_list_button = GTK_BUTTON(delete_list);
     notes_label = gtk_label_new(_("Notes"));
     tags_label = gtk_label_new(_("Tags"));
+    tags_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    delete_tag = gtk_button_new_from_icon_name("edit-delete-symbolic");
+    page->delete_tag_button = GTK_BUTTON(delete_tag);
     lists_label = gtk_label_new(_("Verse lists"));
     list_items_label = gtk_label_new(_("List verses"));
     editor_scroll = gtk_scrolled_window_new();
@@ -855,6 +919,14 @@ gsword_notes_page_new(GswordWindow *window)
 
     gtk_label_set_xalign(GTK_LABEL(notes_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(tags_label), 0.0f);
+    gtk_widget_set_hexpand(tags_label, TRUE);
+    gtk_widget_add_css_class(delete_tag, "flat");
+    gtk_widget_add_css_class(delete_tag, "destructive-action");
+    gtk_widget_set_tooltip_text(delete_tag, _("Delete tag"));
+    gtk_widget_set_sensitive(delete_tag, FALSE);
+    g_signal_connect(delete_tag, "clicked", G_CALLBACK(on_delete_tag), page);
+    gtk_box_append(GTK_BOX(tags_header), tags_label);
+    gtk_box_append(GTK_BOX(tags_header), delete_tag);
     gtk_label_set_xalign(GTK_LABEL(lists_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(list_items_label), 0.0f);
     gtk_widget_add_css_class(notes_label, "heading");
@@ -864,7 +936,7 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(left), GTK_WIDGET(page->search));
     gtk_box_append(GTK_BOX(left), notes_label);
     gtk_box_append(GTK_BOX(left), notes_scroll);
-    gtk_box_append(GTK_BOX(left), tags_label);
+    gtk_box_append(GTK_BOX(left), tags_header);
     gtk_box_append(GTK_BOX(left), tags_scroll);
     gtk_box_append(GTK_BOX(left), lists_label);
     gtk_box_append(GTK_BOX(left), lists_scroll);
