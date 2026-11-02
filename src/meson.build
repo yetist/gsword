@@ -1,4 +1,4 @@
-adw_dep = dependency('libadwaita-1', required: false)
+adw_dep = dependency('libadwaita-1', version: '>=1.2', required: false)
 sqlite3_dep = dependency('sqlite3', required: false)
 
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()

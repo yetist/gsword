@@ -16,7 +16,7 @@ G_BEGIN_DECLS
 
 void gsword_window_services_init(GswordWindow *self,
                                  GtkLabel *status_label,
-                                 GtkStack *content_stack);
+                                 AdwViewStack *content_stack);
 
 void gsword_window_set_status(GswordWindow *self, const gchar *message);
 void gsword_window_show_error(GswordWindow *self, const gchar *prefix,
