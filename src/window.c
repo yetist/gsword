@@ -27,7 +27,7 @@ typedef struct {
     GswordModuleSidebar *module_sidebar;
     GswordWorkspacePage *workspace_page;
     GswordReaderPage *reader_page;
-    GtkStack *content_stack;
+    AdwViewStack *content_stack;
     gboolean page_restored;
     GtkLabel *status_label;
 
@@ -542,8 +542,8 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *name = gtk_stack_get_visible_child_name(
-        GTK_STACK(object));
+    const gchar *name = adw_view_stack_get_visible_child_name(
+        ADW_VIEW_STACK(object));
 
     (void)pspec;
     if (priv->settings != NULL && name != NULL && priv->page_restored)
@@ -652,44 +652,64 @@ gsword_window_build(GswordWindow *self)
     priv->notes_page = gsword_notes_page_new(self);
     priv->plan_page = gsword_plan_page_new(self);
     priv->library_page = gsword_library_page_new(self);
-    priv->content_stack = GTK_STACK(gtk_stack_new());
+    priv->content_stack = ADW_VIEW_STACK(adw_view_stack_new());
     priv->reader_page = gsword_reader_page_new(self);
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_reader_page_widget(priv->reader_page),
-                         "reader", _("Reading"));
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_reader_page_widget(
+                                            priv->reader_page),
+                                        "reader", _("Reading"),
+                                        "x-office-document-symbolic");
     priv->workspace_page = gsword_workspace_page_new(self);
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_workspace_page_widget(priv->workspace_page),
-                         "panes", _("Compare"));
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_search_page_widget(priv->search_page),
-                         "search", _("Search"));
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_notes_page_widget(priv->notes_page),
-                         "notes", _("Notes"));
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_plan_page_widget(priv->plan_page),
-                         "plan", _("Plan"));
-    gtk_stack_add_named(priv->content_stack,
-                        gsword_teaching_page_widget(priv->teaching_page),
-                        "teaching");
-    gtk_stack_add_named(priv->content_stack,
-                        gsword_resource_page_widget(priv->resource_page),
-                        "resource");
-    gtk_stack_add_titled(priv->content_stack,
-                         gsword_library_page_widget(priv->library_page),
-                         "library", _("Library"));
-    gtk_stack_set_visible_child_name(priv->content_stack, "reader");
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_workspace_page_widget(
+                                            priv->workspace_page),
+                                        "panes", _("Compare"),
+                                        "view-dual-symbolic");
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_search_page_widget(
+                                            priv->search_page),
+                                        "search", _("Search"),
+                                        "system-search-symbolic");
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_notes_page_widget(
+                                            priv->notes_page),
+                                        "notes", _("Notes"),
+                                        "accessories-text-editor-symbolic");
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_plan_page_widget(
+                                            priv->plan_page),
+                                        "plan", _("Plan"),
+                                        "x-office-calendar-symbolic");
+    {
+        AdwViewStackPage *page;
+
+        page = adw_view_stack_add_named(priv->content_stack,
+                                        gsword_teaching_page_widget(
+                                            priv->teaching_page),
+                                        "teaching");
+        adw_view_stack_page_set_visible(page, FALSE);
+        page = adw_view_stack_add_named(priv->content_stack,
+                                        gsword_resource_page_widget(
+                                            priv->resource_page),
+                                        "resource");
+        adw_view_stack_page_set_visible(page, FALSE);
+    }
+    adw_view_stack_add_titled_with_icon(priv->content_stack,
+                                        gsword_library_page_widget(
+                                            priv->library_page),
+                                        "library", _("Library"),
+                                        "folder-documents-symbolic");
+    adw_view_stack_set_visible_child_name(priv->content_stack, "reader");
     g_signal_connect(priv->content_stack, "notify::visible-child",
                      G_CALLBACK(on_workspace_changed), self);
 
     workspace_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     switcher_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    switcher = gtk_stack_switcher_new();
-    gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(switcher),
-                                  priv->content_stack);
-    gtk_widget_set_margin_top(switcher, 4);
-    gtk_widget_set_margin_bottom(switcher, 4);
+    switcher = adw_view_switcher_new();
+    adw_view_switcher_set_stack(ADW_VIEW_SWITCHER(switcher),
+                                priv->content_stack);
+    adw_view_switcher_set_policy(ADW_VIEW_SWITCHER(switcher),
+                                 ADW_VIEW_SWITCHER_POLICY_WIDE);
     gtk_widget_set_halign(switcher, GTK_ALIGN_CENTER);
     gtk_widget_set_halign(switcher_bar, GTK_ALIGN_CENTER);
     gtk_box_append(GTK_BOX(switcher_bar), switcher);
@@ -697,7 +717,6 @@ gsword_window_build(GswordWindow *self)
     gtk_box_append(GTK_BOX(workspace_box), switcher_bar);
     gtk_box_append(GTK_BOX(workspace_box),
                    GTK_WIDGET(priv->content_stack));
-
     content_page = adw_navigation_page_new(workspace_box, _("Workspace"));
     adw_navigation_split_view_set_sidebar(split, sidebar_page);
     adw_navigation_split_view_set_content(split, content_page);

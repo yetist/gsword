@@ -10,7 +10,7 @@
 
 typedef struct {
     GtkLabel *status_label;
-    GtkStack *content_stack;
+    AdwViewStack *content_stack;
 } GswordWindowServices;
 
 static GswordWindowServices *
@@ -21,7 +21,7 @@ get_services(GswordWindow *self)
 
 void
 gsword_window_services_init(GswordWindow *self, GtkLabel *status_label,
-                            GtkStack *content_stack)
+                            AdwViewStack *content_stack)
 {
     GswordWindowServices *services;
 
@@ -79,7 +79,8 @@ gsword_window_show_page(GswordWindow *self, const gchar *page)
 
     if (services == NULL || services->content_stack == NULL || page == NULL)
         return;
-    gtk_stack_set_visible_child_name(services->content_stack, page);
+    adw_view_stack_set_visible_child_name(services->content_stack,
+                                           page);
 }
 
 gboolean
@@ -90,7 +91,8 @@ gsword_window_is_page_visible(GswordWindow *self, const gchar *page)
 
     if (services == NULL || services->content_stack == NULL || page == NULL)
         return FALSE;
-    visible = gtk_stack_get_visible_child_name(services->content_stack);
+    visible = adw_view_stack_get_visible_child_name(
+        services->content_stack);
     return g_strcmp0(visible, page) == 0;
 }
 
