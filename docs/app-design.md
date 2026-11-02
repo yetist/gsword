@@ -282,8 +282,9 @@ gsword
 - `WebKitWebView` 作为经文渲染区
 
 主导航采用单行标题栏布局：宽窗口在 `AdwHeaderBar` 中显示
-`AdwViewSwitcher`；窗口宽度不超过 `700sp` 时隐藏标题栏导航，改用底部
-`AdwViewSwitcherBar`。模块侧栏与内容区都从标题栏下方开始。
+`AdwViewSwitcher`。窗口最小宽度为 1100px，正常情况下不会进入底部导航模式；
+若系统或窗口管理器强制缩窄到 `700sp` 以下，则隐藏标题栏导航并改用底部
+`AdwViewSwitcherBar` 作为降级布局。模块侧栏与内容区都从标题栏下方开始。
 
 模块侧栏使用 `AdwOverlaySplitView`。宽窗口下可通过标题栏左侧按钮或 `F9`
 隐藏/显示；隐藏后内容占满宽度。窄窗口下侧栏变为覆盖层，默认关闭，选择模块
