@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 18:20+0800\n"
+"POT-Creation-Date: 2026-11-02 18:22+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -45,7 +45,8 @@ msgstr "显示模块侧栏"
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:409 src/resource-page.c:206 src/resource-page.c:212
+#: src/window.c:409 src/search-page.c:245 src/resource-page.c:206
+#: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
@@ -93,7 +94,7 @@ msgstr "退出"
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:808 src/search-page.c:253
+#: src/window.c:808 src/search-page.c:447
 msgid "Search"
 msgstr "搜索"
 
@@ -153,89 +154,113 @@ msgstr "其他"
 msgid "Unknown"
 msgstr "未知"
 
-#: src/search-page.c:49
-msgid "Open a module before searching"
-msgstr "搜索前请先打开模块"
+#: src/search-page.c:74
+#, c-format
+msgid "Searching %s: %u/%u"
+msgstr "正在搜索 %s：%u/%u"
 
-#: src/search-page.c:66
-msgid "Search failed"
-msgstr "搜索失败"
+#: src/search-page.c:77
+#, c-format
+msgid "Searching %s: %u"
+msgstr "正在搜索 %s：%u"
 
-#: src/search-page.c:95
+#: src/search-page.c:142
 #, c-format
 msgid "Search: %u result(s)"
 msgstr "搜索：%u 个结果"
 
-#: src/search-page.c:103
+#: src/search-page.c:150
 msgid "No results."
 msgstr "没有找到结果。"
 
-#: src/search-page.c:172
+#: src/search-page.c:161 src/search-page.c:162 src/search-page.c:268
+msgid "Searching..."
+msgstr "正在搜索…"
+
+#: src/search-page.c:198
+msgid "Search cancelled"
+msgstr "搜索已取消"
+
+#: src/search-page.c:200
+msgid "Search failed"
+msgstr "搜索失败"
+
+#: src/search-page.c:227
+msgid "Open a module before searching"
+msgstr "搜索前请先打开模块"
+
+#: src/search-page.c:345
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr "正在建立 %s 索引：%u/%u"
 
-#: src/search-page.c:189 src/search-page.c:278
+#: src/search-page.c:362 src/search-page.c:475
 msgid "Index: no module"
 msgstr "索引：无模块"
 
-#: src/search-page.c:193
+#: src/search-page.c:366
 msgid "Index: available"
 msgstr "索引：可用"
 
-#: src/search-page.c:193
+#: src/search-page.c:366
 msgid "Index: not built"
 msgstr "索引：未建立"
 
-#: src/search-page.c:208
+#: src/search-page.c:381
 msgid "Cannot build index"
 msgstr "无法建立索引"
 
-#: src/search-page.c:211
+#: src/search-page.c:384
 msgid "Search index built"
 msgstr "搜索索引已建立"
 
-#: src/search-page.c:226
+#: src/search-page.c:399
 msgid "Cannot delete index"
 msgstr "无法删除索引"
 
-#: src/search-page.c:229
+#: src/search-page.c:402
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:264
+#: src/search-page.c:448 src/notes-page.c:749 src/notes-page.c:818
+#: src/notes-page.c:869 src/notes-page.c:948 src/library-page.c:1044
+#: src/plan-page.c:477
+msgid "Cancel"
+msgstr "取消"
+
+#: src/search-page.c:460
 msgid "Back"
 msgstr "返回"
 
-#: src/search-page.c:265
+#: src/search-page.c:462
 msgid "Build search index"
 msgstr "建立搜索索引"
 
-#: src/search-page.c:266
+#: src/search-page.c:463
 msgid "Delete search index"
 msgstr "删除搜索索引"
 
-#: src/search-page.c:269
+#: src/search-page.c:466
 msgid "Search text"
 msgstr "搜索文本"
 
-#: src/search-page.c:273
+#: src/search-page.c:470
 msgid "Phrase"
 msgstr "短语"
 
-#: src/search-page.c:273
+#: src/search-page.c:470
 msgid "Multiword"
 msgstr "多词"
 
-#: src/search-page.c:273
+#: src/search-page.c:470
 msgid "Regex"
 msgstr "正则"
 
-#: src/search-page.c:277
+#: src/search-page.c:474
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/search-page.c:313
+#: src/search-page.c:513
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
@@ -274,11 +299,6 @@ msgstr "标签已重命名"
 #: src/notes-page.c:742 src/notes-page.c:1128
 msgid "Rename tag"
 msgstr "重命名标签"
-
-#: src/notes-page.c:749 src/notes-page.c:818 src/notes-page.c:869
-#: src/notes-page.c:948 src/library-page.c:1044 src/plan-page.c:477
-msgid "Cancel"
-msgstr "取消"
 
 #: src/notes-page.c:750 src/notes-page.c:819
 msgid "Rename"

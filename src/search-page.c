@@ -6,6 +6,7 @@
 #include "window-private.h"
 
 #include <glib/gi18n.h>
+#include <gio/gio.h>
 
 struct _GswordSearchPage {
     GswordWindow *window;
@@ -18,8 +19,86 @@ struct _GswordSearchPage {
     GtkLabel *empty_label;
     GtkStack *results_stack;
     GtkButton *search_button;
+    GtkButton *cancel_button;
     GtkLabel *index_label;
+    GCancellable *search_cancellable;
+    GTask *search_task;
 };
+
+typedef struct {
+    GswordWindow *window;
+    GswordSearchPage *page;
+    GswModule *module;
+    GswSearchOptions *options;
+} SearchJob;
+
+typedef struct {
+    GswordWindow *window;
+    gchar *message;
+} SearchProgressData;
+
+static void
+search_job_free(gpointer data)
+{
+    SearchJob *job = data;
+
+    g_clear_object(&job->window);
+    g_clear_object(&job->module);
+    g_clear_pointer(&job->options, gsw_search_options_unref);
+    g_free(job);
+}
+
+static gboolean
+search_progress_update(gpointer data)
+{
+    SearchProgressData *progress = data;
+
+    gsword_window_set_status(progress->window, progress->message);
+    g_clear_object(&progress->window);
+    g_free(progress->message);
+    g_free(progress);
+    return G_SOURCE_REMOVE;
+}
+
+static void
+search_progress(const gchar *module_name, guint processed, guint total,
+                gpointer user_data)
+{
+    SearchJob *job = user_data;
+    SearchProgressData *progress;
+    gchar *message;
+
+    if (processed % 500 != 0 && (total == 0 || processed != total))
+        return;
+    if (total > 0)
+        message = g_strdup_printf(_("Searching %s: %u/%u"),
+                                  module_name, processed, total);
+    else
+        message = g_strdup_printf(_("Searching %s: %u"),
+                                  module_name, processed);
+    progress = g_new0(SearchProgressData, 1);
+    progress->window = g_object_ref(job->window);
+    progress->message = message;
+    g_main_context_invoke(NULL, search_progress_update, progress);
+}
+
+static void
+search_thread(GTask *task, gpointer source_object, gpointer task_data,
+              GCancellable *cancellable)
+{
+    SearchJob *job = task_data;
+    GError *error = NULL;
+    GPtrArray *results;
+
+    (void)source_object;
+    results = gsw_module_search_full(job->module, job->options, cancellable,
+                                     search_progress, job, &error);
+    if (results == NULL)
+        g_task_return_error(task, error);
+    else
+        g_task_return_pointer(task, results,
+                              (GDestroyNotify)g_ptr_array_unref);
+}
 
 static void
 clear_results(GswordSearchPage *page)
@@ -31,41 +110,9 @@ clear_results(GswordSearchPage *page)
 }
 
 static void
-run_search(GswordSearchPage *page)
+populate_results(GswordSearchPage *page, GPtrArray *results)
 {
-    GswModule *module = gsword_window_get_module(page->window);
-    GswSearchOptions *options;
-    GPtrArray *results;
-    GError *error = NULL;
     guint i;
-    guint selected = gtk_drop_down_get_selected(page->type);
-
-    const gchar *text = gtk_editable_get_text(GTK_EDITABLE(page->entry));
-
-    if (*text == '\0')
-        return;
-    if (module == NULL) {
-        gsword_window_set_status(page->window,
-                                 _("Open a module before searching"));
-        return;
-    }
-
-    options = gsw_search_options_new();
-    gsw_search_options_set_text(options, text);
-    gsw_search_options_set_search_type(
-        options, selected == 1 ? GSW_SEARCH_MULTIWORD
-                             : selected == 2 ? GSW_SEARCH_REGEX
-                                             : GSW_SEARCH_PHRASE);
-    gsw_search_options_set_case_sensitive(
-        options, gtk_check_button_get_active(page->case_sensitive));
-    gsw_search_options_set_max_results(options, 200);
-    results = gsw_module_search_full(module, options, NULL, NULL, NULL,
-                                     &error);
-    gsw_search_options_unref(options);
-    if (results == NULL) {
-        gsword_window_show_error(page->window, _("Search failed"), error);
-        return;
-    }
 
     clear_results(page);
     for (i = 0; i < results->len; i++) {
@@ -103,7 +150,123 @@ run_search(GswordSearchPage *page)
         gtk_label_set_text(page->empty_label, _("No results."));
     gtk_stack_set_visible_child_name(page->results_stack,
                                      results->len > 0 ? "results" : "empty");
+}
+
+static void
+set_searching(GswordSearchPage *page, gboolean searching)
+{
+    gtk_widget_set_sensitive(GTK_WIDGET(page->search_button), !searching);
+    gtk_widget_set_visible(GTK_WIDGET(page->cancel_button), searching);
+    if (searching) {
+        gtk_label_set_text(page->results_label, _("Searching..."));
+        gtk_label_set_text(page->empty_label, _("Searching..."));
+        gtk_stack_set_visible_child_name(page->results_stack, "empty");
+    } else {
+        gtk_widget_set_sensitive(
+            GTK_WIDGET(page->search_button),
+            *gtk_editable_get_text(GTK_EDITABLE(page->entry)) != '\0');
+    }
+}
+
+static void
+on_search_done(GObject *source_object, GAsyncResult *result,
+               gpointer user_data)
+{
+    GTask *task = G_TASK(result);
+    SearchJob *job = g_task_get_task_data(task);
+    GswordSearchPage *page = job != NULL ? job->page : NULL;
+    GError *error = NULL;
+    GPtrArray *results;
+
+    (void)source_object;
+    (void)user_data;
+    results = g_task_propagate_pointer(task, &error);
+    if (page == NULL) {
+        g_clear_pointer(&results, g_ptr_array_unref);
+        g_clear_error(&error);
+        return;
+    }
+
+    if (page->search_task == task)
+        g_clear_object(&page->search_task);
+    g_clear_object(&page->search_cancellable);
+    set_searching(page, FALSE);
+
+    if (results == NULL) {
+        if (g_error_matches(error, GSW_ERROR, GSW_ERROR_CANCELLED) ||
+            g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+            gsword_window_set_status(page->window, _("Search cancelled"));
+        } else {
+            gsword_window_show_error(page->window, _("Search failed"), error);
+        }
+        g_clear_error(&error);
+        return;
+    }
+
+    g_clear_error(&error);
+    populate_results(page, results);
     g_ptr_array_unref(results);
+}
+
+static void
+run_search(GswordSearchPage *page)
+{
+    GswordWindow *window = page->window;
+    GswModule *current = gsword_window_get_module(window);
+    GswManager *manager;
+    GswModule *module;
+    GswSearchOptions *options;
+    SearchJob *job;
+    GTask *task;
+    const gchar *text = gtk_editable_get_text(GTK_EDITABLE(page->entry));
+    guint selected = gtk_drop_down_get_selected(page->type);
+
+    if (*text == '\0')
+        return;
+    if (current == NULL) {
+        gsword_window_set_status(window, _("Open a module before searching"));
+        return;
+    }
+    if (page->search_task != NULL) {
+        SearchJob *old_job = g_task_get_task_data(page->search_task);
+
+        if (old_job != NULL)
+            old_job->page = NULL;
+        g_cancellable_cancel(page->search_cancellable);
+        g_clear_object(&page->search_task);
+        g_clear_object(&page->search_cancellable);
+    }
+
+    manager = gsword_window_get_manager(window);
+    module = manager != NULL
+           ? gsw_manager_create_module(manager, gsw_module_get_name(current))
+           : NULL;
+    if (module == NULL) {
+        gsword_window_set_status(window, _("Cannot open module"));
+        return;
+    }
+    options = gsw_search_options_new();
+    gsw_search_options_set_text(options, text);
+    gsw_search_options_set_search_type(
+        options, selected == 1 ? GSW_SEARCH_MULTIWORD
+                             : selected == 2 ? GSW_SEARCH_REGEX
+                                             : GSW_SEARCH_PHRASE);
+    gsw_search_options_set_case_sensitive(
+        options, gtk_check_button_get_active(page->case_sensitive));
+    gsw_search_options_set_max_results(options, 200);
+
+    job = g_new0(SearchJob, 1);
+    job->window = g_object_ref(window);
+    job->page = page;
+    job->module = module;
+    job->options = options;
+    page->search_cancellable = g_cancellable_new();
+    task = g_task_new(NULL, page->search_cancellable, on_search_done, NULL);
+    g_task_set_task_data(task, job, search_job_free);
+    page->search_task = task;
+    set_searching(page, TRUE);
+    gsword_window_set_status(window, _("Searching..."));
+    g_task_run_in_thread(task, search_thread);
 }
 
 static void
@@ -130,6 +293,16 @@ on_search_stop(GtkSearchEntry *entry, gpointer user_data)
 
     (void)entry;
     gsword_window_close_search(page->window);
+}
+
+static void
+on_cancel_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    if (page->search_cancellable != NULL)
+        g_cancellable_cancel(page->search_cancellable);
 }
 
 static void
@@ -230,6 +403,26 @@ on_delete_index(GtkButton *button, gpointer user_data)
     gsword_search_page_refresh_index(page);
 }
 
+static void
+search_page_free(gpointer data)
+{
+    GswordSearchPage *page = data;
+
+    if (page == NULL)
+        return;
+    if (page->search_task != NULL) {
+        SearchJob *job = g_task_get_task_data(page->search_task);
+
+        if (job != NULL)
+            job->page = NULL;
+        if (page->search_cancellable != NULL)
+            g_cancellable_cancel(page->search_cancellable);
+        g_clear_object(&page->search_task);
+    }
+    g_clear_object(&page->search_cancellable);
+    g_free(page);
+}
+
 GswordSearchPage *
 gsword_search_page_new(GswordWindow *window)
 {
@@ -239,6 +432,7 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *search_row;
     GtkWidget *options_row;
     GtkWidget *search;
+    GtkWidget *cancel;
     GtkWidget *back;
     GtkWidget *build;
     GtkWidget *delete;
@@ -251,6 +445,7 @@ gsword_search_page_new(GswordWindow *window)
     search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     search = gtk_button_new_with_label(_("Search"));
+    cancel = gtk_button_new_with_label(_("Cancel"));
     back = gtk_button_new_from_icon_name("go-previous-symbolic");
     build = gtk_button_new_from_icon_name("document-save-symbolic");
     delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
@@ -261,7 +456,9 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_set_margin_start(controls, 12);
     gtk_widget_set_margin_end(controls, 12);
     gtk_widget_add_css_class(back, "flat");
+    gtk_widget_add_css_class(cancel, "flat");
     gtk_widget_set_tooltip_text(back, _("Back"));
+    gtk_widget_set_visible(cancel, FALSE);
     gtk_widget_set_tooltip_text(build, _("Build search index"));
     gtk_widget_set_tooltip_text(delete, _("Delete search index"));
 
@@ -281,9 +478,11 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "caption");
 
     page->search_button = GTK_BUTTON(search);
+    page->cancel_button = GTK_BUTTON(cancel);
     gtk_widget_set_sensitive(search, FALSE);
     g_signal_connect(back, "clicked", G_CALLBACK(on_back_clicked), page);
     g_signal_connect(search, "clicked", G_CALLBACK(on_search_clicked), page);
+    g_signal_connect(cancel, "clicked", G_CALLBACK(on_cancel_clicked), page);
     g_signal_connect(page->entry, "search-changed",
                      G_CALLBACK(on_search_changed), page);
     g_signal_connect(page->entry, "stop-search",
@@ -296,6 +495,7 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(search_row), back);
     gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(page->entry));
     gtk_box_append(GTK_BOX(search_row), search);
+    gtk_box_append(GTK_BOX(search_row), cancel);
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->type));
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->case_sensitive));
     gtk_box_append(GTK_BOX(options_row), build);
@@ -334,7 +534,8 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_label));
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_stack));
     page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-search-page", page, g_free);
+    g_object_set_data_full(G_OBJECT(box), "gsword-search-page", page,
+                           search_page_free);
     gsword_search_page_refresh_index(page);
     return page;
 }
