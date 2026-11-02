@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 10:54+0800\n"
+"POT-Creation-Date: 2026-11-02 10:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,7 +51,7 @@ msgstr ""
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:520 src/window.c:635
+#: src/window.c:520 src/window.c:639
 msgid "Main menu"
 msgstr ""
 
@@ -87,31 +87,31 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: src/window.c:642 src/window.c:695
+#: src/window.c:646 src/window.c:699
 msgid "Library"
 msgstr ""
 
-#: src/window.c:655 src/preferences-dialog.c:113
+#: src/window.c:659 src/preferences-dialog.c:113
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:661
+#: src/window.c:665
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:666 src/search-page.c:212
+#: src/window.c:670 src/search-page.c:212
 msgid "Search"
 msgstr ""
 
-#: src/window.c:671 src/notes-page.c:483
+#: src/window.c:675 src/notes-page.c:483
 msgid "Notes"
 msgstr ""
 
-#: src/window.c:676
+#: src/window.c:680
 msgid "Plan"
 msgstr ""
 
-#: src/window.c:710
+#: src/window.c:714
 msgid "Workspace"
 msgstr ""
 
