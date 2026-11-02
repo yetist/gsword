@@ -612,11 +612,8 @@ gsword_window_build(GswordWindow *self)
     AdwNavigationSplitView *split;
     AdwNavigationPage *sidebar_page;
     AdwNavigationPage *content_page;
-    GtkWidget *workspace_box;
-    GtkWidget *switcher_bar;
     GtkWidget *switcher;
     GtkWidget *menu_button;
-    GtkWidget *header_title;
     GSimpleAction *preferences;
     GSimpleAction *focus_key;
     GSimpleAction *history_back;
@@ -630,8 +627,6 @@ gsword_window_build(GswordWindow *self)
 
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     header = ADW_HEADER_BAR(adw_header_bar_new());
-    header_title = adw_window_title_new("gsword", _("SWORD study"));
-    adw_header_bar_set_title_widget(header, header_title);
 
     menu_button = gtk_button_new_from_icon_name("open-menu-symbolic");
     gtk_widget_add_css_class(menu_button, "flat");
@@ -703,21 +698,16 @@ gsword_window_build(GswordWindow *self)
     g_signal_connect(priv->content_stack, "notify::visible-child",
                      G_CALLBACK(on_workspace_changed), self);
 
-    workspace_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    switcher_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     switcher = adw_view_switcher_new();
     adw_view_switcher_set_stack(ADW_VIEW_SWITCHER(switcher),
                                 priv->content_stack);
     adw_view_switcher_set_policy(ADW_VIEW_SWITCHER(switcher),
                                  ADW_VIEW_SWITCHER_POLICY_WIDE);
-    gtk_widget_set_halign(switcher, GTK_ALIGN_CENTER);
-    gtk_widget_set_halign(switcher_bar, GTK_ALIGN_CENTER);
-    gtk_box_append(GTK_BOX(switcher_bar), switcher);
+    adw_header_bar_set_title_widget(header, switcher);
+
     gtk_widget_set_vexpand(GTK_WIDGET(priv->content_stack), TRUE);
-    gtk_box_append(GTK_BOX(workspace_box), switcher_bar);
-    gtk_box_append(GTK_BOX(workspace_box),
-                   GTK_WIDGET(priv->content_stack));
-    content_page = adw_navigation_page_new(workspace_box, _("Workspace"));
+    content_page = adw_navigation_page_new(GTK_WIDGET(priv->content_stack),
+                                           _("Workspace"));
     adw_navigation_split_view_set_sidebar(split, sidebar_page);
     adw_navigation_split_view_set_content(split, content_page);
 

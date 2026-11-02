@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 20:57+0800\n"
+"POT-Creation-Date: 2026-11-02 10:53+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -49,7 +49,7 @@ msgstr "注释已在研经面板中打开"
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:520 src/window.c:640
+#: src/window.c:520 src/window.c:635
 msgid "Main menu"
 msgstr "主菜单"
 
@@ -85,19 +85,15 @@ msgstr "退出"
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:633
-msgid "SWORD study"
-msgstr "SWORD 研经"
-
-#: src/window.c:647 src/window.c:681
+#: src/window.c:642 src/window.c:695
 msgid "Library"
 msgstr "模块库"
 
-#: src/window.c:659 src/preferences-dialog.c:113
+#: src/window.c:655 src/preferences-dialog.c:113
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:663
+#: src/window.c:661
 msgid "Compare"
 msgstr "对照"
 
@@ -105,48 +101,48 @@ msgstr "对照"
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:669 src/notes-page.c:483
+#: src/window.c:671 src/notes-page.c:483
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:672
+#: src/window.c:676
 msgid "Plan"
 msgstr "计划"
 
-#: src/window.c:701
+#: src/window.c:710
 msgid "Workspace"
 msgstr "工作区"
 
-#: src/window-services.c:152 src/window-services.c:160
+#: src/window-services.c:154 src/window-services.c:162
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window-services.c:154 src/window-services.c:161 src/library-page.c:1052
+#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:1052
 #: src/module-sidebar.c:27
 msgid "Maps"
 msgstr "地图"
 
-#: src/window-services.c:156
+#: src/window-services.c:158
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window-services.c:157 src/library-page.c:1050 src/module-sidebar.c:23
+#: src/window-services.c:159 src/library-page.c:1050 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window-services.c:158 src/library-page.c:1050 src/module-sidebar.c:24
+#: src/window-services.c:160 src/library-page.c:1050 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
-#: src/window-services.c:159
+#: src/window-services.c:161
 msgid "Generic Books"
 msgstr "通用书籍"
 
-#: src/window-services.c:162
+#: src/window-services.c:164
 msgid "Other"
 msgstr "其他"
 
-#: src/window-services.c:166 src/library-page.c:96 src/library-page.c:130
+#: src/window-services.c:168 src/library-page.c:96 src/library-page.c:130
 #: src/library-page.c:523 src/library-page.c:524 src/library-page.c:556
 #: src/library-page.c:559 src/library-page.c:562 src/library-page.c:565
 #: src/library-page.c:569 src/library-page.c:572
@@ -1349,3 +1345,6 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "SWORD study"
+#~ msgstr "SWORD 研经"
