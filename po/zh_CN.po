@@ -1193,11 +1193,11 @@ msgstr "无法读取教学经文"
 
 #: src/teaching-page.c:146
 msgid "Cannot save teaching notes"
-msgstr "无法保存教学笔记"
+msgstr "无法保存教学讲义"
 
 #: src/teaching-page.c:151
 msgid "Teaching notes saved"
-msgstr "教学笔记已保存"
+msgstr "教学讲义已保存"
 
 #: src/teaching-page.c:167
 msgid "Exit fullscreen"
@@ -1213,7 +1213,7 @@ msgstr "经文"
 
 #: src/teaching-page.c:223
 msgid "Teaching notes"
-msgstr "教学笔记"
+msgstr "教学讲义"
 
 #: src/teaching-page.c:224
 msgid "Load current passage"
