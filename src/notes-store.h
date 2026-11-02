@@ -47,6 +47,8 @@ gboolean gsword_notes_store_delete_note(GswordNotesStore *self,
 void gsword_note_free(GswordNote *note);
 
 GPtrArray *gsword_notes_store_list_tags(GswordNotesStore *self);
+gboolean gsword_notes_store_delete_tag(GswordNotesStore *self,
+                                       const gchar *name, GError **error);
 
 gboolean gsword_notes_store_create_list(GswordNotesStore *self,
                                         const gchar *name, GError **error);

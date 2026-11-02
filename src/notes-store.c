@@ -332,6 +332,27 @@ out:
     return ok;
 }
 
+gboolean
+gsword_notes_store_delete_tag(GswordNotesStore *self, const gchar *name,
+                              GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "DELETE FROM tags WHERE name = ?", -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, name, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot delete tag");
+        goto out;
+    }
+    ok = TRUE;
+
+out:
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
 GPtrArray *
 gsword_notes_store_list_tags(GswordNotesStore *self)
 {
