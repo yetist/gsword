@@ -595,7 +595,9 @@ gsword_window_restore_page(GswordWindow *self)
                (g_strcmp0(page, "reader") == 0 ||
                 g_strcmp0(page, "panes") == 0 ||
                 g_strcmp0(page, "search") == 0 ||
+                g_strcmp0(page, "notes") == 0 ||
                 g_strcmp0(page, "plan") == 0 ||
+                g_strcmp0(page, "library") == 0 ||
                 g_strcmp0(page, "teaching") == 0)) {
         gsword_window_show_page(self, page);
     }
@@ -643,7 +645,7 @@ gsword_window_build(GswordWindow *self)
     adw_navigation_split_view_set_sidebar_width_fraction(split, 0.24);
     priv->module_sidebar = gsword_module_sidebar_new(self);
     sidebar_page = adw_navigation_page_new(
-        gsword_module_sidebar_widget(priv->module_sidebar), _("Library"));
+        gsword_module_sidebar_widget(priv->module_sidebar), _("Modules"));
 
     priv->search_page = gsword_search_page_new(self);
     priv->teaching_page = gsword_teaching_page_new(self);
