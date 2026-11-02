@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 15:53+0800\n"
+"POT-Creation-Date: 2026-11-02 15:57+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,7 +107,7 @@ msgstr ""
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:863 src/notes-page.c:546
+#: src/window.c:863 src/notes-page.c:616
 msgid "Notes"
 msgstr ""
 
@@ -233,103 +233,125 @@ msgstr ""
 msgid "Case sensitive"
 msgstr ""
 
-#: src/notes-page.c:152
+#: src/notes-page.c:155
 msgid "Verse text unavailable"
 msgstr ""
 
-#: src/notes-page.c:283
+#: src/notes-page.c:286
 msgid "Cannot save note"
 msgstr ""
 
-#: src/notes-page.c:295
+#: src/notes-page.c:298
 msgid "Note saved"
 msgstr ""
 
-#: src/notes-page.c:309
+#: src/notes-page.c:312
 msgid "Cannot delete note"
 msgstr ""
 
-#: src/notes-page.c:316
+#: src/notes-page.c:319
 msgid "Note deleted"
 msgstr ""
 
-#: src/notes-page.c:364
+#: src/notes-page.c:367
 msgid "Export note"
 msgstr ""
 
-#: src/notes-page.c:462
+#: src/notes-page.c:474
 msgid "Cannot create list"
 msgstr ""
 
-#: src/notes-page.c:467
+#: src/notes-page.c:479
 msgid "Verse list created"
 msgstr ""
 
-#: src/notes-page.c:481
-msgid "Select a verse list first"
+#: src/notes-page.c:497
+msgid "Cannot delete verse list"
 msgstr ""
 
-#: src/notes-page.c:488
-msgid "Cannot add verse to list"
+#: src/notes-page.c:505
+msgid "Verse list deleted"
 msgstr ""
 
-#: src/notes-page.c:492
-msgid "Verse added to list"
+#: src/notes-page.c:521 src/notes-page.c:680
+msgid "Delete verse list"
 msgstr ""
 
-#: src/notes-page.c:545
-msgid "Add list"
+#: src/notes-page.c:523
+#, c-format
+msgid "Delete “%s” and all its verses?"
 msgstr ""
 
-#: src/notes-page.c:547
-msgid "Tags"
+#: src/notes-page.c:526 src/library-page.c:1044 src/plan-page.c:477
+msgid "Cancel"
 msgstr ""
 
-#: src/notes-page.c:548
-msgid "Verse lists"
-msgstr ""
-
-#: src/notes-page.c:549
-msgid "List verses"
-msgstr ""
-
-#: src/notes-page.c:552
-msgid "Save"
-msgstr ""
-
-#: src/notes-page.c:553 src/memory-page.c:368 src/plan-page.c:478
+#: src/notes-page.c:527 src/notes-page.c:623 src/memory-page.c:368
+#: src/plan-page.c:478
 msgid "Delete"
 msgstr ""
 
-#: src/notes-page.c:554
-msgid "Export"
+#: src/notes-page.c:548
+msgid "Select a verse list first"
 msgstr ""
 
 #: src/notes-page.c:555
+msgid "Cannot add verse to list"
+msgstr ""
+
+#: src/notes-page.c:559
+msgid "Verse added to list"
+msgstr ""
+
+#: src/notes-page.c:613
+msgid "Add list"
+msgstr ""
+
+#: src/notes-page.c:617
+msgid "Tags"
+msgstr ""
+
+#: src/notes-page.c:618
+msgid "Verse lists"
+msgstr ""
+
+#: src/notes-page.c:619
+msgid "List verses"
+msgstr ""
+
+#: src/notes-page.c:622
+msgid "Save"
+msgstr ""
+
+#: src/notes-page.c:624
+msgid "Export"
+msgstr ""
+
+#: src/notes-page.c:625
 msgid "Add to list"
 msgstr ""
 
-#: src/notes-page.c:559 src/notes-page.c:647
+#: src/notes-page.c:629 src/notes-page.c:724
 msgid "Open in reader"
 msgstr ""
 
-#: src/notes-page.c:572
+#: src/notes-page.c:642
 msgid "Search notes"
 msgstr ""
 
-#: src/notes-page.c:604
+#: src/notes-page.c:674
 msgid "New list"
 msgstr ""
 
-#: src/notes-page.c:636
+#: src/notes-page.c:713
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:638
+#: src/notes-page.c:715
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:641 src/teaching-page.c:222
+#: src/notes-page.c:718 src/teaching-page.c:222
 msgid "Scripture"
 msgstr ""
 
@@ -688,10 +710,6 @@ msgstr ""
 
 #: src/library-page.c:1043
 msgid "Remove"
-msgstr ""
-
-#: src/library-page.c:1044 src/plan-page.c:477
-msgid "Cancel"
 msgstr ""
 
 #: src/library-page.c:1047

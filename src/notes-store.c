@@ -419,6 +419,28 @@ out:
     return ok;
 }
 
+gboolean
+gsword_notes_store_delete_list(GswordNotesStore *self, gint64 list_id,
+                               GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "DELETE FROM verse_lists WHERE id = ?", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, list_id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot delete verse list");
+        goto out;
+    }
+    ok = TRUE;
+
+out:
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
 GPtrArray *
 gsword_notes_store_list_items(GswordNotesStore *self, gint64 list_id)
 {
