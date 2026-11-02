@@ -73,10 +73,13 @@ fill_modules(GswordWorkspacePane *pane)
                                    gsw_module_info_get_name(info));
     }
     g_ptr_array_unref(infos);
+    pane->updating++;
+    if (pane->module_selector != NULL)
+        gtk_drop_down_set_model(pane->module_selector, NULL);
     g_clear_object(&pane->module_names);
     pane->module_names = names;
-    pane->updating++;
-    gtk_drop_down_set_model(pane->module_selector, G_LIST_MODEL(names));
+    if (pane->module_selector != NULL)
+        gtk_drop_down_set_model(pane->module_selector, G_LIST_MODEL(names));
     pane->updating--;
 }
 
@@ -679,6 +682,26 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
 {
     if (pane == NULL)
         return;
+    /*
+     * The pane root may outlive the pane object briefly while GTK tears it
+     * down.  Detach signal handlers and the drop-down model first so widget
+     * destruction cannot call back into freed pane memory or clear a model
+     * that is already gone.
+     */
+    if (pane->module_selector != NULL) {
+        g_signal_handlers_disconnect_by_data(pane->module_selector, pane);
+        pane->updating++;
+        gtk_drop_down_set_model(pane->module_selector, NULL);
+        pane->updating--;
+    }
+    if (pane->follow != NULL)
+        g_signal_handlers_disconnect_by_data(pane->follow, pane);
+    if (pane->reference_chooser != NULL)
+        g_signal_handlers_disconnect_by_data(pane->reference_chooser, pane);
+    if (pane->scroll != NULL)
+        g_signal_handlers_disconnect_by_data(
+            gtk_scrolled_window_get_vadjustment(pane->scroll), pane);
+
     g_clear_object(&pane->module);
     g_clear_object(&pane->module_names);
     g_free(pane->module_name);
