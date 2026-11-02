@@ -224,7 +224,7 @@ refresh_views(GswordPlanPage *page)
         label = gtk_label_new(text);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_widget_set_hexpand(label, TRUE);
-        gtk_button_set_label(GTK_BUTTON(check), _("Done"));
+        gtk_check_button_set_label(GTK_CHECK_BUTTON(check), _("Done"));
         gtk_box_append(GTK_BOX(box), label);
         gtk_box_append(GTK_BOX(box), check);
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
