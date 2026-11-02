@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 18:22+0800\n"
+"POT-Creation-Date: 2026-11-02 18:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,7 +47,7 @@ msgstr ""
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:409 src/search-page.c:245 src/resource-page.c:206
+#: src/window.c:409 src/search-page.c:363 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr ""
@@ -96,7 +96,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: src/window.c:808 src/search-page.c:447
+#: src/window.c:808 src/search-page.c:572
 msgid "Search"
 msgstr ""
 
@@ -156,113 +156,145 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: src/search-page.c:74
+#: src/search-page.c:77
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:77
+#: src/search-page.c:80
 #, c-format
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:142
+#: src/search-page.c:249
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:150
+#: src/search-page.c:257
 msgid "No results."
 msgstr ""
 
-#: src/search-page.c:161 src/search-page.c:162 src/search-page.c:268
+#: src/search-page.c:268 src/search-page.c:269 src/search-page.c:388
 msgid "Searching..."
 msgstr ""
 
-#: src/search-page.c:198
+#: src/search-page.c:305
 msgid "Search cancelled"
 msgstr ""
 
-#: src/search-page.c:200
+#: src/search-page.c:307
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:227
+#: src/search-page.c:339
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:345
+#: src/search-page.c:344
+msgid "No active verse reference"
+msgstr ""
+
+#: src/search-page.c:465
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:362 src/search-page.c:475
+#: src/search-page.c:483 src/search-page.c:613
 msgid "Index: no module"
 msgstr ""
 
-#: src/search-page.c:366
+#: src/search-page.c:487
 msgid "Index: available"
 msgstr ""
 
-#: src/search-page.c:366
+#: src/search-page.c:487
 msgid "Index: not built"
 msgstr ""
 
-#: src/search-page.c:381
+#: src/search-page.c:502
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:384
+#: src/search-page.c:505
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:399
+#: src/search-page.c:520
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:402
+#: src/search-page.c:523
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:448 src/notes-page.c:749 src/notes-page.c:818
+#: src/search-page.c:573 src/notes-page.c:749 src/notes-page.c:818
 #: src/notes-page.c:869 src/notes-page.c:948 src/library-page.c:1044
 #: src/plan-page.c:477
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:460
+#: src/search-page.c:585
 msgid "Back"
 msgstr ""
 
-#: src/search-page.c:462
+#: src/search-page.c:587
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:463
+#: src/search-page.c:588
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:466
+#: src/search-page.c:591
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:470
+#: src/search-page.c:597
+msgid "Whole module"
+msgstr ""
+
+#: src/search-page.c:597 src/gsword-reference-chooser.c:1583
+msgid "Old Testament"
+msgstr ""
+
+#: src/search-page.c:598 src/gsword-reference-chooser.c:1583
+msgid "New Testament"
+msgstr ""
+
+#: src/search-page.c:598
+msgid "Current book"
+msgstr ""
+
+#: src/search-page.c:599
+msgid "Current chapter"
+msgstr ""
+
+#: src/search-page.c:604
+msgid "Module:"
+msgstr ""
+
+#: src/search-page.c:605
+msgid "Range:"
+msgstr ""
+
+#: src/search-page.c:608
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:470
+#: src/search-page.c:608
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:470
+#: src/search-page.c:608
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:474
+#: src/search-page.c:612
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:513
+#: src/search-page.c:656
 msgid "Enter a search term."
 msgstr ""
 
@@ -1411,14 +1443,6 @@ msgstr ""
 
 #: src/gsword-reference-chooser.c:1575
 msgid "Chapters"
-msgstr ""
-
-#: src/gsword-reference-chooser.c:1583
-msgid "Old Testament"
-msgstr ""
-
-#: src/gsword-reference-chooser.c:1583
-msgid "New Testament"
 msgstr ""
 
 #: src/gsword-reference-chooser.c:1652
