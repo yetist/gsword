@@ -663,7 +663,7 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
         gsword_workspace_page_sync_from_reader(priv->workspace_page);
     } else if (g_strcmp0(name, "search") == 0) {
         if (priv->search_page != NULL)
-            gsword_search_page_refresh_index(priv->search_page);
+            gsword_search_page_select_current(priv->search_page);
     } else if (g_strcmp0(name, "notes") == 0) {
         if (priv->notes_page != NULL) {
             gsword_notes_page_refresh(priv->notes_page);

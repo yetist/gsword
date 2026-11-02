@@ -126,13 +126,15 @@ selected_module_name(GswordSearchPage *page)
 }
 
 static void
-refresh_modules(GswordSearchPage *page)
+refresh_modules(GswordSearchPage *page, const gchar *preferred_module)
 {
     GswManager *manager = gsword_window_get_manager(page->window);
     GswModule *current = gsword_window_get_module(page->window);
     GPtrArray *infos;
     GtkStringList *names;
-    gchar *wanted = g_strdup(selected_module_name(page));
+    gchar *wanted = g_strdup(preferred_module != NULL
+                             ? preferred_module
+                             : selected_module_name(page));
     const gchar *current_name = current != NULL
                               ? gsw_module_get_name(current) : NULL;
     guint i;
@@ -749,7 +751,19 @@ void
 gsword_search_page_refresh_index(GswordSearchPage *page)
 {
     g_return_if_fail(page != NULL);
-    refresh_modules(page);
+    refresh_modules(page, NULL);
+    refresh_index_status(page);
+}
+
+void
+gsword_search_page_select_current(GswordSearchPage *page)
+{
+    GswModule *current;
+
+    g_return_if_fail(page != NULL);
+    current = gsword_window_get_module(page->window);
+    refresh_modules(page, current != NULL
+                          ? gsw_module_get_name(current) : NULL);
     refresh_index_status(page);
 }
 
