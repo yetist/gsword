@@ -14,6 +14,9 @@ struct _GswordNotesPage {
     GtkWidget *root;
     GtkEntry *search;
     GtkEntry *key_entry;
+    GtkWidget *context_box;
+    GtkLabel *context_title;
+    GtkTextView *context_text;
     GtkTextView *text;
     GtkEntry *tags_entry;
     GtkListBox *notes_list;
@@ -111,6 +114,62 @@ gsword_notes_page_refresh(GswordNotesPage *page)
 }
 
 static void
+update_scripture_context(GswordNotesPage *page)
+{
+    GswordWindow *window = page->window;
+    GswManager *manager;
+    GswModule *module = NULL;
+    GError *error = NULL;
+    gchar *reference;
+    gchar *text = NULL;
+
+    if (page->context_box == NULL)
+        return;
+    if (page->module == NULL || page->storage_key == NULL) {
+        gtk_widget_set_visible(page->context_box, FALSE);
+        return;
+    }
+
+    reference = g_strdup_printf("%s · %s", page->module,
+                                page->display_key != NULL
+                                ? page->display_key : page->storage_key);
+    gtk_label_set_text(page->context_title, reference);
+    g_free(reference);
+
+    manager = gsword_window_get_manager(window);
+    if (manager != NULL)
+        module = gsw_manager_create_module(manager, page->module);
+    if (module != NULL &&
+        gsw_module_set_key_text(module, page->storage_key, &error)) {
+        text = gsw_module_get_text(module, &error);
+    }
+    if (error != NULL) {
+        g_clear_error(&error);
+        g_clear_object(&module);
+    }
+    if (text == NULL || *text == '\0') {
+        g_free(text);
+        text = g_strdup(_("Verse text unavailable"));
+    }
+    gtk_text_buffer_set_text(gtk_text_view_get_buffer(page->context_text),
+                             text, -1);
+    g_free(text);
+    g_clear_object(&module);
+    gtk_widget_set_visible(page->context_box, TRUE);
+}
+
+static void
+on_open_context(GtkButton *button, gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+
+    (void)button;
+    if (page->module != NULL && page->storage_key != NULL)
+        gsword_window_open_module_reference(page->window, page->module,
+                                             page->storage_key);
+}
+
+static void
 load_note(GswordNotesPage *page, const gchar *module, const gchar *key,
           const gchar *display_key)
 {
@@ -138,6 +197,7 @@ load_note(GswordNotesPage *page, const gchar *module, const gchar *key,
     }
     gtk_editable_set_text(GTK_EDITABLE(page->key_entry),
                           display_key != NULL ? display_key : "");
+    update_scripture_context(page);
     gsword_note_free(note);
 }
 
@@ -463,6 +523,9 @@ gsword_notes_page_new(GswordWindow *window)
     GtkWidget *lists_label;
     GtkWidget *list_items_label;
     GtkWidget *editor_scroll;
+    GtkWidget *context_scroll;
+    GtkWidget *context_header;
+    GtkWidget *context_open;
     GtkWidget *buttons;
     GtkWidget *save;
     GtkWidget *delete;
@@ -491,6 +554,9 @@ gsword_notes_page_new(GswordWindow *window)
     export = gtk_button_new_with_label(_("Export"));
     add_to_list = gtk_button_new_with_label(_("Add to list"));
     tags_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    page->context_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    context_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    context_open = gtk_button_new_with_label(_("Open in reader"));
 
     gtk_widget_set_margin_top(left, 8);
     gtk_widget_set_margin_bottom(left, 8);
@@ -571,6 +637,35 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(tags_row), gtk_label_new(_("Tags:")));
     gtk_box_append(GTK_BOX(tags_row), GTK_WIDGET(page->tags_entry));
 
+    page->context_title = GTK_LABEL(gtk_label_new(_("Scripture")));
+    gtk_label_set_xalign(page->context_title, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(page->context_title), "heading");
+    gtk_widget_set_hexpand(GTK_WIDGET(page->context_title), TRUE);
+    gtk_box_append(GTK_BOX(context_header), GTK_WIDGET(page->context_title));
+    gtk_widget_add_css_class(context_open, "flat");
+    gtk_widget_set_tooltip_text(context_open, _("Open in reader"));
+    g_signal_connect(context_open, "clicked",
+                     G_CALLBACK(on_open_context), page);
+    gtk_box_append(GTK_BOX(context_header), context_open);
+    page->context_text = GTK_TEXT_VIEW(gtk_text_view_new());
+    gtk_text_view_set_editable(page->context_text, FALSE);
+    gtk_text_view_set_cursor_visible(page->context_text, FALSE);
+    gtk_text_view_set_wrap_mode(page->context_text, GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_left_margin(page->context_text, 8);
+    gtk_text_view_set_right_margin(page->context_text, 8);
+    gtk_text_view_set_top_margin(page->context_text, 6);
+    gtk_text_view_set_bottom_margin(page->context_text, 6);
+    context_scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(context_scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(context_scroll),
+                                  GTK_WIDGET(page->context_text));
+    gtk_widget_set_size_request(context_scroll, -1, 110);
+    gtk_widget_set_vexpand(context_scroll, FALSE);
+    gtk_box_append(GTK_BOX(page->context_box), context_header);
+    gtk_box_append(GTK_BOX(page->context_box), context_scroll);
+    gtk_widget_set_visible(page->context_box, FALSE);
+
     page->text = GTK_TEXT_VIEW(gtk_text_view_new());
     gtk_text_view_set_wrap_mode(page->text, GTK_WRAP_WORD_CHAR);
     gtk_text_view_set_left_margin(page->text, 12);
@@ -591,6 +686,7 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(buttons), export);
 
     gtk_box_append(GTK_BOX(right), GTK_WIDGET(page->key_entry));
+    gtk_box_append(GTK_BOX(right), page->context_box);
     gtk_box_append(GTK_BOX(right), tags_row);
     gtk_box_append(GTK_BOX(right), editor_scroll);
     gtk_box_append(GTK_BOX(right), buttons);

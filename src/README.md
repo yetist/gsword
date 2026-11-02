@@ -48,8 +48,8 @@ Current implementation:
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource
   tree, text/picture rendering and resource navigation
-- `notes-page.c` / `notes-page.h`: notes, note search, tags, verse lists and
-  Markdown export
+- `notes-page.c` / `notes-page.h`: notes, note search, tags, verse lists,
+  Markdown export and a single-verse scripture preview for the selected note
 - `plan-page.c` / `plan-page.h`: reading plan notebook, plan selection,
   schedule and plan creation/deletion
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection

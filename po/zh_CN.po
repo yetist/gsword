@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 15:02+0800\n"
+"POT-Creation-Date: 2026-11-02 15:43+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -105,7 +105,7 @@ msgstr "阅读"
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:863 src/notes-page.c:483
+#: src/window.c:863 src/notes-page.c:546
 msgid "Notes"
 msgstr "笔记"
 
@@ -231,97 +231,109 @@ msgstr "正则"
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/notes-page.c:223
+#: src/notes-page.c:152
+msgid "Verse text unavailable"
+msgstr "经文内容不可用"
+
+#: src/notes-page.c:283
 msgid "Cannot save note"
 msgstr "无法保存笔记"
 
-#: src/notes-page.c:235
+#: src/notes-page.c:295
 msgid "Note saved"
 msgstr "笔记已保存"
 
-#: src/notes-page.c:249
+#: src/notes-page.c:309
 msgid "Cannot delete note"
 msgstr "无法删除笔记"
 
-#: src/notes-page.c:256
+#: src/notes-page.c:316
 msgid "Note deleted"
 msgstr "笔记已删除"
 
-#: src/notes-page.c:304
+#: src/notes-page.c:364
 msgid "Export note"
 msgstr "导出笔记"
 
-#: src/notes-page.c:402
+#: src/notes-page.c:462
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/notes-page.c:407
+#: src/notes-page.c:467
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/notes-page.c:421
+#: src/notes-page.c:481
 msgid "Select a verse list first"
 msgstr "请先选择经文列表"
 
-#: src/notes-page.c:428
+#: src/notes-page.c:488
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:432
+#: src/notes-page.c:492
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
-#: src/notes-page.c:482
+#: src/notes-page.c:545
 msgid "Add list"
 msgstr "添加列表"
 
-#: src/notes-page.c:484
+#: src/notes-page.c:547
 msgid "Tags"
 msgstr "标签"
 
-#: src/notes-page.c:485
+#: src/notes-page.c:548
 msgid "Verse lists"
 msgstr "经文列表"
 
-#: src/notes-page.c:486
+#: src/notes-page.c:549
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/notes-page.c:489
+#: src/notes-page.c:552
 msgid "Save"
 msgstr "保存"
 
-#: src/notes-page.c:490 src/memory-page.c:368 src/plan-page.c:478
+#: src/notes-page.c:553 src/memory-page.c:368 src/plan-page.c:478
 msgid "Delete"
 msgstr "删除"
 
-#: src/notes-page.c:491
+#: src/notes-page.c:554
 msgid "Export"
 msgstr "导出"
 
-#: src/notes-page.c:492
+#: src/notes-page.c:555
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/notes-page.c:506
+#: src/notes-page.c:559 src/notes-page.c:646
+msgid "Open in reader"
+msgstr "在阅读器中打开"
+
+#: src/notes-page.c:572
 msgid "Search notes"
 msgstr "搜索笔记"
 
-#: src/notes-page.c:538
+#: src/notes-page.c:604
 msgid "New list"
 msgstr "新列表"
 
-#: src/notes-page.c:566
+#: src/notes-page.c:632
 msgid "Verse key"
 msgstr "经文位置"
 
-#: src/notes-page.c:569
+#: src/notes-page.c:635
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/notes-page.c:571
+#: src/notes-page.c:637
 msgid "Tags:"
 msgstr "标签："
+
+#: src/notes-page.c:640 src/teaching-page.c:222
+msgid "Scripture"
+msgstr "经文"
 
 #: src/memory-page.c:103 src/memory-page.c:400
 msgid "Select a verse card"
@@ -1206,10 +1218,6 @@ msgstr "退出全屏"
 #: src/teaching-page.c:167 src/teaching-page.c:179 src/teaching-page.c:227
 msgid "Fullscreen"
 msgstr "全屏"
-
-#: src/teaching-page.c:222
-msgid "Scripture"
-msgstr "经文"
 
 #: src/teaching-page.c:223
 msgid "Teaching notes"
