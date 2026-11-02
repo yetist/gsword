@@ -23,6 +23,8 @@ struct _GswordSearchPage {
     GtkStack *results_stack;
     GtkButton *search_button;
     GtkButton *cancel_button;
+    GtkButton *build_button;
+    GtkButton *delete_button;
     GtkLabel *index_label;
     GCancellable *search_cancellable;
     GTask *search_task;
@@ -157,6 +159,57 @@ refresh_modules(GswordSearchPage *page)
     }
     if (selected != GTK_INVALID_LIST_POSITION)
         gtk_drop_down_set_selected(page->module_selector, selected);
+}
+
+static GswModule *
+create_selected_module(GswordSearchPage *page)
+{
+    GswManager *manager = gsword_window_get_manager(page->window);
+    GswModule *current = gsword_window_get_module(page->window);
+    const gchar *name = selected_module_name(page);
+
+    if (manager == NULL)
+        return NULL;
+    if (name == NULL && current != NULL)
+        name = gsw_module_get_name(current);
+    if (name == NULL)
+        return NULL;
+    return gsw_manager_create_module(manager, name);
+}
+
+static gboolean
+search_can_use_index(GswordSearchPage *page)
+{
+    guint type = gtk_drop_down_get_selected(page->type);
+    guint scope = gtk_drop_down_get_selected(page->scope_selector);
+
+    return !gtk_check_button_get_active(page->case_sensitive) &&
+           scope == 0 && (type == 0 || type == 1);
+}
+
+static void
+refresh_index_status(GswordSearchPage *page)
+{
+    GswModule *module = create_selected_module(page);
+    gboolean built = module != NULL && gsw_module_has_search_index(module);
+
+    if (module == NULL)
+        gtk_label_set_text(page->index_label, _("Index: no module"));
+    else if (!built)
+        gtk_label_set_text(page->index_label,
+                           _("Index: not built (scan used)"));
+    else if (search_can_use_index(page))
+        gtk_label_set_text(page->index_label,
+                           _("Index: built (used for this search)"));
+    else
+        gtk_label_set_text(page->index_label,
+                           _("Index: built (scan used for this search)"));
+    if (page->build_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->build_button),
+                                 module != NULL && !built);
+    if (page->delete_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button), built);
+    g_clear_object(&module);
 }
 
 static GswVerseList *
@@ -471,27 +524,26 @@ on_index_progress(const gchar *module_name, guint processed, guint total,
         ;
 }
 
+static void
+on_index_option_changed(GtkWidget *widget, gpointer user_data)
+{
+    (void)widget;
+    refresh_index_status(user_data);
+}
+
 void
 gsword_search_page_refresh_index(GswordSearchPage *page)
 {
-    GswModule *module;
-
     g_return_if_fail(page != NULL);
     refresh_modules(page);
-    module = gsword_window_get_module(page->window);
-    if (module == NULL)
-        gtk_label_set_text(page->index_label, _("Index: no module"));
-    else
-        gtk_label_set_text(page->index_label,
-            gsw_module_has_search_index(module)
-            ? _("Index: available") : _("Index: not built"));
+    refresh_index_status(page);
 }
 
 static void
 on_build_index(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = create_selected_module(page);
     GError *error = NULL;
 
     (void)button;
@@ -500,9 +552,11 @@ on_build_index(GtkButton *button, gpointer user_data)
     if (!gsw_module_build_search_index(module, NULL, on_index_progress, page,
                                        &error)) {
         gsword_window_show_error(page->window, _("Cannot build index"), error);
+        g_clear_object(&module);
         return;
     }
     gsword_window_set_status(page->window, _("Search index built"));
+    g_clear_object(&module);
     gsword_search_page_refresh_index(page);
 }
 
@@ -510,7 +564,7 @@ static void
 on_delete_index(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = create_selected_module(page);
     GError *error = NULL;
 
     (void)button;
@@ -518,9 +572,11 @@ on_delete_index(GtkButton *button, gpointer user_data)
         return;
     if (!gsw_module_delete_search_index(module, &error)) {
         gsword_window_show_error(page->window, _("Cannot delete index"), error);
+        g_clear_object(&module);
         return;
     }
     gsword_window_set_status(page->window, _("Search index deleted"));
+    g_clear_object(&module);
     gsword_search_page_refresh_index(page);
 }
 
@@ -614,9 +670,14 @@ gsword_search_page_new(GswordWindow *window)
     gtk_label_set_xalign(page->index_label, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "dim-label");
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "caption");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(page->index_label),
+        _("The index accelerates case-insensitive phrase and multiword "
+          "searches without a range."));
 
     page->search_button = GTK_BUTTON(search);
     page->cancel_button = GTK_BUTTON(cancel);
+    page->build_button = GTK_BUTTON(build);
+    page->delete_button = GTK_BUTTON(delete);
     gtk_widget_set_sensitive(search, FALSE);
     g_signal_connect(back, "clicked", G_CALLBACK(on_back_clicked), page);
     g_signal_connect(search, "clicked", G_CALLBACK(on_search_clicked), page);
@@ -629,6 +690,14 @@ gsword_search_page_new(GswordWindow *window)
                      G_CALLBACK(on_search_activate), page);
     g_signal_connect(build, "clicked", G_CALLBACK(on_build_index), page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete_index), page);
+    g_signal_connect(page->module_selector, "notify::selected",
+                     G_CALLBACK(on_index_option_changed), page);
+    g_signal_connect(page->scope_selector, "notify::selected",
+                     G_CALLBACK(on_index_option_changed), page);
+    g_signal_connect(page->type, "notify::selected",
+                     G_CALLBACK(on_index_option_changed), page);
+    g_signal_connect(page->case_sensitive, "toggled",
+                     G_CALLBACK(on_index_option_changed), page);
 
     gtk_box_append(GTK_BOX(search_row), back);
     gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(page->entry));
