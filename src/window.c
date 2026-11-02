@@ -786,7 +786,7 @@ gsword_window_build(GswordWindow *self)
     priv->sidebar_visible = TRUE;
     gtk_window_set_title(GTK_WINDOW(self), "gsword");
     gtk_window_set_default_size(GTK_WINDOW(self), GSWORD_WINDOW_MIN_WIDTH, 760);
-    gtk_widget_set_size_request(GTK_WIDGET(self), GSWORD_WINDOW_MIN_WIDTH, -1);
+    gtk_widget_set_size_request(GTK_WIDGET(self), GSWORD_WINDOW_MIN_WIDTH, 660);
 
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     header = ADW_HEADER_BAR(adw_header_bar_new());
