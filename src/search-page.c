@@ -102,6 +102,15 @@ on_search_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_back_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gsword_window_close_search(page->window);
+}
+
+static void
 on_search_activate(GtkEntry *entry, gpointer user_data)
 {
     (void)entry;
@@ -199,6 +208,7 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *search_row;
     GtkWidget *options_row;
     GtkWidget *search;
+    GtkWidget *back;
     GtkWidget *build;
     GtkWidget *delete;
     GtkWidget *scrolled;
@@ -210,6 +220,7 @@ gsword_search_page_new(GswordWindow *window)
     search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     search = gtk_button_new_with_label(_("Search"));
+    back = gtk_button_new_from_icon_name("go-previous-symbolic");
     build = gtk_button_new_from_icon_name("document-save-symbolic");
     delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
     scrolled = gtk_scrolled_window_new();
@@ -218,6 +229,8 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_set_margin_bottom(controls, 8);
     gtk_widget_set_margin_start(controls, 12);
     gtk_widget_set_margin_end(controls, 12);
+    gtk_widget_add_css_class(back, "flat");
+    gtk_widget_set_tooltip_text(back, _("Back"));
     gtk_widget_set_tooltip_text(build, _("Build search index"));
     gtk_widget_set_tooltip_text(delete, _("Delete search index"));
 
@@ -236,12 +249,14 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "dim-label");
     gtk_widget_add_css_class(GTK_WIDGET(page->index_label), "caption");
 
+    g_signal_connect(back, "clicked", G_CALLBACK(on_back_clicked), page);
     g_signal_connect(search, "clicked", G_CALLBACK(on_search_clicked), page);
     g_signal_connect(page->entry, "activate",
                      G_CALLBACK(on_search_activate), page);
     g_signal_connect(build, "clicked", G_CALLBACK(on_build_index), page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete_index), page);
 
+    gtk_box_append(GTK_BOX(search_row), back);
     gtk_box_append(GTK_BOX(search_row), GTK_WIDGET(page->entry));
     gtk_box_append(GTK_BOX(search_row), search);
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->type));
@@ -272,4 +287,13 @@ gsword_search_page_widget(GswordSearchPage *page)
 {
     g_return_val_if_fail(page != NULL, NULL);
     return page->root;
+}
+
+void
+gsword_search_page_focus(GswordSearchPage *page)
+{
+    if (page == NULL || page->entry == NULL)
+        return;
+    gtk_widget_grab_focus(GTK_WIDGET(page->entry));
+    gtk_editable_select_region(GTK_EDITABLE(page->entry), 0, -1);
 }

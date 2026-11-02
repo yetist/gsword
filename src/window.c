@@ -38,6 +38,7 @@ typedef struct {
     GtkLabel *status_label;
 
     GswordSearchPage *search_page;
+    gchar *search_return_page;
 
     GswordLibraryPage *library_page;
 
@@ -716,6 +717,48 @@ gsword_window_restore_page(GswordWindow *self)
 }
 
 static void
+gsword_window_open_search(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *current = adw_view_stack_get_visible_child_name(
+        priv->content_stack);
+
+    if (g_strcmp0(current, "search") != 0) {
+        g_free(priv->search_return_page);
+        priv->search_return_page = g_strdup(current != NULL
+                                            ? current : "reader");
+    }
+    gsword_window_show_page(self, "search");
+    if (priv->search_page != NULL)
+        gsword_search_page_focus(priv->search_page);
+}
+
+static void
+on_search_action(GSimpleAction *action, GVariant *parameter,
+                 gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    gsword_window_open_search(GSWORD_WINDOW(user_data));
+}
+
+static void
+on_search_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_open_search(GSWORD_WINDOW(user_data));
+}
+
+void
+gsword_window_close_search(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    gsword_window_show_page(self, priv->search_return_page != NULL
+                                  ? priv->search_return_page : "reader");
+}
+
+static void
 gsword_window_build(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
@@ -724,12 +767,15 @@ gsword_window_build(GswordWindow *self)
     AdwOverlaySplitView *split;
     GtkWidget *switcher;
     GtkWidget *switcher_bar;
+    GtkWidget *search_button;
+    GtkWidget *header_actions;
     GtkWidget *menu_button;
     AdwBreakpoint *breakpoint;
     AdwBreakpointCondition *condition;
     GValue value = G_VALUE_INIT;
     GSimpleAction *preferences;
     GSimpleAction *focus_key;
+    GSimpleAction *search_action;
     GSimpleAction *history_back;
     GSimpleAction *history_forward;
     GSimpleAction *toggle_sidebar;
@@ -755,12 +801,22 @@ gsword_window_build(GswordWindow *self)
                      G_CALLBACK(on_sidebar_toggled), self);
     adw_header_bar_pack_start(header, GTK_WIDGET(priv->sidebar_button));
 
+    search_button = gtk_button_new_from_icon_name("system-search-symbolic");
+    gtk_widget_add_css_class(search_button, "flat");
+    g_signal_connect(search_button, "clicked",
+                     G_CALLBACK(on_search_clicked), self);
+    gtk_widget_set_tooltip_text(search_button, _("Search"));
+
     menu_button = gtk_button_new_from_icon_name("open-menu-symbolic");
     gtk_widget_add_css_class(menu_button, "flat");
     g_signal_connect(menu_button, "clicked",
                      G_CALLBACK(on_main_menu_clicked), self);
     gtk_widget_set_tooltip_text(menu_button, _("Main menu"));
-    adw_header_bar_pack_end(header, menu_button);
+
+    header_actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_box_append(GTK_BOX(header_actions), search_button);
+    gtk_box_append(GTK_BOX(header_actions), menu_button);
+    adw_header_bar_pack_end(header, header_actions);
 
     split = ADW_OVERLAY_SPLIT_VIEW(adw_overlay_split_view_new());
     priv->split_view = split;
@@ -792,11 +848,15 @@ gsword_window_build(GswordWindow *self)
                                             priv->workspace_page),
                                         "panes", _("Compare"),
                                         "view-dual-symbolic");
-    adw_view_stack_add_titled_with_icon(priv->content_stack,
+    {
+        AdwViewStackPage *page;
+
+        page = adw_view_stack_add_named(priv->content_stack,
                                         gsword_search_page_widget(
                                             priv->search_page),
-                                        "search", _("Search"),
-                                        "system-search-symbolic");
+                                        "search");
+        adw_view_stack_page_set_visible(page, FALSE);
+    }
     adw_view_stack_add_titled_with_icon(priv->content_stack,
                                         gsword_notes_page_widget(
                                             priv->notes_page),
@@ -896,6 +956,12 @@ gsword_window_build(GswordWindow *self)
     g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(focus_key));
     g_object_unref(focus_key);
 
+    search_action = g_simple_action_new("search", NULL);
+    g_signal_connect(search_action, "activate",
+                     G_CALLBACK(on_search_action), self);
+    g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(search_action));
+    g_object_unref(search_action);
+
     history_back = g_simple_action_new("history-back", NULL);
     g_signal_connect(history_back, "activate",
                      G_CALLBACK(on_history_back_action), self);
@@ -921,6 +987,9 @@ gsword_window_build(GswordWindow *self)
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.focus-key",
         (const gchar * const[]) { "<Control>l", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.search",
+        (const gchar * const[]) { "<Control>f", NULL });
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.history-back",
         (const gchar * const[]) { "<Alt>Left", NULL });
@@ -966,6 +1035,7 @@ gsword_window_finalize(GObject *object)
     g_clear_object(&priv->settings);
     g_clear_pointer(&priv->notes, gsword_notes_store_free);
     g_clear_pointer(&priv->plans, gsword_plan_store_free);
+    g_free(priv->search_return_page);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->finalize(object);
 }
