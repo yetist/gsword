@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 15:43+0800\n"
+"POT-Creation-Date: 2026-11-02 15:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -309,7 +309,7 @@ msgstr ""
 msgid "Add to list"
 msgstr ""
 
-#: src/notes-page.c:559 src/notes-page.c:646
+#: src/notes-page.c:559 src/notes-page.c:647
 msgid "Open in reader"
 msgstr ""
 
@@ -321,19 +321,15 @@ msgstr ""
 msgid "New list"
 msgstr ""
 
-#: src/notes-page.c:632
-msgid "Verse key"
-msgstr ""
-
-#: src/notes-page.c:635
+#: src/notes-page.c:636
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:637
+#: src/notes-page.c:638
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:640 src/teaching-page.c:222
+#: src/notes-page.c:641 src/teaching-page.c:222
 msgid "Scripture"
 msgstr ""
 

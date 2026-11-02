@@ -13,7 +13,7 @@ struct _GswordNotesPage {
     GswordWindow *window;
     GtkWidget *root;
     GtkEntry *search;
-    GtkEntry *key_entry;
+    GtkLabel *key_label;
     GtkWidget *context_box;
     GtkLabel *context_title;
     GtkTextView *context_text;
@@ -195,8 +195,8 @@ load_note(GswordNotesPage *page, const gchar *module, const gchar *key,
         gtk_text_buffer_set_text(buffer, "", -1);
         gtk_editable_set_text(GTK_EDITABLE(page->tags_entry), "");
     }
-    gtk_editable_set_text(GTK_EDITABLE(page->key_entry),
-                          display_key != NULL ? display_key : "");
+    gtk_label_set_text(page->key_label,
+                       display_key != NULL ? display_key : "");
     update_scripture_context(page);
     gsword_note_free(note);
 }
@@ -627,9 +627,10 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(left), list_items_scroll);
     gtk_box_append(GTK_BOX(left), new_list_row);
 
-    page->key_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_editable_set_editable(GTK_EDITABLE(page->key_entry), FALSE);
-    gtk_entry_set_placeholder_text(page->key_entry, _("Verse key"));
+    page->key_label = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(page->key_label, 0.0f);
+    gtk_label_set_selectable(page->key_label, TRUE);
+    gtk_widget_add_css_class(GTK_WIDGET(page->key_label), "heading");
     page->tags_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(page->tags_entry,
                                    _("Tags, separated by commas"));
@@ -685,7 +686,7 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(buttons), add_to_list);
     gtk_box_append(GTK_BOX(buttons), export);
 
-    gtk_box_append(GTK_BOX(right), GTK_WIDGET(page->key_entry));
+    gtk_box_append(GTK_BOX(right), GTK_WIDGET(page->key_label));
     gtk_box_append(GTK_BOX(right), page->context_box);
     gtk_box_append(GTK_BOX(right), tags_row);
     gtk_box_append(GTK_BOX(right), editor_scroll);
