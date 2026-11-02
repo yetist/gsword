@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-02 18:25+0800\n"
+"POT-Creation-Date: 2026-11-02 18:26+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -45,7 +45,7 @@ msgstr "显示模块侧栏"
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:409 src/search-page.c:363 src/resource-page.c:206
+#: src/window.c:409 src/search-page.c:416 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
@@ -94,7 +94,7 @@ msgstr "退出"
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:808 src/search-page.c:572
+#: src/window.c:808 src/search-page.c:628
 msgid "Search"
 msgstr "搜索"
 
@@ -154,145 +154,155 @@ msgstr "其他"
 msgid "Unknown"
 msgstr "未知"
 
-#: src/search-page.c:77
+#: src/search-page.c:79
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr "正在搜索 %s：%u/%u"
 
-#: src/search-page.c:80
+#: src/search-page.c:82
 #, c-format
 msgid "Searching %s: %u"
 msgstr "正在搜索 %s：%u"
 
-#: src/search-page.c:249
+#: src/search-page.c:197 src/search-page.c:669
+msgid "Index: no module"
+msgstr "索引：无模块"
+
+#: src/search-page.c:200
+msgid "Index: not built (scan used)"
+msgstr "索引：未建立（使用扫描）"
+
+#: src/search-page.c:203
+msgid "Index: built (used for this search)"
+msgstr "索引：已建立（本次搜索使用）"
+
+#: src/search-page.c:206
+msgid "Index: built (scan used for this search)"
+msgstr "索引：已建立（本次搜索使用扫描）"
+
+#: src/search-page.c:302
 #, c-format
 msgid "Search: %u result(s)"
 msgstr "搜索：%u 个结果"
 
-#: src/search-page.c:257
+#: src/search-page.c:310
 msgid "No results."
 msgstr "没有找到结果。"
 
-#: src/search-page.c:268 src/search-page.c:269 src/search-page.c:388
+#: src/search-page.c:321 src/search-page.c:322 src/search-page.c:441
 msgid "Searching..."
 msgstr "正在搜索…"
 
-#: src/search-page.c:305
+#: src/search-page.c:358
 msgid "Search cancelled"
 msgstr "搜索已取消"
 
-#: src/search-page.c:307
+#: src/search-page.c:360
 msgid "Search failed"
 msgstr "搜索失败"
 
-#: src/search-page.c:339
+#: src/search-page.c:392
 msgid "Open a module before searching"
 msgstr "搜索前请先打开模块"
 
-#: src/search-page.c:344
+#: src/search-page.c:397
 msgid "No active verse reference"
 msgstr "当前没有可用的经文范围"
 
-#: src/search-page.c:465
+#: src/search-page.c:518
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr "正在建立 %s 索引：%u/%u"
 
-#: src/search-page.c:483 src/search-page.c:613
-msgid "Index: no module"
-msgstr "索引：无模块"
-
-#: src/search-page.c:487
-msgid "Index: available"
-msgstr "索引：可用"
-
-#: src/search-page.c:487
-msgid "Index: not built"
-msgstr "索引：未建立"
-
-#: src/search-page.c:502
+#: src/search-page.c:554
 msgid "Cannot build index"
 msgstr "无法建立索引"
 
-#: src/search-page.c:505
+#: src/search-page.c:558
 msgid "Search index built"
 msgstr "搜索索引已建立"
 
-#: src/search-page.c:520
+#: src/search-page.c:574
 msgid "Cannot delete index"
 msgstr "无法删除索引"
 
-#: src/search-page.c:523
+#: src/search-page.c:578
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:573 src/notes-page.c:749 src/notes-page.c:818
+#: src/search-page.c:629 src/notes-page.c:749 src/notes-page.c:818
 #: src/notes-page.c:869 src/notes-page.c:948 src/library-page.c:1044
 #: src/plan-page.c:477
 msgid "Cancel"
 msgstr "取消"
 
-#: src/search-page.c:585
+#: src/search-page.c:641
 msgid "Back"
 msgstr "返回"
 
-#: src/search-page.c:587
+#: src/search-page.c:643
 msgid "Build search index"
 msgstr "建立搜索索引"
 
-#: src/search-page.c:588
+#: src/search-page.c:644
 msgid "Delete search index"
 msgstr "删除搜索索引"
 
-#: src/search-page.c:591
+#: src/search-page.c:647
 msgid "Search text"
 msgstr "搜索文本"
 
-#: src/search-page.c:597
+#: src/search-page.c:653
 msgid "Whole module"
 msgstr "整个模块"
 
-#: src/search-page.c:597 src/gsword-reference-chooser.c:1583
+#: src/search-page.c:653 src/gsword-reference-chooser.c:1583
 msgid "Old Testament"
 msgstr "旧约"
 
-#: src/search-page.c:598 src/gsword-reference-chooser.c:1583
+#: src/search-page.c:654 src/gsword-reference-chooser.c:1583
 msgid "New Testament"
 msgstr "新约"
 
-#: src/search-page.c:598
+#: src/search-page.c:654
 msgid "Current book"
 msgstr "当前卷"
 
-#: src/search-page.c:599
+#: src/search-page.c:655
 msgid "Current chapter"
 msgstr "当前章"
 
-#: src/search-page.c:604
+#: src/search-page.c:660
 msgid "Module:"
 msgstr "模块："
 
-#: src/search-page.c:605
+#: src/search-page.c:661
 msgid "Range:"
 msgstr "范围："
 
-#: src/search-page.c:608
+#: src/search-page.c:664
 msgid "Phrase"
 msgstr "短语"
 
-#: src/search-page.c:608
+#: src/search-page.c:664
 msgid "Multiword"
 msgstr "多词"
 
-#: src/search-page.c:608
+#: src/search-page.c:664
 msgid "Regex"
 msgstr "正则"
 
-#: src/search-page.c:612
+#: src/search-page.c:668
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/search-page.c:656
+#: src/search-page.c:674
+msgid ""
+"The index accelerates case-insensitive phrase and multiword searches without "
+"a range."
+msgstr "索引可加速不限定范围、不区分大小写的短语或多词搜索。"
+
+#: src/search-page.c:725
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
@@ -1509,6 +1519,9 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "Index: available"
+#~ msgstr "索引：可用"
 
 #~ msgid "Workspace"
 #~ msgstr "工作区"
