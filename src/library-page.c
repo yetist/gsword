@@ -11,6 +11,8 @@
 struct _GswordLibraryPage {
     GswordWindow *window;
     GtkWidget *root;
+    AdwNavigationSplitView *split_view;
+    GtkWidget *detail_back;
     GswManager *manager;
     GSettings *settings;
     GswInstallManager *installer;
@@ -96,6 +98,7 @@ library_page_get(GswordWindow *self)
 
 static void gsword_window_refresh_remote_modules(GswordWindow *self);
 static void gsword_window_refresh_installed_list(GswordWindow *self);
+static void show_module_details(GswordWindow *self);
 static void on_refresh_sources_finished(GObject *source, GAsyncResult *result,
                                         gpointer user_data);
 static void on_refresh_remote_finished(GObject *source, GAsyncResult *result,
@@ -875,6 +878,7 @@ on_remote_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     priv->selected_remote_name = g_strdup(name);
     g_clear_pointer(&priv->selected_installed_name, g_free);
     gsword_window_update_remote_details(self, name);
+    show_module_details(self);
 }
 
 static void
@@ -893,6 +897,7 @@ on_installed_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     g_free(priv->selected_installed_name);
     priv->selected_installed_name = g_strdup(name);
     gsword_window_update_installed_details(self, name);
+    show_module_details(self);
 }
 
 static void
@@ -1732,6 +1737,39 @@ on_source_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 }
 
 static void
+show_module_details(GswordWindow *self)
+{
+    GswordLibraryPage *priv = library_page_get(self);
+
+    if (priv->split_view != NULL)
+        adw_navigation_split_view_set_show_content(priv->split_view, TRUE);
+}
+
+static void
+on_detail_back(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+
+    (void)button;
+    if (priv->split_view != NULL)
+        adw_navigation_split_view_set_show_content(priv->split_view, FALSE);
+}
+
+static void
+on_split_collapsed_changed(GObject *object, GParamSpec *pspec,
+                           gpointer user_data)
+{
+    GswordLibraryPage *priv = library_page_get(GSWORD_WINDOW(user_data));
+
+    (void)pspec;
+    if (priv->detail_back != NULL)
+        gtk_widget_set_visible(priv->detail_back,
+            adw_navigation_split_view_get_collapsed(
+                ADW_NAVIGATION_SPLIT_VIEW(object)));
+}
+
+static void
 update_library_view(GswordWindow *self, gint view)
 {
     GswordLibraryPage *priv = library_page_get(self);
@@ -1809,7 +1847,11 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *progress_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    AdwNavigationSplitView *split_view = ADW_NAVIGATION_SPLIT_VIEW(
+        adw_navigation_split_view_new());
+    GtkWidget *detail_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *detail_back = gtk_button_new_from_icon_name(
+        "go-previous-symbolic");
     GtkWidget *left_scroll = gtk_scrolled_window_new();
     GtkWidget *installed_scroll = gtk_scrolled_window_new();
     GtkWidget *action_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -2086,7 +2128,15 @@ gsword_library_page_new(GswordWindow *self)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(details_scroll),
                                   details_box);
 
-    gtk_box_append(GTK_BOX(right), GTK_WIDGET(priv->remote_title));
+    gtk_widget_add_css_class(detail_back, "flat");
+    gtk_widget_set_tooltip_text(detail_back, _("Back to modules"));
+    gtk_widget_set_visible(detail_back, FALSE);
+    g_signal_connect(detail_back, "clicked",
+                     G_CALLBACK(on_detail_back), self);
+    gtk_box_append(GTK_BOX(detail_header), detail_back);
+    gtk_box_append(GTK_BOX(detail_header), GTK_WIDGET(priv->remote_title));
+    gtk_widget_set_hexpand(GTK_WIDGET(priv->remote_title), TRUE);
+    gtk_box_append(GTK_BOX(right), detail_header);
     gtk_box_append(GTK_BOX(right), GTK_WIDGET(priv->remote_status));
     gtk_box_append(GTK_BOX(right), GTK_WIDGET(priv->remote_description));
     gtk_widget_set_vexpand(details_scroll, TRUE);
@@ -2134,12 +2184,22 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(right), local_box);
     priv->local_box = local_box;
 
-    gtk_widget_set_vexpand(paned, TRUE);
-    gtk_paned_set_start_child(GTK_PANED(paned), GTK_WIDGET(priv->list_stack));
-    gtk_paned_set_end_child(GTK_PANED(paned), right);
-    gtk_paned_set_position(GTK_PANED(paned), 340);
+    gtk_widget_set_vexpand(GTK_WIDGET(split_view), TRUE);
+    adw_navigation_split_view_set_sidebar(split_view,
+        adw_navigation_page_new(GTK_WIDGET(priv->list_stack), _("Modules")));
+    adw_navigation_split_view_set_content(split_view,
+        adw_navigation_page_new(right, _("Module details")));
+    adw_navigation_split_view_set_min_sidebar_width(split_view, 200);
+    adw_navigation_split_view_set_max_sidebar_width(split_view, 300);
+    adw_navigation_split_view_set_sidebar_width_fraction(split_view, 0.24);
+    priv->split_view = split_view;
+    priv->detail_back = detail_back;
+    g_signal_connect(split_view, "notify::collapsed",
+                     G_CALLBACK(on_split_collapsed_changed), self);
+    gtk_widget_set_visible(detail_back,
+        adw_navigation_split_view_get_collapsed(split_view));
     gtk_box_append(GTK_BOX(box), controls);
-    gtk_box_append(GTK_BOX(box), paned);
+    gtk_box_append(GTK_BOX(box), GTK_WIDGET(split_view));
     priv->root = box;
     priv->installed_view_button = GTK_TOGGLE_BUTTON(installed_view);
     priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
