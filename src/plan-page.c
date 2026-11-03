@@ -169,6 +169,34 @@ selected_plan(GswordPlanPage *page)
          ? g_ptr_array_index(page->items, 0) : NULL;
 }
 
+static gchar *
+localize_plan_reference(const gchar *reference)
+{
+    GswVerseKey *key;
+    const gchar *book;
+    gint chapter;
+    gint verse;
+    gchar *result;
+
+    if (reference == NULL || *reference == '\0')
+        return g_strdup("");
+    key = gsw_verse_key_new(reference, NULL);
+    if (key == NULL || gsw_verse_key_get_book(key) <= 0 ||
+        gsw_verse_key_get_chapter(key) <= 0) {
+        g_clear_pointer(&key, gsw_key_unref);
+        return g_strdup(reference);
+    }
+    book = gsw_verse_key_get_book_name(key);
+    chapter = gsw_verse_key_get_chapter(key);
+    verse = gsw_verse_key_get_verse(key);
+    if (verse > 1)
+        result = g_strdup_printf("%s %d:%d", book, chapter, verse);
+    else
+        result = g_strdup_printf("%s %d", book, chapter);
+    gsw_key_unref((GswKey *)key);
+    return result;
+}
+
 static void
 update_undo_button(GswordPlanPage *page, GswordPlan *plan)
 {
@@ -298,10 +326,12 @@ refresh_views(GswordPlanPage *page)
         g_free(summary);
     }
     if (plan->next_day > 0) {
+        gchar *reference = localize_plan_reference(plan->next_reference);
         gchar *today = g_strdup_printf(_("Day %d: %s"), plan->next_day,
-                                       plan->next_reference != NULL
-                                       ? plan->next_reference : "");
+                                       reference);
+
         gtk_label_set_text(page->today, today);
+        g_free(reference);
         g_free(today);
         gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(page->complete_button), TRUE);
@@ -333,12 +363,14 @@ refresh_views(GswordPlanPage *page)
             row = gtk_list_box_row_new();
             box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
             check = gtk_check_button_new();
+            gchar *localized = localize_plan_reference(day->reference);
+
             is_today = day->day == plan->next_day;
             day_number = g_strdup_printf("%d", day->day);
             text = g_strdup_printf(_("Day %d   %s%s"), day->day,
-                                   day->reference != NULL
-                                   ? day->reference : "",
+                                   localized,
                                    is_today ? _("   · today") : "");
+            g_free(localized);
 
             gtk_check_button_set_active(GTK_CHECK_BUTTON(check),
                                         day->completed_on != NULL);
@@ -582,15 +614,21 @@ update_plan_preview(gpointer data)
     references = generate_plan_references(start, days, chapters);
     if (references->len == 0) {
         text = g_strdup(_("Preview unavailable for this reference."));
-    } else if (references->len == 1) {
-        text = g_strdup_printf(_("Day 1: %s"),
-                               (const gchar *)g_ptr_array_index(references, 0));
     } else {
-        text = g_strdup_printf(_("Day 1: %s\nDay %u: %s"),
-                               (const gchar *)g_ptr_array_index(references, 0),
-                               references->len,
-                               (const gchar *)g_ptr_array_index(
-                                   references, references->len - 1));
+        gchar *first = localize_plan_reference(
+            g_ptr_array_index(references, 0));
+
+        if (references->len == 1) {
+            text = g_strdup_printf(_("Day 1: %s"), first);
+        } else {
+            gchar *last = localize_plan_reference(
+                g_ptr_array_index(references, references->len - 1));
+
+            text = g_strdup_printf(_("Day 1: %s\nDay %u: %s"),
+                                   first, references->len, last);
+            g_free(last);
+        }
+        g_free(first);
     }
     gtk_label_set_text(page->preview, text);
     g_free(text);
