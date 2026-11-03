@@ -97,6 +97,8 @@ struct _GswordLibraryPage {
     GtkStack *list_stack;
     GtkListView *installed_view;
     GtkListView *remote_view;
+    GtkWidget *installed_empty;
+    GtkWidget *remote_empty;
     GListStore *installed_store;
     GListStore *remote_store;
     GtkFilterListModel *installed_filter_model;
@@ -509,6 +511,12 @@ update_filter_count(GswordLibraryPage *priv)
     text = g_strdup_printf(_("%u module(s)"), count);
     gtk_label_set_text(priv->filter_count, text);
     g_free(text);
+    if (priv->installed_empty != NULL)
+        gtk_widget_set_visible(priv->installed_empty,
+                               priv->library_view == 0 && count == 0);
+    if (priv->remote_empty != NULL)
+        gtk_widget_set_visible(priv->remote_empty,
+                               priv->library_view != 0 && count == 0);
 }
 
 static void
@@ -2520,12 +2528,40 @@ gsword_library_page_new(GswordWindow *self)
     }
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(left_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(left_scroll),
-                                  GTK_WIDGET(priv->remote_view));
+    {
+        GtkWidget *overlay = gtk_overlay_new();
+        GtkWidget *empty = gtk_label_new(
+            _("No modules match the current filters."));
+
+        gtk_widget_add_css_class(empty, "dim-label");
+        gtk_widget_set_halign(empty, GTK_ALIGN_CENTER);
+        gtk_widget_set_valign(empty, GTK_ALIGN_CENTER);
+        gtk_widget_set_margin_start(empty, 12);
+        gtk_widget_set_margin_end(empty, 12);
+        gtk_overlay_set_child(GTK_OVERLAY(overlay),
+                              GTK_WIDGET(priv->remote_view));
+        gtk_overlay_add_overlay(GTK_OVERLAY(overlay), empty);
+        priv->remote_empty = empty;
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(left_scroll), overlay);
+    }
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(installed_scroll),
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(installed_scroll),
-                                  GTK_WIDGET(priv->installed_view));
+    {
+        GtkWidget *overlay = gtk_overlay_new();
+        GtkWidget *empty = gtk_label_new(_("No installed modules."));
+
+        gtk_widget_add_css_class(empty, "dim-label");
+        gtk_widget_set_halign(empty, GTK_ALIGN_CENTER);
+        gtk_widget_set_valign(empty, GTK_ALIGN_CENTER);
+        gtk_widget_set_margin_start(empty, 12);
+        gtk_widget_set_margin_end(empty, 12);
+        gtk_overlay_set_child(GTK_OVERLAY(overlay),
+                              GTK_WIDGET(priv->installed_view));
+        gtk_overlay_add_overlay(GTK_OVERLAY(overlay), empty);
+        priv->installed_empty = empty;
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(installed_scroll),
+                                      overlay);
+    }
 
     priv->list_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_named(priv->list_stack, installed_scroll, "installed");
