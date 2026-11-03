@@ -547,6 +547,52 @@ out:
 }
 
 gboolean
+gsword_notes_store_remove_from_list(GswordNotesStore *self, gint64 list_id,
+                                    const gchar *module, const gchar *key,
+                                    GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "DELETE FROM verse_list_items"
+            " WHERE list_id = ? AND module = ? AND key = ?", -1, &stmt,
+            NULL) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, list_id) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, module, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 3, key, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        notes_store_error(self, error, "Cannot remove verse from list");
+        goto out;
+    }
+    ok = TRUE;
+
+out:
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+gboolean
+gsword_notes_store_is_in_list(GswordNotesStore *self, gint64 list_id,
+                              const gchar *module, const gchar *key)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean found = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT 1 FROM verse_list_items"
+            " WHERE list_id = ? AND module = ? AND key = ?", -1, &stmt,
+            NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, list_id);
+        sqlite3_bind_text(stmt, 2, module, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 3, key, -1, SQLITE_TRANSIENT);
+        found = sqlite3_step(stmt) == SQLITE_ROW;
+    }
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+gboolean
 gsword_notes_store_rename_list(GswordNotesStore *self, gint64 list_id,
                                const gchar *new_name, GError **error)
 {
