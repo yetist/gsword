@@ -104,11 +104,11 @@ msgstr "基于 GObject 的 SWORD 研经库实现。"
 
 #: src/window.c:705
 msgid "Show study panel"
-msgstr "切换研经面板"
+msgstr "显示研经面板"
 
 #: src/window.c:706
 msgid "Comparison"
-msgstr "关闭对照栏"
+msgstr "经文对照"
 
 #: src/window.c:707
 msgid "Teaching"
