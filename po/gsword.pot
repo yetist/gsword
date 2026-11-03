@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 14:40+0800\n"
+"POT-Creation-Date: 2026-11-03 14:46+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -92,7 +92,7 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:642 src/window-services.c:64 src/library-page.c:1254
+#: src/window.c:642 src/window-services.c:64 src/library-page.c:1264
 msgid "Close"
 msgstr ""
 
@@ -124,7 +124,7 @@ msgstr ""
 msgid "Daily Devotional"
 msgstr ""
 
-#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2262
+#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2309
 #: src/module-sidebar.c:27
 msgid "Maps"
 msgstr ""
@@ -133,11 +133,11 @@ msgstr ""
 msgid "Biblical Texts"
 msgstr ""
 
-#: src/window-services.c:159 src/library-page.c:2260 src/module-sidebar.c:23
+#: src/window-services.c:159 src/library-page.c:2307 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr ""
 
-#: src/window-services.c:160 src/library-page.c:2260 src/module-sidebar.c:24
+#: src/window-services.c:160 src/library-page.c:2307 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr ""
 
@@ -149,12 +149,12 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: src/window-services.c:168 src/library-page.c:226 src/library-page.c:260
-#: src/library-page.c:719 src/library-page.c:720 src/library-page.c:758
-#: src/library-page.c:761 src/library-page.c:764 src/library-page.c:767
-#: src/library-page.c:771 src/library-page.c:774 src/library-page.c:896
-#: src/library-page.c:899 src/library-page.c:902 src/library-page.c:906
-#: src/library-page.c:909
+#: src/window-services.c:168 src/library-page.c:230 src/library-page.c:264
+#: src/library-page.c:729 src/library-page.c:730 src/library-page.c:768
+#: src/library-page.c:771 src/library-page.c:774 src/library-page.c:777
+#: src/library-page.c:781 src/library-page.c:784 src/library-page.c:906
+#: src/library-page.c:909 src/library-page.c:912 src/library-page.c:916
+#: src/library-page.c:919
 msgid "Unknown"
 msgstr ""
 
@@ -240,7 +240,7 @@ msgstr ""
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1582 src/library-page.c:2163 src/library-page.c:2255
+#: src/library-page.c:1599 src/library-page.c:2209 src/library-page.c:2302
 #: src/plan-page.c:557 src/plan-page.c:899
 msgid "Cancel"
 msgstr ""
@@ -540,7 +540,7 @@ msgstr ""
 msgid "List verses"
 msgstr ""
 
-#: src/notes-page.c:1674 src/library-page.c:2164
+#: src/notes-page.c:1674 src/library-page.c:2210
 msgid "Save"
 msgstr ""
 
@@ -732,102 +732,102 @@ msgstr ""
 msgid "Type the verse"
 msgstr ""
 
-#: src/library-page.c:228
+#: src/library-page.c:232
 msgid "Chinese"
 msgstr ""
 
-#: src/library-page.c:230
+#: src/library-page.c:234
 msgid "English"
 msgstr ""
 
-#: src/library-page.c:232
+#: src/library-page.c:236
 msgid "German"
 msgstr ""
 
-#: src/library-page.c:234
+#: src/library-page.c:238
 msgid "French"
 msgstr ""
 
-#: src/library-page.c:236
+#: src/library-page.c:240
 msgid "Spanish"
 msgstr ""
 
-#: src/library-page.c:238
+#: src/library-page.c:242
 msgid "Portuguese"
 msgstr ""
 
-#: src/library-page.c:240
+#: src/library-page.c:244
 msgid "Russian"
 msgstr ""
 
-#: src/library-page.c:242
+#: src/library-page.c:246
 msgid "Korean"
 msgstr ""
 
-#: src/library-page.c:244
+#: src/library-page.c:248
 msgid "Japanese"
 msgstr ""
 
-#: src/library-page.c:246
+#: src/library-page.c:250
 msgid "Polish"
 msgstr ""
 
-#: src/library-page.c:248
+#: src/library-page.c:252
 msgid "Ukrainian"
 msgstr ""
 
-#: src/library-page.c:250
+#: src/library-page.c:254
 msgid "Arabic"
 msgstr ""
 
-#: src/library-page.c:344
+#: src/library-page.c:348
 msgid "All languages"
 msgstr ""
 
-#: src/library-page.c:509
+#: src/library-page.c:513
 #, c-format
 msgid "%u module(s)"
 msgstr ""
 
-#: src/library-page.c:560 src/library-page.c:2264
+#: src/library-page.c:570 src/library-page.c:2311
 msgid "Not installed"
 msgstr ""
 
-#: src/library-page.c:562 src/library-page.c:2265
+#: src/library-page.c:572 src/library-page.c:2312
 msgid "Update available"
 msgstr ""
 
-#: src/library-page.c:564 src/library-page.c:2266
+#: src/library-page.c:574 src/library-page.c:2313
 msgid "Installed - local version is newer"
 msgstr ""
 
-#: src/library-page.c:566 src/library-page.c:2267
+#: src/library-page.c:576 src/library-page.c:2314
 msgid "Installed - up to date"
 msgstr ""
 
-#: src/library-page.c:567 src/library-page.c:863 src/library-page.c:2265
-#: src/library-page.c:2269
+#: src/library-page.c:577 src/library-page.c:873 src/library-page.c:2312
+#: src/library-page.c:2316
 msgid "Installed"
 msgstr ""
 
-#: src/library-page.c:603
+#: src/library-page.c:613
 msgid "Install manager is not available"
 msgstr ""
 
-#: src/library-page.c:617
+#: src/library-page.c:627
 msgid "Source"
 msgstr ""
 
-#: src/library-page.c:647 src/library-page.c:2536
+#: src/library-page.c:657 src/library-page.c:2615
 msgid "Select a module"
 msgstr ""
 
-#: src/library-page.c:712
+#: src/library-page.c:722
 #, c-format
 msgid "Local %s / Remote %s"
 msgstr ""
 
-#: src/library-page.c:718 src/library-page.c:855
+#: src/library-page.c:728 src/library-page.c:865
 #, c-format
 msgid ""
 "Type: %s\n"
@@ -838,65 +838,65 @@ msgid ""
 "License: %s"
 msgstr ""
 
-#: src/library-page.c:721 src/library-page.c:781 src/library-page.c:783
-#: src/library-page.c:860 src/library-page.c:915 src/library-page.c:916
+#: src/library-page.c:731 src/library-page.c:791 src/library-page.c:793
+#: src/library-page.c:870 src/library-page.c:925 src/library-page.c:926
 msgid "Not specified"
 msgstr ""
 
-#: src/library-page.c:730 src/library-page.c:869
+#: src/library-page.c:740 src/library-page.c:879
 msgid "⚠ This module may not be readable by this version of gsword."
 msgstr ""
 
-#: src/library-page.c:732 src/library-page.c:871
+#: src/library-page.c:742 src/library-page.c:881
 #, c-format
 msgid "Requires: %s"
 msgstr ""
 
-#: src/library-page.c:735 src/library-page.c:874
+#: src/library-page.c:745 src/library-page.c:884
 #, c-format
 msgid "Conflicts: %s"
 msgstr ""
 
-#: src/library-page.c:739 src/library-page.c:878
+#: src/library-page.c:749 src/library-page.c:888
 msgid "⚠ This module is encrypted and may require unlocking."
 msgstr ""
 
-#: src/library-page.c:756 src/library-page.c:894
+#: src/library-page.c:766 src/library-page.c:904
 #, c-format
 msgid "Driver: %s\n"
 msgstr ""
 
-#: src/library-page.c:759 src/library-page.c:897
+#: src/library-page.c:769 src/library-page.c:907
 #, c-format
 msgid "Encoding: %s\n"
 msgstr ""
 
-#: src/library-page.c:762 src/library-page.c:900
+#: src/library-page.c:772 src/library-page.c:910
 #, c-format
 msgid "Versification: %s\n"
 msgstr ""
 
-#: src/library-page.c:765
+#: src/library-page.c:775
 #, c-format
 msgid "Minimum SWORD version: %s\n"
 msgstr ""
 
-#: src/library-page.c:768 src/library-page.c:903
+#: src/library-page.c:778 src/library-page.c:913
 #, c-format
 msgid "Module ID: %s\n"
 msgstr ""
 
-#: src/library-page.c:769 src/library-page.c:904
+#: src/library-page.c:779 src/library-page.c:914
 #, c-format
 msgid "Config file: %s\n"
 msgstr ""
 
-#: src/library-page.c:772 src/library-page.c:907
+#: src/library-page.c:782 src/library-page.c:917
 #, c-format
 msgid "Data path: %s"
 msgstr ""
 
-#: src/library-page.c:779 src/library-page.c:914
+#: src/library-page.c:789 src/library-page.c:924
 #, c-format
 msgid ""
 "License: %s\n"
@@ -904,410 +904,438 @@ msgid ""
 "Copyright: %s"
 msgstr ""
 
-#: src/library-page.c:789 src/library-page.c:922
+#: src/library-page.c:799 src/library-page.c:932
 msgid "No additional information is available."
 msgstr ""
 
-#: src/library-page.c:859
+#: src/library-page.c:869
 msgid "Local library"
 msgstr ""
 
-#: src/library-page.c:958
+#: src/library-page.c:968
 msgid "No source selected. Refresh the source list first."
 msgstr ""
 
-#: src/library-page.c:964
+#: src/library-page.c:974
 msgid "Cannot read remote modules"
 msgstr ""
 
-#: src/library-page.c:1085
+#: src/library-page.c:1095
 msgid "Enter a source name and host"
 msgstr ""
 
-#: src/library-page.c:1092
+#: src/library-page.c:1102
 msgid "Invalid source settings"
 msgstr ""
 
-#: src/library-page.c:1096
+#: src/library-page.c:1106
 msgid "Cannot add source"
 msgstr ""
 
-#: src/library-page.c:1101 src/library-page.c:1129
+#: src/library-page.c:1111 src/library-page.c:1139
 msgid "Cannot save source"
 msgstr ""
 
-#: src/library-page.c:1107
+#: src/library-page.c:1117
 msgid "Source added"
 msgstr ""
 
-#: src/library-page.c:1125
+#: src/library-page.c:1135
 msgid "Cannot remove source"
 msgstr ""
 
-#: src/library-page.c:1133
+#: src/library-page.c:1143
 msgid "Source removed"
 msgstr ""
 
-#: src/library-page.c:1161
+#: src/library-page.c:1171
 msgid "Installation sources"
 msgstr ""
 
-#: src/library-page.c:1166
+#: src/library-page.c:1176
 msgid "Configured sources"
 msgstr ""
 
-#: src/library-page.c:1172
+#: src/library-page.c:1182
 msgid "No sources configured."
 msgstr ""
 
-#: src/library-page.c:1211 src/library-page.c:1239
+#: src/library-page.c:1221 src/library-page.c:1249
 msgid "Add source"
 msgstr ""
 
-#: src/library-page.c:1217
+#: src/library-page.c:1227
 msgid "Source name"
 msgstr ""
 
-#: src/library-page.c:1219
+#: src/library-page.c:1229
 msgid "Host"
 msgstr ""
 
-#: src/library-page.c:1222
+#: src/library-page.c:1232
 msgid "Module directory"
 msgstr ""
 
-#: src/library-page.c:1227
+#: src/library-page.c:1237
 msgid "Username (optional)"
 msgstr ""
 
-#: src/library-page.c:1230
+#: src/library-page.c:1240
 msgid "Password (optional)"
 msgstr ""
 
-#: src/library-page.c:1269
+#: src/library-page.c:1279
 msgid "Refreshing install sources..."
 msgstr ""
 
-#: src/library-page.c:1284
+#: src/library-page.c:1294
 msgid "Cannot refresh install sources"
 msgstr ""
 
-#: src/library-page.c:1286
+#: src/library-page.c:1296
 msgid "Install sources refreshed"
 msgstr ""
 
-#: src/library-page.c:1304
+#: src/library-page.c:1314
 msgid "Cannot connect to source"
 msgstr ""
 
-#: src/library-page.c:1306
+#: src/library-page.c:1316
 msgid "Source connection OK"
 msgstr ""
 
-#: src/library-page.c:1325 src/library-page.c:1495
+#: src/library-page.c:1335 src/library-page.c:1511
 msgid "No source selected"
 msgstr ""
 
-#: src/library-page.c:1329
+#: src/library-page.c:1339
 msgid "An operation is already running"
 msgstr ""
 
-#: src/library-page.c:1337
+#: src/library-page.c:1347
 msgid "Testing source connection..."
 msgstr ""
 
-#: src/library-page.c:1360
+#: src/library-page.c:1370
 msgid "Refreshing remote module list..."
 msgstr ""
 
-#: src/library-page.c:1399
+#: src/library-page.c:1409
 msgid "Cannot refresh remote modules"
 msgstr ""
 
-#: src/library-page.c:1401
+#: src/library-page.c:1411
 msgid "Remote module list refreshed"
 msgstr ""
 
-#: src/library-page.c:1463
-msgid "Updates finished with errors"
+#: src/library-page.c:1451 src/library-page.c:1709
+msgid "Resume"
 msgstr ""
 
-#: src/library-page.c:1464
-msgid "All updates complete"
+#: src/library-page.c:1451 src/library-page.c:1704 src/library-page.c:2271
+msgid "Pause"
 msgstr ""
 
 #: src/library-page.c:1479
+msgid "Updates finished with errors"
+msgstr ""
+
+#: src/library-page.c:1480
+msgid "All updates complete"
+msgstr ""
+
+#: src/library-page.c:1495
 msgid "Updating modules..."
 msgstr ""
 
-#: src/library-page.c:1514
+#: src/library-page.c:1530
 msgid "No updates available"
 msgstr ""
 
-#: src/library-page.c:1551
+#: src/library-page.c:1568
 msgid "Cannot unlock module"
 msgstr ""
 
-#: src/library-page.c:1557
+#: src/library-page.c:1574
 msgid "Module unlocked"
 msgstr ""
 
-#: src/library-page.c:1572
+#: src/library-page.c:1589
 msgid "Unlock module"
 msgstr ""
 
-#: src/library-page.c:1574
+#: src/library-page.c:1591
 #, c-format
 msgid "Enter the encryption key for %s."
 msgstr ""
 
-#: src/library-page.c:1583 src/library-page.c:2254
+#: src/library-page.c:1600 src/library-page.c:2301
 msgid "Unlock"
 msgstr ""
 
-#: src/library-page.c:1616
+#: src/library-page.c:1633
 msgid "Cannot check disk space"
 msgstr ""
 
-#: src/library-page.c:1628 src/library-page.c:1631
+#: src/library-page.c:1645 src/library-page.c:1648
 msgid "Not enough disk space"
 msgstr ""
 
-#: src/library-page.c:1633
+#: src/library-page.c:1650
 #, c-format
 msgid "This module needs %s, but only %s is available."
 msgstr ""
 
-#: src/library-page.c:1704
+#: src/library-page.c:1705
+msgid "Resuming updates"
+msgstr ""
+
+#: src/library-page.c:1710
+msgid "Pausing after current module..."
+msgstr ""
+
+#: src/library-page.c:1742
 msgid "Installing module..."
 msgstr ""
 
-#: src/library-page.c:1722
+#: src/library-page.c:1760
 msgid "Module install failed"
 msgstr ""
 
-#: src/library-page.c:1747
+#: src/library-page.c:1786
+msgid "Updates paused"
+msgstr ""
+
+#: src/library-page.c:1793
 #, c-format
 msgid "Installed module %s"
 msgstr ""
 
-#: src/library-page.c:1771
+#: src/library-page.c:1817
 msgid "Removing module..."
 msgstr ""
 
-#: src/library-page.c:1786
+#: src/library-page.c:1832
 msgid "Module removal failed"
 msgstr ""
 
-#: src/library-page.c:1788
+#: src/library-page.c:1834
 msgid "Module removed"
 msgstr ""
 
-#: src/library-page.c:1815
+#: src/library-page.c:1861
 msgid "Cancelling..."
 msgstr ""
 
-#: src/library-page.c:1829
+#: src/library-page.c:1875
 msgid "Installing..."
 msgstr ""
 
-#: src/library-page.c:1847 src/library-page.c:1851
+#: src/library-page.c:1893 src/library-page.c:1897
 msgid "Downloading"
 msgstr ""
 
-#: src/library-page.c:1847 src/library-page.c:1851
+#: src/library-page.c:1893 src/library-page.c:1897
 msgid "bytes"
 msgstr ""
 
-#: src/library-page.c:1889
+#: src/library-page.c:1935
 msgid "Select local module directory"
 msgstr ""
 
-#: src/library-page.c:1912
+#: src/library-page.c:1958
 msgid "Enter a local SWORD directory and module name"
 msgstr ""
 
-#: src/library-page.c:1917
+#: src/library-page.c:1963
 msgid "Local install failed"
 msgstr ""
 
-#: src/library-page.c:1929
+#: src/library-page.c:1975
 msgid "Module installed from local directory"
 msgstr ""
 
-#: src/library-page.c:2115
+#: src/library-page.c:2161
 msgid "Proxy settings saved"
 msgstr ""
 
-#: src/library-page.c:2134
+#: src/library-page.c:2180
 msgid "Proxy settings"
 msgstr ""
 
-#: src/library-page.c:2136
+#: src/library-page.c:2182
 msgid "Leave the proxy URL empty to use the environment proxy."
 msgstr ""
 
-#: src/library-page.c:2143
+#: src/library-page.c:2189
 msgid "Proxy URL, e.g. http://127.0.0.1:8080"
 msgstr ""
 
-#: src/library-page.c:2145
+#: src/library-page.c:2191
 msgid "Proxy user name"
 msgstr ""
 
-#: src/library-page.c:2147
+#: src/library-page.c:2193
 msgid "Proxy password"
 msgstr ""
 
-#: src/library-page.c:2223
+#: src/library-page.c:2269
 msgid "Update all"
 msgstr ""
 
-#: src/library-page.c:2224
+#: src/library-page.c:2270
 msgid "Retry failed"
 msgstr ""
 
-#: src/library-page.c:2225
+#: src/library-page.c:2272
 msgid "Proxy"
 msgstr ""
 
-#: src/library-page.c:2226
+#: src/library-page.c:2273
 msgid "Manage sources"
 msgstr ""
 
-#: src/library-page.c:2251
+#: src/library-page.c:2298
 msgid "Test"
 msgstr ""
 
-#: src/library-page.c:2252
+#: src/library-page.c:2299
 msgid "Install / Update"
 msgstr ""
 
-#: src/library-page.c:2253
+#: src/library-page.c:2300
 msgid "Remove"
 msgstr ""
 
-#: src/library-page.c:2257
+#: src/library-page.c:2304
 msgid "Install from local directory"
 msgstr ""
 
-#: src/library-page.c:2259
+#: src/library-page.c:2306
 msgid "All types"
 msgstr ""
 
-#: src/library-page.c:2259 src/module-sidebar.c:22
+#: src/library-page.c:2306 src/module-sidebar.c:22
 msgid "Bibles"
 msgstr ""
 
-#: src/library-page.c:2261 src/module-sidebar.c:25
+#: src/library-page.c:2308 src/module-sidebar.c:25
 msgid "Daily Devotions"
 msgstr ""
 
-#: src/library-page.c:2261 src/module-sidebar.c:26
+#: src/library-page.c:2308 src/module-sidebar.c:26
 msgid "General Books"
 msgstr ""
 
-#: src/library-page.c:2262 src/module-sidebar.c:30
+#: src/library-page.c:2309 src/module-sidebar.c:30
 msgid "Other Modules"
 msgstr ""
 
-#: src/library-page.c:2264
+#: src/library-page.c:2311
 msgid "All statuses"
 msgstr ""
 
-#: src/library-page.c:2270
+#: src/library-page.c:2317
 msgid "Available"
 msgstr ""
 
-#: src/library-page.c:2271
+#: src/library-page.c:2318
 msgid "Updates"
 msgstr ""
 
-#: src/library-page.c:2294
+#: src/library-page.c:2341
 msgid "Install all available updates"
 msgstr ""
 
-#: src/library-page.c:2360
+#: src/library-page.c:2411
 msgid "Filter modules"
 msgstr ""
 
-#: src/library-page.c:2369
+#: src/library-page.c:2420
 msgid "Clear filters"
 msgstr ""
 
-#: src/library-page.c:2372
+#: src/library-page.c:2423
 msgid "Name"
 msgstr ""
 
-#: src/library-page.c:2372
+#: src/library-page.c:2423
 msgid "Type"
 msgstr ""
 
-#: src/library-page.c:2372
+#: src/library-page.c:2423
 msgid "Language"
 msgstr ""
 
-#: src/library-page.c:2373
+#: src/library-page.c:2424
 msgid "Status"
 msgstr ""
 
-#: src/library-page.c:2381
+#: src/library-page.c:2432
 msgid "0 module(s)"
 msgstr ""
 
-#: src/library-page.c:2390
+#: src/library-page.c:2441
 msgid "Refresh the install source list"
 msgstr ""
 
-#: src/library-page.c:2392
+#: src/library-page.c:2443
 msgid "Refresh modules from the selected source"
 msgstr ""
 
-#: src/library-page.c:2394
+#: src/library-page.c:2445
 msgid "Test source connection"
 msgstr ""
 
-#: src/library-page.c:2450
+#: src/library-page.c:2501
 msgid "Update queue"
 msgstr ""
 
-#: src/library-page.c:2554
+#: src/library-page.c:2577
+msgid "No modules match the current filters."
+msgstr ""
+
+#: src/library-page.c:2594
+msgid "No installed modules."
+msgstr ""
+
+#: src/library-page.c:2633
 msgid "Technical details"
 msgstr ""
 
-#: src/library-page.c:2564
+#: src/library-page.c:2643
 msgid "Copyright & license"
 msgstr ""
 
-#: src/library-page.c:2574
+#: src/library-page.c:2653
 msgid "About this module"
 msgstr ""
 
-#: src/library-page.c:2596
+#: src/library-page.c:2675
 msgid "Back to modules"
 msgstr ""
 
-#: src/library-page.c:2626
+#: src/library-page.c:2705
 msgid "Local SWORD library directory"
 msgstr ""
 
-#: src/library-page.c:2628
+#: src/library-page.c:2707
 msgid "Module name"
 msgstr ""
 
-#: src/library-page.c:2630
+#: src/library-page.c:2709
 msgid "Install local module"
 msgstr ""
 
-#: src/library-page.c:2636
+#: src/library-page.c:2715
 msgid "Browse…"
 msgstr ""
 
-#: src/library-page.c:2653 src/module-sidebar.c:280
+#: src/library-page.c:2732 src/module-sidebar.c:280
 msgid "Modules"
 msgstr ""
 
-#: src/library-page.c:2655
+#: src/library-page.c:2734
 msgid "Module details"
 msgstr ""
 
