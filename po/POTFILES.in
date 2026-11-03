@@ -14,6 +14,7 @@ src/reader-toolbar.c
 src/preferences-dialog.c
 src/devotion-page.c
 src/plan-page.c
+src/plan-store.c
 src/resource-page.c
 src/teaching-page.c
 src/gsword-reference-chooser.c

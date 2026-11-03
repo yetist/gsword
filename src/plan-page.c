@@ -22,16 +22,26 @@ struct _GswordPlanPage {
     GtkStringList *names;
     GPtrArray *items;
     GtkLabel *summary;
+    GtkLabel *progress_text;
+    GtkProgressBar *progress;
+    GtkStack *today_stack;
     GtkLabel *today;
     GtkButton *open_button;
     GtkButton *complete_button;
     GtkListBox *days;
+    GtkListBox *plans_list;
+    GtkButton *rename_plan_button;
+    GtkButton *duplicate_plan_button;
+    GtkButton *delete_plan_button;
+    GtkExpander *create_expander;
+    GtkLabel *preview;
     GtkEntry *name_entry;
     GtkEntry *start_entry;
     GtkSpinButton *days_spin;
     GtkSpinButton *chapters_spin;
     gint64 selected_id;
     guint refresh_source;
+    guint preview_source;
 };
 
 static GPtrArray *
@@ -153,6 +163,80 @@ selected_plan(GswordPlanPage *page)
          ? g_ptr_array_index(page->items, 0) : NULL;
 }
 
+static GtkWidget *
+make_plan_placeholder(const gchar *text)
+{
+    GtkWidget *label = gtk_label_new(text);
+
+    gtk_label_set_wrap(GTK_LABEL(label), TRUE);
+    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+    gtk_widget_set_margin_top(label, 12);
+    gtk_widget_set_margin_bottom(label, 12);
+    gtk_widget_set_margin_start(label, 8);
+    gtk_widget_set_margin_end(label, 8);
+    gtk_widget_add_css_class(label, "dim-label");
+    gtk_widget_add_css_class(label, "caption");
+    return label;
+}
+
+static void
+refresh_plan_list(GswordPlanPage *page)
+{
+    GtkWidget *child;
+
+    if (page->plans_list == NULL)
+        return;
+    while ((child = gtk_widget_get_first_child(
+                GTK_WIDGET(page->plans_list))) != NULL)
+        gtk_list_box_remove(page->plans_list, child);
+    if (page->items == NULL || page->items->len == 0) {
+        gtk_list_box_set_placeholder(page->plans_list,
+            make_plan_placeholder(_("No reading plans yet")));
+    }
+    for (guint i = 0; page->items != NULL && i < page->items->len; i++) {
+        GswordPlan *plan = g_ptr_array_index(page->items, i);
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *name = gtk_label_new(plan->name);
+        gdouble percent = plan->total_days > 0
+                        ? (gdouble)plan->completed_days * 100.0 /
+                          plan->total_days : 0.0;
+        gchar *detail_text = g_strdup_printf(
+            _("%d/%d days (%.0f%%) · streak %d"), plan->completed_days,
+            plan->total_days, percent, plan->streak);
+        GtkWidget *detail = gtk_label_new(detail_text);
+
+        gtk_label_set_xalign(GTK_LABEL(name), 0.0f);
+        gtk_label_set_ellipsize(GTK_LABEL(name), PANGO_ELLIPSIZE_END);
+        gtk_widget_add_css_class(name, "heading");
+        if (plan->id == page->selected_id)
+            gtk_widget_add_css_class(name, "accent");
+        gtk_label_set_xalign(GTK_LABEL(detail), 0.0f);
+        gtk_label_set_ellipsize(GTK_LABEL(detail), PANGO_ELLIPSIZE_END);
+        gtk_widget_add_css_class(detail, "caption");
+        gtk_widget_add_css_class(detail, "dim-label");
+        gtk_box_append(GTK_BOX(box), name);
+        gtk_box_append(GTK_BOX(box), detail);
+        gtk_widget_set_margin_top(box, 4);
+        gtk_widget_set_margin_bottom(box, 4);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
+        g_object_set_data_full(G_OBJECT(row), "plan-id",
+                               g_strdup_printf("%" G_GINT64_FORMAT, plan->id),
+                               g_free);
+        gtk_list_box_append(page->plans_list, row);
+        g_free(detail_text);
+    }
+    if (page->rename_plan_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_plan_button),
+                                 page->selected_id != 0);
+    if (page->duplicate_plan_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->duplicate_plan_button),
+                                 page->selected_id != 0);
+    if (page->delete_plan_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_plan_button),
+                                 page->selected_id != 0);
+}
+
 static void
 refresh_views(GswordPlanPage *page)
 {
@@ -167,24 +251,32 @@ refresh_views(GswordPlanPage *page)
         gtk_list_box_remove(page->days,
                             gtk_widget_get_first_child(GTK_WIDGET(page->days)));
     if (plan == NULL) {
-        gtk_label_set_text(page->summary,
-                           _("Create a reading plan to get started."));
+        if (page->today_stack != NULL)
+            gtk_stack_set_visible_child_name(page->today_stack, "empty");
+        gtk_label_set_text(page->summary, "");
+        gtk_label_set_text(page->progress_text, "");
         gtk_label_set_text(page->today, "");
+        gtk_progress_bar_set_fraction(page->progress, 0.0);
         gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(page->complete_button), FALSE);
+        refresh_plan_list(page);
         return;
     }
+    if (page->today_stack != NULL)
+        gtk_stack_set_visible_child_name(page->today_stack, "dashboard");
     page->selected_id = plan->id;
     {
         gdouble percent = plan->total_days > 0
                         ? (gdouble)plan->completed_days * 100.0 /
                           plan->total_days : 0.0;
         gchar *summary = g_strdup_printf(
-            _("%s · %d/%d days (%.0f%%) · streak %d"),
-            plan->name, plan->completed_days, plan->total_days, percent,
-            plan->streak);
+            _("%d/%d days (%.0f%%) · streak %d"),
+            plan->completed_days, plan->total_days, percent, plan->streak);
 
-        gtk_label_set_text(page->summary, summary);
+        gtk_label_set_text(page->summary, plan->name);
+        gtk_label_set_text(page->progress_text, summary);
+        gtk_progress_bar_set_fraction(page->progress,
+                                      CLAMP(percent / 100.0, 0.0, 1.0));
         g_free(summary);
     }
     if (plan->next_day > 0) {
@@ -235,6 +327,7 @@ refresh_views(GswordPlanPage *page)
     }
     if (days != NULL)
         g_ptr_array_unref(days);
+    refresh_plan_list(page);
 }
 
 void
@@ -274,6 +367,8 @@ gsword_plan_page_refresh(GswordPlanPage *page)
         gtk_drop_down_set_selected(page->selector, selected);
     } else {
         page->selected_id = 0;
+        if (page->create_expander != NULL)
+            gtk_expander_set_expanded(page->create_expander, TRUE);
     }
     refresh_views(page);
     g_free(active);
@@ -320,6 +415,163 @@ on_plan_selected(GObject *object, GParamSpec *pspec, gpointer user_data)
         g_free(id);
     }
     refresh_views(page);
+}
+
+static void
+on_plan_list_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GSettings *settings = gsword_window_get_settings(page->window);
+    const gchar *id;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    id = g_object_get_data(G_OBJECT(row), "plan-id");
+    if (id == NULL)
+        return;
+    page->selected_id = g_ascii_strtoll(id, NULL, 10);
+    if (settings != NULL)
+        g_settings_set_string(settings, "active-plan-id", id);
+    gsword_plan_page_refresh(page);
+}
+
+static void
+on_rename_plan_response(AdwAlertDialog *dialog, const gchar *response,
+                        gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GtkEntry *entry = g_object_get_data(G_OBJECT(dialog), "rename-entry");
+    GswordPlan *plan = selected_plan(page);
+    GError *error = NULL;
+    gchar *name;
+
+    if (g_strcmp0(response, "rename") != 0 || plans == NULL ||
+        plan == NULL || entry == NULL)
+        return;
+    name = g_strdup(gtk_editable_get_text(GTK_EDITABLE(entry)));
+    g_strstrip(name);
+    if (*name == '\0' || g_strcmp0(name, plan->name) == 0) {
+        g_free(name);
+        return;
+    }
+    if (!gsword_plan_store_rename_plan(plans, plan->id, name, &error)) {
+        gsword_window_show_error(page->window, _("Cannot rename plan"), error);
+        g_free(name);
+        return;
+    }
+    g_free(name);
+    gsword_plan_page_refresh(page);
+    gsword_window_set_status(page->window, _("Reading plan renamed"));
+}
+
+static void
+on_rename_plan(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GswordPlan *plan = selected_plan(page);
+    GtkWidget *entry;
+    AdwDialog *dialog;
+
+    (void)button;
+    if (plan == NULL)
+        return;
+    dialog = adw_alert_dialog_new(_("Rename reading plan"), NULL);
+    entry = gtk_entry_new();
+    gtk_editable_set_text(GTK_EDITABLE(entry), plan->name);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_widget_set_hexpand(entry, TRUE);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), entry);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "rename", _("Rename"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "rename");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_rename_plan_response), page);
+    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+}
+
+static void
+on_duplicate_plan(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GSettings *settings = gsword_window_get_settings(page->window);
+    GswordPlan *plan = selected_plan(page);
+    GError *error = NULL;
+    gint64 new_id;
+
+    (void)button;
+    if (plans == NULL || plan == NULL)
+        return;
+    new_id = gsword_plan_store_duplicate_plan(plans, plan->id, &error);
+    if (new_id == 0) {
+        gsword_window_show_error(page->window, _("Cannot duplicate plan"),
+                                 error);
+        return;
+    }
+    page->selected_id = new_id;
+    if (settings != NULL) {
+        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, new_id);
+
+        g_settings_set_string(settings, "active-plan-id", id);
+        g_free(id);
+    }
+    gsword_plan_page_refresh(page);
+    gsword_window_set_status(page->window, _("Reading plan duplicated"));
+}
+
+static gboolean
+update_plan_preview(gpointer data)
+{
+    GswordPlanPage *page = data;
+    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
+    gint days = gtk_spin_button_get_value_as_int(page->days_spin);
+    gint chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
+    GPtrArray *references;
+    gchar *text;
+
+    page->preview_source = 0;
+    if (page->preview == NULL)
+        return G_SOURCE_REMOVE;
+    if (start == NULL || *start == '\0') {
+        gtk_label_set_text(page->preview, "");
+        return G_SOURCE_REMOVE;
+    }
+    references = generate_plan_references(start, days, chapters);
+    if (references->len == 0) {
+        text = g_strdup(_("Preview unavailable for this reference."));
+    } else if (references->len == 1) {
+        text = g_strdup_printf(_("Day 1: %s"),
+                               (const gchar *)g_ptr_array_index(references, 0));
+    } else {
+        text = g_strdup_printf(_("Day 1: %s\nDay %u: %s"),
+                               (const gchar *)g_ptr_array_index(references, 0),
+                               references->len,
+                               (const gchar *)g_ptr_array_index(
+                                   references, references->len - 1));
+    }
+    gtk_label_set_text(page->preview, text);
+    g_free(text);
+    g_ptr_array_unref(references);
+    return G_SOURCE_REMOVE;
+}
+
+static void
+schedule_preview(GswordPlanPage *page)
+{
+    if (page->preview_source == 0)
+        page->preview_source = g_idle_add(update_plan_preview, page);
+}
+
+static void
+on_preview_changed(GtkWidget *widget, gpointer user_data)
+{
+    (void)widget;
+    schedule_preview(user_data);
 }
 
 static void
@@ -389,43 +641,33 @@ on_complete_today(GtkButton *button, gpointer user_data)
     gsword_plan_page_refresh(page);
 }
 
-static void
-on_create(GtkButton *button, gpointer user_data)
+static gboolean
+create_plan_from_values(GswordPlanPage *page, const gchar *name,
+                        const gchar *start, gint days, gint chapters)
 {
-    GswordPlanPage *page = user_data;
     GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
     GSettings *settings = gsword_window_get_settings(page->window);
-    const gchar *name = gtk_editable_get_text(GTK_EDITABLE(page->name_entry));
-    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
-    gint days = gtk_spin_button_get_value_as_int(page->days_spin);
-    gint chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
     GPtrArray *references;
     GError *error = NULL;
     gint64 plan_id;
     gchar *id;
 
-    (void)button;
     if (plans == NULL)
-        return;
-    if (name == NULL || *name == '\0' || start == NULL || *start == '\0') {
-        gsword_window_set_status(page->window,
-                                 _("Enter a plan name and start reference"));
-        return;
-    }
+        return FALSE;
     references = generate_plan_references(start, days, chapters);
     if (references->len == 0) {
         gsword_window_show_error(page->window, _("Cannot create plan"),
             g_error_new_literal(G_FILE_ERROR, G_FILE_ERROR_INVAL,
                                 _("Invalid start reference or empty plan")));
         g_ptr_array_unref(references);
-        return;
+        return FALSE;
     }
     plan_id = gsword_plan_store_create_plan(plans, name, start, chapters,
                                             references, &error);
     g_ptr_array_unref(references);
     if (plan_id == 0) {
         gsword_window_show_error(page->window, _("Cannot create plan"), error);
-        return;
+        return FALSE;
     }
     id = g_strdup_printf("%" G_GINT64_FORMAT, plan_id);
     if (settings != NULL)
@@ -433,6 +675,54 @@ on_create(GtkButton *button, gpointer user_data)
     g_free(id);
     gsword_plan_page_refresh(page);
     gsword_window_set_status(page->window, _("Reading plan created"));
+    return TRUE;
+}
+
+static void
+on_template_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    const gchar *template = g_object_get_data(G_OBJECT(button), "template");
+
+    if (g_strcmp0(template, "nt90") == 0) {
+        create_plan_from_values(page, _("90-day New Testament"), "Matt 1",
+                                90, 3);
+    } else if (g_strcmp0(template, "psalms30") == 0) {
+        create_plan_from_values(page, _("30-day Psalms"), "Ps 1", 30, 5);
+    }
+}
+
+static void
+on_empty_create(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+
+    (void)button;
+    gtk_notebook_set_current_page(page->notebook, 1);
+    if (page->create_expander != NULL)
+        gtk_expander_set_expanded(page->create_expander, TRUE);
+    if (page->name_entry != NULL)
+        gtk_widget_grab_focus(GTK_WIDGET(page->name_entry));
+}
+
+static void
+on_create(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    const gchar *name = gtk_editable_get_text(GTK_EDITABLE(page->name_entry));
+    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
+    gint days = gtk_spin_button_get_value_as_int(page->days_spin);
+    gint chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
+
+    (void)button;
+    if (name == NULL || *name == '\0' || start == NULL || *start == '\0') {
+        gsword_window_set_status(page->window,
+                                 _("Enter a plan name and start reference"));
+        return;
+    }
+    if (create_plan_from_values(page, name, start, days, chapters) &&
+        page->create_expander != NULL)
+        gtk_expander_set_expanded(page->create_expander, FALSE);
 }
 
 static void
@@ -519,6 +809,8 @@ plan_page_free(gpointer data)
         return;
     if (page->refresh_source != 0)
         g_source_remove(page->refresh_source);
+    if (page->preview_source != 0)
+        g_source_remove(page->preview_source);
     g_clear_pointer(&page->items, g_ptr_array_unref);
     g_clear_object(&page->names);
     g_free(page);
@@ -531,7 +823,23 @@ gsword_plan_page_new(GswordWindow *window)
     GtkWidget *notebook = gtk_notebook_new();
     GtkWidget *today_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *today_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *dashboard = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *empty_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget *empty_title;
+    GtkWidget *empty_desc;
+    GtkWidget *empty_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *empty_create;
+    GtkWidget *empty_nt;
+    GtkWidget *empty_psalms;
     GtkWidget *plans_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *plans_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *plans_label = gtk_label_new(_("Your plans"));
+    GtkWidget *plans_scroll = gtk_scrolled_window_new();
+    GtkWidget *rename_plan = gtk_button_new_from_icon_name(
+        "document-edit-symbolic");
+    GtkWidget *duplicate_plan = gtk_button_new_from_icon_name(
+        "edit-copy-symbolic");
+    GtkWidget *form_expander;
     GtkWidget *plan_form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *form_row1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *form_row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -539,7 +847,7 @@ gsword_plan_page_new(GswordWindow *window)
     GtkWidget *open = gtk_button_new_with_label(_("Open today's reading"));
     GtkWidget *complete = gtk_button_new_with_label(_("Mark today complete"));
     GtkWidget *create = gtk_button_new_with_label(_("Create plan"));
-    GtkWidget *delete = gtk_button_new_with_label(_("Delete plan"));
+    GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
     GtkWidget *hint;
 
     page->window = window;
@@ -551,6 +859,35 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_widget_set_margin_bottom(plans_page, 10);
     gtk_widget_set_margin_start(plans_page, 12);
     gtk_widget_set_margin_end(plans_page, 12);
+
+    page->plans_list = GTK_LIST_BOX(gtk_list_box_new());
+    gtk_list_box_set_selection_mode(page->plans_list, GTK_SELECTION_NONE);
+    gtk_list_box_set_activate_on_single_click(page->plans_list, TRUE);
+    g_signal_connect(page->plans_list, "row-activated",
+                     G_CALLBACK(on_plan_list_activated), page);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(plans_scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(plans_scroll),
+                                  GTK_WIDGET(page->plans_list));
+    gtk_widget_set_vexpand(plans_scroll, TRUE);
+    gtk_widget_set_size_request(plans_scroll, -1, 140);
+    gtk_label_set_xalign(GTK_LABEL(plans_label), 0.0f);
+    gtk_widget_set_hexpand(plans_label, TRUE);
+    gtk_widget_add_css_class(plans_label, "heading");
+    gtk_widget_add_css_class(rename_plan, "flat");
+    gtk_widget_add_css_class(duplicate_plan, "flat");
+    gtk_widget_set_tooltip_text(rename_plan, _("Rename plan"));
+    gtk_widget_set_tooltip_text(duplicate_plan, _("Duplicate plan"));
+    gtk_widget_set_sensitive(rename_plan, FALSE);
+    gtk_widget_set_sensitive(duplicate_plan, FALSE);
+    g_signal_connect(rename_plan, "clicked", G_CALLBACK(on_rename_plan), page);
+    g_signal_connect(duplicate_plan, "clicked",
+                     G_CALLBACK(on_duplicate_plan), page);
+    page->rename_plan_button = GTK_BUTTON(rename_plan);
+    page->duplicate_plan_button = GTK_BUTTON(duplicate_plan);
+    gtk_box_append(GTK_BOX(plans_header), plans_label);
+    gtk_box_append(GTK_BOX(plans_header), rename_plan);
+    gtk_box_append(GTK_BOX(plans_header), duplicate_plan);
 
     page->selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     gtk_widget_set_hexpand(GTK_WIDGET(page->selector), TRUE);
@@ -566,18 +903,29 @@ gsword_plan_page_new(GswordWindow *window)
     page->complete_button = GTK_BUTTON(complete);
     g_signal_connect(open, "clicked", G_CALLBACK(on_open_today), page);
     g_signal_connect(complete, "clicked", G_CALLBACK(on_complete_today), page);
+    page->progress = GTK_PROGRESS_BAR(gtk_progress_bar_new());
+    gtk_progress_bar_set_show_text(page->progress, TRUE);
+    gtk_widget_set_hexpand(GTK_WIDGET(page->progress), TRUE);
+    gtk_widget_add_css_class(GTK_WIDGET(page->progress), "plan-progress");
+    page->progress_text = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(page->progress_text, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(page->progress_text), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(page->progress_text), "dim-label");
+
     gtk_box_append(GTK_BOX(today_controls), GTK_WIDGET(page->selector));
     gtk_box_append(GTK_BOX(today_controls), open);
     gtk_box_append(GTK_BOX(today_controls), complete);
-    gtk_box_append(GTK_BOX(today_page), today_controls);
-    gtk_box_append(GTK_BOX(today_page), GTK_WIDGET(page->summary));
-    gtk_box_append(GTK_BOX(today_page), GTK_WIDGET(page->today));
+    gtk_box_append(GTK_BOX(dashboard), today_controls);
+    gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->summary));
+    gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->progress));
+    gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->progress_text));
+    gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->today));
     {
         GtkWidget *label = gtk_label_new(_("Schedule"));
 
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_widget_add_css_class(label, "heading");
-        gtk_box_append(GTK_BOX(today_page), label);
+        gtk_box_append(GTK_BOX(dashboard), label);
     }
     page->days = GTK_LIST_BOX(gtk_list_box_new());
     gtk_list_box_set_activate_on_single_click(page->days, FALSE);
@@ -586,7 +934,45 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(days_scroll),
                                   GTK_WIDGET(page->days));
     gtk_widget_set_vexpand(days_scroll, TRUE);
-    gtk_box_append(GTK_BOX(today_page), days_scroll);
+    gtk_box_append(GTK_BOX(dashboard), days_scroll);
+
+    empty_title = gtk_label_new(_("Start a reading plan"));
+    gtk_label_set_xalign(GTK_LABEL(empty_title), 0.0f);
+    gtk_widget_add_css_class(empty_title, "title-2");
+    empty_desc = gtk_label_new(
+        _("Choose a template or create a custom plan to begin."));
+    gtk_label_set_wrap(GTK_LABEL(empty_desc), TRUE);
+    gtk_label_set_xalign(GTK_LABEL(empty_desc), 0.0f);
+    gtk_widget_add_css_class(empty_desc, "dim-label");
+    empty_create = gtk_button_new_with_label(_("Custom plan"));
+    empty_nt = gtk_button_new_with_label(_("90-day New Testament"));
+    empty_psalms = gtk_button_new_with_label(_("30-day Psalms"));
+    gtk_widget_add_css_class(empty_create, "suggested-action");
+    g_object_set_data(G_OBJECT(empty_nt), "template", "nt90");
+    g_object_set_data(G_OBJECT(empty_psalms), "template", "psalms30");
+    g_signal_connect(empty_create, "clicked",
+                     G_CALLBACK(on_empty_create), page);
+    g_signal_connect(empty_nt, "clicked",
+                     G_CALLBACK(on_template_clicked), page);
+    g_signal_connect(empty_psalms, "clicked",
+                     G_CALLBACK(on_template_clicked), page);
+    gtk_box_append(GTK_BOX(empty_buttons), empty_nt);
+    gtk_box_append(GTK_BOX(empty_buttons), empty_psalms);
+    gtk_box_append(GTK_BOX(empty_buttons), empty_create);
+    gtk_widget_set_halign(empty_buttons, GTK_ALIGN_START);
+    gtk_box_append(GTK_BOX(empty_box), empty_title);
+    gtk_box_append(GTK_BOX(empty_box), empty_desc);
+    gtk_box_append(GTK_BOX(empty_box), empty_buttons);
+    gtk_widget_set_valign(empty_box, GTK_ALIGN_START);
+    gtk_widget_set_margin_top(empty_box, 24);
+
+    page->today_stack = GTK_STACK(gtk_stack_new());
+    gtk_stack_set_transition_type(page->today_stack,
+                                  GTK_STACK_TRANSITION_TYPE_CROSSFADE);
+    gtk_stack_add_named(page->today_stack, empty_box, "empty");
+    gtk_stack_add_named(page->today_stack, dashboard, "dashboard");
+    gtk_widget_set_vexpand(GTK_WIDGET(page->today_stack), TRUE);
+    gtk_box_append(GTK_BOX(today_page), GTK_WIDGET(page->today_stack));
 
     page->name_entry = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(page->name_entry, _("Plan name"));
@@ -600,9 +986,20 @@ gsword_plan_page_new(GswordWindow *window)
     page->chapters_spin = GTK_SPIN_BUTTON(
         gtk_spin_button_new_with_range(1, 20, 1));
     gtk_spin_button_set_value(page->chapters_spin, 4);
+    g_signal_connect(page->start_entry, "changed",
+                     G_CALLBACK(on_preview_changed), page);
+    g_signal_connect(page->days_spin, "value-changed",
+                     G_CALLBACK(on_preview_changed), page);
+    g_signal_connect(page->chapters_spin, "value-changed",
+                     G_CALLBACK(on_preview_changed), page);
+    page->delete_plan_button = GTK_BUTTON(delete);
     g_signal_connect(create, "clicked", G_CALLBACK(on_create), page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete), page);
+    gtk_widget_add_css_class(delete, "flat");
     gtk_widget_add_css_class(delete, "destructive-action");
+    gtk_widget_set_tooltip_text(delete, _("Delete plan"));
+    gtk_widget_set_sensitive(delete, FALSE);
+    gtk_box_append(GTK_BOX(plans_header), delete);
     gtk_widget_set_hexpand(GTK_WIDGET(page->name_entry), TRUE);
     gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->name_entry));
     gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->start_entry));
@@ -611,17 +1008,29 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(form_row1), gtk_label_new(_("Chapters/day")));
     gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->chapters_spin));
     gtk_box_append(GTK_BOX(form_row2), create);
-    gtk_box_append(GTK_BOX(form_row2), delete);
     gtk_box_append(GTK_BOX(plan_form), form_row1);
     gtk_box_append(GTK_BOX(plan_form), form_row2);
+    page->preview = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_wrap(page->preview, TRUE);
+    gtk_label_set_xalign(page->preview, 0.0f);
+    gtk_label_set_selectable(page->preview, TRUE);
+    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "dim-label");
+    gtk_box_append(GTK_BOX(plan_form), GTK_WIDGET(page->preview));
     hint = gtk_label_new(
         _("The plan advances through chapters from the start reference. "
           "Reading days can be opened by double-clicking a schedule row."));
     gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
     gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
     gtk_widget_add_css_class(hint, "dim-label");
-    gtk_box_append(GTK_BOX(plans_page), plan_form);
-    gtk_box_append(GTK_BOX(plans_page), hint);
+    gtk_box_append(GTK_BOX(plan_form), hint);
+    form_expander = gtk_expander_new(_("Create a plan"));
+    gtk_expander_set_child(GTK_EXPANDER(form_expander), plan_form);
+    gtk_expander_set_expanded(GTK_EXPANDER(form_expander), FALSE);
+    page->create_expander = GTK_EXPANDER(form_expander);
+    gtk_box_append(GTK_BOX(plans_page), plans_header);
+    gtk_box_append(GTK_BOX(plans_page), plans_scroll);
+    gtk_box_append(GTK_BOX(plans_page), form_expander);
 
     page->devotion = gsword_devotion_page_new(window);
     page->memory = gsword_memory_page_new(window);
