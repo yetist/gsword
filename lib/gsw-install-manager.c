@@ -29,6 +29,9 @@ typedef struct {
     GCancellable *cancellable;
     gchar *default_user;
     gchar *default_password;
+    gchar *proxy_url;
+    gchar *proxy_user;
+    gchar *proxy_password;
     gboolean passive;
     gboolean verify_peer;
     gboolean disclaimer_confirmed;
@@ -60,6 +63,9 @@ gsw_install_manager_finalize(GObject *object)
     g_clear_object(&priv->cancellable);
     g_free(priv->default_user);
     g_free(priv->default_password);
+    g_free(priv->proxy_url);
+    g_free(priv->proxy_user);
+    g_free(priv->proxy_password);
     g_mutex_clear(&priv->lock);
     g_mutex_clear(&priv->cancel_lock);
 
@@ -394,6 +400,22 @@ gsw_install_manager_get_timeout(GswInstallManager *self)
 }
 
 void
+gsw_install_manager_set_proxy(GswInstallManager *self, const gchar *url,
+                              const gchar *user, const gchar *password)
+{
+    GswInstallManagerPrivate *priv;
+
+    g_return_if_fail(GSW_IS_INSTALL_MANAGER(self));
+    priv = gsw_install_manager_priv(self);
+    g_free(priv->proxy_url);
+    priv->proxy_url = g_strdup(url != NULL ? url : "");
+    g_free(priv->proxy_user);
+    priv->proxy_user = g_strdup(user != NULL ? user : "");
+    g_free(priv->proxy_password);
+    priv->proxy_password = g_strdup(password != NULL ? password : "");
+}
+
+void
 gsw_install_manager_set_verify_peer(GswInstallManager *self, gboolean verify)
 {
     gsw_install_manager_priv(self)->verify_peer = verify;
@@ -527,6 +549,8 @@ gsw_install_manager_create_transport(GswInstallManager *self,
     gsw_transport_set_passive(transport, priv->passive);
     gsw_transport_set_timeout(transport, priv->timeout_msec);
     gsw_transport_set_verify_peer(transport, priv->verify_peer);
+    gsw_transport_set_proxy(transport, priv->proxy_url, priv->proxy_user,
+                            priv->proxy_password);
     gsw_transport_set_status_reporter(transport, priv->reporter);
 
     return transport;

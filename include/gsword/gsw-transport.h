@@ -186,6 +186,19 @@ void              gsw_transport_set_timeout(GswTransport *self, guint timeout_ms
  */
 void              gsw_transport_set_verify_peer(GswTransport *self, gboolean verify);
 /**
+ * gsw_transport_set_proxy:
+ * @self: a #GswTransport
+ * @url: (nullable): proxy URL, or %NULL to use libcurl's default
+ * @user: (nullable): proxy user name
+ * @password: (nullable): proxy password
+ *
+ * Configures an HTTP/HTTPS proxy for the transport.
+ */
+void              gsw_transport_set_proxy(GswTransport *self,
+                                          const gchar *url,
+                                          const gchar *user,
+                                          const gchar *password);
+/**
  * gsw_transport_set_status_reporter:
  * @self: a #GswTransport
  * @reporter: the #GswStatusReporter, or %NULL to disable reporting

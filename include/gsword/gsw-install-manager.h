@@ -135,6 +135,20 @@ void              gsw_install_manager_set_timeout(GswInstallManager *self,
  */
 guint             gsw_install_manager_get_timeout(GswInstallManager *self);
 /**
+ * gsw_install_manager_set_proxy:
+ * @self: a #GswInstallManager
+ * @url: (nullable): proxy URL
+ * @user: (nullable): proxy user name
+ * @password: (nullable): proxy password
+ *
+ * Sets the proxy used for future remote operations.
+ */
+void              gsw_install_manager_set_proxy(GswInstallManager *self,
+                                                const gchar *url,
+                                                const gchar *user,
+                                                const gchar *password);
+
+/**
  * gsw_install_manager_set_verify_peer:
  * @self: a #GswInstallManager
  * @verify: whether to verify TLS peers
