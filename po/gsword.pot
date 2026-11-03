@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 16:09+0800\n"
+"POT-Creation-Date: 2026-11-03 17:09+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,8 +43,8 @@ msgstr ""
 msgid "Show module sidebar"
 msgstr ""
 
-#: src/window.c:239 src/workspace-page.c:402 src/workspace-page.c:708
-#: src/workspace-pane.c:248
+#: src/window.c:239 src/workspace-page.c:481 src/workspace-page.c:790
+#: src/workspace-pane.c:472
 msgid "No Bible text module is installed"
 msgstr ""
 
@@ -181,6 +181,10 @@ msgstr ""
 #: src/library-page.c:909 src/library-page.c:912 src/library-page.c:916
 #: src/library-page.c:919
 msgid "Unknown"
+msgstr ""
+
+#: src/window-services.c:215 src/window-services.c:223
+msgid "Verse not present in this module."
 msgstr ""
 
 #: src/search-page.c:86
@@ -1372,7 +1376,7 @@ msgstr ""
 msgid "Commentary"
 msgstr ""
 
-#: src/study-panel.c:119 src/workspace-pane.c:206
+#: src/study-panel.c:119 src/workspace-pane.c:418
 msgid "No commentary for this verse."
 msgstr ""
 
@@ -1400,7 +1404,7 @@ msgstr ""
 msgid "Cannot read lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:568 src/workspace-pane.c:591
+#: src/study-panel.c:568 src/workspace-pane.c:834
 msgid "Follow"
 msgstr ""
 
@@ -1424,111 +1428,119 @@ msgstr ""
 msgid "Cross-refs"
 msgstr ""
 
-#: src/workspace-page.c:429
+#: src/workspace-page.c:508
 msgid "Parallel comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:611
+#: src/workspace-page.c:693
 msgid "Comparison order changed"
 msgstr ""
 
-#: src/workspace-page.c:633
+#: src/workspace-page.c:715
 msgid "Comparisons cleared"
 msgstr ""
 
-#: src/workspace-page.c:661
+#: src/workspace-page.c:743
 msgid "Clear comparisons?"
 msgstr ""
 
-#: src/workspace-page.c:664
+#: src/workspace-page.c:746
 msgid "All comparison panes will be removed. This cannot be undone."
 msgstr ""
 
-#: src/workspace-page.c:667
+#: src/workspace-page.c:749
 msgid "_Cancel"
 msgstr ""
 
-#: src/workspace-page.c:668
+#: src/workspace-page.c:750
 msgid "_Clear"
 msgstr ""
 
-#: src/workspace-page.c:738
+#: src/workspace-page.c:820
 msgid "Four-way comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:803 src/workspace-page.c:815
+#: src/workspace-page.c:897 src/workspace-page.c:911
 msgid "Add comparison"
 msgstr ""
 
-#: src/workspace-page.c:804
+#: src/workspace-page.c:898
 msgid "Clear comparisons"
 msgstr ""
 
-#: src/workspace-page.c:805
+#: src/workspace-page.c:899
 msgid "Columns"
 msgstr ""
 
-#: src/workspace-page.c:807
+#: src/workspace-page.c:901
 msgid "Sync scroll"
 msgstr ""
 
-#: src/workspace-page.c:809
+#: src/workspace-page.c:903
+msgid "Highlight differences"
+msgstr ""
+
+#: src/workspace-page.c:905
 msgid "No comparisons yet"
 msgstr ""
 
-#: src/workspace-page.c:811
+#: src/workspace-page.c:907
 msgid "Choose a template or add a comparison pane to begin."
 msgstr ""
 
-#: src/workspace-page.c:813
+#: src/workspace-page.c:909
 msgid "Two translations"
 msgstr ""
 
-#: src/workspace-page.c:814
+#: src/workspace-page.c:910
 msgid "Four translations"
 msgstr ""
 
-#: src/workspace-page.c:855
+#: src/workspace-page.c:951
 msgid "Keep comparison scroll positions together"
 msgstr ""
 
-#: src/workspace-pane.c:193
+#: src/workspace-page.c:956
+msgid "Highlight verses whose text differs between panes"
+msgstr ""
+
+#: src/workspace-pane.c:404
 msgid "No module selected."
 msgstr ""
 
-#: src/workspace-pane.c:207
+#: src/workspace-pane.c:419
 msgid "No content for this reference."
 msgstr ""
 
-#: src/workspace-pane.c:266
+#: src/workspace-pane.c:490
 msgid "Cannot open module."
 msgstr ""
 
-#: src/workspace-pane.c:475
+#: src/workspace-pane.c:718
 msgid "Comparison updated"
 msgstr ""
 
-#: src/workspace-pane.c:502
+#: src/workspace-pane.c:745
 msgid "Drag to another comparison to rearrange"
 msgstr ""
 
-#: src/workspace-pane.c:577
+#: src/workspace-pane.c:820
 msgid "Drag to rearrange comparison"
 msgstr ""
 
-#: src/workspace-pane.c:591
+#: src/workspace-pane.c:834
 msgid "Pinned"
 msgstr ""
 
-#: src/workspace-pane.c:591
+#: src/workspace-pane.c:834
 msgid "Free"
 msgstr ""
 
-#: src/workspace-pane.c:595
+#: src/workspace-pane.c:838
 msgid "Follow, pin, or free this comparison"
 msgstr ""
 
-#: src/workspace-pane.c:602
+#: src/workspace-pane.c:845
 msgid "Close comparison"
 msgstr ""
 

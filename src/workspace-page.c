@@ -16,12 +16,14 @@ struct _GswordWorkspacePage {
     gint columns;
     GtkToggleButton *column_buttons[4];
     GtkCheckButton *sync_scroll_toggle;
+    GtkCheckButton *diff_toggle;
     GPtrArray *panes;
     GswordWorkspacePane *active_pane;
     gchar *reference;
     gboolean restoring;
     gboolean syncing;
     gboolean sync_scroll_enabled;
+    gboolean highlight_diffs;
     gboolean syncing_scroll;
 };
 
@@ -43,19 +45,6 @@ update_column_buttons(GswordWorkspacePage *page)
             page->restoring--;
         }
     }
-}
-
-static void
-sync_adjustment(GtkAdjustment *from, GtkAdjustment *to)
-{
-    gdouble from_span = gtk_adjustment_get_upper(from) -
-                        gtk_adjustment_get_page_size(from);
-    gdouble to_span = gtk_adjustment_get_upper(to) -
-                      gtk_adjustment_get_page_size(to);
-    gdouble fraction = from_span > 0
-                     ? gtk_adjustment_get_value(from) / from_span : 0.0;
-
-    gtk_adjustment_set_value(to, fraction * MAX(to_span, 0.0));
 }
 
 static gchar *
@@ -184,6 +173,8 @@ gsword_workspace_page_save(GswordWorkspacePage *page)
     g_settings_set_int(settings, "workspace-columns", page->columns);
     g_settings_set_boolean(settings, "workspace-sync-scroll",
                            page->sync_scroll_enabled);
+    g_settings_set_boolean(settings, "workspace-highlight-diffs",
+                           page->highlight_diffs);
     g_free(text);
     g_variant_unref(layout);
 }
@@ -203,6 +194,7 @@ gsword_workspace_page_add_pane(GswordWorkspacePage *page,
     if (page->active_pane == NULL)
         gsword_workspace_page_set_active_pane(page, pane);
     gsword_workspace_page_reflow(page);
+    gsword_workspace_page_refresh_diff(page);
     if (save)
         gsword_workspace_page_save(page);
     return pane;
@@ -234,7 +226,93 @@ gsword_workspace_page_remove_pane(GswordWorkspacePage *page,
         gsword_workspace_page_set_active_pane(page,
             g_ptr_array_index(page->panes, 0));
     gsword_workspace_page_reflow(page);
+    gsword_workspace_page_refresh_diff(page);
     gsword_workspace_page_save(page);
+}
+
+void
+gsword_workspace_page_refresh_diff(GswordWorkspacePage *page)
+{
+    GPtrArray *maps;
+    GHashTable *verses;
+    GHashTable *diff;
+    GHashTableIter iter;
+    gpointer key;
+    guint i;
+
+    if (page == NULL || page->panes == NULL)
+        return;
+    if (!page->highlight_diffs) {
+        for (i = 0; i < page->panes->len; i++)
+            gsword_workspace_pane_set_diff_verses(
+                g_ptr_array_index(page->panes, i), NULL);
+        return;
+    }
+    maps = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)g_hash_table_unref);
+    verses = g_hash_table_new(g_direct_hash, g_direct_equal);
+    diff = g_hash_table_new(g_direct_hash, g_direct_equal);
+    for (i = 0; i < page->panes->len; i++) {
+        GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+        GHashTable *map = gsword_workspace_pane_dup_verse_texts(pane);
+
+        g_ptr_array_add(maps, map);
+        g_hash_table_iter_init(&iter, map);
+        while (g_hash_table_iter_next(&iter, &key, NULL))
+            g_hash_table_add(verses, key);
+    }
+    if (page->panes->len > 1) {
+        g_hash_table_iter_init(&iter, verses);
+        while (g_hash_table_iter_next(&iter, &key, NULL)) {
+            const gchar *base = NULL;
+            gboolean have_base = FALSE;
+            gboolean differs = FALSE;
+
+            for (i = 0; i < maps->len; i++) {
+                GHashTable *map = g_ptr_array_index(maps, i);
+                const gchar *text = g_hash_table_lookup(map, key);
+
+                if (!have_base) {
+                    base = text;
+                    have_base = TRUE;
+                } else if (g_strcmp0(base, text) != 0) {
+                    differs = TRUE;
+                    break;
+                }
+            }
+            if (differs)
+                g_hash_table_add(diff, key);
+        }
+    }
+    for (i = 0; i < page->panes->len; i++) {
+        GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+
+        gsword_workspace_pane_set_diff_verses(pane, diff);
+    }
+    g_hash_table_unref(diff);
+    g_hash_table_unref(verses);
+    g_ptr_array_unref(maps);
+}
+
+void
+gsword_workspace_page_scroll_to_reference(GswordWorkspacePage *page,
+                                          GswordWorkspacePane *source)
+{
+    gboolean syncing;
+    guint i;
+
+    if (page == NULL || page->panes == NULL)
+        return;
+    syncing = page->syncing_scroll;
+    page->syncing_scroll = TRUE;
+    for (i = 0; i < page->panes->len; i++) {
+        GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+
+        if (pane == source || !gsword_workspace_pane_get_follow(pane))
+            continue;
+        gsword_workspace_pane_scroll_to_active(pane);
+    }
+    page->syncing_scroll = syncing;
 }
 
 void
@@ -266,6 +344,7 @@ gsword_workspace_page_sync_reference(GswordWorkspacePage *page,
         gsword_workspace_pane_set_reference(pane, reference);
     }
     page->syncing = FALSE;
+    gsword_workspace_page_scroll_to_reference(page, source);
 }
 
 const gchar *
@@ -451,6 +530,8 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
         columns = g_settings_get_int(settings, "workspace-columns");
         page->sync_scroll_enabled = g_settings_get_boolean(
             settings, "workspace-sync-scroll");
+        page->highlight_diffs = g_settings_get_boolean(
+            settings, "workspace-highlight-diffs");
     }
     if (columns < 1 || columns > 4)
         columns = 2;
@@ -460,6 +541,9 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
     if (page->sync_scroll_toggle != NULL)
         gtk_check_button_set_active(page->sync_scroll_toggle,
                                     page->sync_scroll_enabled);
+    if (page->diff_toggle != NULL)
+        gtk_check_button_set_active(page->diff_toggle,
+                                    page->highlight_diffs);
 
     if (layout_text == NULL || *layout_text == '\0') {
         gchar *module = default_module(page);
@@ -541,20 +625,18 @@ gsword_workspace_page_sync_scroll(GswordWorkspacePage *page,
     if (page == NULL || page->syncing_scroll ||
         !page->sync_scroll_enabled)
         return;
+    (void)adjustment;
     page->syncing_scroll = TRUE;
-    for (i = 0; i < page->panes->len; i++) {
-        GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
-        GtkScrolledWindow *scroll;
-        GtkAdjustment *target;
+    {
+        gint verse = gsword_workspace_pane_get_top_verse(source);
 
-        if (pane == source)
-            continue;
-        scroll = gsword_workspace_pane_get_scroll(pane);
-        if (scroll == NULL)
-            continue;
-        target = gtk_scrolled_window_get_vadjustment(scroll);
-        if (target != NULL)
-            sync_adjustment(adjustment, target);
+        for (i = 0; i < page->panes->len; i++) {
+            GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+
+            if (pane == source)
+                continue;
+            gsword_workspace_pane_scroll_to_verse(pane, verse);
+        }
     }
     page->syncing_scroll = FALSE;
 }
@@ -778,6 +860,18 @@ on_sync_scroll_toggled(GtkCheckButton *button, gpointer user_data)
 }
 
 static void
+on_diff_toggled(GtkCheckButton *button, gpointer user_data)
+{
+    GswordWorkspacePage *page = user_data;
+
+    page->highlight_diffs = gtk_check_button_get_active(button);
+    if (page->restoring)
+        return;
+    gsword_workspace_page_refresh_diff(page);
+    gsword_workspace_page_save(page);
+}
+
+static void
 workspace_page_free(gpointer data)
 {
     GswordWorkspacePage *page = data;
@@ -805,6 +899,8 @@ gsword_workspace_page_new(GswordWindow *window)
     GtkWidget *columns_label = gtk_label_new(_("Columns"));
     GtkWidget *column_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     GtkWidget *sync_scroll = gtk_check_button_new_with_label(_("Sync scroll"));
+    GtkWidget *diff_toggle = gtk_check_button_new_with_label(
+        _("Highlight differences"));
     GtkWidget *empty = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
     GtkWidget *empty_title = gtk_label_new(_("No comparisons yet"));
     GtkWidget *empty_text = gtk_label_new(
@@ -855,11 +951,17 @@ gsword_workspace_page_new(GswordWindow *window)
                                 _("Keep comparison scroll positions together"));
     g_signal_connect(sync_scroll, "toggled",
                      G_CALLBACK(on_sync_scroll_toggled), page);
+    page->diff_toggle = GTK_CHECK_BUTTON(diff_toggle);
+    gtk_widget_set_tooltip_text(
+        diff_toggle, _("Highlight verses whose text differs between panes"));
+    g_signal_connect(diff_toggle, "toggled",
+                     G_CALLBACK(on_diff_toggled), page);
     gtk_box_append(GTK_BOX(toolbar), add);
     gtk_box_append(GTK_BOX(toolbar), clear);
     gtk_box_append(GTK_BOX(toolbar), columns_label);
     gtk_box_append(GTK_BOX(toolbar), column_box);
     gtk_box_append(GTK_BOX(toolbar), sync_scroll);
+    gtk_box_append(GTK_BOX(toolbar), diff_toggle);
 
     page->grid = GTK_GRID(gtk_grid_new());
     gtk_widget_set_hexpand(GTK_WIDGET(page->grid), TRUE);

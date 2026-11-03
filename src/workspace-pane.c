@@ -24,13 +24,17 @@ struct _GswordWorkspacePane {
     GtkScrolledWindow *scroll;
     GtkTextView *view;
     GtkTextTag *active_tag;
+    GtkTextTag *diff_tag;
     GswModule *module;
     gchar *module_name;
     guint id;
     guint updating;
+    guint scroll_idle;
 };
 
 static guint workspace_pane_next_id = 1;
+
+static gboolean scroll_to_active_idle(gpointer user_data);
 
 gboolean
 gsword_workspace_pane_supports_module(GswModuleInfo *info)
@@ -85,6 +89,42 @@ fill_modules(GswordWorkspacePane *pane)
     pane->updating--;
 }
 
+static gboolean
+find_verse_line(GswordWorkspacePane *pane, gint verse,
+                GtkTextIter *line_start, GtkTextIter *line_end)
+{
+    GtkTextBuffer *buffer;
+    gint line_count;
+    gint line;
+
+    if (pane == NULL || pane->view == NULL || verse < 1)
+        return FALSE;
+    buffer = gtk_text_view_get_buffer(pane->view);
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gint found;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        found = gsword_window_verse_number_from_line(text);
+        g_free(text);
+        if (found == verse) {
+            if (line_start != NULL)
+                *line_start = start;
+            if (line_end != NULL)
+                *line_end = end;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static void
 apply_active(GswordWorkspacePane *pane)
 {
@@ -93,8 +133,6 @@ apply_active(GswordWorkspacePane *pane)
     GtkTextIter end;
     GswKey *key;
     gint active;
-    gint line_count;
-    gint line;
 
     if (pane->view == NULL || pane->active_tag == NULL || pane->module == NULL)
         return;
@@ -106,6 +144,93 @@ apply_active(GswordWorkspacePane *pane)
         return;
     active = gsw_verse_key_get_verse((GswVerseKey *)key);
     if (active < 1)
+        return;
+    if (find_verse_line(pane, active, &start, &end))
+        gtk_text_buffer_apply_tag(buffer, pane->active_tag, &start, &end);
+}
+
+static gchar *
+normalize_verse_text(const gchar *line)
+{
+    const gchar *p = line;
+    GString *result;
+
+    if (p == NULL)
+        return g_strdup("");
+    while (g_ascii_isspace(*p))
+        p++;
+    while (g_ascii_isdigit(*p))
+        p++;
+    while (g_ascii_isspace(*p))
+        p++;
+    result = g_string_new(NULL);
+    while (*p != '\0') {
+        if (g_ascii_isspace(*p)) {
+            if (result->len > 0 &&
+                result->str[result->len - 1] != ' ')
+                g_string_append_c(result, ' ');
+        } else {
+            g_string_append_c(result, *p);
+        }
+        p++;
+    }
+    while (result->len > 0 &&
+           result->str[result->len - 1] == ' ')
+        g_string_truncate(result, result->len - 1);
+    return g_string_free(result, FALSE);
+}
+
+GHashTable *
+gsword_workspace_pane_dup_verse_texts(GswordWorkspacePane *pane)
+{
+    GHashTable *verses = g_hash_table_new_full(g_direct_hash, g_direct_equal,
+                                               NULL, g_free);
+    GtkTextBuffer *buffer;
+    gint line_count;
+    gint line;
+
+    if (pane == NULL || pane->view == NULL)
+        return verses;
+    buffer = gtk_text_view_get_buffer(pane->view);
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gchar *normalized;
+        gint verse;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        verse = gsword_window_verse_number_from_line(text);
+        if (verse > 0) {
+            normalized = normalize_verse_text(text);
+            g_hash_table_replace(verses, GINT_TO_POINTER(verse), normalized);
+        }
+        g_free(text);
+    }
+    return verses;
+}
+
+void
+gsword_workspace_pane_set_diff_verses(GswordWorkspacePane *pane,
+                                      const GHashTable *verses)
+{
+    GtkTextBuffer *buffer;
+    GtkTextIter start;
+    GtkTextIter end;
+    gint line_count;
+    gint line;
+
+    if (pane == NULL || pane->view == NULL || pane->diff_tag == NULL)
+        return;
+    buffer = gtk_text_view_get_buffer(pane->view);
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    gtk_text_buffer_remove_tag(buffer, pane->diff_tag, &start, &end);
+    if (verses == NULL || g_hash_table_size((GHashTable *)verses) == 0)
         return;
     line_count = gtk_text_buffer_get_line_count(buffer);
     for (line = 1; line < line_count; line++) {
@@ -121,12 +246,98 @@ apply_active(GswordWorkspacePane *pane)
         text = gtk_text_buffer_get_text(buffer, &line_start, &line_end, TRUE);
         verse = gsword_window_verse_number_from_line(text);
         g_free(text);
-        if (verse == active) {
-            gtk_text_buffer_apply_tag(buffer, pane->active_tag,
+        if (verse > 0 &&
+            g_hash_table_contains((GHashTable *)verses,
+                                  GINT_TO_POINTER(verse)))
+            gtk_text_buffer_apply_tag(buffer, pane->diff_tag,
                                       &line_start, &line_end);
-            break;
-        }
     }
+}
+
+void
+gsword_workspace_pane_scroll_to_active(GswordWorkspacePane *pane)
+{
+    GtkTextIter start;
+    GswKey *key;
+    gint active;
+
+    if (pane == NULL || pane->view == NULL || pane->module == NULL)
+        return;
+    key = gsw_module_get_key(pane->module);
+    if (gsw_key_get_kind(key) != GSW_KEY_KIND_VERSE)
+        return;
+    active = gsw_verse_key_get_verse((GswVerseKey *)key);
+    if (active < 1 || !find_verse_line(pane, active, &start, NULL))
+        return;
+    gtk_text_view_scroll_to_iter(pane->view, &start, 0.1, FALSE, 0.0, 0.0);
+}
+
+gint
+gsword_workspace_pane_get_top_verse(GswordWorkspacePane *pane)
+{
+    GtkTextView *view;
+    GtkTextBuffer *buffer;
+    GtkTextIter iter;
+    gint bx;
+    gint by;
+    gint line;
+    gint line_count;
+
+    if (pane == NULL || pane->view == NULL)
+        return 0;
+    view = pane->view;
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
+                                          0, 0, &bx, &by);
+    gtk_text_view_get_iter_at_location(view, &iter, bx, by);
+    buffer = gtk_text_view_get_buffer(view);
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = gtk_text_iter_get_line(&iter); line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gint verse;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        verse = gsword_window_verse_number_from_line(text);
+        g_free(text);
+        if (verse > 0)
+            return verse;
+    }
+    return 0;
+}
+
+void
+gsword_workspace_pane_scroll_to_verse(GswordWorkspacePane *pane, gint verse)
+{
+    GtkTextIter start;
+    GtkAdjustment *adjustment;
+
+    if (pane == NULL || pane->view == NULL)
+        return;
+    if (verse > 0 && find_verse_line(pane, verse, &start, NULL)) {
+        gtk_text_view_scroll_to_iter(pane->view, &start, 0.0, TRUE,
+                                     0.0, 0.0);
+        return;
+    }
+    if (pane->scroll == NULL)
+        return;
+    adjustment = gtk_scrolled_window_get_vadjustment(pane->scroll);
+    if (adjustment != NULL)
+        gtk_adjustment_set_value(adjustment, 0.0);
+}
+
+static gboolean
+scroll_to_active_idle(gpointer user_data)
+{
+    GswordWorkspacePane *pane = user_data;
+
+    pane->scroll_idle = 0;
+    gsword_workspace_pane_scroll_to_active(pane);
+    return G_SOURCE_REMOVE;
 }
 
 static void
@@ -196,7 +407,8 @@ render(GswordWorkspacePane *pane)
     info = gsw_module_get_info(pane->module);
     type = gsword_window_module_effective_type(info);
     if (type == GSW_MODULE_TYPE_BIBLES) {
-        text = gsword_window_chapter_text_for_module(pane->module);
+        text = gsword_window_chapter_text_for_module_with_missing(
+            pane->module, TRUE);
     }
     if (text == NULL)
         text = gsw_module_get_text(pane->module, &error);
@@ -209,8 +421,20 @@ render(GswordWorkspacePane *pane)
     gsword_window_set_view_text(pane->view, text);
     g_free(text);
     g_clear_error(&error);
+    {
+        GtkTextBuffer *buffer = gtk_text_view_get_buffer(pane->view);
+        GtkTextIter start;
+
+        gtk_text_buffer_get_start_iter(buffer, &start);
+        gtk_text_buffer_place_cursor(buffer, &start);
+    }
     sync_chooser(pane);
     apply_active(pane);
+    gsword_workspace_page_refresh_diff(pane->page);
+    gsword_workspace_pane_scroll_to_active(pane);
+    if (pane->scroll_idle != 0)
+        g_source_remove(pane->scroll_idle);
+    pane->scroll_idle = g_timeout_add(25, scroll_to_active_idle, pane);
 }
 
 static void
@@ -321,6 +545,7 @@ note_reference(GswordWorkspacePane *pane)
     if (reference != NULL)
         gsword_workspace_page_sync_reference(pane->page, reference, pane);
     g_free(reference);
+    gsword_workspace_pane_scroll_to_active(pane);
     gsword_workspace_page_save(pane->page);
 }
 
@@ -391,8 +616,11 @@ on_follow_mode_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
         const gchar *reference =
             gsword_workspace_page_get_reference(pane->page);
 
-        if (reference != NULL)
+        if (reference != NULL) {
             gsword_workspace_pane_set_reference(pane, reference);
+            gsword_workspace_pane_scroll_to_active(pane);
+            gsword_workspace_page_scroll_to_reference(pane->page, pane);
+        }
     }
     gsword_workspace_page_save(pane->page);
 }
@@ -404,6 +632,13 @@ on_focus_enter(GtkEventControllerFocus *controller, gpointer user_data)
 
     (void)controller;
     gsword_workspace_page_set_active_pane(pane->page, pane);
+}
+
+static void
+on_view_mapped(GtkWidget *widget, gpointer user_data)
+{
+    (void)widget;
+    gsword_workspace_pane_scroll_to_active(user_data);
 }
 
 static void
@@ -421,14 +656,18 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     gint verse;
     gint bx;
     gint by;
+    gint trailing;
+    gint line_y;
+    gint line_height;
     GswModuleInfo *info;
 
     (void)n_press;
-    if (pane->module == NULL)
-        return;
     gsword_workspace_page_set_active_pane(pane->page, pane);
     if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
         GDK_BUTTON_PRIMARY)
+        return;
+    gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+    if (pane->module == NULL)
         return;
     info = gsw_module_get_info(pane->module);
     if (gsword_window_module_effective_type(info) != GSW_MODULE_TYPE_BIBLES)
@@ -437,8 +676,12 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
         GTK_EVENT_CONTROLLER(gesture)));
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
                                           (gint)x, (gint)y, &bx, &by);
-    gtk_text_view_get_iter_at_location(view, &iter, bx, by);
+    if (!gtk_text_view_get_iter_at_position(view, &iter, &trailing, bx, by))
+        return;
     if (gtk_text_iter_get_line(&iter) == 0)
+        return;
+    gtk_text_view_get_line_yrange(view, &iter, &line_y, &line_height);
+    if (by < line_y || by >= line_y + line_height)
         return;
     buffer = gtk_text_view_get_buffer(view);
     line_start = iter;
@@ -630,6 +873,9 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     gtk_text_view_set_right_margin(pane->view, 10);
     gtk_text_view_set_top_margin(pane->view, 10);
     gtk_text_view_set_bottom_margin(pane->view, 10);
+    pane->diff_tag = gtk_text_buffer_create_tag(
+        gtk_text_view_get_buffer(pane->view), "workspace-diff",
+        "background", "#fef3c7", NULL);
     pane->active_tag = gtk_text_buffer_create_tag(
         gtk_text_view_get_buffer(pane->view), "workspace-active",
         "background", "#dbeafe", "weight", PANGO_WEIGHT_SEMIBOLD, NULL);
@@ -643,9 +889,14 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
                      "value-changed", G_CALLBACK(on_scrolled), pane);
 
     click = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),
+                                  GDK_BUTTON_PRIMARY);
+    gtk_event_controller_set_propagation_phase(
+        GTK_EVENT_CONTROLLER(click), GTK_PHASE_CAPTURE);
     g_signal_connect(click, "pressed", G_CALLBACK(on_clicked), pane);
     gtk_widget_add_controller(GTK_WIDGET(pane->view),
                               GTK_EVENT_CONTROLLER(click));
+    g_signal_connect(pane->view, "map", G_CALLBACK(on_view_mapped), pane);
     {
         GtkEventController *focus = gtk_event_controller_focus_new();
 
@@ -733,6 +984,12 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
         g_signal_handlers_disconnect_by_data(pane->module_selector, pane);
     if (pane->follow_mode != NULL)
         g_signal_handlers_disconnect_by_data(pane->follow_mode, pane);
+    if (pane->scroll_idle != 0) {
+        g_source_remove(pane->scroll_idle);
+        pane->scroll_idle = 0;
+    }
+    if (pane->view != NULL)
+        g_signal_handlers_disconnect_by_data(pane->view, pane);
     if (pane->focus != NULL)
         g_signal_handlers_disconnect_by_data(pane->focus, pane);
     if (pane->reference_chooser != NULL)

@@ -72,6 +72,8 @@ gchar *gsword_window_current_storage_key(GswordWindow *self);
 gchar *gsword_window_current_display_key(GswordWindow *self);
 
 gchar *gsword_window_chapter_text_for_module(GswModule *module);
+gchar *gsword_window_chapter_text_for_module_with_missing(GswModule *module,
+                                                          gboolean show_missing);
 void gsword_window_set_view_text(GtkTextView *view, const gchar *text);
 
 gchar *gsword_window_normalize_reference(const gchar *text);

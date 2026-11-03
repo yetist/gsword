@@ -41,6 +41,10 @@
       <summary>Comparison workspace column count</summary>
       <description>Number of columns used by the comparison workspace grid.</description>
     </key>
+    <key name="workspace-highlight-diffs" type="b">
+      <default>false</default>
+      <summary>Highlight textual differences between comparison panes</summary>
+    </key>
     <key name="workspace-sync-scroll" type="b">
       <default>false</default>
       <summary>Synchronize comparison scrolling</summary>
