@@ -62,9 +62,10 @@ Current implementation:
   checking and review scheduling
 - `library-page.c` / `library-page.h`: Installed/Available/Updates library
   views using GtkListView with filter/sort models, installed-module details,
-  authenticated source management, update queue, disk-space preflight,
-  encrypted-module unlock, local directory picker, install/remove, progress
-  and cancellation
+  authenticated source management and connection test, update queue with
+  failed-item retry, disk-space preflight, encrypted-module unlock,
+  dependency/conflict warnings, local directory picker, install/remove,
+  progress and cancellation
 - `preferences-dialog.c` / `preferences-dialog.h`: font scale, color scheme and
   application CSS
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and

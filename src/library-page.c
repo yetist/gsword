@@ -143,11 +143,14 @@ struct _GswordLibraryPage {
     GtkButton *cancel_button;
     GtkButton *refresh_source_button;
     GtkButton *refresh_sources_button;
+    GtkButton *test_source_button;
     GtkToggleButton *installed_view_button;
     GtkToggleButton *available_view_button;
     GtkToggleButton *updates_view_button;
     GtkButton *update_all_button;
+    GtkButton *retry_failed_button;
     GPtrArray *update_queue;
+    GPtrArray *failed_updates;
     GswInstallSource *update_source;
     gboolean updating_all;
     GCancellable *install_cancellable;
@@ -184,6 +187,7 @@ library_page_get(GswordWindow *self)
 static void gsword_window_refresh_remote_modules(GswordWindow *self);
 static void gsword_window_refresh_installed_list(GswordWindow *self);
 static void show_module_details(GswordWindow *self);
+static void append_module_warning(gchar **warning, const gchar *format, ...);
 static void on_refresh_sources_finished(GObject *source, GAsyncResult *result,
                                         gpointer user_data);
 static void on_refresh_remote_finished(GObject *source, GAsyncResult *result,
@@ -717,6 +721,12 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
 
     if (!gsw_module_info_is_supported(info))
         warning = g_strdup(_("⚠ This module may not be readable by this version of gsword."));
+    if (gsw_module_info_get_value(info, "Requires") != NULL)
+        append_module_warning(&warning, _("Requires: %s"),
+            gsw_module_info_get_value(info, "Requires"));
+    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
+        append_module_warning(&warning, _("Conflicts: %s"),
+            gsw_module_info_get_value(info, "Conflicts"));
     if (gsw_module_info_is_ciphered(info)) {
         gchar *cipher_warning = g_strdup(
             _("⚠ This module is encrypted and may require unlocking."));
@@ -788,6 +798,26 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
 }
 
 static void
+append_module_warning(gchar **warning, const gchar *format, ...)
+{
+    va_list args;
+    gchar *line;
+    gchar *combined;
+
+    va_start(args, format);
+    line = g_strdup_vprintf(format, args);
+    va_end(args);
+    if (*warning == NULL) {
+        *warning = line;
+    } else {
+        combined = g_strconcat(*warning, "\n", line, NULL);
+        g_free(*warning);
+        g_free(line);
+        *warning = combined;
+    }
+}
+
+static void
 gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
 {
     GswordLibraryPage *priv = library_page_get(self);
@@ -830,6 +860,12 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
 
     if (!gsw_module_info_is_supported(info))
         warning = g_strdup(_("⚠ This module may not be readable by this version of gsword."));
+    if (gsw_module_info_get_value(info, "Requires") != NULL)
+        append_module_warning(&warning, _("Requires: %s"),
+            gsw_module_info_get_value(info, "Requires"));
+    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
+        append_module_warning(&warning, _("Conflicts: %s"),
+            gsw_module_info_get_value(info, "Conflicts"));
     if (gsw_module_info_is_ciphered(info)) {
         gchar *cipher_warning = g_strdup(
             _("⚠ This module is encrypted and may require unlocking."));
@@ -1247,6 +1283,57 @@ on_refresh_sources_finished(GObject *source, GAsyncResult *result,
 }
 
 static void
+on_test_source_finished(GObject *source, GAsyncResult *result,
+                        gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    GError *error = NULL;
+    gboolean ok;
+
+    ok = gsw_install_manager_refresh_remote_source_finish(
+        GSW_INSTALL_MANAGER(source), result, &error);
+    if (!ok)
+        gsword_window_show_error(self, _("Cannot connect to source"), error);
+    else
+        gsword_window_set_status(self, _("Source connection OK"));
+    if (priv->test_source_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->test_source_button), TRUE);
+    if (priv->refresh_source_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), TRUE);
+    g_clear_object(&priv->install_cancellable);
+    if (ok)
+        gsword_window_refresh_remote_modules(self);
+}
+
+static void
+on_test_source_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    GswInstallSource *source = gsword_window_current_install_source(self);
+
+    (void)button;
+    if (source == NULL) {
+        gsword_window_set_status(self, _("No source selected"));
+        return;
+    }
+    if (priv->install_cancellable != NULL) {
+        gsword_window_set_status(self, _("An operation is already running"));
+        return;
+    }
+    priv->install_cancellable = g_cancellable_new();
+    gsw_install_manager_set_cancellable(priv->installer,
+                                        priv->install_cancellable);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->test_source_button), FALSE);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), FALSE);
+    gsword_window_set_status(self, _("Testing source connection..."));
+    gsw_install_manager_refresh_remote_source_async(
+        priv->installer, source, priv->install_cancellable,
+        on_test_source_finished, self);
+}
+
+static void
 on_refresh_remote_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -1343,6 +1430,14 @@ rebuild_queue_view(GswordWindow *self)
 }
 
 static void
+update_retry_button(GswordLibraryPage *priv)
+{
+    if (priv->retry_failed_button != NULL)
+        gtk_widget_set_visible(GTK_WIDGET(priv->retry_failed_button),
+            priv->failed_updates != NULL && priv->failed_updates->len > 0);
+}
+
+static void
 start_next_update(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
@@ -1355,7 +1450,11 @@ start_next_update(GswordWindow *self)
         g_clear_object(&priv->install_cancellable);
         g_clear_object(&priv->update_source);
         rebuild_queue_view(self);
-        gsword_window_set_status(self, _("All updates complete"));
+        update_retry_button(priv);
+        gsword_window_set_status(self, priv->failed_updates != NULL &&
+                                 priv->failed_updates->len > 0
+                                 ? _("Updates finished with errors")
+                                 : _("All updates complete"));
         gsword_window_refresh_remote_modules(self);
         return;
     }
@@ -1390,7 +1489,10 @@ on_update_all_clicked(GtkButton *button, gpointer user_data)
         return;
     }
     g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
+    g_clear_pointer(&priv->failed_updates, g_ptr_array_unref);
+    priv->failed_updates = g_ptr_array_new_with_free_func(g_free);
     priv->update_queue = g_ptr_array_new_with_free_func(g_free);
+    update_retry_button(priv);
     for (i = 0; i < priv->remote_infos->len; i++) {
         GswModuleInfo *info = g_ptr_array_index(priv->remote_infos, i);
         guint status = gsw_install_manager_get_module_status(priv->manager,
@@ -1539,6 +1641,33 @@ check_install_space(GswordWindow *self, GswModuleInfo *info)
 }
 
 static void
+on_retry_failed_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    GswInstallSource *source = gsword_window_current_install_source(self);
+    guint i;
+
+    (void)button;
+    if (source == NULL || priv->failed_updates == NULL ||
+        priv->failed_updates->len == 0)
+        return;
+    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
+    priv->update_queue = g_ptr_array_new_with_free_func(g_free);
+    for (i = 0; i < priv->failed_updates->len; i++)
+        g_ptr_array_add(priv->update_queue,
+                        g_strdup(g_ptr_array_index(priv->failed_updates, i)));
+    g_clear_pointer(&priv->failed_updates, g_ptr_array_unref);
+    priv->failed_updates = g_ptr_array_new_with_free_func(g_free);
+    update_retry_button(priv);
+    g_clear_object(&priv->update_source);
+    priv->update_source = g_object_ref(source);
+    priv->updating_all = TRUE;
+    rebuild_queue_view(self);
+    start_next_update(self);
+}
+
+static void
 on_install_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -1601,6 +1730,8 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     gsword_window_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
     if (priv->updating_all) {
+        if (!installed && installed_name != NULL && priv->failed_updates != NULL)
+            g_ptr_array_add(priv->failed_updates, g_strdup(installed_name));
         g_free(installed_name);
         start_next_update(self);
         return;
@@ -1958,6 +2089,7 @@ library_page_free(gpointer data)
     g_clear_object(&page->source_names);
     g_clear_object(&page->install_cancellable);
     g_clear_pointer(&page->update_queue, g_ptr_array_unref);
+    g_clear_pointer(&page->failed_updates, g_ptr_array_unref);
     g_clear_object(&page->update_source);
     g_clear_pointer(&page->language_codes, g_ptr_array_unref);
     g_clear_object(&page->language_names);
@@ -1989,6 +2121,7 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *available_view;
     GtkWidget *updates_view;
     GtkWidget *update_all = gtk_button_new_with_label(_("Update all"));
+    GtkWidget *retry_failed = gtk_button_new_with_label(_("Retry failed"));
     GtkWidget *manage_sources = gtk_button_new_with_label(_("Manage sources"));
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -2014,6 +2147,7 @@ gsword_library_page_new(GswordWindow *self)
         "view-refresh-symbolic");
     GtkWidget *refresh_remote = gtk_button_new_from_icon_name(
         "network-transmit-receive-symbolic");
+    GtkWidget *test_source = gtk_button_new_with_label(_("Test"));
     GtkWidget *install = gtk_button_new_with_label(_("Install / Update"));
     GtkWidget *remove = gtk_button_new_with_label(_("Remove"));
     GtkWidget *unlock = gtk_button_new_with_label(_("Unlock"));
@@ -2056,13 +2190,17 @@ gsword_library_page_new(GswordWindow *self)
     gtk_widget_add_css_class(update_all, "flat");
     gtk_widget_set_tooltip_text(update_all, _("Install all available updates"));
     gtk_widget_set_visible(update_all, FALSE);
+    gtk_widget_set_visible(retry_failed, FALSE);
     g_signal_connect(update_all, "clicked",
                      G_CALLBACK(on_update_all_clicked), self);
+    g_signal_connect(retry_failed, "clicked",
+                     G_CALLBACK(on_retry_failed_clicked), self);
     gtk_widget_add_css_class(view_row, "linked");
     gtk_box_append(GTK_BOX(view_row), installed_view);
     gtk_box_append(GTK_BOX(view_row), available_view);
     gtk_box_append(GTK_BOX(view_row), updates_view);
     gtk_box_append(GTK_BOX(view_row), update_all);
+    gtk_box_append(GTK_BOX(view_row), retry_failed);
     gtk_box_append(GTK_BOX(view_row), manage_sources);
 
     priv->window = self;
@@ -2136,6 +2274,10 @@ gsword_library_page_new(GswordWindow *self)
                                 _("Refresh the install source list"));
     gtk_widget_set_tooltip_text(refresh_remote,
                                 _("Refresh modules from the selected source"));
+    gtk_widget_add_css_class(test_source, "flat");
+    gtk_widget_set_tooltip_text(test_source, _("Test source connection"));
+    g_signal_connect(test_source, "clicked",
+                     G_CALLBACK(on_test_source_clicked), self);
     g_signal_connect(refresh_sources, "clicked",
                      G_CALLBACK(on_refresh_sources_clicked), self);
     g_signal_connect(refresh_remote, "clicked",
@@ -2156,6 +2298,8 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(source_row), GTK_WIDGET(priv->source_dropdown));
     gtk_box_append(GTK_BOX(source_row), refresh_sources);
     gtk_box_append(GTK_BOX(source_row), refresh_remote);
+    gtk_box_append(GTK_BOX(source_row), test_source);
+    priv->test_source_button = GTK_BUTTON(test_source);
 
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->install_search));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->type_filter));
@@ -2409,6 +2553,7 @@ gsword_library_page_new(GswordWindow *self)
     priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
     priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);
     priv->update_all_button = GTK_BUTTON(update_all);
+    priv->retry_failed_button = GTK_BUTTON(retry_failed);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(installed_view), TRUE);
     update_library_view(self, 0);
     return priv;
