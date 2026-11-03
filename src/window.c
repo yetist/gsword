@@ -602,54 +602,133 @@ gsword_window_apply_workspace(GswordWindow *self, const gchar *workspace)
 }
 
 static void
-on_main_menu_response(AdwAlertDialog *dialog, const gchar *response,
+on_study_panel_action(GSimpleAction *action, GVariant *parameter,
                       gpointer user_data)
 {
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-
-    (void)dialog;
-    if (g_strcmp0(response, "reading") == 0 ||
-        g_strcmp0(response, "study") == 0 ||
-        g_strcmp0(response, "panes") == 0 ||
-        g_strcmp0(response, "parallel") == 0 ||
-        g_strcmp0(response, "teaching") == 0) {
-        gsword_window_apply_workspace(self, response);
-    } else if (g_strcmp0(response, "library") == 0) {
-        gsword_window_open_library(self);
-    } else if (g_strcmp0(response, "preferences") == 0) {
-        gsword_preferences_show(self);
-    } else if (g_strcmp0(response, "quit") == 0) {
-        GtkApplication *application = gtk_window_get_application(
-            GTK_WINDOW(self));
-
-        if (application != NULL)
-            g_application_quit(G_APPLICATION(application));
-    }
+    (void)action;
+    (void)parameter;
+    gsword_window_apply_workspace(GSWORD_WINDOW(user_data), "study");
 }
 
 static void
-on_main_menu_clicked(GtkButton *button, gpointer user_data)
+on_compare_action(GSimpleAction *action, GVariant *parameter,
+                  gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    gsword_window_apply_workspace(GSWORD_WINDOW(user_data), "panes");
+}
+
+static void
+on_teaching_action(GSimpleAction *action, GVariant *parameter,
+                   gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    gsword_window_apply_workspace(GSWORD_WINDOW(user_data), "teaching");
+}
+
+static void
+add_shortcut_row(GtkGrid *grid, gint row, const gchar *keys,
+                 const gchar *description)
+{
+    GtkWidget *key_label = gtk_label_new(keys);
+    GtkWidget *description_label = gtk_label_new(description);
+
+    gtk_label_set_xalign(GTK_LABEL(key_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(description_label), 0.0f);
+    gtk_widget_add_css_class(key_label, "dim-label");
+    gtk_widget_add_css_class(key_label, "caption");
+    gtk_grid_attach(grid, key_label, 0, row, 1, 1);
+    gtk_grid_attach(grid, description_label, 1, row, 1, 1);
+}
+
+static void
+on_shortcuts_action(GSimpleAction *action, GVariant *parameter,
+                    gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
-    AdwDialog *dialog = adw_alert_dialog_new(_("Main menu"), NULL);
+    AdwDialog *dialog = adw_alert_dialog_new(_("Keyboard shortcuts"), NULL);
+    GtkWidget *grid = gtk_grid_new();
 
-    (void)button;
+    (void)action;
+    (void)parameter;
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 6);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 18);
+    gtk_widget_set_margin_start(grid, 4);
+    gtk_widget_set_margin_end(grid, 4);
+    add_shortcut_row(GTK_GRID(grid), 0, "Ctrl+F", _("Search"));
+    add_shortcut_row(GTK_GRID(grid), 1, "Ctrl+L", _("Focus reference"));
+    add_shortcut_row(GTK_GRID(grid), 2, "Ctrl+Shift+I", _("Module library"));
+    add_shortcut_row(GTK_GRID(grid), 3, "Ctrl+,", _("Preferences"));
+    add_shortcut_row(GTK_GRID(grid), 4, "Alt+Left", _("Back"));
+    add_shortcut_row(GTK_GRID(grid), 5, "Alt+Right", _("Forward"));
+    add_shortcut_row(GTK_GRID(grid), 6, "F9", _("Toggle sidebar"));
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), grid);
     adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
-                                   "reading", _("Reading workspace"),
-                                   "study", _("Study workspace"),
-                                   "panes", _("Comparison workspace"),
-                                   "parallel", _("Parallel comparison"),
-                                   "teaching", _("Teaching workspace"),
-                                   "library", _("Module library"),
-                                   "preferences", _("Preferences"),
-                                   "quit", _("Quit"),
-                                   "close", _("Close"),
-                                   NULL);
-    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "close");
+                                   "close", _("Close"), NULL);
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "close");
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(on_main_menu_response), self);
     adw_dialog_present(dialog, GTK_WIDGET(self));
+}
+
+static void
+on_about_action(GSimpleAction *action, GVariant *parameter,
+                gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    AdwAboutDialog *about = ADW_ABOUT_DIALOG(adw_about_dialog_new());
+
+    (void)action;
+    (void)parameter;
+    adw_about_dialog_set_application_name(about, "gsword");
+    adw_about_dialog_set_application_icon(about, "org.gsword.GSword");
+    adw_about_dialog_set_developer_name(about, _("gsword contributors"));
+    adw_about_dialog_set_version(about, GSW_VERSION_S);
+    adw_about_dialog_set_comments(about,
+        _("A GObject implementation of the SWORD Bible study library."));
+    adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_2_0);
+    adw_about_dialog_set_copyright(about, "© 2026 gsword contributors");
+    adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(self));
+}
+
+static GMenuModel *
+build_main_menu(GswordWindow *self)
+{
+    GMenu *menu = g_menu_new();
+    GMenu *workspace = g_menu_new();
+    GMenu *settings = g_menu_new();
+    GMenu *help = g_menu_new();
+    GMenu *quit = g_menu_new();
+    GMenuItem *item;
+
+    (void)self;
+    g_menu_append(workspace, _("Show study panel"), "win.study-panel");
+    g_menu_append(workspace, _("Comparison"), "win.compare");
+    g_menu_append(workspace, _("Teaching"), "win.teaching");
+    g_menu_append_section(menu, NULL, G_MENU_MODEL(workspace));
+
+    item = g_menu_item_new(_("Module library"), "win.library");
+    g_menu_item_set_attribute(item, "accel", "s", "<Control><Shift>i");
+    g_menu_append_item(settings, item);
+    g_object_unref(item);
+    item = g_menu_item_new(_("Preferences"), "win.preferences");
+    g_menu_item_set_attribute(item, "accel", "s", "<Control>comma");
+    g_menu_append_item(settings, item);
+    g_object_unref(item);
+    g_menu_append_section(menu, NULL, G_MENU_MODEL(settings));
+
+    g_menu_append(help, _("Keyboard shortcuts"), "win.shortcuts");
+    g_menu_append(help, _("About gsword"), "win.about");
+    g_menu_append_section(menu, NULL, G_MENU_MODEL(help));
+
+    g_menu_append(quit, _("Quit"), "app.quit");
+    g_menu_append_section(menu, NULL, G_MENU_MODEL(quit));
+
+    g_object_unref(workspace);
+    g_object_unref(settings);
+    g_object_unref(help);
+    g_object_unref(quit);
+    return G_MENU_MODEL(menu);
 }
 
 static void
@@ -860,10 +939,10 @@ gsword_window_build(GswordWindow *self)
                      G_CALLBACK(on_library_clicked), self);
     gtk_widget_set_tooltip_text(library_button, _("Module library"));
 
-    menu_button = gtk_button_new_from_icon_name("open-menu-symbolic");
+    menu_button = gtk_menu_button_new();
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu_button),
+                                  "open-menu-symbolic");
     gtk_widget_add_css_class(menu_button, "flat");
-    g_signal_connect(menu_button, "clicked",
-                     G_CALLBACK(on_main_menu_clicked), self);
     gtk_widget_set_tooltip_text(menu_button, _("Main menu"));
 
     header_actions = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -1026,6 +1105,35 @@ gsword_window_build(GswordWindow *self)
     g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(library_action));
     g_object_unref(library_action);
 
+    {
+        GSimpleAction *study_panel = g_simple_action_new("study-panel", NULL);
+        GSimpleAction *compare = g_simple_action_new("compare", NULL);
+        GSimpleAction *teaching = g_simple_action_new("teaching", NULL);
+        GSimpleAction *shortcuts = g_simple_action_new("shortcuts", NULL);
+        GSimpleAction *about = g_simple_action_new("about", NULL);
+
+        g_signal_connect(study_panel, "activate",
+                         G_CALLBACK(on_study_panel_action), self);
+        g_signal_connect(compare, "activate",
+                         G_CALLBACK(on_compare_action), self);
+        g_signal_connect(teaching, "activate",
+                         G_CALLBACK(on_teaching_action), self);
+        g_signal_connect(shortcuts, "activate",
+                         G_CALLBACK(on_shortcuts_action), self);
+        g_signal_connect(about, "activate",
+                         G_CALLBACK(on_about_action), self);
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(study_panel));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(compare));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(teaching));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(shortcuts));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(about));
+        g_object_unref(study_panel);
+        g_object_unref(compare);
+        g_object_unref(teaching);
+        g_object_unref(shortcuts);
+        g_object_unref(about);
+    }
+
     history_back = g_simple_action_new("history-back", NULL);
     g_signal_connect(history_back, "activate",
                      G_CALLBACK(on_history_back_action), self);
@@ -1044,6 +1152,12 @@ gsword_window_build(GswordWindow *self)
     g_object_unref(toggle_sidebar);
 
     update_sidebar_button(self);
+    {
+        GMenuModel *main_menu = build_main_menu(self);
+
+        gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(menu_button), main_menu);
+        g_object_unref(main_menu);
+    }
 
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.preferences",
