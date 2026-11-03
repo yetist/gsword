@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 09:40+0800\n"
+"POT-Creation-Date: 2026-11-03 09:42+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -407,11 +407,11 @@ msgstr "导出笔记"
 msgid "No tags yet"
 msgstr "还没有标签"
 
-#: src/notes-page.c:998 src/notes-page.c:1129
+#: src/notes-page.c:998 src/notes-page.c:1129 src/reader-toolbar.c:95
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
-#: src/notes-page.c:1002 src/notes-page.c:1138
+#: src/notes-page.c:1002 src/notes-page.c:1138 src/reader-toolbar.c:103
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
@@ -423,11 +423,11 @@ msgstr "选择经文列表"
 msgid "This list is empty"
 msgstr "此列表为空"
 
-#: src/notes-page.c:1121
+#: src/notes-page.c:1121 src/reader-toolbar.c:85
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:1137
+#: src/notes-page.c:1137 src/reader-toolbar.c:102
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
@@ -435,7 +435,7 @@ msgstr "经文已加入列表"
 msgid "Select a note first"
 msgstr "请先选择笔记"
 
-#: src/notes-page.c:1168 src/notes-page.c:1655
+#: src/notes-page.c:1168 src/notes-page.c:1655 src/reader-toolbar.c:138
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
 
@@ -1219,47 +1219,55 @@ msgstr "无法更新高亮"
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/reader-toolbar.c:81
+#: src/reader-toolbar.c:125
+msgid "Open a verse first"
+msgstr "请先打开经文"
+
+#: src/reader-toolbar.c:197
 msgid "No reading history yet."
 msgstr "还没有阅读历史。"
 
-#: src/reader-toolbar.c:238
+#: src/reader-toolbar.c:355
 msgid "Teach"
 msgstr "教学"
 
-#: src/reader-toolbar.c:266 src/reader-toolbar.c:270
+#: src/reader-toolbar.c:385
+msgid "Add verse to list"
+msgstr "加入经文列表"
+
+#: src/reader-toolbar.c:398 src/reader-toolbar.c:402
 msgid "Recent reading"
 msgstr "最近阅读"
 
-#: src/reader-toolbar.c:282
+#: src/reader-toolbar.c:414
 msgid "Clear history"
 msgstr "清除历史"
 
-#: src/reader-toolbar.c:296
+#: src/reader-toolbar.c:428
 msgid "Back (Alt+Left)"
 msgstr "返回（Alt+左箭头）"
 
-#: src/reader-toolbar.c:297
+#: src/reader-toolbar.c:429
 msgid "Forward (Alt+Right)"
 msgstr "前进（Alt+右箭头）"
 
-#: src/reader-toolbar.c:320
+#: src/reader-toolbar.c:452
 msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
-#: src/reader-toolbar.c:325
+#: src/reader-toolbar.c:457
 msgid "Copy entry"
 msgstr "复制条目"
 
-#: src/reader-toolbar.c:326
+#: src/reader-toolbar.c:458
 msgid "Open note for this verse"
 msgstr "打开本节笔记"
 
-#: src/reader-toolbar.c:327
+#: src/reader-toolbar.c:459
 msgid "Toggle verse highlight"
 msgstr "切换经文高亮"
 
-#: src/reader-toolbar.c:328
+#: src/reader-toolbar.c:460
 msgid "Toggle study panel"
 msgstr "切换研经面板"
 

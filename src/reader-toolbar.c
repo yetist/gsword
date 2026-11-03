@@ -19,6 +19,9 @@ struct _GswordReaderToolbar {
     GtkMenuButton *history_button;
     GtkPopover *history_popover;
     GtkListBox *history_list;
+    GtkMenuButton *list_button;
+    GtkBox *list_menu_box;
+    gboolean updating_list_menu;
 };
 
 static void
@@ -52,6 +55,119 @@ on_highlight_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     gsword_reader_page_toggle_highlight(
         ((GswordReaderToolbar *)user_data)->page);
+}
+
+static void
+on_list_check_toggled(GtkCheckButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(toolbar->window);
+    GswModule *module = gsword_window_get_module(toolbar->window);
+    gchar *storage_key = gsword_window_current_storage_key(toolbar->window);
+    gchar *display_key = gsword_window_current_display_key(toolbar->window);
+    const gchar *id_text = g_object_get_data(G_OBJECT(button), "list-id");
+    gint64 list_id;
+    GError *error = NULL;
+    gboolean active = gtk_check_button_get_active(button);
+
+    if (toolbar->updating_list_menu || store == NULL || module == NULL ||
+        storage_key == NULL || id_text == NULL) {
+        g_free(storage_key);
+        g_free(display_key);
+        return;
+    }
+    list_id = g_ascii_strtoll(id_text, NULL, 10);
+    if (active) {
+        if (!gsword_notes_store_add_to_list(
+                store, list_id, gsw_module_get_name(module), storage_key,
+                display_key, &error)) {
+            gsword_window_show_error(toolbar->window,
+                                     _("Cannot add verse to list"), error);
+            g_free(storage_key);
+            g_free(display_key);
+            return;
+        }
+    } else {
+        if (!gsword_notes_store_remove_from_list(
+                store, list_id, gsw_module_get_name(module), storage_key,
+                &error)) {
+            gsword_window_show_error(toolbar->window,
+                                     _("Cannot remove verse from list"), error);
+            g_free(storage_key);
+            g_free(display_key);
+            return;
+        }
+    }
+    gsword_window_set_status(toolbar->window, active
+                             ? _("Verse added to list")
+                             : _("Verse removed from list"));
+    g_free(storage_key);
+    g_free(display_key);
+}
+
+static void
+rebuild_list_menu(GswordReaderToolbar *toolbar)
+{
+    GswordNotesStore *store = gsword_window_get_notes_store(toolbar->window);
+    GswModule *module = gsword_window_get_module(toolbar->window);
+    gchar *storage_key = gsword_window_current_storage_key(toolbar->window);
+    GPtrArray *lists;
+    GtkWidget *child;
+    guint i;
+
+    if (toolbar->list_menu_box == NULL)
+        return;
+    toolbar->updating_list_menu = TRUE;
+    while ((child = gtk_widget_get_first_child(
+                GTK_WIDGET(toolbar->list_menu_box))) != NULL)
+        gtk_box_remove(toolbar->list_menu_box, child);
+    if (store == NULL || module == NULL || storage_key == NULL) {
+        GtkWidget *label = gtk_label_new(_("Open a verse first"));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_set_margin_top(label, 6);
+        gtk_widget_set_margin_bottom(label, 6);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_box_append(toolbar->list_menu_box, label);
+        g_free(storage_key);
+        toolbar->updating_list_menu = FALSE;
+        return;
+    }
+    lists = gsword_notes_store_list_lists(store);
+    if (lists->len == 0) {
+        GtkWidget *label = gtk_label_new(_("No verse lists yet"));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_set_margin_top(label, 6);
+        gtk_widget_set_margin_bottom(label, 6);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_box_append(toolbar->list_menu_box, label);
+    }
+    for (i = 0; i < lists->len; i++) {
+        GswordVerseList *list = g_ptr_array_index(lists, i);
+        GtkWidget *check = gtk_check_button_new_with_label(list->name);
+        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, list->id);
+
+        g_object_set_data_full(G_OBJECT(check), "list-id", id, g_free);
+        gtk_check_button_set_active(
+            GTK_CHECK_BUTTON(check),
+            gsword_notes_store_is_in_list(store, list->id,
+                                          gsw_module_get_name(module),
+                                          storage_key));
+        g_signal_connect(check, "toggled",
+                         G_CALLBACK(on_list_check_toggled), toolbar);
+        gtk_box_append(toolbar->list_menu_box, check);
+    }
+    g_ptr_array_unref(lists);
+    g_free(storage_key);
+    toolbar->updating_list_menu = FALSE;
+}
+
+static void
+on_list_popover_show(GtkPopover *popover, gpointer user_data)
+{
+    (void)popover;
+    rebuild_list_menu(user_data);
 }
 
 static void
@@ -235,6 +351,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *highlight = gtk_button_new_from_icon_name(
         "emblem-favorite-symbolic");
+    GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *back;
@@ -262,6 +379,21 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     history_button = gtk_menu_button_new();
     gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(history_button),
                                   "view-list-symbolic");
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(list_add),
+                                  "list-add-symbolic");
+    gtk_widget_add_css_class(list_add, "flat");
+    gtk_widget_set_tooltip_text(list_add, _("Add verse to list"));
+    toolbar->list_menu_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 2));
+    {
+        GtkWidget *popover = gtk_popover_new();
+
+        gtk_popover_set_child(GTK_POPOVER(popover),
+                              GTK_WIDGET(toolbar->list_menu_box));
+        gtk_menu_button_set_popover(GTK_MENU_BUTTON(list_add), popover);
+        g_signal_connect(popover, "show",
+                         G_CALLBACK(on_list_popover_show), toolbar);
+    }
+    toolbar->list_button = GTK_MENU_BUTTON(list_add);
     gtk_widget_add_css_class(history_button, "flat");
     gtk_widget_set_tooltip_text(history_button, _("Recent reading"));
     history_popover = gtk_popover_new();
@@ -332,6 +464,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_box_append(GTK_BOX(bar), history_button);
     gtk_box_append(GTK_BOX(bar), GTK_WIDGET(toolbar->reference_chooser));
     gtk_box_append(GTK_BOX(bar), note);
+    gtk_box_append(GTK_BOX(bar), list_add);
     gtk_box_append(GTK_BOX(bar), highlight);
     gtk_box_append(GTK_BOX(bar), teaching);
     gtk_box_append(GTK_BOX(bar), study_button);
