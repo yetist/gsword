@@ -69,6 +69,14 @@ gboolean gsword_notes_store_add_to_list(GswordNotesStore *self, gint64 list_id,
                                         const gchar *module, const gchar *key,
                                         const gchar *display_key,
                                         GError **error);
+gboolean gsword_notes_store_remove_from_list(GswordNotesStore *self,
+                                             gint64 list_id,
+                                             const gchar *module,
+                                             const gchar *key,
+                                             GError **error);
+gboolean gsword_notes_store_is_in_list(GswordNotesStore *self, gint64 list_id,
+                                       const gchar *module,
+                                       const gchar *key);
 GPtrArray *gsword_notes_store_list_items(GswordNotesStore *self, gint64 list_id);
 void gsword_verse_list_free(GswordVerseList *list);
 void gsword_verse_list_item_free(GswordVerseListItem *item);
