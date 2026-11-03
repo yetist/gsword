@@ -725,50 +725,6 @@ on_note_export(GtkButton *button, gpointer user_data)
 }
 
 static void
-update_tag_actions(GswordNotesPage *page)
-{
-    gboolean active = page->tag_filter != NULL && *page->tag_filter != '\0';
-
-    if (page->rename_tag_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), active);
-    if (page->delete_tag_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), active);
-    if (page->show_tagged_notes_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->show_tagged_notes_button),
-                                 active);
-}
-
-static void
-on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    const gchar *tag;
-
-    (void)list;
-    if (row == NULL) {
-        update_tag_actions(page);
-        return;
-    }
-    tag = g_object_get_data(G_OBJECT(row), "tag-name");
-    if (tag == NULL)
-        return;
-    if (page->rename_tag_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), TRUE);
-    if (page->delete_tag_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), TRUE);
-    if (page->show_tagged_notes_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->show_tagged_notes_button),
-                                 TRUE);
-    if (g_strcmp0(page->tag_filter, tag) == 0) {
-        g_clear_pointer(&page->tag_filter, g_free);
-    } else {
-        g_free(page->tag_filter);
-        page->tag_filter = g_strdup(tag);
-    }
-    gsword_notes_page_refresh(page);
-}
-
-static void
 on_tag_name_clicked(GtkButton *button, gpointer user_data)
 {
     GswordNotesPage *page = user_data;
@@ -852,6 +808,20 @@ on_tag_menu_active(GObject *object, GParamSpec *pspec, gpointer user_data)
 }
 
 static void
+update_tag_actions(GswordNotesPage *page)
+{
+    gboolean active = page->tag_filter != NULL && *page->tag_filter != '\0';
+
+    if (page->rename_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), active);
+    if (page->delete_tag_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), active);
+    if (page->show_tagged_notes_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(page->show_tagged_notes_button),
+                                 active);
+}
+
+static void
 on_show_tagged_notes(GtkButton *button, gpointer user_data)
 {
     GswordNotesPage *page = user_data;
@@ -869,9 +839,22 @@ on_show_tagged_notes(GtkButton *button, gpointer user_data)
 static void
 on_tag_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
+    GswordNotesPage *page = user_data;
+    const gchar *tag;
+
     (void)list;
-    if (row != NULL)
-        on_show_tagged_notes(NULL, user_data);
+    if (row == NULL)
+        return;
+    tag = g_object_get_data(G_OBJECT(row), "tag-name");
+    if (tag == NULL)
+        return;
+    if (g_strcmp0(page->tag_filter, tag) == 0) {
+        g_clear_pointer(&page->tag_filter, g_free);
+    } else {
+        g_free(page->tag_filter);
+        page->tag_filter = g_strdup(tag);
+    }
+    gsword_notes_page_refresh(page);
 }
 
 static void
@@ -1728,9 +1711,8 @@ gsword_notes_page_new(GswordWindow *window)
                                  make_placeholder(_("No notes yet")));
 
     page->tags_list = GTK_LIST_BOX(gtk_list_box_new());
-    gtk_list_box_set_activate_on_single_click(page->tags_list, FALSE);
-    g_signal_connect(page->tags_list, "row-selected",
-                     G_CALLBACK(on_tag_selected), page);
+    gtk_list_box_set_selection_mode(page->tags_list, GTK_SELECTION_NONE);
+    gtk_list_box_set_activate_on_single_click(page->tags_list, TRUE);
     g_signal_connect(page->tags_list, "row-activated",
                      G_CALLBACK(on_tag_activated), page);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tags_scroll),
