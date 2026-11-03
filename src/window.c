@@ -16,7 +16,7 @@
 
 #include <glib/gi18n.h>
 
-#define GSWORD_WINDOW_MIN_WIDTH 1100
+#define GSWORD_WINDOW_MIN_WIDTH 1140
 
 struct _GswordWindow {
     AdwApplicationWindow parent_instance;
