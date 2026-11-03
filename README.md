@@ -80,6 +80,9 @@ meson test -C build
 ./build/examples/gsword-dict-lookup ~/.sword StrongsGreek G26
 ./build/examples/gsword-genbook-walk ~/.sword BookChapter 1
 ./build/examples/gsword-render-options ~/.sword KJV "John 3:16" "Strong's Numbers=On"
+./build/examples/gsword-html ~/.sword KJV "John 3:16" verse > verse.html
+./build/examples/gsword-html ~/.sword KJV "John 3" chapter > chapter.html
+./build/examples/gsword-html ~/.sword KJV "John" book > john.html
 ./build/examples/gsword-locale ~/.sword zh-Hans KJV "来 4:1"
 ./build/examples/gsword-search ~/.sword KJV "God so loved" phrase
 ./build/examples/gsword-search ~/.sword KJV "God.*world" regex
