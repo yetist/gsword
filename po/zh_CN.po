@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 10:01+0800\n"
+"POT-Creation-Date: 2026-11-03 10:11+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -106,7 +106,7 @@ msgstr "阅读"
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:863 src/notes-page.c:188 src/notes-page.c:1833
+#: src/window.c:863 src/notes-page.c:190 src/notes-page.c:1887
 msgid "Notes"
 msgstr "笔记"
 
@@ -234,8 +234,8 @@ msgstr "无法删除索引"
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:863 src/notes-page.c:657 src/notes-page.c:1344
-#: src/notes-page.c:1413 src/notes-page.c:1464 src/notes-page.c:1543
+#: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1383
+#: src/notes-page.c:1452 src/notes-page.c:1506 src/notes-page.c:1585
 #: src/library-page.c:1044 src/plan-page.c:477
 msgid "Cancel"
 msgstr "取消"
@@ -340,290 +340,294 @@ msgstr "索引可加速不限定范围、不区分大小写的短语或多词搜
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
-#: src/notes-page.c:160
+#: src/notes-page.c:162
 msgid "No matching notes"
 msgstr "没有匹配的笔记"
 
-#: src/notes-page.c:160 src/notes-page.c:1683
+#: src/notes-page.c:162 src/notes-page.c:1728
 msgid "No notes yet"
 msgstr "还没有笔记"
 
-#: src/notes-page.c:167
+#: src/notes-page.c:169
 #, c-format
 msgid "Tag: %s"
 msgstr "标签：%s"
 
-#: src/notes-page.c:182
+#: src/notes-page.c:184
 #, c-format
 msgid "Notes · %s"
 msgstr "笔记 · %s"
 
-#: src/notes-page.c:195
+#: src/notes-page.c:197
 #, c-format
 msgid "%u note(s)"
 msgstr "%u 条笔记"
 
-#: src/notes-page.c:348
+#: src/notes-page.c:356
 msgid "Verse text unavailable"
 msgstr "经文内容不可用"
 
-#: src/notes-page.c:453
+#: src/notes-page.c:461
 msgid "Cannot save note"
 msgstr "无法保存笔记"
 
-#: src/notes-page.c:467 src/notes-page.c:522
+#: src/notes-page.c:475 src/notes-page.c:530
 msgid "Saved"
 msgstr "已保存"
 
-#: src/notes-page.c:481
+#: src/notes-page.c:489
 msgid "Unsaved changes"
 msgstr "有未保存的更改"
 
-#: src/notes-page.c:522 src/notes-page.c:629
+#: src/notes-page.c:530 src/notes-page.c:637
 msgid "Not saved"
 msgstr "未保存"
 
-#: src/notes-page.c:606
+#: src/notes-page.c:614
 msgid "Note saved"
 msgstr "笔记已保存"
 
-#: src/notes-page.c:618
+#: src/notes-page.c:626
 msgid "Cannot delete note"
 msgstr "无法删除笔记"
 
-#: src/notes-page.c:631
+#: src/notes-page.c:639
 msgid "Note deleted"
 msgstr "笔记已删除"
 
-#: src/notes-page.c:652
+#: src/notes-page.c:660
 msgid "Delete note"
 msgstr "删除笔记"
 
-#: src/notes-page.c:654
+#: src/notes-page.c:662
 #, c-format
 msgid "Delete the note for %s? This cannot be undone."
 msgstr "删除 %s 的笔记？此操作无法撤销。"
 
-#: src/notes-page.c:658 src/notes-page.c:1465 src/notes-page.c:1544
-#: src/notes-page.c:1647 src/memory-page.c:368 src/plan-page.c:478
+#: src/notes-page.c:666 src/notes-page.c:1507 src/notes-page.c:1586
+#: src/notes-page.c:1692 src/memory-page.c:368 src/plan-page.c:478
 msgid "Delete"
 msgstr "删除"
 
-#: src/notes-page.c:711
+#: src/notes-page.c:719
 msgid "Export note"
 msgstr "导出笔记"
 
-#: src/notes-page.c:812 src/notes-page.c:1694
+#: src/notes-page.c:823 src/notes-page.c:1742
 msgid "No tags yet"
 msgstr "还没有标签"
 
-#: src/notes-page.c:1048 src/notes-page.c:1179 src/reader-toolbar.c:95
+#: src/notes-page.c:1082 src/notes-page.c:1213 src/reader-toolbar.c:95
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
-#: src/notes-page.c:1052 src/notes-page.c:1188 src/reader-toolbar.c:103
+#: src/notes-page.c:1086 src/notes-page.c:1222 src/reader-toolbar.c:103
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
-#: src/notes-page.c:1086 src/notes-page.c:1719
+#: src/notes-page.c:1120 src/notes-page.c:1767
 msgid "Select a verse list"
 msgstr "选择经文列表"
 
-#: src/notes-page.c:1098
+#: src/notes-page.c:1132
 msgid "This list is empty"
 msgstr "此列表为空"
 
-#: src/notes-page.c:1171 src/reader-toolbar.c:85
+#: src/notes-page.c:1205 src/reader-toolbar.c:85
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:1187 src/reader-toolbar.c:102
+#: src/notes-page.c:1221 src/reader-toolbar.c:102
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
-#: src/notes-page.c:1206
+#: src/notes-page.c:1240
 msgid "Select a note first"
 msgstr "请先选择笔记"
 
-#: src/notes-page.c:1218 src/notes-page.c:1705 src/reader-toolbar.c:138
+#: src/notes-page.c:1252 src/notes-page.c:1753 src/reader-toolbar.c:138
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
 
-#: src/notes-page.c:1313
+#: src/notes-page.c:1347
 msgid "Cannot rename tag"
 msgstr "无法重命名标签"
 
-#: src/notes-page.c:1320
+#: src/notes-page.c:1358
 msgid "Tag renamed"
 msgstr "标签已重命名"
 
-#: src/notes-page.c:1337 src/notes-page.c:1738
+#: src/notes-page.c:1376 src/notes-page.c:1786
 msgid "Rename tag"
 msgstr "重命名标签"
 
-#: src/notes-page.c:1345 src/notes-page.c:1414
+#: src/notes-page.c:1384 src/notes-page.c:1453
 msgid "Rename"
 msgstr "重命名"
 
-#: src/notes-page.c:1381
+#: src/notes-page.c:1420
 msgid "Cannot rename verse list"
 msgstr "无法重命名经文列表"
 
-#: src/notes-page.c:1387
+#: src/notes-page.c:1426
 msgid "Verse list renamed"
 msgstr "经文列表已重命名"
 
-#: src/notes-page.c:1406 src/notes-page.c:1752
+#: src/notes-page.c:1445 src/notes-page.c:1806
 msgid "Rename verse list"
 msgstr "重命名经文列表"
 
-#: src/notes-page.c:1439
+#: src/notes-page.c:1478
 msgid "Cannot delete tag"
 msgstr "无法删除标签"
 
-#: src/notes-page.c:1443
+#: src/notes-page.c:1484
 msgid "Tag deleted"
 msgstr "标签已删除"
 
-#: src/notes-page.c:1459 src/notes-page.c:1743
+#: src/notes-page.c:1501 src/notes-page.c:1791
 msgid "Delete tag"
 msgstr "删除标签"
 
-#: src/notes-page.c:1461
+#: src/notes-page.c:1503
 #, c-format
 msgid "Delete tag “%s”? Notes will remain."
 msgstr "删除标签“%s”？笔记将保留。"
 
-#: src/notes-page.c:1489
+#: src/notes-page.c:1531
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/notes-page.c:1494
+#: src/notes-page.c:1536
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/notes-page.c:1512
+#: src/notes-page.c:1554
 msgid "Cannot delete verse list"
 msgstr "无法删除经文列表"
 
-#: src/notes-page.c:1522
+#: src/notes-page.c:1564
 msgid "Verse list deleted"
 msgstr "经文列表已删除"
 
-#: src/notes-page.c:1538 src/notes-page.c:1728
+#: src/notes-page.c:1580 src/notes-page.c:1776
 msgid "Delete verse list"
 msgstr "删除经文列表"
 
-#: src/notes-page.c:1540
+#: src/notes-page.c:1582
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr "删除“%s”及其所有经文？"
 
-#: src/notes-page.c:1626
+#: src/notes-page.c:1669
 msgid "Add list"
 msgstr "添加列表"
 
-#: src/notes-page.c:1629 src/notes-page.c:1834
+#: src/notes-page.c:1672 src/notes-page.c:1888
 msgid "Tags"
 msgstr "标签"
 
-#: src/notes-page.c:1638 src/notes-page.c:1836
+#: src/notes-page.c:1683 src/notes-page.c:1890
 msgid "Verse lists"
 msgstr "经文列表"
 
-#: src/notes-page.c:1639
+#: src/notes-page.c:1684
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/notes-page.c:1646
+#: src/notes-page.c:1691
 msgid "Save"
 msgstr "保存"
 
-#: src/notes-page.c:1648
+#: src/notes-page.c:1693
 msgid "Export"
 msgstr "导出"
 
-#: src/notes-page.c:1650
+#: src/notes-page.c:1695
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/notes-page.c:1653
+#: src/notes-page.c:1698
 msgid "Add tag"
 msgstr "添加标签"
 
-#: src/notes-page.c:1657 src/notes-page.c:1890
+#: src/notes-page.c:1702 src/notes-page.c:1944
 msgid "Open in reader"
 msgstr "在阅读器中打开"
 
-#: src/notes-page.c:1670
+#: src/notes-page.c:1715
 msgid "Search notes"
 msgstr "搜索笔记"
 
-#: src/notes-page.c:1722
+#: src/notes-page.c:1770
 msgid "New list"
 msgstr "新列表"
 
-#: src/notes-page.c:1766
+#: src/notes-page.c:1795
+msgid "Show filtered notes"
+msgstr "查看筛选笔记"
+
+#: src/notes-page.c:1820
 msgid "Open verse"
 msgstr "打开经文"
 
-#: src/notes-page.c:1767
+#: src/notes-page.c:1821
 msgid "Remove from list"
 msgstr "从列表移除"
 
-#: src/notes-page.c:1780
+#: src/notes-page.c:1834
 msgid "All notes"
 msgstr "全部笔记"
 
-#: src/notes-page.c:1783
+#: src/notes-page.c:1837
 msgid "Clear tag filter"
 msgstr "清除标签筛选"
 
-#: src/notes-page.c:1856
+#: src/notes-page.c:1910
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/notes-page.c:1858
+#: src/notes-page.c:1912
 msgid "Tags:"
 msgstr "标签："
 
-#: src/notes-page.c:1884 src/teaching-page.c:222
+#: src/notes-page.c:1938 src/teaching-page.c:222
 msgid "Scripture"
 msgstr "经文"
 
-#: src/notes-page.c:1914
+#: src/notes-page.c:1968
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr "Markdown：**粗体**、*斜体*、# 标题、- 列表、> 引用"
 
-#: src/notes-page.c:1921
+#: src/notes-page.c:1975
 msgid "Bold"
 msgstr "粗体"
 
-#: src/notes-page.c:1924
+#: src/notes-page.c:1978
 msgid "Italic"
 msgstr "斜体"
 
-#: src/notes-page.c:1927
+#: src/notes-page.c:1981
 msgid "Heading"
 msgstr "标题"
 
-#: src/notes-page.c:1930
+#: src/notes-page.c:1984
 msgid "Bullet list"
 msgstr "无序列表"
 
-#: src/notes-page.c:1933
+#: src/notes-page.c:1987
 msgid "Numbered list"
 msgstr "有序列表"
 
-#: src/notes-page.c:1936
+#: src/notes-page.c:1990
 msgid "Quote"
 msgstr "引用"
 
-#: src/notes-page.c:1939
+#: src/notes-page.c:1993
 msgid "Link"
 msgstr "链接"
 
-#: src/notes-page.c:1942
+#: src/notes-page.c:1996
 msgid "Inline code"
 msgstr "行内代码"
 
