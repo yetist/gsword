@@ -112,6 +112,9 @@ typedef struct {
     gboolean passive;
     guint timeout_msec;
     gboolean verify_peer;
+    gchar *proxy;
+    gchar *proxy_user;
+    gchar *proxy_password;
     GswStatusReporter *reporter;
 } GswTransportPrivate;
 
@@ -125,6 +128,9 @@ gsw_transport_private_free(gpointer data)
     g_free(priv->host);
     g_free(priv->user);
     g_free(priv->password);
+    g_free(priv->proxy);
+    g_free(priv->proxy_user);
+    g_free(priv->proxy_password);
     g_clear_object(&priv->reporter);
     g_free(priv);
 }
@@ -209,6 +215,22 @@ gsw_transport_set_verify_peer(GswTransport *self, gboolean verify)
 {
     GswTransportPrivate *priv = gsw_transport_priv(self);
     priv->verify_peer = verify;
+}
+
+void
+gsw_transport_set_proxy(GswTransport *self, const gchar *url,
+                        const gchar *user, const gchar *password)
+{
+    GswTransportPrivate *priv;
+
+    g_return_if_fail(GSW_IS_TRANSPORT(self));
+    priv = gsw_transport_priv(self);
+    g_free(priv->proxy);
+    priv->proxy = g_strdup(url != NULL ? url : "");
+    g_free(priv->proxy_user);
+    priv->proxy_user = g_strdup(user != NULL ? user : "");
+    g_free(priv->proxy_password);
+    priv->proxy_password = g_strdup(password != NULL ? password : "");
 }
 
 void
@@ -360,6 +382,15 @@ gsw_curl_setup(GswTransport *self, CURL *curl, const gchar *url,
                      (long)MAX(1U, priv->timeout_msec / 1000U));
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, priv->verify_peer ? 1L : 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, priv->verify_peer ? 2L : 0L);
+    if (priv->proxy != NULL && *priv->proxy != '\0') {
+        curl_easy_setopt(curl, CURLOPT_PROXY, priv->proxy);
+        if (priv->proxy_user != NULL && *priv->proxy_user != '\0') {
+            curl_easy_setopt(curl, CURLOPT_PROXYUSERNAME, priv->proxy_user);
+            curl_easy_setopt(curl, CURLOPT_PROXYPASSWORD,
+                             priv->proxy_password != NULL
+                             ? priv->proxy_password : "");
+        }
+    }
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gsw_curl_write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, ctx);
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, gsw_curl_xferinfo_cb);

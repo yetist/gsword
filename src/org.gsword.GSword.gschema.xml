@@ -101,5 +101,20 @@
       <summary>Current reading history position</summary>
       <description>Index of the current entry in reader-history.</description>
     </key>
+    <key name="proxy-url" type="s">
+      <default>''</default>
+      <summary>Proxy URL</summary>
+      <description>HTTP proxy used for module downloads, empty to use the environment default.</description>
+    </key>
+    <key name="proxy-user" type="s">
+      <default>''</default>
+      <summary>Proxy user name</summary>
+      <description>Optional user name for the HTTP proxy.</description>
+    </key>
+    <key name="proxy-password" type="s">
+      <default>''</default>
+      <summary>Proxy password</summary>
+      <description>Optional password for the HTTP proxy.</description>
+    </key>
   </schema>
 </schemalist>

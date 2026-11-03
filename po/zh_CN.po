@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 14:20+0800\n"
+"POT-Creation-Date: 2026-11-03 14:40+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -90,7 +90,7 @@ msgstr "首选项"
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:642 src/window-services.c:64 src/library-page.c:1247
+#: src/window.c:642 src/window-services.c:64 src/library-page.c:1254
 msgid "Close"
 msgstr "关闭"
 
@@ -122,7 +122,7 @@ msgstr "模块库"
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2161
+#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2262
 #: src/module-sidebar.c:27
 msgid "Maps"
 msgstr "地图"
@@ -131,11 +131,11 @@ msgstr "地图"
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window-services.c:159 src/library-page.c:2159 src/module-sidebar.c:23
+#: src/window-services.c:159 src/library-page.c:2260 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window-services.c:160 src/library-page.c:2159 src/module-sidebar.c:24
+#: src/window-services.c:160 src/library-page.c:2260 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
@@ -147,12 +147,12 @@ msgstr "通用书籍"
 msgid "Other"
 msgstr "其他"
 
-#: src/window-services.c:168 src/library-page.c:219 src/library-page.c:253
-#: src/library-page.c:712 src/library-page.c:713 src/library-page.c:751
-#: src/library-page.c:754 src/library-page.c:757 src/library-page.c:760
-#: src/library-page.c:764 src/library-page.c:767 src/library-page.c:889
-#: src/library-page.c:892 src/library-page.c:895 src/library-page.c:899
-#: src/library-page.c:902
+#: src/window-services.c:168 src/library-page.c:226 src/library-page.c:260
+#: src/library-page.c:719 src/library-page.c:720 src/library-page.c:758
+#: src/library-page.c:761 src/library-page.c:764 src/library-page.c:767
+#: src/library-page.c:771 src/library-page.c:774 src/library-page.c:896
+#: src/library-page.c:899 src/library-page.c:902 src/library-page.c:906
+#: src/library-page.c:909
 msgid "Unknown"
 msgstr "未知"
 
@@ -238,8 +238,8 @@ msgstr "搜索索引已删除"
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1575 src/library-page.c:2154 src/plan-page.c:557
-#: src/plan-page.c:899
+#: src/library-page.c:1582 src/library-page.c:2163 src/library-page.c:2255
+#: src/plan-page.c:557 src/plan-page.c:899
 msgid "Cancel"
 msgstr "取消"
 
@@ -538,7 +538,7 @@ msgstr "经文列表"
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/notes-page.c:1674
+#: src/notes-page.c:1674 src/library-page.c:2164
 msgid "Save"
 msgstr "保存"
 
@@ -732,102 +732,102 @@ msgstr "卡片模式"
 msgid "Type the verse"
 msgstr "输入经文"
 
-#: src/library-page.c:221
+#: src/library-page.c:228
 msgid "Chinese"
 msgstr "中文"
 
-#: src/library-page.c:223
+#: src/library-page.c:230
 msgid "English"
 msgstr "英文"
 
-#: src/library-page.c:225
+#: src/library-page.c:232
 msgid "German"
 msgstr "德文"
 
-#: src/library-page.c:227
+#: src/library-page.c:234
 msgid "French"
 msgstr "法文"
 
-#: src/library-page.c:229
+#: src/library-page.c:236
 msgid "Spanish"
 msgstr "西班牙文"
 
-#: src/library-page.c:231
+#: src/library-page.c:238
 msgid "Portuguese"
 msgstr "葡萄牙文"
 
-#: src/library-page.c:233
+#: src/library-page.c:240
 msgid "Russian"
 msgstr "俄文"
 
-#: src/library-page.c:235
+#: src/library-page.c:242
 msgid "Korean"
 msgstr "韩文"
 
-#: src/library-page.c:237
+#: src/library-page.c:244
 msgid "Japanese"
 msgstr "日文"
 
-#: src/library-page.c:239
+#: src/library-page.c:246
 msgid "Polish"
 msgstr "波兰文"
 
-#: src/library-page.c:241
+#: src/library-page.c:248
 msgid "Ukrainian"
 msgstr "乌克兰文"
 
-#: src/library-page.c:243
+#: src/library-page.c:250
 msgid "Arabic"
 msgstr "阿拉伯文"
 
-#: src/library-page.c:337
+#: src/library-page.c:344
 msgid "All languages"
 msgstr "全部语言"
 
-#: src/library-page.c:502
+#: src/library-page.c:509
 #, c-format
 msgid "%u module(s)"
 msgstr "共 %u 个模块"
 
-#: src/library-page.c:553 src/library-page.c:2163
+#: src/library-page.c:560 src/library-page.c:2264
 msgid "Not installed"
 msgstr "未安装"
 
-#: src/library-page.c:555 src/library-page.c:2164
+#: src/library-page.c:562 src/library-page.c:2265
 msgid "Update available"
 msgstr "有更新"
 
-#: src/library-page.c:557 src/library-page.c:2165
+#: src/library-page.c:564 src/library-page.c:2266
 msgid "Installed - local version is newer"
 msgstr "已安装 - 本地版本较新"
 
-#: src/library-page.c:559 src/library-page.c:2166
+#: src/library-page.c:566 src/library-page.c:2267
 msgid "Installed - up to date"
 msgstr "已安装 - 已是最新"
 
-#: src/library-page.c:560 src/library-page.c:856 src/library-page.c:2164
-#: src/library-page.c:2168
+#: src/library-page.c:567 src/library-page.c:863 src/library-page.c:2265
+#: src/library-page.c:2269
 msgid "Installed"
 msgstr "已安装"
 
-#: src/library-page.c:596
+#: src/library-page.c:603
 msgid "Install manager is not available"
 msgstr "安装管理器不可用"
 
-#: src/library-page.c:610
+#: src/library-page.c:617
 msgid "Source"
 msgstr "安装源"
 
-#: src/library-page.c:640 src/library-page.c:2420
+#: src/library-page.c:647 src/library-page.c:2536
 msgid "Select a module"
 msgstr "选择模块"
 
-#: src/library-page.c:705
+#: src/library-page.c:712
 #, c-format
 msgid "Local %s / Remote %s"
 msgstr "本地 %s / 远程 %s"
 
-#: src/library-page.c:711 src/library-page.c:848
+#: src/library-page.c:718 src/library-page.c:855
 #, c-format
 msgid ""
 "Type: %s\n"
@@ -844,65 +844,65 @@ msgstr ""
 "安装源：%s\n"
 "许可：%s"
 
-#: src/library-page.c:714 src/library-page.c:774 src/library-page.c:776
-#: src/library-page.c:853 src/library-page.c:908 src/library-page.c:909
+#: src/library-page.c:721 src/library-page.c:781 src/library-page.c:783
+#: src/library-page.c:860 src/library-page.c:915 src/library-page.c:916
 msgid "Not specified"
 msgstr "未指定"
 
-#: src/library-page.c:723 src/library-page.c:862
+#: src/library-page.c:730 src/library-page.c:869
 msgid "⚠ This module may not be readable by this version of gsword."
 msgstr "⚠ 当前版本可能无法读取此模块。"
 
-#: src/library-page.c:725 src/library-page.c:864
+#: src/library-page.c:732 src/library-page.c:871
 #, c-format
 msgid "Requires: %s"
 msgstr "依赖：%s"
 
-#: src/library-page.c:728 src/library-page.c:867
+#: src/library-page.c:735 src/library-page.c:874
 #, c-format
 msgid "Conflicts: %s"
 msgstr "冲突：%s"
 
-#: src/library-page.c:732 src/library-page.c:871
+#: src/library-page.c:739 src/library-page.c:878
 msgid "⚠ This module is encrypted and may require unlocking."
 msgstr "⚠ 此模块已加密，可能需要解锁。"
 
-#: src/library-page.c:749 src/library-page.c:887
+#: src/library-page.c:756 src/library-page.c:894
 #, c-format
 msgid "Driver: %s\n"
 msgstr "驱动：%s\n"
 
-#: src/library-page.c:752 src/library-page.c:890
+#: src/library-page.c:759 src/library-page.c:897
 #, c-format
 msgid "Encoding: %s\n"
 msgstr "编码：%s\n"
 
-#: src/library-page.c:755 src/library-page.c:893
+#: src/library-page.c:762 src/library-page.c:900
 #, c-format
 msgid "Versification: %s\n"
 msgstr "章节体系：%s\n"
 
-#: src/library-page.c:758
+#: src/library-page.c:765
 #, c-format
 msgid "Minimum SWORD version: %s\n"
 msgstr "最低 SWORD 版本：%s\n"
 
-#: src/library-page.c:761 src/library-page.c:896
+#: src/library-page.c:768 src/library-page.c:903
 #, c-format
 msgid "Module ID: %s\n"
 msgstr "模块 ID：%s\n"
 
-#: src/library-page.c:762 src/library-page.c:897
+#: src/library-page.c:769 src/library-page.c:904
 #, c-format
 msgid "Config file: %s\n"
 msgstr "配置文件：%s\n"
 
-#: src/library-page.c:765 src/library-page.c:900
+#: src/library-page.c:772 src/library-page.c:907
 #, c-format
 msgid "Data path: %s"
 msgstr "数据路径：%s"
 
-#: src/library-page.c:772 src/library-page.c:907
+#: src/library-page.c:779 src/library-page.c:914
 #, c-format
 msgid ""
 "License: %s\n"
@@ -913,382 +913,410 @@ msgstr ""
 "\n"
 "版权：%s"
 
-#: src/library-page.c:782 src/library-page.c:915
+#: src/library-page.c:789 src/library-page.c:922
 msgid "No additional information is available."
 msgstr "暂无更多信息。"
 
-#: src/library-page.c:852
+#: src/library-page.c:859
 msgid "Local library"
 msgstr "本地模块库"
 
-#: src/library-page.c:951
+#: src/library-page.c:958
 msgid "No source selected. Refresh the source list first."
 msgstr "未选择安装源。请先刷新安装源列表。"
 
-#: src/library-page.c:957
+#: src/library-page.c:964
 msgid "Cannot read remote modules"
 msgstr "无法读取远程模块"
 
-#: src/library-page.c:1078
+#: src/library-page.c:1085
 msgid "Enter a source name and host"
 msgstr "请输入来源名称和主机"
 
-#: src/library-page.c:1085
+#: src/library-page.c:1092
 msgid "Invalid source settings"
 msgstr "安装源设置无效"
 
-#: src/library-page.c:1089
+#: src/library-page.c:1096
 msgid "Cannot add source"
 msgstr "无法添加安装源"
 
-#: src/library-page.c:1094 src/library-page.c:1122
+#: src/library-page.c:1101 src/library-page.c:1129
 msgid "Cannot save source"
 msgstr "无法保存安装源"
 
-#: src/library-page.c:1100
+#: src/library-page.c:1107
 msgid "Source added"
 msgstr "安装源已添加"
 
-#: src/library-page.c:1118
+#: src/library-page.c:1125
 msgid "Cannot remove source"
 msgstr "无法移除安装源"
 
-#: src/library-page.c:1126
+#: src/library-page.c:1133
 msgid "Source removed"
 msgstr "安装源已移除"
 
-#: src/library-page.c:1154
+#: src/library-page.c:1161
 msgid "Installation sources"
 msgstr "安装源"
 
-#: src/library-page.c:1159
+#: src/library-page.c:1166
 msgid "Configured sources"
 msgstr "已配置的来源"
 
-#: src/library-page.c:1165
+#: src/library-page.c:1172
 msgid "No sources configured."
 msgstr "尚未配置安装源。"
 
-#: src/library-page.c:1204 src/library-page.c:1232
+#: src/library-page.c:1211 src/library-page.c:1239
 msgid "Add source"
 msgstr "添加来源"
 
-#: src/library-page.c:1210
+#: src/library-page.c:1217
 msgid "Source name"
 msgstr "来源名称"
 
-#: src/library-page.c:1212
+#: src/library-page.c:1219
 msgid "Host"
 msgstr "主机"
 
-#: src/library-page.c:1215
+#: src/library-page.c:1222
 msgid "Module directory"
 msgstr "模块目录"
 
-#: src/library-page.c:1220
+#: src/library-page.c:1227
 msgid "Username (optional)"
 msgstr "用户名（可选）"
 
-#: src/library-page.c:1223
+#: src/library-page.c:1230
 msgid "Password (optional)"
 msgstr "密码（可选）"
 
-#: src/library-page.c:1262
+#: src/library-page.c:1269
 msgid "Refreshing install sources..."
 msgstr "正在刷新安装源..."
 
-#: src/library-page.c:1277
+#: src/library-page.c:1284
 msgid "Cannot refresh install sources"
 msgstr "无法刷新安装源"
 
-#: src/library-page.c:1279
+#: src/library-page.c:1286
 msgid "Install sources refreshed"
 msgstr "安装源已刷新"
 
-#: src/library-page.c:1297
+#: src/library-page.c:1304
 msgid "Cannot connect to source"
 msgstr "无法移除安装源"
 
-#: src/library-page.c:1299
+#: src/library-page.c:1306
 msgid "Source connection OK"
 msgstr "来源连接正常"
 
-#: src/library-page.c:1318 src/library-page.c:1488
+#: src/library-page.c:1325 src/library-page.c:1495
 msgid "No source selected"
 msgstr "未选择安装源"
 
-#: src/library-page.c:1322
+#: src/library-page.c:1329
 msgid "An operation is already running"
 msgstr "已有操作正在运行"
 
-#: src/library-page.c:1330
+#: src/library-page.c:1337
 msgid "Testing source connection..."
 msgstr "正在测试来源连接…"
 
-#: src/library-page.c:1353
+#: src/library-page.c:1360
 msgid "Refreshing remote module list..."
 msgstr "正在刷新远程模块列表..."
 
-#: src/library-page.c:1392
+#: src/library-page.c:1399
 msgid "Cannot refresh remote modules"
 msgstr "无法刷新远程模块"
 
-#: src/library-page.c:1394
+#: src/library-page.c:1401
 msgid "Remote module list refreshed"
 msgstr "远程模块列表已刷新"
 
-#: src/library-page.c:1456
+#: src/library-page.c:1463
 msgid "Updates finished with errors"
 msgstr "更新完成，但有错误"
 
-#: src/library-page.c:1457
+#: src/library-page.c:1464
 msgid "All updates complete"
 msgstr "全部更新完成"
 
-#: src/library-page.c:1472
+#: src/library-page.c:1479
 msgid "Updating modules..."
 msgstr "正在更新模块…"
 
-#: src/library-page.c:1507
+#: src/library-page.c:1514
 msgid "No updates available"
 msgstr "没有可用更新"
 
-#: src/library-page.c:1544
+#: src/library-page.c:1551
 msgid "Cannot unlock module"
 msgstr "无法解锁模块"
 
-#: src/library-page.c:1550
+#: src/library-page.c:1557
 msgid "Module unlocked"
 msgstr "模块已解锁"
 
-#: src/library-page.c:1565
+#: src/library-page.c:1572
 msgid "Unlock module"
 msgstr "解锁模块"
 
-#: src/library-page.c:1567
+#: src/library-page.c:1574
 #, c-format
 msgid "Enter the encryption key for %s."
 msgstr "请输入 %s 的解密密钥。"
 
-#: src/library-page.c:1576 src/library-page.c:2153
+#: src/library-page.c:1583 src/library-page.c:2254
 msgid "Unlock"
 msgstr "解锁"
 
-#: src/library-page.c:1609
+#: src/library-page.c:1616
 msgid "Cannot check disk space"
 msgstr "无法检查磁盘空间"
 
-#: src/library-page.c:1621 src/library-page.c:1624
+#: src/library-page.c:1628 src/library-page.c:1631
 msgid "Not enough disk space"
 msgstr "磁盘空间不足"
 
-#: src/library-page.c:1626
+#: src/library-page.c:1633
 #, c-format
 msgid "This module needs %s, but only %s is available."
 msgstr "此模块需要 %s，但仅有 %s 可用。"
 
-#: src/library-page.c:1697
+#: src/library-page.c:1704
 msgid "Installing module..."
 msgstr "正在安装模块..."
 
-#: src/library-page.c:1715
+#: src/library-page.c:1722
 msgid "Module install failed"
 msgstr "模块安装失败"
 
-#: src/library-page.c:1740
+#: src/library-page.c:1747
 #, c-format
 msgid "Installed module %s"
 msgstr "已安装模块 %s"
 
-#: src/library-page.c:1764
+#: src/library-page.c:1771
 msgid "Removing module..."
 msgstr "正在删除模块..."
 
-#: src/library-page.c:1779
+#: src/library-page.c:1786
 msgid "Module removal failed"
 msgstr "模块删除失败"
 
-#: src/library-page.c:1781
+#: src/library-page.c:1788
 msgid "Module removed"
 msgstr "模块已删除"
 
-#: src/library-page.c:1808
+#: src/library-page.c:1815
 msgid "Cancelling..."
 msgstr "正在取消..."
 
-#: src/library-page.c:1822
+#: src/library-page.c:1829
 msgid "Installing..."
 msgstr "正在安装..."
 
-#: src/library-page.c:1840 src/library-page.c:1844
+#: src/library-page.c:1847 src/library-page.c:1851
 msgid "Downloading"
 msgstr "下载中"
 
-#: src/library-page.c:1840 src/library-page.c:1844
+#: src/library-page.c:1847 src/library-page.c:1851
 msgid "bytes"
 msgstr "字节"
 
-#: src/library-page.c:1882
+#: src/library-page.c:1889
 msgid "Select local module directory"
 msgstr "选择本地模块目录"
 
-#: src/library-page.c:1905
+#: src/library-page.c:1912
 msgid "Enter a local SWORD directory and module name"
 msgstr "请输入本地 SWORD 目录和模块名称"
 
-#: src/library-page.c:1910
+#: src/library-page.c:1917
 msgid "Local install failed"
 msgstr "本地安装失败"
 
-#: src/library-page.c:1922
+#: src/library-page.c:1929
 msgid "Module installed from local directory"
 msgstr "已从本地目录安装模块"
 
-#: src/library-page.c:2123
+#: src/library-page.c:2115
+msgid "Proxy settings saved"
+msgstr "代理设置已保存"
+
+#: src/library-page.c:2134
+msgid "Proxy settings"
+msgstr "代理设置"
+
+#: src/library-page.c:2136
+msgid "Leave the proxy URL empty to use the environment proxy."
+msgstr "代理 URL 留空时使用环境变量中的代理。"
+
+#: src/library-page.c:2143
+msgid "Proxy URL, e.g. http://127.0.0.1:8080"
+msgstr "代理 URL，例如 http://127.0.0.1:8080"
+
+#: src/library-page.c:2145
+msgid "Proxy user name"
+msgstr "来源名称"
+
+#: src/library-page.c:2147
+msgid "Proxy password"
+msgstr "代理密码"
+
+#: src/library-page.c:2223
 msgid "Update all"
 msgstr "全部更新"
 
-#: src/library-page.c:2124
+#: src/library-page.c:2224
 msgid "Retry failed"
 msgstr "搜索失败"
 
-#: src/library-page.c:2125
+#: src/library-page.c:2225
+msgid "Proxy"
+msgstr "代理"
+
+#: src/library-page.c:2226
 msgid "Manage sources"
 msgstr "管理来源"
 
-#: src/library-page.c:2150
+#: src/library-page.c:2251
 msgid "Test"
 msgstr "测试"
 
-#: src/library-page.c:2151
+#: src/library-page.c:2252
 msgid "Install / Update"
 msgstr "安装 / 更新"
 
-#: src/library-page.c:2152
+#: src/library-page.c:2253
 msgid "Remove"
 msgstr "移除"
 
-#: src/library-page.c:2156
+#: src/library-page.c:2257
 msgid "Install from local directory"
 msgstr "从本地目录安装"
 
-#: src/library-page.c:2158
+#: src/library-page.c:2259
 msgid "All types"
 msgstr "全部类型"
 
-#: src/library-page.c:2158 src/module-sidebar.c:22
+#: src/library-page.c:2259 src/module-sidebar.c:22
 msgid "Bibles"
 msgstr "圣经"
 
-#: src/library-page.c:2160 src/module-sidebar.c:25
+#: src/library-page.c:2261 src/module-sidebar.c:25
 msgid "Daily Devotions"
 msgstr "每日灵修"
 
-#: src/library-page.c:2160 src/module-sidebar.c:26
+#: src/library-page.c:2261 src/module-sidebar.c:26
 msgid "General Books"
 msgstr "通用书籍"
 
-#: src/library-page.c:2161 src/module-sidebar.c:30
+#: src/library-page.c:2262 src/module-sidebar.c:30
 msgid "Other Modules"
 msgstr "其他模块"
 
-#: src/library-page.c:2163
+#: src/library-page.c:2264
 msgid "All statuses"
 msgstr "全部状态"
 
-#: src/library-page.c:2169
+#: src/library-page.c:2270
 msgid "Available"
 msgstr "可安装"
 
-#: src/library-page.c:2170
+#: src/library-page.c:2271
 msgid "Updates"
 msgstr "更新"
 
-#: src/library-page.c:2191
+#: src/library-page.c:2294
 msgid "Install all available updates"
 msgstr "安装所有可用更新"
 
-#: src/library-page.c:2244
+#: src/library-page.c:2360
 msgid "Filter modules"
 msgstr "筛选模块"
 
-#: src/library-page.c:2253
+#: src/library-page.c:2369
 msgid "Clear filters"
 msgstr "清除筛选"
 
-#: src/library-page.c:2256
+#: src/library-page.c:2372
 msgid "Name"
 msgstr "名称"
 
-#: src/library-page.c:2256
+#: src/library-page.c:2372
 msgid "Type"
 msgstr "类型"
 
-#: src/library-page.c:2256
+#: src/library-page.c:2372
 msgid "Language"
 msgstr "语言"
 
-#: src/library-page.c:2257
+#: src/library-page.c:2373
 msgid "Status"
 msgstr "状态"
 
-#: src/library-page.c:2265
+#: src/library-page.c:2381
 msgid "0 module(s)"
 msgstr "共 0 个模块"
 
-#: src/library-page.c:2274
+#: src/library-page.c:2390
 msgid "Refresh the install source list"
 msgstr "刷新安装源列表"
 
-#: src/library-page.c:2276
+#: src/library-page.c:2392
 msgid "Refresh modules from the selected source"
 msgstr "从所选安装源刷新模块"
 
-#: src/library-page.c:2278
+#: src/library-page.c:2394
 msgid "Test source connection"
 msgstr "测试来源连接"
 
-#: src/library-page.c:2334
+#: src/library-page.c:2450
 msgid "Update queue"
 msgstr "更新队列"
 
-#: src/library-page.c:2438
+#: src/library-page.c:2554
 msgid "Technical details"
 msgstr "详细信息"
 
-#: src/library-page.c:2448
+#: src/library-page.c:2564
 msgid "Copyright & license"
 msgstr "版权与许可"
 
-#: src/library-page.c:2458
+#: src/library-page.c:2574
 msgid "About this module"
 msgstr "关于此模块"
 
-#: src/library-page.c:2480
+#: src/library-page.c:2596
 msgid "Back to modules"
 msgstr "返回模块列表"
 
-#: src/library-page.c:2510
+#: src/library-page.c:2626
 msgid "Local SWORD library directory"
 msgstr "本地 SWORD 模块库目录"
 
-#: src/library-page.c:2512
+#: src/library-page.c:2628
 msgid "Module name"
 msgstr "模块名称"
 
-#: src/library-page.c:2514
+#: src/library-page.c:2630
 msgid "Install local module"
 msgstr "安装本地模块"
 
-#: src/library-page.c:2520
+#: src/library-page.c:2636
 msgid "Browse…"
 msgstr "浏览…"
 
-#: src/library-page.c:2537 src/module-sidebar.c:280
+#: src/library-page.c:2653 src/module-sidebar.c:280
 msgid "Modules"
 msgstr "模块"
 
-#: src/library-page.c:2539
+#: src/library-page.c:2655
 msgid "Module details"
 msgstr "模块详情"
 

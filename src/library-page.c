@@ -178,6 +178,13 @@ typedef struct {
     gchar *module_name;
 } CipherDialogData;
 
+typedef struct {
+    GswordLibraryPage *page;
+    GtkEntry *url_entry;
+    GtkEntry *user_entry;
+    GtkEntry *password_entry;
+} ProxyDialogData;
+
 static GswordLibraryPage *
 library_page_get(GswordWindow *self)
 {
@@ -2077,6 +2084,99 @@ on_view_toggled(GtkToggleButton *button, gpointer user_data)
 }
 
 static void
+proxy_dialog_free(gpointer data)
+{
+    g_free(data);
+}
+
+static void
+on_proxy_response(AdwAlertDialog *dialog, const gchar *response,
+                  gpointer user_data)
+{
+    ProxyDialogData *data = user_data;
+    GswordLibraryPage *priv = data->page;
+    const gchar *url;
+    const gchar *user;
+    const gchar *password;
+
+    (void)dialog;
+    if (g_strcmp0(response, "save") != 0)
+        return;
+    url = gtk_editable_get_text(GTK_EDITABLE(data->url_entry));
+    user = gtk_editable_get_text(GTK_EDITABLE(data->user_entry));
+    password = gtk_editable_get_text(GTK_EDITABLE(data->password_entry));
+    if (priv->settings != NULL) {
+        g_settings_set_string(priv->settings, "proxy-url", url);
+        g_settings_set_string(priv->settings, "proxy-user", user);
+        g_settings_set_string(priv->settings, "proxy-password", password);
+    }
+    if (priv->installer != NULL)
+        gsw_install_manager_set_proxy(priv->installer, url, user, password);
+    gsword_window_set_status(priv->window, _("Proxy settings saved"));
+}
+
+static void
+on_proxy_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    ProxyDialogData *data;
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *url_entry = gtk_entry_new();
+    GtkWidget *user_entry = gtk_entry_new();
+    GtkWidget *password_entry = gtk_entry_new();
+    AdwDialog *dialog;
+    gchar *url = NULL;
+    gchar *user = NULL;
+    gchar *password = NULL;
+
+    (void)button;
+    dialog = ADW_DIALOG(adw_alert_dialog_new(_("Proxy settings"), NULL));
+    adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog),
+        _("Leave the proxy URL empty to use the environment proxy."));
+    if (priv->settings != NULL) {
+        url = g_settings_get_string(priv->settings, "proxy-url");
+        user = g_settings_get_string(priv->settings, "proxy-user");
+        password = g_settings_get_string(priv->settings, "proxy-password");
+    }
+    gtk_entry_set_placeholder_text(GTK_ENTRY(url_entry),
+                                   _("Proxy URL, e.g. http://127.0.0.1:8080"));
+    gtk_entry_set_placeholder_text(GTK_ENTRY(user_entry),
+                                   _("Proxy user name"));
+    gtk_entry_set_placeholder_text(GTK_ENTRY(password_entry),
+                                   _("Proxy password"));
+    gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE);
+    gtk_entry_set_input_purpose(GTK_ENTRY(password_entry),
+                                GTK_INPUT_PURPOSE_PASSWORD);
+    gtk_editable_set_text(GTK_EDITABLE(url_entry), url != NULL ? url : "");
+    gtk_editable_set_text(GTK_EDITABLE(user_entry), user != NULL ? user : "");
+    gtk_editable_set_text(GTK_EDITABLE(password_entry),
+                          password != NULL ? password : "");
+    g_free(url);
+    g_free(user);
+    g_free(password);
+    gtk_box_append(GTK_BOX(box), url_entry);
+    gtk_box_append(GTK_BOX(box), user_entry);
+    gtk_box_append(GTK_BOX(box), password_entry);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), box);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "save", _("Save"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "save");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    data = g_new0(ProxyDialogData, 1);
+    data->page = priv;
+    data->url_entry = GTK_ENTRY(url_entry);
+    data->user_entry = GTK_ENTRY(user_entry);
+    data->password_entry = GTK_ENTRY(password_entry);
+    g_object_set_data_full(G_OBJECT(dialog), "proxy-dialog-data", data,
+                           proxy_dialog_free);
+    g_signal_connect(dialog, "response",
+                     G_CALLBACK(on_proxy_response), data);
+    adw_dialog_present(dialog, GTK_WIDGET(self));
+}
+
+static void
 library_page_free(gpointer data)
 {
     GswordLibraryPage *page = data;
@@ -2122,6 +2222,7 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *updates_view;
     GtkWidget *update_all = gtk_button_new_with_label(_("Update all"));
     GtkWidget *retry_failed = gtk_button_new_with_label(_("Retry failed"));
+    GtkWidget *proxy = gtk_button_new_with_label(_("Proxy"));
     GtkWidget *manage_sources = gtk_button_new_with_label(_("Manage sources"));
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -2179,8 +2280,10 @@ gsword_library_page_new(GswordWindow *self)
     g_object_set_data(G_OBJECT(updates_view), "library-view",
                       GINT_TO_POINTER(2));
     gtk_widget_add_css_class(manage_sources, "flat");
+    gtk_widget_add_css_class(proxy, "flat");
     g_signal_connect(manage_sources, "clicked",
                      G_CALLBACK(on_manage_sources), self);
+    g_signal_connect(proxy, "clicked", G_CALLBACK(on_proxy_clicked), self);
     g_signal_connect(installed_view, "toggled",
                      G_CALLBACK(on_view_toggled), self);
     g_signal_connect(available_view, "toggled",
@@ -2201,6 +2304,7 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(view_row), updates_view);
     gtk_box_append(GTK_BOX(view_row), update_all);
     gtk_box_append(GTK_BOX(view_row), retry_failed);
+    gtk_box_append(GTK_BOX(view_row), proxy);
     gtk_box_append(GTK_BOX(view_row), manage_sources);
 
     priv->window = self;
@@ -2233,6 +2337,18 @@ gsword_library_page_new(GswordWindow *self)
         }
         g_free(installmgr_dir);
         g_free(data_dir);
+    }
+    if (priv->installer != NULL && priv->settings != NULL) {
+        gchar *proxy_url = g_settings_get_string(priv->settings, "proxy-url");
+        gchar *proxy_user = g_settings_get_string(priv->settings, "proxy-user");
+        gchar *proxy_password = g_settings_get_string(priv->settings,
+                                                      "proxy-password");
+
+        gsw_install_manager_set_proxy(priv->installer, proxy_url, proxy_user,
+                                      proxy_password);
+        g_free(proxy_url);
+        g_free(proxy_user);
+        g_free(proxy_password);
     }
     gtk_widget_set_margin_top(controls, 8);
     gtk_widget_set_margin_bottom(controls, 8);
