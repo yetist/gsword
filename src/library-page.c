@@ -17,9 +17,13 @@ struct _GswordLibraryPage {
     GswStatusReporter *install_reporter;
     GPtrArray *install_sources;
     GtkStringList *source_names;
-    GtkStringList *installed_names;
     GtkDropDown *source_dropdown;
-    GtkDropDown *installed_dropdown;
+    GtkWidget *source_row;
+    GtkWidget *filter_row;
+    GtkStack *list_stack;
+    GtkListBox *installed_list;
+    GtkWidget *local_box;
+    gint library_view;
     GtkEntry *install_search;
     GtkDropDown *type_filter;
     GtkDropDown *language_filter;
@@ -49,11 +53,15 @@ struct _GswordLibraryPage {
     GtkButton *cancel_button;
     GtkButton *refresh_source_button;
     GtkButton *refresh_sources_button;
+    GtkToggleButton *installed_view_button;
+    GtkToggleButton *available_view_button;
+    GtkToggleButton *updates_view_button;
     GCancellable *install_cancellable;
     GtkEntry *local_dir_entry;
     GtkEntry *local_name_entry;
     GtkButton *local_install_button;
     gchar *selected_remote_name;
+    gchar *selected_installed_name;
 };
 
 static GswordLibraryPage *
@@ -63,6 +71,7 @@ library_page_get(GswordWindow *self)
 }
 
 static void gsword_window_refresh_remote_modules(GswordWindow *self);
+static void gsword_window_refresh_installed_list(GswordWindow *self);
 static void on_refresh_sources_finished(GObject *source, GAsyncResult *result,
                                         gpointer user_data);
 static void on_refresh_remote_finished(GObject *source, GAsyncResult *result,
@@ -332,6 +341,9 @@ apply_filters(GswordWindow *self)
                                     language, status_filter))
             continue;
         status = gsw_install_manager_get_module_status(priv->manager, info);
+        if (priv->library_view == 2 &&
+            (status & GSW_MODULE_STATUS_UPDATED) == 0)
+            continue;
         text = g_strdup_printf("%s\n%s", name, module_status_text(status));
         row = gtk_list_box_row_new();
         label = gtk_label_new(text);
@@ -358,9 +370,11 @@ apply_filters(GswordWindow *self)
         gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
         gtk_list_box_append(priv->remote_list, row);
     }
-    count_text = g_strdup_printf(_("%u module(s)"), count);
-    gtk_label_set_text(priv->filter_count, count_text);
-    g_free(count_text);
+    if (priv->library_view != 0) {
+        count_text = g_strdup_printf(_("%u module(s)"), count);
+        gtk_label_set_text(priv->filter_count, count_text);
+        g_free(count_text);
+    }
     g_free(folded_query);
 }
 
@@ -379,23 +393,93 @@ module_status_text(guint status)
 }
 
 static void
-gsword_window_refresh_installed_dropdown(GswordWindow *self)
+gsword_window_refresh_installed_list(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
-    GPtrArray *infos = gsw_manager_get_module_infos(priv->manager);
-    GtkStringList *names = gtk_string_list_new(NULL);
+    GPtrArray *infos;
+    const gchar *query;
+    gchar *folded_query = NULL;
+    GswModuleType type_filter;
+    const gchar *language_filter;
+    guint count = 0;
     guint i;
+    gchar *count_text;
 
+    if (priv->installed_list == NULL)
+        return;
+    gsword_window_clear_list(priv->installed_list);
+    infos = gsw_manager_get_module_infos(priv->manager);
+    query = gtk_editable_get_text(GTK_EDITABLE(priv->install_search));
+    if (query != NULL && *query != '\0')
+        folded_query = g_utf8_casefold(query, -1);
+    type_filter = filter_type_from_index(
+        gtk_drop_down_get_selected(priv->type_filter));
+    language_filter = selected_language_code(priv);
     for (i = 0; i < infos->len; i++) {
         GswModuleInfo *info = g_ptr_array_index(infos, i);
+        const gchar *name = gsw_module_info_get_name(info);
+        const gchar *description = gsw_module_info_get_description(info);
+        const gchar *language = gsw_module_info_get_language(info);
+        gchar *language_text;
+        gchar *text;
+        GtkWidget *row;
+        GtkWidget *label;
 
-        gtk_string_list_append(names, gsw_module_info_get_name(info));
+        if (type_filter != GSW_MODULE_TYPE_UNKNOWN &&
+            filter_type_for_info(info) != type_filter)
+            continue;
+        if (language_filter != NULL && *language_filter != '\0' &&
+            g_strcmp0(language, language_filter) != 0)
+            continue;
+        if (folded_query != NULL) {
+            gchar *folded_name = g_utf8_casefold(name != NULL ? name : "", -1);
+            gchar *folded_description = g_utf8_casefold(
+                description != NULL ? description : "", -1);
+            gboolean match = strstr(folded_name, folded_query) != NULL ||
+                             strstr(folded_description, folded_query) != NULL;
+
+            g_free(folded_name);
+            g_free(folded_description);
+            if (!match)
+                continue;
+        }
+        language_text = language_display_name(language);
+        text = g_strdup_printf("%s\n%s · %s · %s", name,
+                               gsword_window_module_type_display(info),
+                               language_text,
+                               gsw_module_info_get_version(info) != NULL
+                               ? gsw_module_info_get_version(info) : "?");
+        row = gtk_list_box_row_new();
+        label = gtk_label_new(text);
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(label), TRUE);
+        gtk_widget_set_margin_top(label, 4);
+        gtk_widget_set_margin_bottom(label, 4);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        g_object_set_data_full(G_OBJECT(row), "installed-name", g_strdup(name),
+                               g_free);
+        gtk_list_box_append(priv->installed_list, row);
+        g_free(text);
+        g_free(language_text);
+        count++;
     }
-    g_clear_object(&priv->installed_names);
-    priv->installed_names = names;
-    gtk_drop_down_set_model(priv->installed_dropdown, G_LIST_MODEL(names));
-    if (infos->len > 0)
-        gtk_drop_down_set_selected(priv->installed_dropdown, 0);
+    if (count == 0) {
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *label = gtk_label_new(_("No installed modules."));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_append(priv->installed_list, row);
+    }
+    if (priv->library_view == 0) {
+        count_text = g_strdup_printf(_("%u module(s)"), count);
+        gtk_label_set_text(priv->filter_count, count_text);
+        g_free(count_text);
+    }
+    g_free(folded_query);
     g_ptr_array_unref(infos);
 }
 
@@ -465,6 +549,8 @@ clear_remote_details(GswordWindow *self)
     gtk_widget_set_visible(GTK_WIDGET(priv->license_expander), FALSE);
     gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
+    if (priv->remove_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
 }
 
 static void
@@ -590,10 +676,115 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button),
                              (status & GSW_MODULE_STATUS_NEW) ||
                              (status & GSW_MODULE_STATUS_UPDATED));
+    if (priv->remove_button != NULL)
+        gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
 
     g_free(language);
     g_free(size);
     g_free(version_text);
+    g_free(meta);
+    g_free(warning);
+    g_string_free(technical, TRUE);
+    g_string_free(license_text, TRUE);
+}
+
+static void
+gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
+{
+    GswordLibraryPage *priv = library_page_get(self);
+    GswModuleInfo *info;
+    const gchar *description;
+    const gchar *license;
+    const gchar *copyright;
+    const gchar *about;
+    gchar *language;
+    gchar *size;
+    gchar *meta;
+    gchar *warning = NULL;
+    GString *technical;
+    GString *license_text;
+
+    if (name == NULL)
+        return;
+    info = gsw_manager_lookup_module_info(priv->manager, name);
+    if (info == NULL)
+        return;
+    description = gsw_module_info_get_description(info);
+    license = gsw_module_info_get_distribution_license(info);
+    copyright = gsw_module_info_get_copyright(info);
+    about = gsw_module_info_get_about(info);
+    language = language_display_name(gsw_module_info_get_language(info));
+    size = format_size(gsw_module_info_get_install_size(info));
+    meta = g_strdup_printf(
+        _("Type: %s\nLanguage: %s\nVersion: %s\nSize: %s\nSource: %s\nLicense: %s"),
+        gsword_window_module_type_display(info), language,
+        gsw_module_info_get_version(info) != NULL
+        ? gsw_module_info_get_version(info) : "?",
+        size, _("Local library"),
+        license != NULL && *license != '\0' ? license : _("Not specified"));
+
+    gtk_label_set_text(priv->remote_title, name);
+    gtk_label_set_text(priv->remote_status, _("Installed"));
+    gtk_label_set_text(priv->remote_description,
+                       description != NULL ? description : "");
+    gtk_label_set_text(priv->remote_meta, meta);
+
+    if (!gsw_module_info_is_supported(info))
+        warning = g_strdup(_("⚠ This module may not be readable by this version of gsword."));
+    if (gsw_module_info_is_ciphered(info)) {
+        gchar *cipher_warning = g_strdup(
+            _("⚠ This module is encrypted and may require unlocking."));
+
+        if (warning != NULL) {
+            gchar *combined = g_strconcat(warning, "\n", cipher_warning, NULL);
+
+            g_free(warning);
+            g_free(cipher_warning);
+            warning = combined;
+        } else {
+            warning = cipher_warning;
+        }
+    }
+    gtk_label_set_text(priv->remote_warning, warning != NULL ? warning : "");
+    gtk_widget_set_visible(GTK_WIDGET(priv->remote_warning), warning != NULL);
+
+    technical = g_string_new(NULL);
+    g_string_append_printf(technical, _("Driver: %s\n"),
+        gsw_module_info_get_driver_name(info) != NULL
+        ? gsw_module_info_get_driver_name(info) : _("Unknown"));
+    g_string_append_printf(technical, _("Encoding: %s\n"),
+        gsw_module_info_get_encoding(info) != NULL
+        ? gsw_module_info_get_encoding(info) : _("Unknown"));
+    g_string_append_printf(technical, _("Versification: %s\n"),
+        gsw_module_info_get_versification(info) != NULL
+        ? gsw_module_info_get_versification(info) : _("Unknown"));
+    g_string_append_printf(technical, _("Module ID: %s\n"), name);
+    g_string_append_printf(technical, _("Config file: %s\n"),
+        gsw_module_info_get_config_file(info) != NULL
+        ? gsw_module_info_get_config_file(info) : _("Unknown"));
+    g_string_append_printf(technical, _("Data path: %s"),
+        gsw_module_info_get_absolute_data_path(info) != NULL
+        ? gsw_module_info_get_absolute_data_path(info) : _("Unknown"));
+    gtk_label_set_text(priv->technical_label, technical->str);
+    gtk_widget_set_visible(GTK_WIDGET(priv->technical_expander), TRUE);
+
+    license_text = g_string_new(NULL);
+    g_string_append_printf(license_text, _("License: %s\n\nCopyright: %s"),
+        license != NULL && *license != '\0' ? license : _("Not specified"),
+        copyright != NULL && *copyright != '\0' ? copyright : _("Not specified"));
+    gtk_label_set_text(priv->license_label, license_text->str);
+    gtk_widget_set_visible(GTK_WIDGET(priv->license_expander), TRUE);
+
+    gtk_label_set_text(priv->about_label,
+        about != NULL && *about != '\0'
+        ? about : _("No additional information is available."));
+    gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), TRUE);
+
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), TRUE);
+
+    g_free(language);
+    g_free(size);
     g_free(meta);
     g_free(warning);
     g_string_free(technical, TRUE);
@@ -611,9 +802,11 @@ gsword_window_refresh_remote_modules(GswordWindow *self)
     g_clear_pointer(&priv->remote_infos, g_ptr_array_unref);
     if (source == NULL) {
         rebuild_language_filter(self, NULL);
-        apply_filters(self);
-        gtk_label_set_text(priv->remote_status,
-                           _("No source selected. Refresh the source list first."));
+        if (priv->library_view != 0) {
+            apply_filters(self);
+            gtk_label_set_text(priv->remote_status,
+                _("No source selected. Refresh the source list first."));
+        }
         return;
     }
     infos = gsw_install_manager_get_remote_module_infos(
@@ -621,12 +814,14 @@ gsword_window_refresh_remote_modules(GswordWindow *self)
     if (infos == NULL) {
         gsword_window_show_error(self, _("Cannot read remote modules"), error);
         rebuild_language_filter(self, NULL);
-        apply_filters(self);
+        if (priv->library_view != 0)
+            apply_filters(self);
         return;
     }
     priv->remote_infos = infos;
     rebuild_language_filter(self, infos);
-    apply_filters(self);
+    if (priv->library_view != 0)
+        apply_filters(self);
 }
 
 static void
@@ -644,7 +839,26 @@ on_remote_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         return;
     g_free(priv->selected_remote_name);
     priv->selected_remote_name = g_strdup(name);
+    g_clear_pointer(&priv->selected_installed_name, g_free);
     gsword_window_update_remote_details(self, name);
+}
+
+static void
+on_installed_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    const gchar *name;
+
+    (void)list;
+    if (row == NULL)
+        return;
+    name = g_object_get_data(G_OBJECT(row), "installed-name");
+    if (name == NULL)
+        return;
+    g_free(priv->selected_installed_name);
+    priv->selected_installed_name = g_strdup(name);
+    gsword_window_update_installed_details(self, name);
 }
 
 static void
@@ -796,7 +1010,7 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
         g_settings_set_string(priv->settings, "last-key", "");
     }
     gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_dropdown(self);
+    gsword_window_refresh_installed_list(self);
     gsword_window_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
     if (installed && installed_name != NULL) {
@@ -814,15 +1028,10 @@ on_remove_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordLibraryPage *priv = library_page_get(self);
-    guint selected = gtk_drop_down_get_selected(priv->installed_dropdown);
-    const gchar *name;
+    const gchar *name = priv->selected_installed_name;
 
     (void)button;
-    if (priv->installer == NULL || priv->installed_names == NULL ||
-        selected == GTK_INVALID_LIST_POSITION)
-        return;
-    name = gtk_string_list_get_string(priv->installed_names, selected);
-    if (name == NULL)
+    if (priv->installer == NULL || name == NULL)
         return;
     g_clear_object(&priv->install_cancellable);
     priv->install_cancellable = g_cancellable_new();
@@ -849,11 +1058,12 @@ on_remove_finished(GObject *source, GAsyncResult *result, gpointer user_data)
         gsword_window_set_status(self, _("Module removed"));
     }
     g_clear_object(&priv->install_cancellable);
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), TRUE);
+    g_clear_pointer(&priv->selected_installed_name, g_free);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
     if (priv->manager != NULL)
         gsw_manager_reload(priv->manager, NULL);
     gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_dropdown(self);
+    gsword_window_refresh_installed_list(self);
     gsword_window_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
     gsword_window_clear_install_progress_later(self);
@@ -942,7 +1152,7 @@ on_local_install_clicked(GtkButton *button, gpointer user_data)
         g_settings_set_string(priv->settings, "last-key", "");
     }
     gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_dropdown(self);
+    gsword_window_refresh_installed_list(self);
     gsword_window_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
     gsword_window_set_status(self, _("Module installed from local directory"));
@@ -956,8 +1166,12 @@ on_filter_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 
     (void)object;
     (void)pspec;
-    if (!priv->updating_filters)
-        apply_filters(self);
+    if (!priv->updating_filters) {
+        if (priv->library_view == 0)
+            gsword_window_refresh_installed_list(self);
+        else
+            apply_filters(self);
+    }
 }
 
 static void
@@ -967,8 +1181,12 @@ on_remote_search_changed(GtkEditable *editable, gpointer user_data)
     GswordLibraryPage *priv = library_page_get(self);
 
     (void)editable;
-    if (!priv->updating_filters)
-        apply_filters(self);
+    if (!priv->updating_filters) {
+        if (priv->library_view == 0)
+            gsword_window_refresh_installed_list(self);
+        else
+            apply_filters(self);
+    }
 }
 
 static void
@@ -984,7 +1202,10 @@ on_clear_filters(GtkButton *button, gpointer user_data)
     gtk_drop_down_set_selected(priv->status_filter, 0);
     gtk_editable_set_text(GTK_EDITABLE(priv->install_search), "");
     priv->updating_filters = FALSE;
-    apply_filters(self);
+    if (priv->library_view == 0)
+        gsword_window_refresh_installed_list(self);
+    else
+        apply_filters(self);
 }
 
 static void
@@ -992,7 +1213,47 @@ on_source_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 {
     (void)object;
     (void)pspec;
-    gsword_window_refresh_remote_modules(GSWORD_WINDOW(user_data));
+    if (library_page_get(GSWORD_WINDOW(user_data))->library_view != 0)
+        gsword_window_refresh_remote_modules(GSWORD_WINDOW(user_data));
+}
+
+static void
+update_library_view(GswordWindow *self, gint view)
+{
+    GswordLibraryPage *priv = library_page_get(self);
+
+    priv->library_view = view;
+    if (priv->source_row != NULL)
+        gtk_widget_set_visible(priv->source_row, view != 0);
+    if (priv->status_filter != NULL)
+        gtk_widget_set_visible(GTK_WIDGET(priv->status_filter), view == 1);
+    if (priv->local_box != NULL)
+        gtk_widget_set_visible(priv->local_box, view == 0);
+    if (priv->list_stack != NULL)
+        gtk_stack_set_visible_child_name(priv->list_stack,
+            view == 0 ? "installed" : "remote");
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
+    if (view == 0) {
+        g_clear_pointer(&priv->selected_remote_name, g_free);
+        clear_remote_details(self);
+        gsword_window_refresh_installed_list(self);
+    } else {
+        g_clear_pointer(&priv->selected_installed_name, g_free);
+        gsword_window_refresh_remote_modules(self);
+    }
+}
+
+static void
+on_view_toggled(GtkToggleButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    gint view;
+
+    if (!gtk_toggle_button_get_active(button))
+        return;
+    view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "library-view"));
+    update_library_view(self, view);
 }
 
 static void
@@ -1006,12 +1267,12 @@ library_page_free(gpointer data)
     g_clear_object(&page->install_reporter);
     g_clear_pointer(&page->install_sources, g_ptr_array_unref);
     g_clear_object(&page->source_names);
-    g_clear_object(&page->installed_names);
     g_clear_object(&page->install_cancellable);
     g_clear_pointer(&page->language_codes, g_ptr_array_unref);
     g_clear_object(&page->language_names);
     g_clear_pointer(&page->remote_infos, g_ptr_array_unref);
     g_free(page->selected_remote_name);
+    g_free(page->selected_installed_name);
     g_free(page);
 }
 
@@ -1021,11 +1282,17 @@ gsword_library_page_new(GswordWindow *self)
     GswordLibraryPage *priv = g_new0(GswordLibraryPage, 1);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *view_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    GtkWidget *installed_view;
+    GtkWidget *available_view;
+    GtkWidget *updates_view;
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *progress_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *left_scroll = gtk_scrolled_window_new();
+    GtkWidget *installed_scroll = gtk_scrolled_window_new();
+    GtkWidget *action_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *details_scroll = gtk_scrolled_window_new();
     GtkWidget *details_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
@@ -1042,7 +1309,6 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *install = gtk_button_new_with_label(_("Install / Update"));
     GtkWidget *remove = gtk_button_new_with_label(_("Remove"));
     GtkWidget *cancel = gtk_button_new_with_label(_("Cancel"));
-    GtkWidget *installed_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *local_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *local_label = gtk_label_new(_("Install from local directory"));
     GtkStringList *type_names = gtk_string_list_new(
@@ -1055,6 +1321,30 @@ gsword_library_page_new(GswordWindow *self)
                                   _("Update available"), _("Installed"),
                                   _("Installed - local version is newer"),
                                   _("Installed - up to date"), NULL });
+
+    installed_view = gtk_toggle_button_new_with_label(_("Installed"));
+    available_view = gtk_toggle_button_new_with_label(_("Available"));
+    updates_view = gtk_toggle_button_new_with_label(_("Updates"));
+    gtk_toggle_button_set_group(GTK_TOGGLE_BUTTON(available_view),
+                                GTK_TOGGLE_BUTTON(installed_view));
+    gtk_toggle_button_set_group(GTK_TOGGLE_BUTTON(updates_view),
+                                GTK_TOGGLE_BUTTON(installed_view));
+    g_object_set_data(G_OBJECT(installed_view), "library-view",
+                      GINT_TO_POINTER(0));
+    g_object_set_data(G_OBJECT(available_view), "library-view",
+                      GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(updates_view), "library-view",
+                      GINT_TO_POINTER(2));
+    g_signal_connect(installed_view, "toggled",
+                     G_CALLBACK(on_view_toggled), self);
+    g_signal_connect(available_view, "toggled",
+                     G_CALLBACK(on_view_toggled), self);
+    g_signal_connect(updates_view, "toggled",
+                     G_CALLBACK(on_view_toggled), self);
+    gtk_widget_add_css_class(view_row, "linked");
+    gtk_box_append(GTK_BOX(view_row), installed_view);
+    gtk_box_append(GTK_BOX(view_row), available_view);
+    gtk_box_append(GTK_BOX(view_row), updates_view);
 
     priv->window = self;
     priv->manager = gsword_window_get_manager(self);
@@ -1133,8 +1423,8 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(source_row), GTK_WIDGET(priv->source_dropdown));
     gtk_box_append(GTK_BOX(source_row), refresh_sources);
     gtk_box_append(GTK_BOX(source_row), refresh_remote);
-    gtk_box_append(GTK_BOX(source_row), GTK_WIDGET(priv->install_search));
 
+    gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->install_search));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->type_filter));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->language_filter));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->status_filter));
@@ -1156,6 +1446,9 @@ gsword_library_page_new(GswordWindow *self)
     priv->cancel_button = GTK_BUTTON(cancel);
     priv->refresh_sources_button = GTK_BUTTON(refresh_sources);
     priv->refresh_source_button = GTK_BUTTON(refresh_remote);
+    priv->source_row = source_row;
+    priv->filter_row = filter_row;
+    gtk_box_append(GTK_BOX(controls), view_row);
     gtk_box_append(GTK_BOX(controls), source_row);
     gtk_box_append(GTK_BOX(controls), filter_row);
     gtk_box_append(GTK_BOX(controls), progress_row);
@@ -1163,9 +1456,24 @@ gsword_library_page_new(GswordWindow *self)
     priv->remote_list = GTK_LIST_BOX(gtk_list_box_new());
     g_signal_connect(priv->remote_list, "row-selected",
                      G_CALLBACK(on_remote_selected), self);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(left_scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(left_scroll),
                                   GTK_WIDGET(priv->remote_list));
-    gtk_widget_set_size_request(left_scroll, 300, -1);
+
+    priv->installed_list = GTK_LIST_BOX(gtk_list_box_new());
+    g_signal_connect(priv->installed_list, "row-selected",
+                     G_CALLBACK(on_installed_selected), self);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(installed_scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(installed_scroll),
+                                  GTK_WIDGET(priv->installed_list));
+
+    priv->list_stack = GTK_STACK(gtk_stack_new());
+    gtk_stack_add_named(priv->list_stack, installed_scroll, "installed");
+    gtk_stack_add_named(priv->list_stack, left_scroll, "remote");
+    gtk_widget_set_vexpand(GTK_WIDGET(priv->list_stack), TRUE);
+    gtk_widget_set_size_request(GTK_WIDGET(priv->list_stack), 320, -1);
 
     priv->remote_title = GTK_LABEL(gtk_label_new(_("Select a module")));
     gtk_label_set_xalign(priv->remote_title, 0.0f);
@@ -1231,19 +1539,15 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(right), GTK_WIDGET(priv->remote_description));
     gtk_widget_set_vexpand(details_scroll, TRUE);
     gtk_box_append(GTK_BOX(right), details_scroll);
-    gtk_box_append(GTK_BOX(right), install);
     priv->install_button = GTK_BUTTON(install);
-    gtk_widget_set_sensitive(install, FALSE);
-    g_signal_connect(install, "clicked", G_CALLBACK(on_install_clicked), self);
-
-    priv->installed_dropdown = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
-    gtk_widget_set_hexpand(GTK_WIDGET(priv->installed_dropdown), TRUE);
-    g_signal_connect(remove, "clicked", G_CALLBACK(on_remove_clicked), self);
     priv->remove_button = GTK_BUTTON(remove);
-    gtk_box_append(GTK_BOX(installed_row), gtk_label_new(_("Installed:")));
-    gtk_box_append(GTK_BOX(installed_row), GTK_WIDGET(priv->installed_dropdown));
-    gtk_box_append(GTK_BOX(installed_row), remove);
-    gtk_box_append(GTK_BOX(right), installed_row);
+    gtk_widget_set_sensitive(install, FALSE);
+    gtk_widget_set_sensitive(remove, FALSE);
+    g_signal_connect(install, "clicked", G_CALLBACK(on_install_clicked), self);
+    g_signal_connect(remove, "clicked", G_CALLBACK(on_remove_clicked), self);
+    gtk_box_append(GTK_BOX(action_row), install);
+    gtk_box_append(GTK_BOX(action_row), remove);
+    gtk_box_append(GTK_BOX(right), action_row);
 
     gtk_label_set_xalign(GTK_LABEL(local_label), 0.0f);
     gtk_widget_add_css_class(local_label, "heading");
@@ -1262,14 +1566,20 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(local_box),
                    GTK_WIDGET(priv->local_install_button));
     gtk_box_append(GTK_BOX(right), local_box);
+    priv->local_box = local_box;
 
     gtk_widget_set_vexpand(paned, TRUE);
-    gtk_paned_set_start_child(GTK_PANED(paned), left_scroll);
+    gtk_paned_set_start_child(GTK_PANED(paned), GTK_WIDGET(priv->list_stack));
     gtk_paned_set_end_child(GTK_PANED(paned), right);
     gtk_paned_set_position(GTK_PANED(paned), 360);
     gtk_box_append(GTK_BOX(box), controls);
     gtk_box_append(GTK_BOX(box), paned);
     priv->root = box;
+    priv->installed_view_button = GTK_TOGGLE_BUTTON(installed_view);
+    priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
+    priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(installed_view), TRUE);
+    update_library_view(self, 0);
     return priv;
 }
 
@@ -1291,7 +1601,7 @@ void
 gsword_library_page_refresh_installed(GswordLibraryPage *page)
 {
     if (page != NULL)
-        gsword_window_refresh_installed_dropdown(page->window);
+        gsword_window_refresh_installed_list(page->window);
 }
 
 void
