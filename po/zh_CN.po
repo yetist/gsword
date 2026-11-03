@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 11:28+0800\n"
+"POT-Creation-Date: 2026-11-03 12:15+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -122,7 +122,7 @@ msgstr "模块库"
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:1052
+#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:1318
 #: src/module-sidebar.c:27
 msgid "Maps"
 msgstr "地图"
@@ -131,11 +131,11 @@ msgstr "地图"
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window-services.c:159 src/library-page.c:1050 src/module-sidebar.c:23
+#: src/window-services.c:159 src/library-page.c:1316 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window-services.c:160 src/library-page.c:1050 src/module-sidebar.c:24
+#: src/window-services.c:160 src/library-page.c:1316 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
@@ -147,10 +147,12 @@ msgstr "通用书籍"
 msgid "Other"
 msgstr "其他"
 
-#: src/window-services.c:168 src/library-page.c:96 src/library-page.c:130
-#: src/library-page.c:523 src/library-page.c:524 src/library-page.c:556
-#: src/library-page.c:559 src/library-page.c:562 src/library-page.c:565
-#: src/library-page.c:569 src/library-page.c:572
+#: src/window-services.c:168 src/library-page.c:105 src/library-page.c:139
+#: src/library-page.c:609 src/library-page.c:610 src/library-page.c:642
+#: src/library-page.c:645 src/library-page.c:648 src/library-page.c:651
+#: src/library-page.c:655 src/library-page.c:658 src/library-page.c:754
+#: src/library-page.c:757 src/library-page.c:760 src/library-page.c:764
+#: src/library-page.c:767
 msgid "Unknown"
 msgstr "未知"
 
@@ -236,7 +238,7 @@ msgstr "搜索索引已删除"
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1044 src/plan-page.c:525 src/plan-page.c:861
+#: src/library-page.c:1311 src/plan-page.c:557 src/plan-page.c:899
 msgid "Cancel"
 msgstr "取消"
 
@@ -405,7 +407,7 @@ msgid "Delete the note for %s? This cannot be undone."
 msgstr "删除 %s 的笔记？此操作无法撤销。"
 
 #: src/notes-page.c:666 src/notes-page.c:1490 src/notes-page.c:1569
-#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:862
+#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:900
 msgid "Delete"
 msgstr "删除"
 
@@ -461,7 +463,7 @@ msgstr "标签已重命名"
 msgid "Rename tag"
 msgstr "重命名标签"
 
-#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:526
+#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:558
 msgid "Rename"
 msgstr "重命名"
 
@@ -729,105 +731,110 @@ msgstr "卡片模式"
 msgid "Type the verse"
 msgstr "输入经文"
 
-#: src/library-page.c:98
+#: src/library-page.c:107
 msgid "Chinese"
 msgstr "中文"
 
-#: src/library-page.c:100
+#: src/library-page.c:109
 msgid "English"
 msgstr "英文"
 
-#: src/library-page.c:102
+#: src/library-page.c:111
 msgid "German"
 msgstr "德文"
 
-#: src/library-page.c:104
+#: src/library-page.c:113
 msgid "French"
 msgstr "法文"
 
-#: src/library-page.c:106
+#: src/library-page.c:115
 msgid "Spanish"
 msgstr "西班牙文"
 
-#: src/library-page.c:108
+#: src/library-page.c:117
 msgid "Portuguese"
 msgstr "葡萄牙文"
 
-#: src/library-page.c:110
+#: src/library-page.c:119
 msgid "Russian"
 msgstr "俄文"
 
-#: src/library-page.c:112
+#: src/library-page.c:121
 msgid "Korean"
 msgstr "韩文"
 
-#: src/library-page.c:114
+#: src/library-page.c:123
 msgid "Japanese"
 msgstr "日文"
 
-#: src/library-page.c:116
+#: src/library-page.c:125
 msgid "Polish"
 msgstr "波兰文"
 
-#: src/library-page.c:118
+#: src/library-page.c:127
 msgid "Ukrainian"
 msgstr "乌克兰文"
 
-#: src/library-page.c:120
+#: src/library-page.c:129
 msgid "Arabic"
 msgstr "阿拉伯文"
 
-#: src/library-page.c:214
+#: src/library-page.c:223
 msgid "All languages"
 msgstr "全部语言"
 
-#: src/library-page.c:352
+#: src/library-page.c:364
 msgid "No modules match the current filters."
 msgstr "没有符合当前筛选条件的模块。"
 
-#: src/library-page.c:361
+#: src/library-page.c:374 src/library-page.c:478
 #, c-format
 msgid "%u module(s)"
 msgstr "共 %u 个模块"
 
-#: src/library-page.c:371 src/library-page.c:1054
+#: src/library-page.c:385 src/library-page.c:1320
 msgid "Not installed"
 msgstr "未安装"
 
-#: src/library-page.c:373 src/library-page.c:1055
+#: src/library-page.c:387 src/library-page.c:1321
 msgid "Update available"
 msgstr "有更新"
 
-#: src/library-page.c:375 src/library-page.c:1056
+#: src/library-page.c:389 src/library-page.c:1322
 msgid "Installed - local version is newer"
 msgstr "已安装 - 本地版本较新"
 
-#: src/library-page.c:377 src/library-page.c:1057
+#: src/library-page.c:391 src/library-page.c:1323
 msgid "Installed - up to date"
 msgstr "已安装 - 已是最新"
 
-#: src/library-page.c:378 src/library-page.c:1055
+#: src/library-page.c:392 src/library-page.c:727 src/library-page.c:1321
+#: src/library-page.c:1325
 msgid "Installed"
 msgstr "已安装"
 
-#: src/library-page.c:411
+#: src/library-page.c:468
+msgid "No installed modules."
+msgstr "还没有安装模块。"
+
+#: src/library-page.c:495
 msgid "Install manager is not available"
 msgstr "安装管理器不可用"
 
-#: src/library-page.c:425
+#: src/library-page.c:509
 msgid "Source"
 msgstr "安装源"
 
-#: src/library-page.c:455 src/library-page.c:1170
+#: src/library-page.c:539 src/library-page.c:1478
 msgid "Select a module"
 msgstr "选择模块"
 
-#: src/library-page.c:516
+#: src/library-page.c:602
 #, c-format
 msgid "Local %s / Remote %s"
 msgstr "本地 %s / 远程 %s"
 
-#: src/library-page.c:522
+#: src/library-page.c:608 src/library-page.c:719
 #, c-format
 msgid ""
 "Type: %s\n"
@@ -844,54 +851,55 @@ msgstr ""
 "安装源：%s\n"
 "许可：%s"
 
-#: src/library-page.c:525 src/library-page.c:579 src/library-page.c:581
+#: src/library-page.c:611 src/library-page.c:665 src/library-page.c:667
+#: src/library-page.c:724 src/library-page.c:773 src/library-page.c:774
 msgid "Not specified"
 msgstr "未指定"
 
-#: src/library-page.c:534
+#: src/library-page.c:620 src/library-page.c:733
 msgid "⚠ This module may not be readable by this version of gsword."
 msgstr "⚠ 当前版本可能无法读取此模块。"
 
-#: src/library-page.c:537
+#: src/library-page.c:623 src/library-page.c:736
 msgid "⚠ This module is encrypted and may require unlocking."
 msgstr "⚠ 此模块已加密，可能需要解锁。"
 
-#: src/library-page.c:554
+#: src/library-page.c:640 src/library-page.c:752
 #, c-format
 msgid "Driver: %s\n"
 msgstr "驱动：%s\n"
 
-#: src/library-page.c:557
+#: src/library-page.c:643 src/library-page.c:755
 #, c-format
 msgid "Encoding: %s\n"
 msgstr "编码：%s\n"
 
-#: src/library-page.c:560
+#: src/library-page.c:646 src/library-page.c:758
 #, c-format
 msgid "Versification: %s\n"
 msgstr "章节体系：%s\n"
 
-#: src/library-page.c:563
+#: src/library-page.c:649
 #, c-format
 msgid "Minimum SWORD version: %s\n"
 msgstr "最低 SWORD 版本：%s\n"
 
-#: src/library-page.c:566
+#: src/library-page.c:652 src/library-page.c:761
 #, c-format
 msgid "Module ID: %s\n"
 msgstr "模块 ID：%s\n"
 
-#: src/library-page.c:567
+#: src/library-page.c:653 src/library-page.c:762
 #, c-format
 msgid "Config file: %s\n"
 msgstr "配置文件：%s\n"
 
-#: src/library-page.c:570
+#: src/library-page.c:656 src/library-page.c:765
 #, c-format
 msgid "Data path: %s"
 msgstr "数据路径：%s"
 
-#: src/library-page.c:577
+#: src/library-page.c:663 src/library-page.c:772
 #, c-format
 msgid ""
 "License: %s\n"
@@ -902,176 +910,184 @@ msgstr ""
 "\n"
 "版权：%s"
 
-#: src/library-page.c:587
+#: src/library-page.c:673 src/library-page.c:780
 msgid "No additional information is available."
 msgstr "暂无更多信息。"
 
-#: src/library-page.c:616
+#: src/library-page.c:723
+msgid "Local library"
+msgstr "本地模块库"
+
+#: src/library-page.c:808
 msgid "No source selected. Refresh the source list first."
 msgstr "未选择安装源。请先刷新安装源列表。"
 
-#: src/library-page.c:622
+#: src/library-page.c:815
 msgid "Cannot read remote modules"
 msgstr "无法读取远程模块"
 
-#: src/library-page.c:660
+#: src/library-page.c:874
 msgid "Refreshing install sources..."
 msgstr "正在刷新安装源..."
 
-#: src/library-page.c:675
+#: src/library-page.c:889
 msgid "Cannot refresh install sources"
 msgstr "无法刷新安装源"
 
-#: src/library-page.c:677
+#: src/library-page.c:891
 msgid "Install sources refreshed"
 msgstr "安装源已刷新"
 
-#: src/library-page.c:700
+#: src/library-page.c:914
 msgid "Refreshing remote module list..."
 msgstr "正在刷新远程模块列表..."
 
-#: src/library-page.c:739
+#: src/library-page.c:953
 msgid "Cannot refresh remote modules"
 msgstr "无法刷新远程模块"
 
-#: src/library-page.c:741
+#: src/library-page.c:955
 msgid "Remote module list refreshed"
 msgstr "远程模块列表已刷新"
 
-#: src/library-page.c:767
+#: src/library-page.c:981
 msgid "Installing module..."
 msgstr "正在安装模块..."
 
-#: src/library-page.c:785
+#: src/library-page.c:999
 msgid "Module install failed"
 msgstr "模块安装失败"
 
-#: src/library-page.c:803
+#: src/library-page.c:1017
 #, c-format
 msgid "Installed module %s"
 msgstr "已安装模块 %s"
 
-#: src/library-page.c:832
+#: src/library-page.c:1041
 msgid "Removing module..."
 msgstr "正在删除模块..."
 
-#: src/library-page.c:847
+#: src/library-page.c:1056
 msgid "Module removal failed"
 msgstr "模块删除失败"
 
-#: src/library-page.c:849
+#: src/library-page.c:1058
 msgid "Module removed"
 msgstr "模块已删除"
 
-#: src/library-page.c:871
+#: src/library-page.c:1081
 msgid "Cancelling..."
 msgstr "正在取消..."
 
-#: src/library-page.c:885
+#: src/library-page.c:1095
 msgid "Installing..."
 msgstr "正在安装..."
 
-#: src/library-page.c:903 src/library-page.c:907
+#: src/library-page.c:1113 src/library-page.c:1117
 msgid "Downloading"
 msgstr "下载中"
 
-#: src/library-page.c:903 src/library-page.c:907
+#: src/library-page.c:1113 src/library-page.c:1117
 msgid "bytes"
 msgstr "字节"
 
-#: src/library-page.c:931
+#: src/library-page.c:1141
 msgid "Enter a local SWORD directory and module name"
 msgstr "请输入本地 SWORD 目录和模块名称"
 
-#: src/library-page.c:936
+#: src/library-page.c:1146
 msgid "Local install failed"
 msgstr "本地安装失败"
 
-#: src/library-page.c:948
+#: src/library-page.c:1158
 msgid "Module installed from local directory"
 msgstr "已从本地目录安装模块"
 
-#: src/library-page.c:1042
+#: src/library-page.c:1309
 msgid "Install / Update"
 msgstr "安装 / 更新"
 
-#: src/library-page.c:1043
+#: src/library-page.c:1310
 msgid "Remove"
 msgstr "移除"
 
-#: src/library-page.c:1047
+#: src/library-page.c:1313
 msgid "Install from local directory"
 msgstr "从本地目录安装"
 
-#: src/library-page.c:1049
+#: src/library-page.c:1315
 msgid "All types"
 msgstr "全部类型"
 
-#: src/library-page.c:1049 src/module-sidebar.c:22
+#: src/library-page.c:1315 src/module-sidebar.c:22
 msgid "Bibles"
 msgstr "圣经"
 
-#: src/library-page.c:1051 src/module-sidebar.c:25
+#: src/library-page.c:1317 src/module-sidebar.c:25
 msgid "Daily Devotions"
 msgstr "每日灵修"
 
-#: src/library-page.c:1051 src/module-sidebar.c:26
+#: src/library-page.c:1317 src/module-sidebar.c:26
 msgid "General Books"
 msgstr "通用书籍"
 
-#: src/library-page.c:1052 src/module-sidebar.c:30
+#: src/library-page.c:1318 src/module-sidebar.c:30
 msgid "Other Modules"
 msgstr "其他模块"
 
-#: src/library-page.c:1054
+#: src/library-page.c:1320
 msgid "All statuses"
 msgstr "全部状态"
 
-#: src/library-page.c:1097
+#: src/library-page.c:1326
+msgid "Available"
+msgstr "可安装"
+
+#: src/library-page.c:1327
+msgid "Updates"
+msgstr "更新"
+
+#: src/library-page.c:1387
 msgid "Filter modules"
 msgstr "筛选模块"
 
-#: src/library-page.c:1105
+#: src/library-page.c:1395
 msgid "Clear filters"
 msgstr "清除筛选"
 
-#: src/library-page.c:1106
+#: src/library-page.c:1396
 msgid "0 module(s)"
 msgstr "共 0 个模块"
 
-#: src/library-page.c:1113
+#: src/library-page.c:1403
 msgid "Refresh the install source list"
 msgstr "刷新安装源列表"
 
-#: src/library-page.c:1115
+#: src/library-page.c:1405
 msgid "Refresh modules from the selected source"
 msgstr "从所选安装源刷新模块"
 
-#: src/library-page.c:1188
+#: src/library-page.c:1496
 msgid "Technical details"
 msgstr "详细信息"
 
-#: src/library-page.c:1198
+#: src/library-page.c:1506
 msgid "Copyright & license"
 msgstr "版权与许可"
 
-#: src/library-page.c:1208
+#: src/library-page.c:1516
 msgid "About this module"
 msgstr "关于此模块"
 
-#: src/library-page.c:1243
-msgid "Installed:"
-msgstr "已安装："
-
-#: src/library-page.c:1252
+#: src/library-page.c:1556
 msgid "Local SWORD library directory"
 msgstr "本地 SWORD 模块库目录"
 
-#: src/library-page.c:1254
+#: src/library-page.c:1558
 msgid "Module name"
 msgstr "模块名称"
 
-#: src/library-page.c:1256
+#: src/library-page.c:1560
 msgid "Install local module"
 msgstr "安装本地模块"
 
@@ -1345,7 +1361,7 @@ msgstr ""
 "\n"
 "请从模块库安装 Daily Light 或 Morning and Evening 等灵修模块。"
 
-#: src/devotion-page.c:225 src/plan-page.c:944 src/plan-page.c:1153
+#: src/devotion-page.c:225 src/plan-page.c:982 src/plan-page.c:1191
 msgid "Today"
 msgstr "今天"
 
@@ -1361,67 +1377,67 @@ msgstr "前一天"
 msgid "Next day"
 msgstr "后一天"
 
-#: src/plan-page.c:210
+#: src/plan-page.c:238
 msgid "No reading plans yet"
 msgstr "还没有阅读计划"
 
-#: src/plan-page.c:221 src/plan-page.c:291
+#: src/plan-page.c:249 src/plan-page.c:319
 #, fuzzy, c-format
 msgid "%d/%d days (%.0f%%) · streak %d"
 msgstr "%s  ·  %d/%d 天（%.1f%%）  ·  连续 %d 天"
 
-#: src/plan-page.c:301
+#: src/plan-page.c:330
 #, c-format
 msgid "Day %d: %s"
 msgstr "第 %d 天：%s"
 
-#: src/plan-page.c:309
+#: src/plan-page.c:339
 msgid "Plan complete"
 msgstr "计划已完成"
 
-#: src/plan-page.c:338
+#: src/plan-page.c:370
 #, c-format
 msgid "Day %d   %s%s"
 msgstr "第 %d 天   %s%s"
 
-#: src/plan-page.c:341
+#: src/plan-page.c:372
 msgid "   · today"
 msgstr "   · 今天"
 
-#: src/plan-page.c:354
+#: src/plan-page.c:386
 msgid "Done"
 msgstr "完成"
 
-#: src/plan-page.c:498
+#: src/plan-page.c:530
 msgid "Cannot rename plan"
 msgstr "无法重命名计划"
 
-#: src/plan-page.c:504
+#: src/plan-page.c:536
 msgid "Reading plan renamed"
 msgstr "阅读计划已重命名"
 
-#: src/plan-page.c:518
+#: src/plan-page.c:550
 msgid "Rename reading plan"
 msgstr "重命名阅读计划"
 
-#: src/plan-page.c:550
+#: src/plan-page.c:582
 msgid "Cannot duplicate plan"
 msgstr "无法复制计划"
 
-#: src/plan-page.c:562
+#: src/plan-page.c:594
 msgid "Reading plan duplicated"
 msgstr "阅读计划已复制"
 
-#: src/plan-page.c:584
+#: src/plan-page.c:616
 msgid "Preview unavailable for this reference."
 msgstr "无法预览此起始经文。"
 
-#: src/plan-page.c:586
+#: src/plan-page.c:622
 #, c-format
 msgid "Day 1: %s"
 msgstr "第 1 天：%s"
 
-#: src/plan-page.c:589
+#: src/plan-page.c:627
 #, c-format
 msgid ""
 "Day 1: %s\n"
@@ -1430,162 +1446,162 @@ msgstr ""
 "第 1 天：%s\n"
 "第 %u 天：%s"
 
-#: src/plan-page.c:630 src/plan-page.c:675 src/plan-page.c:699
+#: src/plan-page.c:668 src/plan-page.c:713 src/plan-page.c:737
 msgid "Cannot update plan"
 msgstr "无法更新计划"
 
-#: src/plan-page.c:633
+#: src/plan-page.c:671
 msgid "Reading plan updated"
 msgstr "阅读计划已更新"
 
-#: src/plan-page.c:681
+#: src/plan-page.c:719
 msgid "Day marked complete"
 msgstr "今日已标记完成"
 
-#: src/plan-page.c:703
+#: src/plan-page.c:741
 msgid "Completion undone"
 msgstr "已撤销完成"
 
-#: src/plan-page.c:753 src/plan-page.c:763
+#: src/plan-page.c:791 src/plan-page.c:801
 msgid "Cannot create plan"
 msgstr "无法创建计划"
 
-#: src/plan-page.c:755
+#: src/plan-page.c:793
 msgid "Invalid start reference or empty plan"
 msgstr "起始经文无效或计划为空"
 
-#: src/plan-page.c:771
+#: src/plan-page.c:809
 msgid "Reading plan created"
 msgstr "阅读计划已创建"
 
-#: src/plan-page.c:782 src/plan-page.c:1063
+#: src/plan-page.c:820 src/plan-page.c:1101
 msgid "90-day New Testament"
 msgstr "90 天读新约"
 
-#: src/plan-page.c:785 src/plan-page.c:1064
+#: src/plan-page.c:823 src/plan-page.c:1102
 msgid "30-day Psalms"
 msgstr "30 天读诗篇"
 
-#: src/plan-page.c:814
+#: src/plan-page.c:852
 msgid "Enter a plan name and start reference"
 msgstr "请输入计划名称和起始经文"
 
-#: src/plan-page.c:836
+#: src/plan-page.c:874
 msgid "Cannot delete plan"
 msgstr "无法删除计划"
 
-#: src/plan-page.c:843
+#: src/plan-page.c:881
 msgid "Reading plan deleted"
 msgstr "阅读计划已删除"
 
-#: src/plan-page.c:856
+#: src/plan-page.c:894
 msgid "Delete reading plan"
 msgstr "删除阅读计划？"
 
-#: src/plan-page.c:858
+#: src/plan-page.c:896
 #, c-format
 msgid "Delete “%s” and its progress?"
 msgstr "删除“%s”及其阅读进度？此操作无法撤销。"
 
-#: src/plan-page.c:930
+#: src/plan-page.c:968
 msgid "Your plans"
 msgstr "你的计划"
 
-#: src/plan-page.c:941
+#: src/plan-page.c:979
 msgid "Open today's reading"
 msgstr "打开今日阅读"
 
-#: src/plan-page.c:942
+#: src/plan-page.c:980
 msgid "Mark today complete"
 msgstr "标记今日完成"
 
-#: src/plan-page.c:943
+#: src/plan-page.c:981
 msgid "Undo"
 msgstr "撤销"
 
-#: src/plan-page.c:946
+#: src/plan-page.c:984
 msgid "Schedule"
 msgstr "进度安排"
 
-#: src/plan-page.c:948
+#: src/plan-page.c:986
 msgid "Create plan"
 msgstr "创建计划"
 
-#: src/plan-page.c:978
+#: src/plan-page.c:1016
 msgid "Rename plan"
 msgstr "重命名计划"
 
-#: src/plan-page.c:979
+#: src/plan-page.c:1017
 msgid "Duplicate plan"
 msgstr "复制计划"
 
-#: src/plan-page.c:1031
+#: src/plan-page.c:1069
 msgid "All days"
 msgstr "全部"
 
-#: src/plan-page.c:1031
+#: src/plan-page.c:1069
 msgid "Upcoming"
 msgstr "未完成"
 
-#: src/plan-page.c:1031
+#: src/plan-page.c:1069
 msgid "Completed"
 msgstr "已完成"
 
-#: src/plan-page.c:1039
+#: src/plan-page.c:1077
 msgid "Jump to today"
 msgstr "跳到今天"
 
-#: src/plan-page.c:1054
+#: src/plan-page.c:1092
 msgid "Start a reading plan"
 msgstr "开始阅读计划"
 
-#: src/plan-page.c:1058
+#: src/plan-page.c:1096
 msgid "Choose a template or create a custom plan to begin."
 msgstr "选择模板或创建自定义计划。"
 
-#: src/plan-page.c:1062
+#: src/plan-page.c:1100
 msgid "Custom plan"
 msgstr "自定义计划"
 
-#: src/plan-page.c:1093
+#: src/plan-page.c:1131
 msgid "Plan name"
 msgstr "计划名称"
 
-#: src/plan-page.c:1096
+#: src/plan-page.c:1134
 msgid "Start, e.g. Genesis 1"
 msgstr "起始，例如 Genesis 1"
 
-#: src/plan-page.c:1115
+#: src/plan-page.c:1153
 msgid "Delete plan"
 msgstr "删除计划"
 
-#: src/plan-page.c:1121
+#: src/plan-page.c:1159
 msgid "Days"
 msgstr "天数"
 
-#: src/plan-page.c:1123
+#: src/plan-page.c:1161
 msgid "Chapters/day"
 msgstr "每日章节数"
 
-#: src/plan-page.c:1136
+#: src/plan-page.c:1174
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr "计划从起始经文开始按章节推进。双击进度行可打开对应阅读。"
 
-#: src/plan-page.c:1142
+#: src/plan-page.c:1180
 msgid "Create a plan"
 msgstr "创建计划"
 
-#: src/plan-page.c:1155
+#: src/plan-page.c:1193
 msgid "Plans"
 msgstr "计划"
 
-#: src/plan-page.c:1158
+#: src/plan-page.c:1196
 msgid "Devotion"
 msgstr "灵修"
 
-#: src/plan-page.c:1161
+#: src/plan-page.c:1199
 msgid "Memorize"
 msgstr "背经"
 
@@ -1760,6 +1776,9 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "Installed:"
+#~ msgstr "已安装："
 
 #~ msgid "Create a reading plan to get started."
 #~ msgstr "创建阅读计划以开始。"
