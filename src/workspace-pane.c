@@ -18,7 +18,9 @@ struct _GswordWorkspacePane {
     GtkStringList *module_names;
     GswordReferenceChooser *reference_chooser;
     gchar *versification;
-    GtkToggleButton *follow;
+    GtkDropDown *follow_mode;
+    GtkEventController *focus;
+    gint mode;
     GtkScrolledWindow *scroll;
     GtkTextView *view;
     GtkTextTag *active_tag;
@@ -278,9 +280,9 @@ set_module(GswordWorkspacePane *pane, const gchar *name, const gchar *key)
             gsw_key_get_kind(gsw_module_get_key(pane->module)) ==
             GSW_KEY_KIND_VERSE;
 
-        gtk_widget_set_sensitive(GTK_WIDGET(pane->follow), can_follow);
+        gtk_widget_set_sensitive(GTK_WIDGET(pane->follow_mode), can_follow);
         if (!can_follow)
-            gtk_check_button_set_active(GTK_CHECK_BUTTON(pane->follow), FALSE);
+            gsword_workspace_pane_set_follow_mode(pane, 1);
     }
     pane->updating--;
     set_context(pane);
@@ -336,6 +338,7 @@ on_reference_activate(GswordReferenceChooser *chooser, gpointer user_data)
         !gsword_reference_chooser_get_reference(chooser, &book, &chapter,
                                                 &verse))
         return;
+    gsword_workspace_page_set_active_pane(pane->page, pane);
     osis = gsword_reference_chooser_dup_osis(chooser);
     if (osis == NULL || *osis == '\0') {
         g_free(osis);
@@ -375,13 +378,16 @@ on_module_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 }
 
 static void
-on_follow_changed(GtkCheckButton *button, gpointer user_data)
+on_follow_mode_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 {
     GswordWorkspacePane *pane = user_data;
+    guint selected = gtk_drop_down_get_selected(GTK_DROP_DOWN(object));
 
-    if (pane->updating)
+    (void)pspec;
+    if (pane->updating || selected == GTK_INVALID_LIST_POSITION)
         return;
-    if (gtk_check_button_get_active(button)) {
+    pane->mode = (gint)selected;
+    if (pane->mode == 0) {
         const gchar *reference =
             gsword_workspace_page_get_reference(pane->page);
 
@@ -389,6 +395,15 @@ on_follow_changed(GtkCheckButton *button, gpointer user_data)
             gsword_workspace_pane_set_reference(pane, reference);
     }
     gsword_workspace_page_save(pane->page);
+}
+
+static void
+on_focus_enter(GtkEventControllerFocus *controller, gpointer user_data)
+{
+    GswordWorkspacePane *pane = user_data;
+
+    (void)controller;
+    gsword_workspace_page_set_active_pane(pane->page, pane);
 }
 
 static void
@@ -411,6 +426,7 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     (void)n_press;
     if (pane->module == NULL)
         return;
+    gsword_workspace_page_set_active_pane(pane->page, pane);
     if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
         GDK_BUTTON_PRIMARY)
         return;
@@ -571,14 +587,15 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
                      G_CALLBACK(on_module_changed), pane);
     gtk_box_append(GTK_BOX(header), GTK_WIDGET(pane->module_selector));
 
-    pane->follow = GTK_TOGGLE_BUTTON(
-        gtk_check_button_new_with_label(_("Follow")));
-    gtk_check_button_set_active(GTK_CHECK_BUTTON(pane->follow), follow);
-    gtk_widget_set_tooltip_text(GTK_WIDGET(pane->follow),
-                                _("Follow the active passage"));
-    g_signal_connect(pane->follow, "toggled",
-                     G_CALLBACK(on_follow_changed), pane);
-    gtk_box_append(GTK_BOX(header), GTK_WIDGET(pane->follow));
+    pane->follow_mode = GTK_DROP_DOWN(gtk_drop_down_new_from_strings(
+        (const gchar *[]) { _("Follow"), _("Pinned"), _("Free"), NULL }));
+    pane->mode = follow ? 0 : 1;
+    gtk_drop_down_set_selected(pane->follow_mode, (guint)pane->mode);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(pane->follow_mode),
+                                _("Follow, pin, or free this comparison"));
+    g_signal_connect(pane->follow_mode, "notify::selected",
+                     G_CALLBACK(on_follow_mode_changed), pane);
+    gtk_box_append(GTK_BOX(header), GTK_WIDGET(pane->follow_mode));
 
     close = gtk_button_new_from_icon_name("window-close-symbolic");
     gtk_widget_add_css_class(close, "flat");
@@ -629,6 +646,13 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     g_signal_connect(click, "pressed", G_CALLBACK(on_clicked), pane);
     gtk_widget_add_controller(GTK_WIDGET(pane->view),
                               GTK_EVENT_CONTROLLER(click));
+    {
+        GtkEventController *focus = gtk_event_controller_focus_new();
+
+        g_signal_connect(focus, "enter", G_CALLBACK(on_focus_enter), pane);
+        pane->focus = focus;
+        gtk_widget_add_controller(pane->root, focus);
+    }
 
     gtk_box_append(GTK_BOX(pane->root), header);
     gtk_box_append(GTK_BOX(pane->root), key_box);
@@ -666,9 +690,26 @@ gsword_workspace_pane_get_module(GswordWorkspacePane *pane)
 gboolean
 gsword_workspace_pane_get_follow(GswordWorkspacePane *pane)
 {
-    return pane != NULL && pane->follow != NULL
-         ? gtk_check_button_get_active(GTK_CHECK_BUTTON(pane->follow))
-         : FALSE;
+    return pane != NULL && pane->mode == 0;
+}
+
+gint
+gsword_workspace_pane_get_follow_mode(GswordWorkspacePane *pane)
+{
+    return pane != NULL ? pane->mode : 1;
+}
+
+void
+gsword_workspace_pane_set_follow_mode(GswordWorkspacePane *pane, gint mode)
+{
+    if (pane == NULL)
+        return;
+    pane->mode = CLAMP(mode, 0, 2);
+    if (pane->follow_mode != NULL) {
+        pane->updating++;
+        gtk_drop_down_set_selected(pane->follow_mode, (guint)pane->mode);
+        pane->updating--;
+    }
 }
 
 GtkScrolledWindow *
@@ -688,14 +729,12 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
      * destruction cannot call back into freed pane memory or clear a model
      * that is already gone.
      */
-    if (pane->module_selector != NULL) {
+    if (pane->module_selector != NULL)
         g_signal_handlers_disconnect_by_data(pane->module_selector, pane);
-        pane->updating++;
-        gtk_drop_down_set_model(pane->module_selector, NULL);
-        pane->updating--;
-    }
-    if (pane->follow != NULL)
-        g_signal_handlers_disconnect_by_data(pane->follow, pane);
+    if (pane->follow_mode != NULL)
+        g_signal_handlers_disconnect_by_data(pane->follow_mode, pane);
+    if (pane->focus != NULL)
+        g_signal_handlers_disconnect_by_data(pane->focus, pane);
     if (pane->reference_chooser != NULL)
         g_signal_handlers_disconnect_by_data(pane->reference_chooser, pane);
     if (pane->scroll != NULL)

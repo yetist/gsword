@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 15:22+0800\n"
+"POT-Creation-Date: 2026-11-03 16:09+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,7 +43,8 @@ msgstr ""
 msgid "Show module sidebar"
 msgstr ""
 
-#: src/window.c:239 src/workspace-page.c:342 src/workspace-pane.c:246
+#: src/window.c:239 src/workspace-page.c:402 src/workspace-page.c:708
+#: src/workspace-pane.c:248
 msgid "No Bible text module is installed"
 msgstr ""
 
@@ -76,7 +77,7 @@ msgstr ""
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:108
+#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:109
 msgid "Preferences"
 msgstr ""
 
@@ -128,7 +129,7 @@ msgstr ""
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:976 src/preferences-dialog.c:113
+#: src/window.c:976 src/preferences-dialog.c:114
 msgid "Reading"
 msgstr ""
 
@@ -1371,7 +1372,7 @@ msgstr ""
 msgid "Commentary"
 msgstr ""
 
-#: src/study-panel.c:119 src/workspace-pane.c:204
+#: src/study-panel.c:119 src/workspace-pane.c:206
 msgid "No commentary for this verse."
 msgstr ""
 
@@ -1399,7 +1400,7 @@ msgstr ""
 msgid "Cannot read lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:568 src/workspace-pane.c:575
+#: src/study-panel.c:568 src/workspace-pane.c:591
 msgid "Follow"
 msgstr ""
 
@@ -1423,67 +1424,111 @@ msgstr ""
 msgid "Cross-refs"
 msgstr ""
 
-#: src/workspace-page.c:379
+#: src/workspace-page.c:429
 msgid "Parallel comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:544
+#: src/workspace-page.c:611
 msgid "Comparison order changed"
 msgstr ""
 
-#: src/workspace-page.c:626
+#: src/workspace-page.c:633
+msgid "Comparisons cleared"
+msgstr ""
+
+#: src/workspace-page.c:661
+msgid "Clear comparisons?"
+msgstr ""
+
+#: src/workspace-page.c:664
+msgid "All comparison panes will be removed. This cannot be undone."
+msgstr ""
+
+#: src/workspace-page.c:667
+msgid "_Cancel"
+msgstr ""
+
+#: src/workspace-page.c:668
+msgid "_Clear"
+msgstr ""
+
+#: src/workspace-page.c:738
+msgid "Four-way comparison ready"
+msgstr ""
+
+#: src/workspace-page.c:803 src/workspace-page.c:815
 msgid "Add comparison"
 msgstr ""
 
-#: src/workspace-page.c:627
+#: src/workspace-page.c:804
 msgid "Clear comparisons"
 msgstr ""
 
-#: src/workspace-page.c:628
+#: src/workspace-page.c:805
 msgid "Columns"
 msgstr ""
 
-#: src/workspace-page.c:629
+#: src/workspace-page.c:807
 msgid "Sync scroll"
 msgstr ""
 
-#: src/workspace-page.c:630
-msgid "No comparisons yet. Add a comparison to begin."
+#: src/workspace-page.c:809
+msgid "No comparisons yet"
 msgstr ""
 
-#: src/workspace-page.c:651
+#: src/workspace-page.c:811
+msgid "Choose a template or add a comparison pane to begin."
+msgstr ""
+
+#: src/workspace-page.c:813
+msgid "Two translations"
+msgstr ""
+
+#: src/workspace-page.c:814
+msgid "Four translations"
+msgstr ""
+
+#: src/workspace-page.c:855
 msgid "Keep comparison scroll positions together"
 msgstr ""
 
-#: src/workspace-pane.c:191
+#: src/workspace-pane.c:193
 msgid "No module selected."
 msgstr ""
 
-#: src/workspace-pane.c:205
+#: src/workspace-pane.c:207
 msgid "No content for this reference."
 msgstr ""
 
-#: src/workspace-pane.c:264
+#: src/workspace-pane.c:266
 msgid "Cannot open module."
 msgstr ""
 
-#: src/workspace-pane.c:459
+#: src/workspace-pane.c:475
 msgid "Comparison updated"
 msgstr ""
 
-#: src/workspace-pane.c:486
+#: src/workspace-pane.c:502
 msgid "Drag to another comparison to rearrange"
 msgstr ""
 
-#: src/workspace-pane.c:561
+#: src/workspace-pane.c:577
 msgid "Drag to rearrange comparison"
 msgstr ""
 
-#: src/workspace-pane.c:578
-msgid "Follow the active passage"
+#: src/workspace-pane.c:591
+msgid "Pinned"
 msgstr ""
 
-#: src/workspace-pane.c:585
+#: src/workspace-pane.c:591
+msgid "Free"
+msgstr ""
+
+#: src/workspace-pane.c:595
+msgid "Follow, pin, or free this comparison"
+msgstr ""
+
+#: src/workspace-pane.c:602
 msgid "Close comparison"
 msgstr ""
 
@@ -1574,35 +1619,35 @@ msgstr ""
 msgid "Toggle study panel"
 msgstr ""
 
-#: src/preferences-dialog.c:115
+#: src/preferences-dialog.c:116
 msgid "Reading appearance is applied immediately."
 msgstr ""
 
-#: src/preferences-dialog.c:119
+#: src/preferences-dialog.c:120
 msgid "Font size"
 msgstr ""
 
-#: src/preferences-dialog.c:120
+#: src/preferences-dialog.c:121
 msgid "Scale the scripture text size"
 msgstr ""
 
-#: src/preferences-dialog.c:131
+#: src/preferences-dialog.c:132
 msgid "Color scheme"
 msgstr ""
 
-#: src/preferences-dialog.c:133
+#: src/preferences-dialog.c:134
 msgid "Follow the desktop or force light/dark mode"
 msgstr ""
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Follow system"
 msgstr ""
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Light"
 msgstr ""
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Dark"
 msgstr ""
 

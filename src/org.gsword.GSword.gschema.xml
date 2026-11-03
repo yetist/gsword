@@ -34,7 +34,7 @@
     <key name="workspace-layout" type="s">
       <default>''</default>
       <summary>Comparison workspace layout</summary>
-      <description>Serialized list of comparison panes and their follow settings.</description>
+      <description>Serialized list of comparison panes and their follow mode (0 follow, 1 pinned, 2 free).</description>
     </key>
     <key name="workspace-columns" type="i">
       <default>2</default>
