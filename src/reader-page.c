@@ -17,6 +17,8 @@ struct _GswordReaderPage {
     GswordReaderToolbar *toolbar;
     GswordStudyPanel *study_panel;
     GtkTextView *view;
+    GtkPaned *paned;
+    GtkWidget *study_widget;
     GswordReferenceChooser *reference_chooser;
     GtkTextTag *highlight_tag;
     GtkTextTag *active_verse_tag;
@@ -27,6 +29,12 @@ struct _GswordReaderPage {
     gboolean range_active;
     GswordReaderHistory *history;
     gboolean history_navigating;
+    gboolean focus_mode;
+    gboolean focus_sidebar_visible;
+    gboolean focus_study_visible;
+    gboolean updating_study_width;
+    gboolean study_width_ready;
+    gint study_width;
 };
 
 static void apply_active_verse(GswordReaderPage *page);
@@ -759,20 +767,57 @@ gsword_reader_page_toggle_highlight(GswordReaderPage *page)
     apply_highlights(page);
 }
 
+static gchar *
+copy_verse_text(GswordReaderPage *page, gint verse)
+{
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(page->view);
+    gint line_count = gtk_text_buffer_get_line_count(buffer);
+    gint line;
+
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gint found;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        found = gsword_window_verse_number_from_line(text);
+        if (found == verse)
+            return text;
+        g_free(text);
+    }
+    return NULL;
+}
+
+static void
+copy_text_to_clipboard(GswordReaderPage *page, const gchar *text)
+{
+    GdkClipboard *clipboard =
+        gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+
+    gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
+    gsword_window_set_status(page->window, _("Copied to clipboard"));
+}
+
 void
 gsword_reader_page_copy(GswordReaderPage *page)
 {
     GtkTextBuffer *buffer;
     GtkTextIter start;
     GtkTextIter end;
-    gchar *text;
-    GdkClipboard *clipboard;
+    gchar *text = NULL;
 
     if (page == NULL)
         return;
     buffer = gtk_text_view_get_buffer(page->view);
-    if (page->range_active && page->range_start > 0 &&
-        page->range_end > 0) {
+    if (gtk_text_buffer_get_selection_bounds(buffer, &start, &end)) {
+        text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    } else if (page->range_active && page->range_start > 0 &&
+               page->range_end > 0) {
         gint first = MIN(page->range_start, page->range_end);
         gint last = MAX(page->range_start, page->range_end);
         gint line_count = gtk_text_buffer_get_line_count(buffer);
@@ -797,14 +842,57 @@ gsword_reader_page_copy(GswordReaderPage *page)
             g_free(line_text);
         }
         text = g_string_free(selected, FALSE);
-    } else {
+    } else if (page->active_verse > 0) {
+        text = copy_verse_text(page, page->active_verse);
+    }
+    if (text == NULL) {
         gtk_text_buffer_get_bounds(buffer, &start, &end);
         text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
     }
-    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(page->window));
-    gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
+    copy_text_to_clipboard(page, text);
     g_free(text);
-    gsword_window_set_status(page->window, _("Copied to clipboard"));
+}
+
+void
+gsword_reader_page_copy_chapter(GswordReaderPage *page)
+{
+    GtkTextBuffer *buffer;
+    GtkTextIter start;
+    GtkTextIter end;
+    gchar *text;
+
+    if (page == NULL)
+        return;
+    buffer = gtk_text_view_get_buffer(page->view);
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    copy_text_to_clipboard(page, text);
+    g_free(text);
+}
+
+void
+gsword_reader_page_set_focus_mode(GswordReaderPage *page, gboolean focus)
+{
+    if (page == NULL || page->focus_mode == focus)
+        return;
+    page->focus_mode = focus;
+    if (focus) {
+        page->focus_sidebar_visible =
+            gsword_window_get_sidebar_visible(page->window);
+        page->focus_study_visible =
+            gtk_widget_get_visible(page->study_widget);
+        gsword_window_set_sidebar_visible(page->window, FALSE);
+        gtk_widget_set_visible(page->study_widget, FALSE);
+        gtk_text_view_set_left_margin(page->view, 64);
+        gtk_text_view_set_right_margin(page->view, 64);
+    } else {
+        gsword_window_set_sidebar_visible(
+            page->window, page->focus_sidebar_visible);
+        gtk_widget_set_visible(page->study_widget, page->focus_study_visible);
+        gtk_text_view_set_left_margin(page->view, 28);
+        gtk_text_view_set_right_margin(page->view, 28);
+    }
+    gsword_reader_toolbar_set_focus_mode(page->toolbar, focus);
 }
 
 GswordStudyPanel *
@@ -946,6 +1034,83 @@ gsword_reader_page_history_entry(GswordReaderPage *page, guint index)
 }
 
 static void
+on_study_position_changed(GObject *object, GParamSpec *pspec,
+                          gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+    GSettings *settings = gsword_window_get_settings(page->window);
+    gint width = gtk_widget_get_width(GTK_WIDGET(object));
+    gint position = gtk_paned_get_position(GTK_PANED(object));
+    gint study_width = width - position;
+
+    (void)pspec;
+    if (page->updating_study_width || settings == NULL ||
+        !gtk_widget_get_visible(page->study_widget) ||
+        study_width < 200 || study_width > width - 160)
+        return;
+    page->study_width = study_width;
+    g_settings_set_int(settings, "study-width", study_width);
+}
+
+static void
+on_paned_width_changed(GObject *object, GParamSpec *pspec,
+                       gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+    gint width = gtk_widget_get_width(GTK_WIDGET(object));
+
+    (void)pspec;
+    if (page->study_width_ready || page->updating_study_width ||
+        !gtk_widget_get_visible(page->study_widget) ||
+        width <= page->study_width + 160)
+        return;
+    page->updating_study_width = TRUE;
+    gtk_paned_set_position(GTK_PANED(object), width - page->study_width);
+    page->updating_study_width = FALSE;
+    page->study_width_ready = TRUE;
+}
+
+static void
+on_study_visible_changed(GObject *object, GParamSpec *pspec,
+                         gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)object;
+    (void)pspec;
+    if (gtk_widget_get_visible(page->study_widget)) {
+        gint width = gtk_widget_get_width(GTK_WIDGET(page->paned));
+
+        page->study_width_ready = FALSE;
+        if (width > page->study_width + 160) {
+            page->updating_study_width = TRUE;
+            gtk_paned_set_position(page->paned,
+                                   width - page->study_width);
+            page->updating_study_width = FALSE;
+            page->study_width_ready = TRUE;
+        }
+    }
+}
+
+static gboolean
+on_reader_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                      guint keycode, GdkModifierType state, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)controller;
+    (void)keycode;
+    if (keyval == GDK_KEY_F11 ||
+        (keyval == GDK_KEY_f &&
+         (state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) ==
+         (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+        gsword_reader_page_set_focus_mode(page, !page->focus_mode);
+        return GDK_EVENT_STOP;
+    }
+    return GDK_EVENT_PROPAGATE;
+}
+
+static void
 reader_page_free(gpointer data)
 {
     GswordReaderPage *page = data;
@@ -962,8 +1127,10 @@ gsword_reader_page_new(GswordWindow *window)
     GswordReaderPage *page = g_new0(GswordReaderPage, 1);
     GtkWidget *reader_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *scrolled = gtk_scrolled_window_new();
-    GtkWidget *content_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *study_widget;
+    GSettings *settings;
+    gint study_width = 320;
     GtkGesture *reader_click;
 
     page->window = window;
@@ -1003,22 +1170,50 @@ gsword_reader_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->view));
     study_widget = gsword_study_panel_widget(page->study_panel);
-    gtk_widget_set_vexpand(content_box, TRUE);
+    page->study_widget = study_widget;
+    page->paned = GTK_PANED(paned);
+    gtk_widget_set_vexpand(paned, TRUE);
+    gtk_widget_set_hexpand(paned, TRUE);
     gtk_widget_set_hexpand(scrolled, TRUE);
     gtk_widget_set_vexpand(scrolled, TRUE);
     gtk_widget_set_hexpand(study_widget, FALSE);
-    gtk_widget_set_size_request(study_widget, 320, -1);
-    gtk_box_append(GTK_BOX(content_box), scrolled);
-    gtk_box_append(GTK_BOX(content_box), study_widget);
+    gtk_widget_set_size_request(study_widget, 240, -1);
+    gtk_paned_set_start_child(GTK_PANED(paned), scrolled);
+    gtk_paned_set_end_child(GTK_PANED(paned), study_widget);
+    gtk_paned_set_resize_start_child(GTK_PANED(paned), TRUE);
+    gtk_paned_set_resize_end_child(GTK_PANED(paned), FALSE);
+    gtk_paned_set_shrink_start_child(GTK_PANED(paned), FALSE);
+    gtk_paned_set_shrink_end_child(GTK_PANED(paned), FALSE);
+    settings = gsword_window_get_settings(window);
+    if (settings != NULL) {
+        study_width = g_settings_get_int(settings, "study-width");
+        if (study_width < 240 || study_width > 800)
+            study_width = 320;
+    }
+    page->study_width = study_width;
+    page->study_width_ready = FALSE;
+    g_signal_connect(paned, "notify::position",
+                     G_CALLBACK(on_study_position_changed), page);
+    g_signal_connect(paned, "notify::width",
+                     G_CALLBACK(on_paned_width_changed), page);
+    g_signal_connect(study_widget, "notify::visible",
+                     G_CALLBACK(on_study_visible_changed), page);
 
     gtk_box_append(GTK_BOX(reader_box),
                    gsword_reader_toolbar_widget(page->toolbar));
-    gtk_box_append(GTK_BOX(reader_box), content_box);
+    gtk_box_append(GTK_BOX(reader_box), paned);
 
     gsword_study_panel_bind_toggle(
         page->study_panel,
         gsword_reader_toolbar_get_study_toggle(page->toolbar));
 
+    {
+        GtkEventController *keys = gtk_event_controller_key_new();
+
+        g_signal_connect(keys, "key-pressed",
+                         G_CALLBACK(on_reader_key_pressed), page);
+        gtk_widget_add_controller(reader_box, keys);
+    }
     g_object_set_data_full(G_OBJECT(reader_box), "gsword-reader-page", page,
                            reader_page_free);
     return page;

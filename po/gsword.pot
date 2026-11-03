@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 17:09+0800\n"
+"POT-Creation-Date: 2026-11-03 18:06+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:112 src/window.c:924
+#: src/window.c:112 src/window.c:944
 msgid "Hide module sidebar"
 msgstr ""
 
@@ -43,105 +43,105 @@ msgstr ""
 msgid "Show module sidebar"
 msgstr ""
 
-#: src/window.c:239 src/workspace-page.c:481 src/workspace-page.c:790
-#: src/workspace-pane.c:472
+#: src/window.c:257 src/workspace-page.c:512 src/workspace-page.c:821
+#: src/workspace-pane.c:596
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:410 src/search-page.c:613 src/resource-page.c:206
+#: src/window.c:428 src/search-page.c:613 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr ""
 
-#: src/window.c:474
+#: src/window.c:492
 msgid "Commentary opened in study panel"
 msgstr ""
 
-#: src/window.c:494
+#: src/window.c:512
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:651 src/window.c:720
+#: src/window.c:669 src/window.c:738
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:660 src/window.c:933 src/search-page.c:862
+#: src/window.c:678 src/window.c:953 src/search-page.c:862
 msgid "Search"
 msgstr ""
 
-#: src/window.c:661
+#: src/window.c:679
 msgid "Focus reference"
 msgstr ""
 
-#: src/window.c:662 src/window.c:710 src/window.c:940 src/library-page.c:2274
+#: src/window.c:680 src/window.c:728 src/window.c:960 src/library-page.c:2274
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:109
+#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:109
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:664 src/search-page.c:881 src/library-page.c:2507
+#: src/window.c:682 src/search-page.c:881 src/library-page.c:2507
 msgid "Back"
 msgstr ""
 
-#: src/window.c:665
+#: src/window.c:683
 msgid "Forward"
 msgstr ""
 
-#: src/window.c:666
+#: src/window.c:684
 msgid "Toggle sidebar"
 msgstr ""
 
-#: src/window.c:669 src/window-services.c:64 src/library-page.c:1264
+#: src/window.c:687 src/window-services.c:64 src/library-page.c:1264
 msgid "Close"
 msgstr ""
 
-#: src/window.c:685
+#: src/window.c:703
 msgid "gsword contributors"
 msgstr ""
 
-#: src/window.c:688
+#: src/window.c:706
 msgid "A GObject implementation of the SWORD Bible study library."
 msgstr ""
 
-#: src/window.c:705
+#: src/window.c:723
 msgid "Show study panel"
 msgstr ""
 
-#: src/window.c:706
+#: src/window.c:724
 msgid "Comparison"
 msgstr ""
 
-#: src/window.c:707
+#: src/window.c:725
 msgid "Teaching"
 msgstr ""
 
-#: src/window.c:721
+#: src/window.c:739
 msgid "About gsword"
 msgstr ""
 
-#: src/window.c:724
+#: src/window.c:742
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:946
+#: src/window.c:966
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:976 src/preferences-dialog.c:114
+#: src/window.c:996 src/preferences-dialog.c:114
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:982
+#: src/window.c:1002
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:996 src/notes-page.c:190 src/notes-page.c:1869
+#: src/window.c:1016 src/notes-page.c:190 src/notes-page.c:1869
 msgid "Notes"
 msgstr ""
 
-#: src/window.c:1001
+#: src/window.c:1021
 msgid "Plan"
 msgstr ""
 
@@ -447,11 +447,11 @@ msgstr ""
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:95
+#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:122
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:103
+#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:130
 msgid "Verse removed from list"
 msgstr ""
 
@@ -463,11 +463,11 @@ msgstr ""
 msgid "This list is empty"
 msgstr ""
 
-#: src/notes-page.c:1188 src/reader-toolbar.c:85
+#: src/notes-page.c:1188 src/reader-toolbar.c:112
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/notes-page.c:1204 src/reader-toolbar.c:102
+#: src/notes-page.c:1204 src/reader-toolbar.c:129
 msgid "Verse added to list"
 msgstr ""
 
@@ -475,7 +475,7 @@ msgstr ""
 msgid "Select a note first"
 msgstr ""
 
-#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:138
+#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:165
 msgid "No verse lists yet"
 msgstr ""
 
@@ -1364,7 +1364,7 @@ msgstr ""
 msgid "Module details"
 msgstr ""
 
-#: src/module-sidebar.c:292
+#: src/module-sidebar.c:292 src/study-panel.c:583
 msgid "Manage modules"
 msgstr ""
 
@@ -1372,262 +1372,274 @@ msgstr ""
 msgid "Install, update or remove modules"
 msgstr ""
 
-#: src/study-panel.c:102 src/study-panel.c:649
+#: src/study-panel.c:103 src/study-panel.c:674
 msgid "Commentary"
 msgstr ""
 
-#: src/study-panel.c:119 src/workspace-pane.c:418
+#: src/study-panel.c:120 src/workspace-pane.c:541
 msgid "No commentary for this verse."
 msgstr ""
 
-#: src/study-panel.c:124
+#: src/study-panel.c:125
 msgid "No commentary module is installed."
 msgstr ""
 
-#: src/study-panel.c:161
+#: src/study-panel.c:165
 msgid "No Strong's data for this verse."
 msgstr ""
 
-#: src/study-panel.c:213
+#: src/study-panel.c:217
 msgid "No cross-references for this verse."
 msgstr ""
 
-#: src/study-panel.c:228
+#: src/study-panel.c:232
 msgid "No lexicon module is installed."
 msgstr ""
 
-#: src/study-panel.c:234
+#: src/study-panel.c:238
 msgid "Cannot look up lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:240
+#: src/study-panel.c:244
 msgid "Cannot read lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:568 src/workspace-pane.c:834
+#: src/study-panel.c:581 src/workspace-pane.c:988
 msgid "Follow"
 msgstr ""
 
-#: src/study-panel.c:579
+#: src/study-panel.c:594
 msgid "Lookup"
 msgstr ""
 
-#: src/study-panel.c:629 src/study-panel.c:655
+#: src/study-panel.c:654 src/study-panel.c:680
 msgid "Lexicon"
 msgstr ""
 
-#: src/study-panel.c:635
+#: src/study-panel.c:660
 msgid "Strong's / dictionary key"
 msgstr ""
 
-#: src/study-panel.c:651
+#: src/study-panel.c:676
 msgid "Strong's"
 msgstr ""
 
-#: src/study-panel.c:653
+#: src/study-panel.c:678
 msgid "Cross-refs"
 msgstr ""
 
-#: src/workspace-page.c:508
+#: src/workspace-page.c:539
 msgid "Parallel comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:693
+#: src/workspace-page.c:724
 msgid "Comparison order changed"
 msgstr ""
 
-#: src/workspace-page.c:715
+#: src/workspace-page.c:746
 msgid "Comparisons cleared"
 msgstr ""
 
-#: src/workspace-page.c:743
+#: src/workspace-page.c:774
 msgid "Clear comparisons?"
 msgstr ""
 
-#: src/workspace-page.c:746
+#: src/workspace-page.c:777
 msgid "All comparison panes will be removed. This cannot be undone."
 msgstr ""
 
-#: src/workspace-page.c:749
+#: src/workspace-page.c:780
 msgid "_Cancel"
 msgstr ""
 
-#: src/workspace-page.c:750
+#: src/workspace-page.c:781
 msgid "_Clear"
 msgstr ""
 
-#: src/workspace-page.c:820
+#: src/workspace-page.c:851
 msgid "Four-way comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:897 src/workspace-page.c:911
+#: src/workspace-page.c:930 src/workspace-page.c:944
 msgid "Add comparison"
 msgstr ""
 
-#: src/workspace-page.c:898
+#: src/workspace-page.c:931
 msgid "Clear comparisons"
 msgstr ""
 
-#: src/workspace-page.c:899
+#: src/workspace-page.c:932
 msgid "Columns"
 msgstr ""
 
-#: src/workspace-page.c:901
+#: src/workspace-page.c:934
 msgid "Sync scroll"
 msgstr ""
 
-#: src/workspace-page.c:903
+#: src/workspace-page.c:936
 msgid "Highlight differences"
 msgstr ""
 
-#: src/workspace-page.c:905
+#: src/workspace-page.c:938
 msgid "No comparisons yet"
 msgstr ""
 
-#: src/workspace-page.c:907
+#: src/workspace-page.c:940
 msgid "Choose a template or add a comparison pane to begin."
 msgstr ""
 
-#: src/workspace-page.c:909
+#: src/workspace-page.c:942
 msgid "Two translations"
 msgstr ""
 
-#: src/workspace-page.c:910
+#: src/workspace-page.c:943
 msgid "Four translations"
 msgstr ""
 
-#: src/workspace-page.c:951
+#: src/workspace-page.c:984
 msgid "Keep comparison scroll positions together"
 msgstr ""
 
-#: src/workspace-page.c:956
+#: src/workspace-page.c:989
 msgid "Highlight verses whose text differs between panes"
 msgstr ""
 
-#: src/workspace-pane.c:404
+#: src/workspace-pane.c:527
 msgid "No module selected."
 msgstr ""
 
-#: src/workspace-pane.c:419
+#: src/workspace-pane.c:542
 msgid "No content for this reference."
 msgstr ""
 
-#: src/workspace-pane.c:490
+#: src/workspace-pane.c:614
 msgid "Cannot open module."
 msgstr ""
 
-#: src/workspace-pane.c:718
+#: src/workspace-pane.c:869
 msgid "Comparison updated"
 msgstr ""
 
-#: src/workspace-pane.c:745
+#: src/workspace-pane.c:897
 msgid "Drag to another comparison to rearrange"
 msgstr ""
 
-#: src/workspace-pane.c:820
+#: src/workspace-pane.c:974
 msgid "Drag to rearrange comparison"
 msgstr ""
 
-#: src/workspace-pane.c:834
+#: src/workspace-pane.c:988
 msgid "Pinned"
 msgstr ""
 
-#: src/workspace-pane.c:834
+#: src/workspace-pane.c:988
 msgid "Free"
 msgstr ""
 
-#: src/workspace-pane.c:838
+#: src/workspace-pane.c:992
 msgid "Follow, pin, or free this comparison"
 msgstr ""
 
-#: src/workspace-pane.c:845
+#: src/workspace-pane.c:999
 msgid "Close comparison"
 msgstr ""
 
-#: src/reader-page.c:171
+#: src/reader-page.c:179
 msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
 
-#: src/reader-page.c:173
+#: src/reader-page.c:181
 msgid "No modules found"
 msgstr ""
 
-#: src/reader-page.c:197
+#: src/reader-page.c:205
 msgid "Cannot read entry"
 msgstr ""
 
-#: src/reader-page.c:240 src/reader-page.c:624 src/reader-page.c:662
+#: src/reader-page.c:248 src/reader-page.c:632 src/reader-page.c:670
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:749
+#: src/reader-page.c:757
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:754
+#: src/reader-page.c:762
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:757
+#: src/reader-page.c:765
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:807
+#: src/reader-page.c:803
 msgid "Copied to clipboard"
 msgstr ""
 
-#: src/reader-toolbar.c:125
+#: src/reader-toolbar.c:152
 msgid "Open a verse first"
 msgstr ""
 
-#: src/reader-toolbar.c:197
+#: src/reader-toolbar.c:224
 msgid "No reading history yet."
 msgstr ""
 
-#: src/reader-toolbar.c:355
+#: src/reader-toolbar.c:400
 msgid "Teach"
 msgstr ""
 
-#: src/reader-toolbar.c:385
+#: src/reader-toolbar.c:405
+msgid "Copy chapter"
+msgstr ""
+
+#: src/reader-toolbar.c:434
 msgid "Add verse to list"
 msgstr ""
 
-#: src/reader-toolbar.c:398 src/reader-toolbar.c:402
+#: src/reader-toolbar.c:448
+msgid "More reading actions"
+msgstr ""
+
+#: src/reader-toolbar.c:464 src/reader-toolbar.c:468
 msgid "Recent reading"
 msgstr ""
 
-#: src/reader-toolbar.c:414
+#: src/reader-toolbar.c:480
 msgid "Clear history"
 msgstr ""
 
-#: src/reader-toolbar.c:428
+#: src/reader-toolbar.c:494
 msgid "Back (Alt+Left)"
 msgstr ""
 
-#: src/reader-toolbar.c:429
+#: src/reader-toolbar.c:495
 msgid "Forward (Alt+Right)"
 msgstr ""
 
-#: src/reader-toolbar.c:452
+#: src/reader-toolbar.c:518
 msgid "Open teaching layout for this passage"
 msgstr ""
 
-#: src/reader-toolbar.c:457
-msgid "Copy entry"
+#: src/reader-toolbar.c:527
+msgid "Focus reading mode (F11)"
 msgstr ""
 
-#: src/reader-toolbar.c:458
+#: src/reader-toolbar.c:535
+msgid "Copy selection or current verse"
+msgstr ""
+
+#: src/reader-toolbar.c:536
 msgid "Open note for this verse"
 msgstr ""
 
-#: src/reader-toolbar.c:459
+#: src/reader-toolbar.c:537
 msgid "Toggle verse highlight"
 msgstr ""
 
-#: src/reader-toolbar.c:460
+#: src/reader-toolbar.c:538
 msgid "Toggle study panel"
 msgstr ""
 

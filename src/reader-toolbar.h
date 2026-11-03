@@ -21,6 +21,8 @@ GswordReferenceChooser *gsword_reader_toolbar_get_reference_chooser(
 GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
     GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);
+void gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
+                                          gboolean focus);
 
 G_END_DECLS
 

@@ -21,7 +21,14 @@ struct _GswordReaderToolbar {
     GtkListBox *history_list;
     GtkMenuButton *list_button;
     GtkBox *list_menu_box;
+    GtkWidget *copy_button;
+    GtkWidget *note_button;
+    GtkWidget *highlight_button;
+    GtkWidget *focus_button;
+    GtkWidget *more_button;
+    GtkToggleButton *study_button;
     gboolean updating_list_menu;
+    gboolean updating_focus;
 };
 
 static void
@@ -38,6 +45,26 @@ on_copy_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
     gsword_reader_page_copy(((GswordReaderToolbar *)user_data)->page);
+}
+
+static void
+on_copy_chapter_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+
+    (void)button;
+    gsword_reader_page_copy_chapter(toolbar->page);
+}
+
+static void
+on_focus_toggled(GtkToggleButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+
+    if (toolbar->updating_focus)
+        return;
+    gsword_reader_page_set_focus_mode(
+        toolbar->page, gtk_toggle_button_get_active(button));
 }
 
 static void
@@ -342,6 +369,24 @@ gsword_reader_toolbar_get_study_toggle(GswordReaderToolbar *toolbar)
     return toolbar != NULL ? toolbar->study_toggle : NULL;
 }
 
+void
+gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
+                                     gboolean focus)
+{
+    if (toolbar == NULL || toolbar->updating_focus)
+        return;
+    toolbar->updating_focus = TRUE;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toolbar->focus_button),
+                                 focus);
+    gtk_widget_set_visible(toolbar->copy_button, !focus);
+    gtk_widget_set_visible(toolbar->note_button, !focus);
+    gtk_widget_set_visible(GTK_WIDGET(toolbar->list_button), !focus);
+    gtk_widget_set_visible(toolbar->highlight_button, !focus);
+    gtk_widget_set_visible(GTK_WIDGET(toolbar->study_button), !focus);
+    gtk_widget_set_visible(toolbar->more_button, !focus);
+    toolbar->updating_focus = FALSE;
+}
+
 GswordReaderToolbar *
 gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
 {
@@ -354,6 +399,10 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
+    GtkWidget *focus_button = gtk_toggle_button_new();
+    GtkWidget *more_button = gtk_menu_button_new();
+    GtkWidget *more_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    GtkWidget *copy_chapter = gtk_button_new_with_label(_("Copy chapter"));
     GtkWidget *back;
     GtkWidget *forward;
     GtkWidget *history_button;
@@ -371,8 +420,8 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
 
     gtk_widget_set_margin_top(bar, 8);
     gtk_widget_set_margin_bottom(bar, 8);
-    gtk_widget_set_margin_start(bar, 12);
-    gtk_widget_set_margin_end(bar, 12);
+    gtk_widget_set_margin_start(bar, 8);
+    gtk_widget_set_margin_end(bar, 8);
 
     back = gtk_button_new_from_icon_name("go-previous-symbolic");
     forward = gtk_button_new_from_icon_name("go-next-symbolic");
@@ -393,6 +442,23 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
         g_signal_connect(popover, "show",
                          G_CALLBACK(on_list_popover_show), toolbar);
     }
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(more_button),
+                                  "open-menu-symbolic");
+    gtk_widget_add_css_class(more_button, "flat");
+    gtk_widget_set_tooltip_text(more_button, _("More reading actions"));
+    gtk_widget_add_css_class(copy_chapter, "flat");
+    gtk_widget_add_css_class(teaching, "flat");
+    g_signal_connect(copy_chapter, "clicked",
+                     G_CALLBACK(on_copy_chapter_clicked), toolbar);
+    gtk_box_append(GTK_BOX(more_box), copy_chapter);
+    gtk_box_append(GTK_BOX(more_box), teaching);
+    {
+        GtkWidget *popover = gtk_popover_new();
+
+        gtk_popover_set_child(GTK_POPOVER(popover), more_box);
+        gtk_menu_button_set_popover(GTK_MENU_BUTTON(more_button), popover);
+    }
+    toolbar->more_button = more_button;
     toolbar->list_button = GTK_MENU_BUTTON(list_add);
     gtk_widget_add_css_class(history_button, "flat");
     gtk_widget_set_tooltip_text(history_button, _("Recent reading"));
@@ -452,9 +518,21 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
                                 _("Open teaching layout for this passage"));
     gtk_button_set_icon_name(GTK_BUTTON(study_button),
                              "dialog-information-symbolic");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), FALSE);
     toolbar->study_toggle = GTK_TOGGLE_BUTTON(study_button);
-    gtk_widget_set_tooltip_text(copy, _("Copy entry"));
+    gtk_button_set_icon_name(GTK_BUTTON(focus_button),
+                             "view-fullscreen-symbolic");
+    gtk_widget_add_css_class(focus_button, "flat");
+    gtk_widget_set_tooltip_text(focus_button,
+                                _("Focus reading mode (F11)"));
+    g_signal_connect(focus_button, "toggled",
+                     G_CALLBACK(on_focus_toggled), toolbar);
+    toolbar->focus_button = focus_button;
+    toolbar->study_button = GTK_TOGGLE_BUTTON(study_button);
+    toolbar->copy_button = copy;
+    toolbar->note_button = note;
+    toolbar->highlight_button = highlight;
+    gtk_widget_set_tooltip_text(copy, _("Copy selection or current verse"));
     gtk_widget_set_tooltip_text(note, _("Open note for this verse"));
     gtk_widget_set_tooltip_text(highlight, _("Toggle verse highlight"));
     gtk_widget_set_tooltip_text(study_button, _("Toggle study panel"));
@@ -463,12 +541,13 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_box_append(GTK_BOX(bar), forward);
     gtk_box_append(GTK_BOX(bar), history_button);
     gtk_box_append(GTK_BOX(bar), GTK_WIDGET(toolbar->reference_chooser));
+    gtk_box_append(GTK_BOX(bar), copy);
     gtk_box_append(GTK_BOX(bar), note);
     gtk_box_append(GTK_BOX(bar), list_add);
     gtk_box_append(GTK_BOX(bar), highlight);
-    gtk_box_append(GTK_BOX(bar), teaching);
     gtk_box_append(GTK_BOX(bar), study_button);
-    gtk_box_append(GTK_BOX(bar), copy);
+    gtk_box_append(GTK_BOX(bar), focus_button);
+    gtk_box_append(GTK_BOX(bar), more_button);
 
     g_object_set_data_full(G_OBJECT(bar), "gsword-reader-toolbar", toolbar,
                            g_free);
