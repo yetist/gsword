@@ -253,6 +253,22 @@ gsword_module_sidebar_populate(GswordModuleSidebar *sidebar)
         }
     }
 
+    if (first == NULL) {
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *label = gtk_label_new(_("No modules installed."));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_widget_set_margin_top(label, 12);
+        gtk_widget_set_margin_bottom(label, 12);
+        gtk_widget_set_margin_start(label, 10);
+        gtk_widget_set_margin_end(label, 10);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_append(sidebar->list, row);
+    }
+
     g_ptr_array_unref(infos);
     g_free(wanted);
 

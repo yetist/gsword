@@ -581,10 +581,13 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
         gchar *reference =
             gsword_window_current_start_reference(page->window);
 
-        gsword_workspace_page_add_pane(page, module, reference, TRUE, FALSE);
+        if (module != NULL) {
+            gsword_workspace_page_add_pane(page, module, reference, TRUE,
+                                           FALSE);
+            created_default = TRUE;
+        }
         g_free(module);
         g_free(reference);
-        created_default = TRUE;
     } else {
         GVariant *layout;
         GVariantIter *iter;
@@ -606,11 +609,13 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
             gchar *reference =
                 gsword_window_current_start_reference(page->window);
 
-            gsword_workspace_page_add_pane(page, module, reference, TRUE,
-                                           FALSE);
+            if (module != NULL) {
+                gsword_workspace_page_add_pane(page, module, reference, TRUE,
+                                               FALSE);
+                created_default = TRUE;
+            }
             g_free(module);
             g_free(reference);
-            created_default = TRUE;
         } else {
             g_variant_get(layout, new_format ? "a(ssi)" : "a(ssb)", &iter);
             for (;;) {
@@ -732,6 +737,12 @@ on_add_clicked(GtkButton *button, gpointer user_data)
     gchar *reference = gsword_window_current_start_reference(page->window);
 
     (void)button;
+    if (name == NULL) {
+        gsword_window_set_status(page->window,
+                                 _("No Bible text module is installed"));
+        g_free(reference);
+        return;
+    }
     gsword_workspace_page_add_pane(page, name, reference, TRUE, TRUE);
     g_free(name);
     g_free(reference);
@@ -858,6 +869,15 @@ on_empty_four_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_empty_manage_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWorkspacePage *page = user_data;
+
+    (void)button;
+    gsword_window_open_library(page->window);
+}
+
+static void
 on_empty_add_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -942,6 +962,7 @@ gsword_workspace_page_new(GswordWindow *window)
     GtkWidget *two = gtk_button_new_with_label(_("Two translations"));
     GtkWidget *four = gtk_button_new_with_label(_("Four translations"));
     GtkWidget *add_pane = gtk_button_new_with_label(_("Add comparison"));
+    GtkWidget *manage = gtk_button_new_with_label(_("Manage modules"));
     GtkWidget *scrolled = gtk_scrolled_window_new();
 
     page->window = window;
@@ -1026,9 +1047,13 @@ gsword_workspace_page_new(GswordWindow *window)
                      G_CALLBACK(on_empty_four_clicked), page);
     g_signal_connect(add_pane, "clicked",
                      G_CALLBACK(on_empty_add_clicked), page);
+    g_signal_connect(manage, "clicked",
+                     G_CALLBACK(on_empty_manage_clicked), page);
+    gtk_widget_add_css_class(manage, "suggested-action");
     gtk_box_append(GTK_BOX(empty_buttons), two);
     gtk_box_append(GTK_BOX(empty_buttons), four);
     gtk_box_append(GTK_BOX(empty_buttons), add_pane);
+    gtk_box_append(GTK_BOX(empty_buttons), manage);
     gtk_box_append(GTK_BOX(empty), empty_title);
     gtk_box_append(GTK_BOX(empty), empty_text);
     gtk_box_append(GTK_BOX(empty), empty_buttons);

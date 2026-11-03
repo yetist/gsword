@@ -18,6 +18,7 @@ struct _GswordReaderPage {
     GswordStudyPanel *study_panel;
     GtkTextView *view;
     GtkWidget *scrolled;
+    GtkWidget *empty_bar;
     GtkPaned *paned;
     GtkWidget *study_widget;
     GswordReferenceChooser *reference_chooser;
@@ -176,6 +177,15 @@ gsword_reader_page_set_reading_width(GswordReaderPage *page, gint width)
 }
 
 static void
+on_empty_manage_modules(GtkButton *button, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)button;
+    gsword_window_open_library(page->window);
+}
+
+static void
 save_last_position(GswordReaderPage *page)
 {
     GSettings *settings = gsword_window_get_settings(page->window);
@@ -299,10 +309,14 @@ gsword_reader_page_refresh(GswordReaderPage *page)
             _("No modules found.\n\nInstall SWORD modules or start gsword with "
               "--library PATH."));
         gsword_window_set_status(self, _("No modules found"));
+        gtk_widget_set_visible(page->empty_bar, TRUE);
+        gsword_reader_toolbar_set_available(page->toolbar, FALSE);
         sync_reference_chooser(page);
         gsword_window_refresh_search_index(self);
         return;
     }
+    gtk_widget_set_visible(page->empty_bar, FALSE);
+    gsword_reader_toolbar_set_available(page->toolbar, TRUE);
 
     if (gsw_key_get_kind(gsw_module_get_key(module)) == GSW_KEY_KIND_VERSE) {
         GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(module);
@@ -1345,6 +1359,10 @@ gsword_reader_page_new(GswordWindow *window)
 {
     GswordReaderPage *page = g_new0(GswordReaderPage, 1);
     GtkWidget *reader_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkWidget *empty_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    GtkWidget *empty_label = gtk_label_new(
+        _("No Bible text module is installed."));
+    GtkWidget *empty_manage = gtk_button_new_with_label(_("Manage modules"));
     GtkWidget *scrolled = gtk_scrolled_window_new();
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *study_widget;
@@ -1477,8 +1495,24 @@ gsword_reader_page_new(GswordWindow *window)
     g_signal_connect(study_widget, "notify::visible",
                      G_CALLBACK(on_study_visible_changed), page);
 
+    page->empty_bar = empty_bar;
+    gtk_widget_set_margin_top(empty_bar, 8);
+    gtk_widget_set_margin_bottom(empty_bar, 8);
+    gtk_widget_set_margin_start(empty_bar, 12);
+    gtk_widget_set_margin_end(empty_bar, 12);
+    gtk_widget_add_css_class(empty_label, "dim-label");
+    gtk_widget_set_hexpand(empty_label, TRUE);
+    gtk_label_set_xalign(GTK_LABEL(empty_label), 0.0f);
+    gtk_widget_add_css_class(empty_manage, "suggested-action");
+    g_signal_connect(empty_manage, "clicked",
+                     G_CALLBACK(on_empty_manage_modules), page);
+    gtk_box_append(GTK_BOX(empty_bar), empty_label);
+    gtk_box_append(GTK_BOX(empty_bar), empty_manage);
+    gtk_widget_set_visible(empty_bar, FALSE);
+
     gtk_box_append(GTK_BOX(reader_box),
                    gsword_reader_toolbar_widget(page->toolbar));
+    gtk_box_append(GTK_BOX(reader_box), empty_bar);
     gtk_box_append(GTK_BOX(reader_box), paned);
 
     gsword_study_panel_bind_toggle(
