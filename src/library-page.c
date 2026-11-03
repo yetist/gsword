@@ -151,6 +151,8 @@ struct _GswordLibraryPage {
     GtkToggleButton *updates_view_button;
     GtkButton *update_all_button;
     GtkButton *retry_failed_button;
+    GtkButton *pause_queue_button;
+    gboolean queue_paused;
     GPtrArray *update_queue;
     GPtrArray *failed_updates;
     GswInstallSource *update_source;
@@ -1442,6 +1444,12 @@ rebuild_queue_view(GswordWindow *self)
     if (priv->install_queue_scroll != NULL)
         gtk_widget_set_visible(priv->install_queue_scroll,
             priv->update_queue != NULL && priv->update_queue->len > 0);
+    if (priv->pause_queue_button != NULL) {
+        gtk_widget_set_visible(GTK_WIDGET(priv->pause_queue_button),
+            priv->update_queue != NULL && priv->update_queue->len > 0);
+        gtk_button_set_label(priv->pause_queue_button,
+            priv->queue_paused ? _("Resume") : _("Pause"));
+    }
 }
 
 static void
@@ -1525,6 +1533,7 @@ on_update_all_clicked(GtkButton *button, gpointer user_data)
     g_clear_object(&priv->update_source);
     priv->update_source = g_object_ref(source);
     priv->updating_all = TRUE;
+    priv->queue_paused = FALSE;
     rebuild_queue_view(self);
     start_next_update(self);
 }
@@ -1683,6 +1692,26 @@ on_retry_failed_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_pause_queue_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+
+    (void)button;
+    if (priv->queue_paused) {
+        priv->queue_paused = FALSE;
+        priv->updating_all = TRUE;
+        gtk_button_set_label(GTK_BUTTON(button), _("Pause"));
+        gsword_window_set_status(self, _("Resuming updates"));
+        start_next_update(self);
+    } else {
+        priv->queue_paused = TRUE;
+        gtk_button_set_label(GTK_BUTTON(button), _("Resume"));
+        gsword_window_set_status(self, _("Pausing after current module..."));
+    }
+}
+
+static void
 on_install_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -1700,6 +1729,7 @@ on_install_clicked(GtkButton *button, gpointer user_data)
             return;
     }
     priv->updating_all = FALSE;
+    priv->queue_paused = FALSE;
     g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
     g_clear_object(&priv->update_source);
     rebuild_queue_view(self);
@@ -1748,6 +1778,14 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
         if (!installed && installed_name != NULL && priv->failed_updates != NULL)
             g_ptr_array_add(priv->failed_updates, g_strdup(installed_name));
         g_free(installed_name);
+        if (priv->queue_paused) {
+            priv->updating_all = FALSE;
+            gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
+            gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
+            g_clear_object(&priv->install_cancellable);
+            gsword_window_set_status(self, _("Updates paused"));
+            return;
+        }
         start_next_update(self);
         return;
     }
@@ -2230,6 +2268,7 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *updates_view;
     GtkWidget *update_all = gtk_button_new_with_label(_("Update all"));
     GtkWidget *retry_failed = gtk_button_new_with_label(_("Retry failed"));
+    GtkWidget *pause_queue = gtk_button_new_with_label(_("Pause"));
     GtkWidget *proxy = gtk_button_new_with_label(_("Proxy"));
     GtkWidget *manage_sources = gtk_button_new_with_label(_("Manage sources"));
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -2302,8 +2341,11 @@ gsword_library_page_new(GswordWindow *self)
     gtk_widget_set_tooltip_text(update_all, _("Install all available updates"));
     gtk_widget_set_visible(update_all, FALSE);
     gtk_widget_set_visible(retry_failed, FALSE);
+    gtk_widget_set_visible(pause_queue, FALSE);
     g_signal_connect(update_all, "clicked",
                      G_CALLBACK(on_update_all_clicked), self);
+    g_signal_connect(pause_queue, "clicked",
+                     G_CALLBACK(on_pause_queue_clicked), self);
     g_signal_connect(retry_failed, "clicked",
                      G_CALLBACK(on_retry_failed_clicked), self);
     gtk_widget_add_css_class(view_row, "linked");
@@ -2312,6 +2354,7 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(view_row), updates_view);
     gtk_box_append(GTK_BOX(view_row), update_all);
     gtk_box_append(GTK_BOX(view_row), retry_failed);
+    gtk_box_append(GTK_BOX(view_row), pause_queue);
     gtk_box_append(GTK_BOX(view_row), proxy);
     gtk_box_append(GTK_BOX(view_row), manage_sources);
 
@@ -2706,6 +2749,7 @@ gsword_library_page_new(GswordWindow *self)
     priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);
     priv->update_all_button = GTK_BUTTON(update_all);
     priv->retry_failed_button = GTK_BUTTON(retry_failed);
+    priv->pause_queue_button = GTK_BUTTON(pause_queue);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(installed_view), TRUE);
     update_library_view(self, 0);
     return priv;
