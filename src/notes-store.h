@@ -14,6 +14,7 @@ typedef struct {
     gchar *display_key;
     gchar *text;
     gchar *tags;
+    gint64 updated;
 } GswordNote;
 
 typedef struct {
@@ -41,7 +42,8 @@ GswordNote *gsword_notes_store_get_note(GswordNotesStore *self,
                                         const gchar *module,
                                         const gchar *key);
 GPtrArray *gsword_notes_store_list_notes(GswordNotesStore *self,
-                                         const gchar *query);
+                                         const gchar *query,
+                                         const gchar *tag);
 gboolean gsword_notes_store_delete_note(GswordNotesStore *self,
                                         gint64 id, GError **error);
 void gsword_note_free(GswordNote *note);

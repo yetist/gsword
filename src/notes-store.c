@@ -153,14 +153,15 @@ note_from_statement(sqlite3_stmt *stmt)
     note->key = g_strdup((const gchar *)sqlite3_column_text(stmt, 2));
     note->display_key = g_strdup((const gchar *)sqlite3_column_text(stmt, 3));
     note->text = g_strdup((const gchar *)sqlite3_column_text(stmt, 4));
-    note->tags = g_strdup((const gchar *)sqlite3_column_text(stmt, 5));
+    note->updated = sqlite3_column_int64(stmt, 5);
+    note->tags = g_strdup((const gchar *)sqlite3_column_text(stmt, 6));
     if (note->tags == NULL)
         note->tags = g_strdup("");
     return note;
 }
 
 static const gchar *note_select_sql =
-    "SELECT n.id, n.module, n.key, n.display_key, n.text,"
+    "SELECT n.id, n.module, n.key, n.display_key, n.text, n.updated,"
     " COALESCE((SELECT group_concat(t.name, ', ') FROM note_tags nt"
     "  JOIN tags t ON t.id = nt.tag_id WHERE nt.note_id = n.id), '')"
     " FROM notes n";
@@ -186,7 +187,8 @@ gsword_notes_store_get_note(GswordNotesStore *self, const gchar *module,
 }
 
 GPtrArray *
-gsword_notes_store_list_notes(GswordNotesStore *self, const gchar *query)
+gsword_notes_store_list_notes(GswordNotesStore *self, const gchar *query,
+                              const gchar *tag)
 {
     GPtrArray *result = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsword_note_free);
@@ -194,9 +196,11 @@ gsword_notes_store_list_notes(GswordNotesStore *self, const gchar *query)
     gchar *pattern = g_strdup_printf("%%%s%%",
                                      query != NULL ? query : "");
     gchar *sql = g_strconcat(note_select_sql,
-        " WHERE ? = '' OR n.text LIKE ? OR n.display_key LIKE ?"
+        " WHERE (? = '' OR n.text LIKE ? OR n.display_key LIKE ?"
         " OR EXISTS (SELECT 1 FROM note_tags nt JOIN tags t"
-        "  ON t.id = nt.tag_id WHERE nt.note_id = n.id AND t.name LIKE ?)"
+        "  ON t.id = nt.tag_id WHERE nt.note_id = n.id AND t.name LIKE ?))"
+        " AND (? = '' OR EXISTS (SELECT 1 FROM note_tags nt JOIN tags t"
+        "  ON t.id = nt.tag_id WHERE nt.note_id = n.id AND t.name = ?))"
         " ORDER BY n.updated DESC LIMIT 200", NULL);
 
     if (sqlite3_prepare_v2(self->db, sql, -1, &stmt, NULL) == SQLITE_OK) {
@@ -205,6 +209,10 @@ gsword_notes_store_list_notes(GswordNotesStore *self, const gchar *query)
         sqlite3_bind_text(stmt, 2, pattern, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 3, pattern, -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 4, pattern, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 5, tag != NULL ? tag : "", -1,
+                          SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 6, tag != NULL ? tag : "", -1,
+                          SQLITE_TRANSIENT);
         while (sqlite3_step(stmt) == SQLITE_ROW)
             g_ptr_array_add(result, note_from_statement(stmt));
     }
