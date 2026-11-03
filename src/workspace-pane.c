@@ -39,6 +39,9 @@ struct _GswordWorkspacePane {
     guint scroll_idle;
     guint scrolling_idle;
     gboolean scrolling;
+    gboolean press_pending;
+    gdouble press_x;
+    gdouble press_y;
     PendingScroll pending_scroll;
     gint pending_verse;
     gdouble restore_scroll_value;
@@ -756,8 +759,24 @@ on_focus_enter(GtkEventControllerFocus *controller, gpointer user_data)
 }
 
 static void
-on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
+on_pressed(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
            gpointer user_data)
+{
+    GswordWorkspacePane *pane = user_data;
+
+    (void)n_press;
+    gsword_workspace_page_set_active_pane(pane->page, pane);
+    if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
+        GDK_BUTTON_PRIMARY)
+        return;
+    pane->press_pending = TRUE;
+    pane->press_x = x;
+    pane->press_y = y;
+}
+
+static void
+on_released(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
+            gpointer user_data)
 {
     GswordWorkspacePane *pane = user_data;
     GtkTextView *view;
@@ -767,6 +786,8 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     GtkTextIter line_end;
     gchar *line;
     GError *error = NULL;
+    gdouble dx;
+    gdouble dy;
     gint verse;
     gint bx;
     gint by;
@@ -778,11 +799,16 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     GswModuleInfo *info;
 
     (void)n_press;
-    gsword_workspace_page_set_active_pane(pane->page, pane);
+    if (!pane->press_pending)
+        return;
+    pane->press_pending = FALSE;
     if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
         GDK_BUTTON_PRIMARY)
         return;
-    gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+    dx = x - pane->press_x;
+    dy = y - pane->press_y;
+    if (dx * dx + dy * dy > 16.0)
+        return;
     if (pane->module == NULL)
         return;
     info = gsw_module_get_info(pane->module);
@@ -804,7 +830,6 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     if (by < line_y || by >= line_y + line_height)
         return;
     buffer = gtk_text_view_get_buffer(view);
-    gtk_text_buffer_place_cursor(buffer, &iter);
     line_start = iter;
     gtk_text_iter_set_line_offset(&line_start, 0);
     line_end = line_start;
@@ -1020,9 +1045,8 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     click = gtk_gesture_click_new();
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click),
                                   GDK_BUTTON_PRIMARY);
-    gtk_event_controller_set_propagation_phase(
-        GTK_EVENT_CONTROLLER(click), GTK_PHASE_CAPTURE);
-    g_signal_connect(click, "pressed", G_CALLBACK(on_clicked), pane);
+    g_signal_connect(click, "pressed", G_CALLBACK(on_pressed), pane);
+    g_signal_connect(click, "released", G_CALLBACK(on_released), pane);
     gtk_widget_add_controller(GTK_WIDGET(pane->view),
                               GTK_EVENT_CONTROLLER(click));
     {
