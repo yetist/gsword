@@ -430,6 +430,20 @@ gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
     toolbar->updating_focus = FALSE;
 }
 
+void
+gsword_reader_toolbar_set_available(GswordReaderToolbar *toolbar,
+                                    gboolean available)
+{
+    if (toolbar == NULL)
+        return;
+    gtk_widget_set_sensitive(toolbar->copy_button, available);
+    gtk_widget_set_sensitive(toolbar->note_button, available);
+    gtk_widget_set_sensitive(GTK_WIDGET(toolbar->list_button), available);
+    gtk_widget_set_sensitive(toolbar->highlight_button, available);
+    gtk_widget_set_sensitive(GTK_WIDGET(toolbar->study_button), available);
+    gtk_widget_set_sensitive(toolbar->more_button, available);
+}
+
 GswordReaderToolbar *
 gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
 {

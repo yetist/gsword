@@ -23,6 +23,8 @@ GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
 void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
                                           gboolean focus);
+void gsword_reader_toolbar_set_available(GswordReaderToolbar *toolbar,
+                                         gboolean available);
 
 G_END_DECLS
 
