@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 09:40+0800\n"
+"POT-Creation-Date: 2026-11-03 09:42+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -409,11 +409,11 @@ msgstr ""
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:998 src/notes-page.c:1129
+#: src/notes-page.c:998 src/notes-page.c:1129 src/reader-toolbar.c:95
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1002 src/notes-page.c:1138
+#: src/notes-page.c:1002 src/notes-page.c:1138 src/reader-toolbar.c:103
 msgid "Verse removed from list"
 msgstr ""
 
@@ -425,11 +425,11 @@ msgstr ""
 msgid "This list is empty"
 msgstr ""
 
-#: src/notes-page.c:1121
+#: src/notes-page.c:1121 src/reader-toolbar.c:85
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/notes-page.c:1137
+#: src/notes-page.c:1137 src/reader-toolbar.c:102
 msgid "Verse added to list"
 msgstr ""
 
@@ -437,7 +437,7 @@ msgstr ""
 msgid "Select a note first"
 msgstr ""
 
-#: src/notes-page.c:1168 src/notes-page.c:1655
+#: src/notes-page.c:1168 src/notes-page.c:1655 src/reader-toolbar.c:138
 msgid "No verse lists yet"
 msgstr ""
 
@@ -1207,47 +1207,55 @@ msgstr ""
 msgid "Copied to clipboard"
 msgstr ""
 
-#: src/reader-toolbar.c:81
+#: src/reader-toolbar.c:125
+msgid "Open a verse first"
+msgstr ""
+
+#: src/reader-toolbar.c:197
 msgid "No reading history yet."
 msgstr ""
 
-#: src/reader-toolbar.c:238
+#: src/reader-toolbar.c:355
 msgid "Teach"
 msgstr ""
 
-#: src/reader-toolbar.c:266 src/reader-toolbar.c:270
+#: src/reader-toolbar.c:385
+msgid "Add verse to list"
+msgstr ""
+
+#: src/reader-toolbar.c:398 src/reader-toolbar.c:402
 msgid "Recent reading"
 msgstr ""
 
-#: src/reader-toolbar.c:282
+#: src/reader-toolbar.c:414
 msgid "Clear history"
 msgstr ""
 
-#: src/reader-toolbar.c:296
+#: src/reader-toolbar.c:428
 msgid "Back (Alt+Left)"
 msgstr ""
 
-#: src/reader-toolbar.c:297
+#: src/reader-toolbar.c:429
 msgid "Forward (Alt+Right)"
 msgstr ""
 
-#: src/reader-toolbar.c:320
+#: src/reader-toolbar.c:452
 msgid "Open teaching layout for this passage"
 msgstr ""
 
-#: src/reader-toolbar.c:325
+#: src/reader-toolbar.c:457
 msgid "Copy entry"
 msgstr ""
 
-#: src/reader-toolbar.c:326
+#: src/reader-toolbar.c:458
 msgid "Open note for this verse"
 msgstr ""
 
-#: src/reader-toolbar.c:327
+#: src/reader-toolbar.c:459
 msgid "Toggle verse highlight"
 msgstr ""
 
-#: src/reader-toolbar.c:328
+#: src/reader-toolbar.c:460
 msgid "Toggle study panel"
 msgstr ""
 
