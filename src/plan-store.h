@@ -50,6 +50,11 @@ GPtrArray *gsword_plan_store_get_plan_days(GswordPlanStore *self, gint64 id);
 gboolean gsword_plan_store_complete_day(GswordPlanStore *self, gint64 plan_id,
                                         gint day, gboolean completed,
                                         GError **error);
+gboolean gsword_plan_store_rename_plan(GswordPlanStore *self, gint64 id,
+                                       const gchar *new_name,
+                                       GError **error);
+gint64 gsword_plan_store_duplicate_plan(GswordPlanStore *self, gint64 id,
+                                        GError **error);
 gboolean gsword_plan_store_delete_plan(GswordPlanStore *self, gint64 id,
                                        GError **error);
 void gsword_plan_free(GswordPlan *plan);

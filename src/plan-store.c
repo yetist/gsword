@@ -2,6 +2,7 @@
 #include "app-paths.h"
 
 #include <glib/gstdio.h>
+#include <glib/gi18n.h>
 #include <sqlite3.h>
 #include <string.h>
 
@@ -420,6 +421,88 @@ gsword_plan_store_complete_day(GswordPlanStore *self, gint64 plan_id,
         plan_store_error(self, error, "Cannot update plan progress");
     sqlite3_finalize(stmt);
     return ok;
+}
+
+gboolean
+gsword_plan_store_rename_plan(GswordPlanStore *self, gint64 id,
+                              const gchar *new_name, GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok;
+
+    if (new_name == NULL || *new_name == '\0') {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                    "Plan name must not be empty");
+        return FALSE;
+    }
+    if (sqlite3_prepare_v2(self->db,
+            "UPDATE plans SET name = ? WHERE id = ?", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 2, id) != SQLITE_OK) {
+        plan_store_error(self, error, "Cannot prepare plan rename");
+        sqlite3_finalize(stmt);
+        return FALSE;
+    }
+    ok = sqlite3_step(stmt) == SQLITE_DONE;
+    if (!ok)
+        plan_store_error(self, error, "Cannot rename plan");
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
+gint64
+gsword_plan_store_duplicate_plan(GswordPlanStore *self, gint64 id,
+                                 GError **error)
+{
+    GswordPlan *plan = gsword_plan_store_get_plan(self, id);
+    sqlite3_stmt *stmt = NULL;
+    gint64 new_id = 0;
+    gchar *new_name;
+
+    if (plan == NULL) {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                    "Plan not found");
+        return 0;
+    }
+    new_name = g_strdup_printf(_("%s (copy)"), plan->name);
+    if (sqlite3_prepare_v2(self->db,
+            "INSERT INTO plans(name, start_ref, total_days, chapters_per_day)"
+            " VALUES(?, ?, ?, ?)", -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, new_name, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, plan->start_ref, -1,
+                          SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 3, plan->total_days) != SQLITE_OK ||
+        sqlite3_bind_int(stmt, 4, plan->chapters_per_day) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        plan_store_error(self, error, "Cannot duplicate plan");
+        sqlite3_finalize(stmt);
+        g_free(new_name);
+        gsword_plan_free(plan);
+        return 0;
+    }
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+    new_id = sqlite3_last_insert_rowid(self->db);
+
+    if (sqlite3_prepare_v2(self->db,
+            "INSERT INTO plan_days(plan_id, day, reference)"
+            " SELECT ?, day, reference FROM plan_days WHERE plan_id = ?"
+            " ORDER BY day", -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, new_id) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 2, id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        plan_store_error(self, error, "Cannot duplicate plan schedule");
+        sqlite3_finalize(stmt);
+        gsword_plan_store_delete_plan(self, new_id, NULL);
+        g_free(new_name);
+        gsword_plan_free(plan);
+        return 0;
+    }
+    sqlite3_finalize(stmt);
+    g_free(new_name);
+    gsword_plan_free(plan);
+    return new_id;
 }
 
 gboolean

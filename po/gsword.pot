@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 10:11+0800\n"
+"POT-Creation-Date: 2026-11-03 11:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -108,7 +108,7 @@ msgstr ""
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:863 src/notes-page.c:190 src/notes-page.c:1887
+#: src/window.c:863 src/notes-page.c:190 src/notes-page.c:1869
 msgid "Notes"
 msgstr ""
 
@@ -236,9 +236,9 @@ msgstr ""
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1383
-#: src/notes-page.c:1452 src/notes-page.c:1506 src/notes-page.c:1585
-#: src/library-page.c:1044 src/plan-page.c:477
+#: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
+#: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
+#: src/library-page.c:1044 src/plan-page.c:485 src/plan-page.c:765
 msgid "Cancel"
 msgstr ""
 
@@ -346,7 +346,7 @@ msgstr ""
 msgid "No matching notes"
 msgstr ""
 
-#: src/notes-page.c:162 src/notes-page.c:1728
+#: src/notes-page.c:162 src/notes-page.c:1711
 msgid "No notes yet"
 msgstr ""
 
@@ -406,8 +406,8 @@ msgstr ""
 msgid "Delete the note for %s? This cannot be undone."
 msgstr ""
 
-#: src/notes-page.c:666 src/notes-page.c:1507 src/notes-page.c:1586
-#: src/notes-page.c:1692 src/memory-page.c:368 src/plan-page.c:478
+#: src/notes-page.c:666 src/notes-page.c:1490 src/notes-page.c:1569
+#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:766
 msgid "Delete"
 msgstr ""
 
@@ -415,221 +415,221 @@ msgstr ""
 msgid "Export note"
 msgstr ""
 
-#: src/notes-page.c:823 src/notes-page.c:1742
+#: src/notes-page.c:779 src/notes-page.c:1724
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:1082 src/notes-page.c:1213 src/reader-toolbar.c:95
+#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:95
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1086 src/notes-page.c:1222 src/reader-toolbar.c:103
+#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:103
 msgid "Verse removed from list"
 msgstr ""
 
-#: src/notes-page.c:1120 src/notes-page.c:1767
+#: src/notes-page.c:1103 src/notes-page.c:1749
 msgid "Select a verse list"
 msgstr ""
 
-#: src/notes-page.c:1132
+#: src/notes-page.c:1115
 msgid "This list is empty"
 msgstr ""
 
-#: src/notes-page.c:1205 src/reader-toolbar.c:85
+#: src/notes-page.c:1188 src/reader-toolbar.c:85
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/notes-page.c:1221 src/reader-toolbar.c:102
+#: src/notes-page.c:1204 src/reader-toolbar.c:102
 msgid "Verse added to list"
 msgstr ""
 
-#: src/notes-page.c:1240
+#: src/notes-page.c:1223
 msgid "Select a note first"
 msgstr ""
 
-#: src/notes-page.c:1252 src/notes-page.c:1753 src/reader-toolbar.c:138
+#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:138
 msgid "No verse lists yet"
 msgstr ""
 
-#: src/notes-page.c:1347
+#: src/notes-page.c:1330
 msgid "Cannot rename tag"
 msgstr ""
 
-#: src/notes-page.c:1358
+#: src/notes-page.c:1341
 msgid "Tag renamed"
 msgstr ""
 
-#: src/notes-page.c:1376 src/notes-page.c:1786
+#: src/notes-page.c:1359 src/notes-page.c:1768
 msgid "Rename tag"
 msgstr ""
 
-#: src/notes-page.c:1384 src/notes-page.c:1453
+#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:486
 msgid "Rename"
 msgstr ""
 
-#: src/notes-page.c:1420
+#: src/notes-page.c:1403
 msgid "Cannot rename verse list"
 msgstr ""
 
-#: src/notes-page.c:1426
+#: src/notes-page.c:1409
 msgid "Verse list renamed"
 msgstr ""
 
-#: src/notes-page.c:1445 src/notes-page.c:1806
+#: src/notes-page.c:1428 src/notes-page.c:1788
 msgid "Rename verse list"
 msgstr ""
 
-#: src/notes-page.c:1478
+#: src/notes-page.c:1461
 msgid "Cannot delete tag"
 msgstr ""
 
-#: src/notes-page.c:1484
+#: src/notes-page.c:1467
 msgid "Tag deleted"
 msgstr ""
 
-#: src/notes-page.c:1501 src/notes-page.c:1791
+#: src/notes-page.c:1484 src/notes-page.c:1773
 msgid "Delete tag"
 msgstr ""
 
-#: src/notes-page.c:1503
+#: src/notes-page.c:1486
 #, c-format
 msgid "Delete tag “%s”? Notes will remain."
 msgstr ""
 
-#: src/notes-page.c:1531
+#: src/notes-page.c:1514
 msgid "Cannot create list"
 msgstr ""
 
-#: src/notes-page.c:1536
+#: src/notes-page.c:1519
 msgid "Verse list created"
 msgstr ""
 
-#: src/notes-page.c:1554
+#: src/notes-page.c:1537
 msgid "Cannot delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1564
+#: src/notes-page.c:1547
 msgid "Verse list deleted"
 msgstr ""
 
-#: src/notes-page.c:1580 src/notes-page.c:1776
+#: src/notes-page.c:1563 src/notes-page.c:1758
 msgid "Delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1582
+#: src/notes-page.c:1565
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr ""
 
-#: src/notes-page.c:1669
+#: src/notes-page.c:1652
 msgid "Add list"
 msgstr ""
 
-#: src/notes-page.c:1672 src/notes-page.c:1888
+#: src/notes-page.c:1655 src/notes-page.c:1870
 msgid "Tags"
 msgstr ""
 
-#: src/notes-page.c:1683 src/notes-page.c:1890
+#: src/notes-page.c:1666 src/notes-page.c:1872
 msgid "Verse lists"
 msgstr ""
 
-#: src/notes-page.c:1684
+#: src/notes-page.c:1667
 msgid "List verses"
 msgstr ""
 
-#: src/notes-page.c:1691
+#: src/notes-page.c:1674
 msgid "Save"
 msgstr ""
 
-#: src/notes-page.c:1693
+#: src/notes-page.c:1676
 msgid "Export"
 msgstr ""
 
-#: src/notes-page.c:1695
+#: src/notes-page.c:1678
 msgid "Add to list"
 msgstr ""
 
-#: src/notes-page.c:1698
+#: src/notes-page.c:1681
 msgid "Add tag"
 msgstr ""
 
-#: src/notes-page.c:1702 src/notes-page.c:1944
+#: src/notes-page.c:1685 src/notes-page.c:1926
 msgid "Open in reader"
 msgstr ""
 
-#: src/notes-page.c:1715
+#: src/notes-page.c:1698
 msgid "Search notes"
 msgstr ""
 
-#: src/notes-page.c:1770
+#: src/notes-page.c:1752
 msgid "New list"
 msgstr ""
 
-#: src/notes-page.c:1795
+#: src/notes-page.c:1777
 msgid "Show filtered notes"
 msgstr ""
 
-#: src/notes-page.c:1820
+#: src/notes-page.c:1802
 msgid "Open verse"
 msgstr ""
 
-#: src/notes-page.c:1821
+#: src/notes-page.c:1803
 msgid "Remove from list"
 msgstr ""
 
-#: src/notes-page.c:1834
+#: src/notes-page.c:1816
 msgid "All notes"
 msgstr ""
 
-#: src/notes-page.c:1837
+#: src/notes-page.c:1819
 msgid "Clear tag filter"
 msgstr ""
 
-#: src/notes-page.c:1910
+#: src/notes-page.c:1892
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:1912
+#: src/notes-page.c:1894
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:1938 src/teaching-page.c:222
+#: src/notes-page.c:1920 src/teaching-page.c:222
 msgid "Scripture"
 msgstr ""
 
-#: src/notes-page.c:1968
+#: src/notes-page.c:1950
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr ""
 
-#: src/notes-page.c:1975
+#: src/notes-page.c:1957
 msgid "Bold"
 msgstr ""
 
-#: src/notes-page.c:1978
+#: src/notes-page.c:1960
 msgid "Italic"
 msgstr ""
 
-#: src/notes-page.c:1981
+#: src/notes-page.c:1963
 msgid "Heading"
 msgstr ""
 
-#: src/notes-page.c:1984
+#: src/notes-page.c:1966
 msgid "Bullet list"
 msgstr ""
 
-#: src/notes-page.c:1987
+#: src/notes-page.c:1969
 msgid "Numbered list"
 msgstr ""
 
-#: src/notes-page.c:1990
+#: src/notes-page.c:1972
 msgid "Quote"
 msgstr ""
 
-#: src/notes-page.c:1993
+#: src/notes-page.c:1975
 msgid "Link"
 msgstr ""
 
-#: src/notes-page.c:1996
+#: src/notes-page.c:1978
 msgid "Inline code"
 msgstr ""
 
@@ -1330,7 +1330,7 @@ msgid ""
 "page."
 msgstr ""
 
-#: src/devotion-page.c:225 src/plan-page.c:629
+#: src/devotion-page.c:225 src/plan-page.c:1036
 msgid "Today"
 msgstr ""
 
@@ -1346,130 +1346,207 @@ msgstr ""
 msgid "Next day"
 msgstr ""
 
-#: src/plan-page.c:171
-msgid "Create a reading plan to get started."
+#: src/plan-page.c:194
+msgid "No reading plans yet"
 msgstr ""
 
-#: src/plan-page.c:183
+#: src/plan-page.c:205 src/plan-page.c:273
 #, c-format
-msgid "%s · %d/%d days (%.0f%%) · streak %d"
+msgid "%d/%d days (%.0f%%) · streak %d"
 msgstr ""
 
-#: src/plan-page.c:191
+#: src/plan-page.c:283
 #, c-format
 msgid "Day %d: %s"
 msgstr ""
 
-#: src/plan-page.c:199
+#: src/plan-page.c:291
 msgid "Plan complete"
 msgstr ""
 
-#: src/plan-page.c:212
+#: src/plan-page.c:304
 #, c-format
 msgid "Day %d   %s"
 msgstr ""
 
-#: src/plan-page.c:227
+#: src/plan-page.c:319
 msgid "Done"
 msgstr ""
 
-#: src/plan-page.c:340 src/plan-page.c:385
+#: src/plan-page.c:458
+msgid "Cannot rename plan"
+msgstr ""
+
+#: src/plan-page.c:464
+msgid "Reading plan renamed"
+msgstr ""
+
+#: src/plan-page.c:478
+msgid "Rename reading plan"
+msgstr ""
+
+#: src/plan-page.c:510
+msgid "Cannot duplicate plan"
+msgstr ""
+
+#: src/plan-page.c:522
+msgid "Reading plan duplicated"
+msgstr ""
+
+#: src/plan-page.c:544
+msgid "Preview unavailable for this reference."
+msgstr ""
+
+#: src/plan-page.c:546
+#, c-format
+msgid "Day 1: %s"
+msgstr ""
+
+#: src/plan-page.c:549
+#, c-format
+msgid ""
+"Day 1: %s\n"
+"Day %u: %s"
+msgstr ""
+
+#: src/plan-page.c:590 src/plan-page.c:635
 msgid "Cannot update plan"
 msgstr ""
 
-#: src/plan-page.c:343
+#: src/plan-page.c:593
 msgid "Reading plan updated"
 msgstr ""
 
-#: src/plan-page.c:388
+#: src/plan-page.c:638
 msgid "Day marked complete"
 msgstr ""
 
-#: src/plan-page.c:412
-msgid "Enter a plan name and start reference"
-msgstr ""
-
-#: src/plan-page.c:417 src/plan-page.c:427
+#: src/plan-page.c:657 src/plan-page.c:667
 msgid "Cannot create plan"
 msgstr ""
 
-#: src/plan-page.c:419
+#: src/plan-page.c:659
 msgid "Invalid start reference or empty plan"
 msgstr ""
 
-#: src/plan-page.c:435
+#: src/plan-page.c:675
 msgid "Reading plan created"
 msgstr ""
 
-#: src/plan-page.c:452
+#: src/plan-page.c:686 src/plan-page.c:946
+msgid "90-day New Testament"
+msgstr ""
+
+#: src/plan-page.c:689 src/plan-page.c:947
+msgid "30-day Psalms"
+msgstr ""
+
+#: src/plan-page.c:718
+msgid "Enter a plan name and start reference"
+msgstr ""
+
+#: src/plan-page.c:740
 msgid "Cannot delete plan"
 msgstr ""
 
-#: src/plan-page.c:459
+#: src/plan-page.c:747
 msgid "Reading plan deleted"
 msgstr ""
 
-#: src/plan-page.c:472
+#: src/plan-page.c:760
 msgid "Delete reading plan"
 msgstr ""
 
-#: src/plan-page.c:474
+#: src/plan-page.c:762
 #, c-format
 msgid "Delete “%s” and its progress?"
 msgstr ""
 
-#: src/plan-page.c:539
+#: src/plan-page.c:834
+msgid "Your plans"
+msgstr ""
+
+#: src/plan-page.c:845
 msgid "Open today's reading"
 msgstr ""
 
-#: src/plan-page.c:540
+#: src/plan-page.c:846
 msgid "Mark today complete"
 msgstr ""
 
-#: src/plan-page.c:541
+#: src/plan-page.c:847
 msgid "Create plan"
 msgstr ""
 
-#: src/plan-page.c:542
+#: src/plan-page.c:848 src/plan-page.c:998
 msgid "Delete plan"
 msgstr ""
 
-#: src/plan-page.c:576
+#: src/plan-page.c:877
+msgid "Rename plan"
+msgstr ""
+
+#: src/plan-page.c:878
+msgid "Duplicate plan"
+msgstr ""
+
+#: src/plan-page.c:922
 msgid "Schedule"
 msgstr ""
 
-#: src/plan-page.c:592
+#: src/plan-page.c:937
+msgid "Start a reading plan"
+msgstr ""
+
+#: src/plan-page.c:941
+msgid "Choose a template or create a custom plan to begin."
+msgstr ""
+
+#: src/plan-page.c:945
+msgid "Custom plan"
+msgstr ""
+
+#: src/plan-page.c:976
 msgid "Plan name"
 msgstr ""
 
-#: src/plan-page.c:595
+#: src/plan-page.c:979
 msgid "Start, e.g. Genesis 1"
 msgstr ""
 
-#: src/plan-page.c:609
+#: src/plan-page.c:1004
 msgid "Days"
 msgstr ""
 
-#: src/plan-page.c:611
+#: src/plan-page.c:1006
 msgid "Chapters/day"
 msgstr ""
 
-#: src/plan-page.c:618
+#: src/plan-page.c:1019
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr ""
 
-#: src/plan-page.c:631
+#: src/plan-page.c:1025
+msgid "Create a plan"
+msgstr ""
+
+#: src/plan-page.c:1038
 msgid "Plans"
 msgstr ""
 
-#: src/plan-page.c:634
+#: src/plan-page.c:1041
 msgid "Devotion"
 msgstr ""
 
-#: src/plan-page.c:637
+#: src/plan-page.c:1044
 msgid "Memorize"
+msgstr ""
+
+#: src/plan-store.c:468
+#, c-format
+msgid "%s (copy)"
 msgstr ""
 
 #: src/resource-page.c:97
