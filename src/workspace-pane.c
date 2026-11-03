@@ -9,6 +9,13 @@
 
 #include <glib/gi18n.h>
 
+typedef enum {
+    PENDING_SCROLL_NONE,
+    PENDING_SCROLL_RESTORE,
+    PENDING_SCROLL_VERSE,
+    PENDING_SCROLL_ACTIVE
+} PendingScroll;
+
 struct _GswordWorkspacePane {
     GswordWindow *window;
     GswordWorkspacePage *page;
@@ -30,11 +37,21 @@ struct _GswordWorkspacePane {
     guint id;
     guint updating;
     guint scroll_idle;
+    guint scrolling_idle;
+    gboolean scrolling;
+    PendingScroll pending_scroll;
+    gint pending_verse;
+    gdouble restore_scroll_value;
 };
 
 static guint workspace_pane_next_id = 1;
 
-static gboolean scroll_to_active_idle(gpointer user_data);
+static void scroll_to_active_now(GswordWorkspacePane *pane);
+static void scroll_to_verse_now(GswordWorkspacePane *pane, gint verse);
+static void schedule_scroll_restore(GswordWorkspacePane *pane,
+                                    gdouble value);
+static void schedule_scroll_to_active(GswordWorkspacePane *pane);
+static void schedule_scroll_to_verse(GswordWorkspacePane *pane, gint verse);
 
 gboolean
 gsword_workspace_pane_supports_module(GswModuleInfo *info)
@@ -87,6 +104,26 @@ fill_modules(GswordWorkspacePane *pane)
     if (pane->module_selector != NULL)
         gtk_drop_down_set_model(pane->module_selector, G_LIST_MODEL(names));
     pane->updating--;
+}
+
+static gboolean
+clear_programmatic_scroll(gpointer user_data)
+{
+    GswordWorkspacePane *pane = user_data;
+
+    pane->scrolling_idle = 0;
+    pane->scrolling = FALSE;
+    return G_SOURCE_REMOVE;
+}
+
+static void
+begin_programmatic_scroll(GswordWorkspacePane *pane)
+{
+    pane->scrolling = TRUE;
+    if (pane->scrolling_idle != 0)
+        g_source_remove(pane->scrolling_idle);
+    pane->scrolling_idle = g_timeout_add(
+        100, clear_programmatic_scroll, pane);
 }
 
 static gboolean
@@ -254,8 +291,8 @@ gsword_workspace_pane_set_diff_verses(GswordWorkspacePane *pane,
     }
 }
 
-void
-gsword_workspace_pane_scroll_to_active(GswordWorkspacePane *pane)
+static void
+scroll_to_active_now(GswordWorkspacePane *pane)
 {
     GtkTextIter start;
     GswKey *key;
@@ -269,7 +306,21 @@ gsword_workspace_pane_scroll_to_active(GswordWorkspacePane *pane)
     active = gsw_verse_key_get_verse((GswVerseKey *)key);
     if (active < 1 || !find_verse_line(pane, active, &start, NULL))
         return;
+    begin_programmatic_scroll(pane);
     gtk_text_view_scroll_to_iter(pane->view, &start, 0.1, FALSE, 0.0, 0.0);
+}
+
+void
+gsword_workspace_pane_scroll_to_active(GswordWorkspacePane *pane)
+{
+    if (pane == NULL || pane->view == NULL || pane->module == NULL)
+        return;
+    if (pane->scroll_idle != 0) {
+        g_source_remove(pane->scroll_idle);
+        pane->scroll_idle = 0;
+    }
+    scroll_to_active_now(pane);
+    schedule_scroll_to_active(pane);
 }
 
 gint
@@ -310,34 +361,97 @@ gsword_workspace_pane_get_top_verse(GswordWorkspacePane *pane)
     return 0;
 }
 
-void
-gsword_workspace_pane_scroll_to_verse(GswordWorkspacePane *pane, gint verse)
+static void
+scroll_to_verse_now(GswordWorkspacePane *pane, gint verse)
 {
     GtkTextIter start;
     GtkAdjustment *adjustment;
 
-    if (pane == NULL || pane->view == NULL)
-        return;
-    if (verse > 0 && find_verse_line(pane, verse, &start, NULL)) {
-        gtk_text_view_scroll_to_iter(pane->view, &start, 0.0, TRUE,
-                                     0.0, 0.0);
-        return;
-    }
-    if (pane->scroll == NULL)
+    if (pane == NULL || pane->view == NULL || pane->scroll == NULL)
         return;
     adjustment = gtk_scrolled_window_get_vadjustment(pane->scroll);
-    if (adjustment != NULL)
+    if (adjustment == NULL)
+        return;
+    if (verse > 0 && find_verse_line(pane, verse, &start, NULL)) {
+        begin_programmatic_scroll(pane);
+        gtk_text_view_scroll_to_iter(pane->view, &start, 0.0, TRUE,
+                                     0.0, 0.0);
+    } else {
+        begin_programmatic_scroll(pane);
         gtk_adjustment_set_value(adjustment, 0.0);
+    }
+}
+
+void
+gsword_workspace_pane_scroll_to_verse(GswordWorkspacePane *pane, gint verse)
+{
+    if (pane == NULL || pane->view == NULL)
+        return;
+    if (pane->scroll_idle != 0) {
+        g_source_remove(pane->scroll_idle);
+        pane->scroll_idle = 0;
+    }
+    scroll_to_verse_now(pane, verse);
+    schedule_scroll_to_verse(pane, verse);
 }
 
 static gboolean
-scroll_to_active_idle(gpointer user_data)
+pending_scroll_idle(gpointer user_data)
 {
     GswordWorkspacePane *pane = user_data;
+    PendingScroll pending = pane->pending_scroll;
+    gint verse = pane->pending_verse;
 
     pane->scroll_idle = 0;
-    gsword_workspace_pane_scroll_to_active(pane);
+    pane->pending_scroll = PENDING_SCROLL_NONE;
+    if (pending == PENDING_SCROLL_RESTORE) {
+        GtkAdjustment *adjustment;
+
+        if (pane->scroll == NULL)
+            return G_SOURCE_REMOVE;
+        adjustment = gtk_scrolled_window_get_vadjustment(pane->scroll);
+        if (adjustment == NULL)
+            return G_SOURCE_REMOVE;
+        begin_programmatic_scroll(pane);
+        gtk_adjustment_set_value(adjustment, pane->restore_scroll_value);
+    } else if (pending == PENDING_SCROLL_VERSE) {
+        scroll_to_verse_now(pane, verse);
+    } else if (pending == PENDING_SCROLL_ACTIVE) {
+        scroll_to_active_now(pane);
+    }
     return G_SOURCE_REMOVE;
+}
+
+static void
+schedule_pending_scroll(GswordWorkspacePane *pane, PendingScroll pending,
+                        gint verse, gdouble value)
+{
+    if (pane == NULL)
+        return;
+    pane->pending_scroll = pending;
+    pane->pending_verse = verse;
+    pane->restore_scroll_value = value;
+    if (pane->scroll_idle != 0)
+        g_source_remove(pane->scroll_idle);
+    pane->scroll_idle = g_timeout_add(25, pending_scroll_idle, pane);
+}
+
+static void
+schedule_scroll_restore(GswordWorkspacePane *pane, gdouble value)
+{
+    schedule_pending_scroll(pane, PENDING_SCROLL_RESTORE, 0, value);
+}
+
+static void
+schedule_scroll_to_active(GswordWorkspacePane *pane)
+{
+    schedule_pending_scroll(pane, PENDING_SCROLL_ACTIVE, 0, 0.0);
+}
+
+static void
+schedule_scroll_to_verse(GswordWorkspacePane *pane, gint verse)
+{
+    schedule_pending_scroll(pane, PENDING_SCROLL_VERSE, verse, 0.0);
 }
 
 static void
@@ -397,8 +511,14 @@ render(GswordWorkspacePane *pane)
     GError *error = NULL;
     GswModuleInfo *info;
     GswModuleType type;
+    GtkAdjustment *adjustment;
+    gdouble old_scroll = 0.0;
     gchar *text = NULL;
 
+    adjustment = pane->scroll != NULL
+               ? gtk_scrolled_window_get_vadjustment(pane->scroll) : NULL;
+    if (adjustment != NULL)
+        old_scroll = gtk_adjustment_get_value(adjustment);
     if (pane->module == NULL) {
         gsword_window_set_view_text(pane->view,
                                     _("No module selected."));
@@ -431,10 +551,11 @@ render(GswordWorkspacePane *pane)
     sync_chooser(pane);
     apply_active(pane);
     gsword_workspace_page_refresh_diff(pane->page);
-    gsword_workspace_pane_scroll_to_active(pane);
-    if (pane->scroll_idle != 0)
-        g_source_remove(pane->scroll_idle);
-    pane->scroll_idle = g_timeout_add(25, scroll_to_active_idle, pane);
+    if (adjustment != NULL) {
+        begin_programmatic_scroll(pane);
+        gtk_adjustment_set_value(adjustment, old_scroll);
+    }
+    schedule_scroll_restore(pane, old_scroll);
 }
 
 static void
@@ -542,10 +663,10 @@ note_reference(GswordWorkspacePane *pane)
             "%s %d:%d", gsw_verse_key_get_book_name(key),
             gsw_verse_key_get_chapter(key), gsw_verse_key_get_verse(key));
     }
+    gsword_workspace_pane_scroll_to_active(pane);
     if (reference != NULL)
         gsword_workspace_page_sync_reference(pane->page, reference, pane);
     g_free(reference);
-    gsword_workspace_pane_scroll_to_active(pane);
     gsword_workspace_page_save(pane->page);
 }
 
@@ -635,13 +756,6 @@ on_focus_enter(GtkEventControllerFocus *controller, gpointer user_data)
 }
 
 static void
-on_view_mapped(GtkWidget *widget, gpointer user_data)
-{
-    (void)widget;
-    gsword_workspace_pane_scroll_to_active(user_data);
-}
-
-static void
 on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
            gpointer user_data)
 {
@@ -659,6 +773,8 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     gint trailing;
     gint line_y;
     gint line_height;
+    GtkAdjustment *adjustment;
+    gdouble old_scroll = 0.0;
     GswModuleInfo *info;
 
     (void)n_press;
@@ -674,6 +790,10 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
         return;
     view = GTK_TEXT_VIEW(gtk_event_controller_get_widget(
         GTK_EVENT_CONTROLLER(gesture)));
+    adjustment = pane->scroll != NULL
+               ? gtk_scrolled_window_get_vadjustment(pane->scroll) : NULL;
+    if (adjustment != NULL)
+        old_scroll = gtk_adjustment_get_value(adjustment);
     gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
                                           (gint)x, (gint)y, &bx, &by);
     if (!gtk_text_view_get_iter_at_position(view, &iter, &trailing, bx, by))
@@ -684,6 +804,7 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     if (by < line_y || by >= line_y + line_height)
         return;
     buffer = gtk_text_view_get_buffer(view);
+    gtk_text_buffer_place_cursor(buffer, &iter);
     line_start = iter;
     gtk_text_iter_set_line_offset(&line_start, 0);
     line_end = line_start;
@@ -704,7 +825,12 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
         g_clear_error(&error);
         return;
     }
-    render(pane);
+    apply_active(pane);
+    sync_chooser(pane);
+    if (adjustment != NULL) {
+        begin_programmatic_scroll(pane);
+        gtk_adjustment_set_value(adjustment, old_scroll);
+    }
     {
         GswVerseKey *key = (GswVerseKey *)gsw_module_get_key(pane->module);
         gchar *reference = g_strdup_printf(
@@ -717,6 +843,7 @@ on_clicked(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     if (gsword_window_is_page_visible(pane->window, "panes"))
         gsword_window_set_status(pane->window, _("Comparison updated"));
     gsword_workspace_page_save(pane->page);
+    schedule_scroll_restore(pane, old_scroll);
 }
 
 static void
@@ -780,6 +907,8 @@ on_scrolled(GtkAdjustment *adjustment, gpointer user_data)
 {
     GswordWorkspacePane *pane = user_data;
 
+    if (pane->scrolling)
+        return;
     gsword_workspace_page_sync_scroll(pane->page, pane, adjustment);
 }
 
@@ -896,7 +1025,6 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     g_signal_connect(click, "pressed", G_CALLBACK(on_clicked), pane);
     gtk_widget_add_controller(GTK_WIDGET(pane->view),
                               GTK_EVENT_CONTROLLER(click));
-    g_signal_connect(pane->view, "map", G_CALLBACK(on_view_mapped), pane);
     {
         GtkEventController *focus = gtk_event_controller_focus_new();
 
@@ -987,6 +1115,10 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
     if (pane->scroll_idle != 0) {
         g_source_remove(pane->scroll_idle);
         pane->scroll_idle = 0;
+    }
+    if (pane->scrolling_idle != 0) {
+        g_source_remove(pane->scrolling_idle);
+        pane->scrolling_idle = 0;
     }
     if (pane->view != NULL)
         g_signal_handlers_disconnect_by_data(pane->view, pane);

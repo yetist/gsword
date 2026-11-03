@@ -25,6 +25,7 @@ struct _GswordWorkspacePage {
     gboolean sync_scroll_enabled;
     gboolean highlight_diffs;
     gboolean syncing_scroll;
+    guint align_idle;
 };
 
 static void update_column_buttons(GswordWorkspacePage *page);
@@ -294,9 +295,9 @@ gsword_workspace_page_refresh_diff(GswordWorkspacePage *page)
     g_ptr_array_unref(maps);
 }
 
-void
-gsword_workspace_page_scroll_to_reference(GswordWorkspacePage *page,
-                                          GswordWorkspacePane *source)
+static void
+scroll_to_reference_now(GswordWorkspacePage *page,
+                        GswordWorkspacePane *source)
 {
     gboolean syncing;
     guint i;
@@ -305,14 +306,44 @@ gsword_workspace_page_scroll_to_reference(GswordWorkspacePage *page,
         return;
     syncing = page->syncing_scroll;
     page->syncing_scroll = TRUE;
-    for (i = 0; i < page->panes->len; i++) {
-        GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+    {
+        gint top_verse = source != NULL
+                       ? gsword_workspace_pane_get_top_verse(source) : 0;
 
-        if (pane == source || !gsword_workspace_pane_get_follow(pane))
-            continue;
-        gsword_workspace_pane_scroll_to_active(pane);
+        for (i = 0; i < page->panes->len; i++) {
+            GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
+
+            if (pane == source || !gsword_workspace_pane_get_follow(pane))
+                continue;
+            if (top_verse > 0)
+                gsword_workspace_pane_scroll_to_verse(pane, top_verse);
+            else
+                gsword_workspace_pane_scroll_to_active(pane);
+        }
     }
     page->syncing_scroll = syncing;
+}
+
+static gboolean
+align_panes_idle(gpointer user_data)
+{
+    GswordWorkspacePage *page = user_data;
+
+    page->align_idle = 0;
+    scroll_to_reference_now(page, page->active_pane);
+    return G_SOURCE_REMOVE;
+}
+
+void
+gsword_workspace_page_scroll_to_reference(GswordWorkspacePage *page,
+                                          GswordWorkspacePane *source)
+{
+    (void)source;
+    if (page == NULL || page->panes == NULL)
+        return;
+    if (page->align_idle != 0)
+        g_source_remove(page->align_idle);
+    page->align_idle = g_timeout_add(50, align_panes_idle, page);
 }
 
 void
@@ -876,6 +907,8 @@ workspace_page_free(gpointer data)
 {
     GswordWorkspacePage *page = data;
 
+    if (page->align_idle != 0)
+        g_source_remove(page->align_idle);
     g_clear_pointer(&page->panes, g_ptr_array_unref);
     g_free(page->reference);
     g_free(page);
