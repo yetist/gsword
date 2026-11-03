@@ -2223,6 +2223,13 @@ on_proxy_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_library_back_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_close_library(GSWORD_WINDOW(user_data));
+}
+
+static void
 library_page_free(gpointer data)
 {
     GswordLibraryPage *page = data;
@@ -2262,6 +2269,9 @@ gsword_library_page_new(GswordWindow *self)
     GswordLibraryPage *priv = g_new0(GswordLibraryPage, 1);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *header_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *back = gtk_button_new_from_icon_name("go-previous-symbolic");
+    GtkWidget *page_title = gtk_label_new(_("Module library"));
     GtkWidget *view_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     GtkWidget *installed_view;
     GtkWidget *available_view;
@@ -2493,6 +2503,16 @@ gsword_library_page_new(GswordWindow *self)
     priv->refresh_source_button = GTK_BUTTON(refresh_remote);
     priv->source_row = source_row;
     priv->filter_row = filter_row;
+    gtk_widget_add_css_class(back, "flat");
+    gtk_widget_set_tooltip_text(back, _("Back"));
+    g_signal_connect(back, "clicked",
+                     G_CALLBACK(on_library_back_clicked), self);
+    gtk_label_set_xalign(GTK_LABEL(page_title), 0.0f);
+    gtk_widget_add_css_class(page_title, "heading");
+    gtk_widget_set_hexpand(page_title, TRUE);
+    gtk_box_append(GTK_BOX(header_row), back);
+    gtk_box_append(GTK_BOX(header_row), page_title);
+    gtk_box_append(GTK_BOX(controls), header_row);
     gtk_box_append(GTK_BOX(controls), view_row);
     gtk_box_append(GTK_BOX(controls), source_row);
     gtk_box_append(GTK_BOX(controls), filter_row);
