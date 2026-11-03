@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 18:06+0800\n"
+"POT-Creation-Date: 2026-11-03 18:49+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -75,7 +75,7 @@ msgstr "首选项"
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:109
+#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:131
 msgid "Preferences"
 msgstr "首选项"
 
@@ -127,7 +127,7 @@ msgstr "退出"
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:996 src/preferences-dialog.c:114
+#: src/window.c:996 src/preferences-dialog.c:136
 msgid "Reading"
 msgstr "阅读"
 
@@ -445,11 +445,11 @@ msgstr "导出笔记"
 msgid "No tags yet"
 msgstr "还没有标签"
 
-#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:122
+#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:164
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
-#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:130
+#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:172
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
@@ -461,11 +461,11 @@ msgstr "选择经文列表"
 msgid "This list is empty"
 msgstr "此列表为空"
 
-#: src/notes-page.c:1188 src/reader-toolbar.c:112
+#: src/notes-page.c:1188 src/reader-toolbar.c:154
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:1204 src/reader-toolbar.c:129
+#: src/notes-page.c:1204 src/reader-toolbar.c:171
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
@@ -473,7 +473,7 @@ msgstr "经文已加入列表"
 msgid "Select a note first"
 msgstr "请先选择笔记"
 
-#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:165
+#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:207
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
 
@@ -1553,7 +1553,7 @@ msgstr "跟随、固定或独立此对照栏"
 msgid "Close comparison"
 msgstr "关闭对照栏"
 
-#: src/reader-page.c:179
+#: src/reader-page.c:299
 msgid ""
 "No modules found.\n"
 "\n"
@@ -1563,127 +1563,151 @@ msgstr ""
 "\n"
 "请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
-#: src/reader-page.c:181
+#: src/reader-page.c:301
 msgid "No modules found"
 msgstr "未找到模块"
 
-#: src/reader-page.c:205
+#: src/reader-page.c:325
 msgid "Cannot read entry"
 msgstr "无法读取条目"
 
-#: src/reader-page.c:248 src/reader-page.c:632 src/reader-page.c:670
+#: src/reader-page.c:369 src/reader-page.c:753 src/reader-page.c:791
 msgid "Cannot set key"
 msgstr "无法设置位置"
 
-#: src/reader-page.c:757
+#: src/reader-page.c:971
 msgid "Highlight removed"
 msgstr "高亮已移除"
 
-#: src/reader-page.c:762
+#: src/reader-page.c:976
 msgid "Verse highlighted"
 msgstr "经文已高亮"
 
-#: src/reader-page.c:765
+#: src/reader-page.c:979
 msgid "Cannot update highlight"
 msgstr "无法更新高亮"
 
-#: src/reader-page.c:803
+#: src/reader-page.c:1017
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/reader-toolbar.c:152
+#: src/reader-page.c:1408
+msgid "Copy verse"
+msgstr "复制本节"
+
+#: src/reader-page.c:1409
+msgid "Open note"
+msgstr "打开笔记"
+
+#: src/reader-page.c:1411
+msgid "Toggle highlight"
+msgstr "切换高亮"
+
+#: src/reader-toolbar.c:194
 msgid "Open a verse first"
 msgstr "请先打开经文"
 
-#: src/reader-toolbar.c:224
+#: src/reader-toolbar.c:266
 msgid "No reading history yet."
 msgstr "还没有阅读历史。"
 
-#: src/reader-toolbar.c:400
+#: src/reader-toolbar.c:440
+msgid "Highlight verse"
+msgstr "高亮本节"
+
+#: src/reader-toolbar.c:442
 msgid "Teach"
 msgstr "教学"
 
-#: src/reader-toolbar.c:405
+#: src/reader-toolbar.c:448
 msgid "Copy chapter"
 msgstr "复制本章"
 
-#: src/reader-toolbar.c:434
+#: src/reader-toolbar.c:477
 msgid "Add verse to list"
 msgstr "加入经文列表"
 
-#: src/reader-toolbar.c:448
+#: src/reader-toolbar.c:491
 msgid "More reading actions"
 msgstr "更多阅读操作"
 
-#: src/reader-toolbar.c:464 src/reader-toolbar.c:468
+#: src/reader-toolbar.c:508 src/reader-toolbar.c:512
 msgid "Recent reading"
 msgstr "最近阅读"
 
-#: src/reader-toolbar.c:480
+#: src/reader-toolbar.c:524
 msgid "Clear history"
 msgstr "清除历史"
 
-#: src/reader-toolbar.c:494
+#: src/reader-toolbar.c:538
 msgid "Back (Alt+Left)"
 msgstr "返回（Alt+左箭头）"
 
-#: src/reader-toolbar.c:495
+#: src/reader-toolbar.c:539
 msgid "Forward (Alt+Right)"
 msgstr "前进（Alt+右箭头）"
 
-#: src/reader-toolbar.c:518
+#: src/reader-toolbar.c:562
 msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
-#: src/reader-toolbar.c:527
-msgid "Focus reading mode (F11)"
-msgstr "专注阅读模式（F11）"
+#: src/reader-toolbar.c:570 src/reader-toolbar.c:574
+msgid "Reading appearance"
+msgstr "阅读外观"
 
-#: src/reader-toolbar.c:535
-msgid "Copy selection or current verse"
-msgstr "复制选中文字或当前节"
-
-#: src/reader-toolbar.c:536
-msgid "Open note for this verse"
-msgstr "打开本节笔记"
-
-#: src/reader-toolbar.c:537
-msgid "Toggle verse highlight"
-msgstr "切换经文高亮"
-
-#: src/reader-toolbar.c:538
-msgid "Toggle study panel"
-msgstr "切换研经面板"
-
-#: src/preferences-dialog.c:116
-msgid "Reading appearance is applied immediately."
-msgstr "阅读外观会立即应用。"
-
-#: src/preferences-dialog.c:120
+#: src/reader-toolbar.c:608 src/preferences-dialog.c:142
 msgid "Font size"
 msgstr "字体大小"
 
-#: src/preferences-dialog.c:121
+#: src/reader-toolbar.c:609
+msgid "Paragraph spacing"
+msgstr "段落间距"
+
+#: src/reader-toolbar.c:611
+msgid "Reading width"
+msgstr "阅读宽度"
+
+#: src/reader-toolbar.c:622
+msgid "Focus reading mode (F11)"
+msgstr "专注阅读模式（F11）"
+
+#: src/reader-toolbar.c:630
+msgid "Copy selection or current verse"
+msgstr "复制选中文字或当前节"
+
+#: src/reader-toolbar.c:631
+msgid "Open note for this verse"
+msgstr "打开本节笔记"
+
+#: src/reader-toolbar.c:633
+msgid "Toggle study panel"
+msgstr "切换研经面板"
+
+#: src/preferences-dialog.c:138
+msgid "Reading appearance is applied immediately."
+msgstr "阅读外观会立即应用。"
+
+#: src/preferences-dialog.c:143
 msgid "Scale the scripture text size"
 msgstr "调整经文文字大小"
 
-#: src/preferences-dialog.c:132
+#: src/preferences-dialog.c:154
 msgid "Color scheme"
 msgstr "配色方案"
 
-#: src/preferences-dialog.c:134
+#: src/preferences-dialog.c:156
 msgid "Follow the desktop or force light/dark mode"
 msgstr "跟随桌面或强制浅色/深色模式"
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Follow system"
 msgstr "跟随系统"
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Light"
 msgstr "浅色"
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Dark"
 msgstr "深色"
 
@@ -2135,9 +2159,6 @@ msgstr "未知章节体系"
 
 #~ msgid "Follow the active passage"
 #~ msgstr "跟随当前经文"
-
-#~ msgid "Reading workspace"
-#~ msgstr "阅读工作区"
 
 #~ msgid "Study workspace"
 #~ msgstr "研经工作区"

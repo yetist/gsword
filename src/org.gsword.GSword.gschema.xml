@@ -65,6 +65,16 @@
       <summary>Active reading plan</summary>
       <description>Identifier of the reading plan shown in the Plan workspace.</description>
     </key>
+    <key name="reader-paragraph-spacing" type="i">
+      <default>0</default>
+      <summary>Reading paragraph spacing</summary>
+      <description>Extra vertical spacing in pixels between scripture paragraphs.</description>
+    </key>
+    <key name="reader-width" type="i">
+      <default>760</default>
+      <summary>Reading text width</summary>
+      <description>Preferred maximum line width in pixels for scripture text.</description>
+    </key>
     <key name="study-visible" type="b">
       <default>false</default>
       <summary>Study panel visibility</summary>

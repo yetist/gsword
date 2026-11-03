@@ -17,12 +17,15 @@ struct _GswordReaderPage {
     GswordReaderToolbar *toolbar;
     GswordStudyPanel *study_panel;
     GtkTextView *view;
+    GtkWidget *scrolled;
     GtkPaned *paned;
     GtkWidget *study_widget;
     GswordReferenceChooser *reference_chooser;
     GtkTextTag *highlight_tag;
     GtkTextTag *active_verse_tag;
     GtkTextTag *range_tag;
+    GtkTextTag *spacing_tag;
+    GtkPopover *context_menu;
     gint active_verse;
     gint range_start;
     gint range_end;
@@ -35,6 +38,9 @@ struct _GswordReaderPage {
     gboolean updating_study_width;
     gboolean study_width_ready;
     gint study_width;
+    gint paragraph_spacing;
+    gint reading_width;
+    guint margin_idle;
 };
 
 static void apply_active_verse(GswordReaderPage *page);
@@ -53,6 +59,120 @@ set_text(GswordReaderPage *page, const gchar *text)
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(page->view);
 
     gtk_text_buffer_set_text(buffer, text != NULL ? text : "", -1);
+}
+
+static void
+update_reading_margins(GswordReaderPage *page)
+{
+    gint width;
+    gint margin;
+
+    if (page == NULL || page->scrolled == NULL || page->view == NULL)
+        return;
+    width = gtk_widget_get_width(page->scrolled);
+    if (width <= 0)
+        return;
+    margin = MAX(28, (width - page->reading_width) / 2);
+    gtk_text_view_set_left_margin(page->view, margin);
+    gtk_text_view_set_right_margin(page->view, margin);
+}
+
+static gboolean
+update_reading_margins_idle(gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    page->margin_idle = 0;
+    update_reading_margins(page);
+    return G_SOURCE_REMOVE;
+}
+
+static void
+schedule_reading_margins(GswordReaderPage *page)
+{
+    if (page->margin_idle != 0)
+        g_source_remove(page->margin_idle);
+    page->margin_idle = g_timeout_add(50, update_reading_margins_idle, page);
+}
+
+static void
+on_reader_size_changed(GObject *object, GParamSpec *pspec,
+                       gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    update_reading_margins(user_data);
+    schedule_reading_margins(user_data);
+}
+
+static void
+on_reader_mapped(GtkWidget *widget, gpointer user_data)
+{
+    (void)widget;
+    update_reading_margins(user_data);
+    schedule_reading_margins(user_data);
+}
+
+static void
+apply_paragraph_spacing(GswordReaderPage *page)
+{
+    GtkTextBuffer *buffer;
+    GtkTextIter start;
+    GtkTextIter end;
+
+    if (page == NULL || page->spacing_tag == NULL || page->view == NULL)
+        return;
+    buffer = gtk_text_view_get_buffer(page->view);
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    gtk_text_buffer_remove_tag(buffer, page->spacing_tag, &start, &end);
+    if (page->paragraph_spacing > 0)
+        gtk_text_buffer_apply_tag(buffer, page->spacing_tag, &start, &end);
+}
+
+gint
+gsword_reader_page_get_paragraph_spacing(GswordReaderPage *page)
+{
+    return page != NULL ? page->paragraph_spacing : 0;
+}
+
+void
+gsword_reader_page_set_paragraph_spacing(GswordReaderPage *page, gint spacing)
+{
+    GSettings *settings;
+
+    if (page == NULL)
+        return;
+    page->paragraph_spacing = CLAMP(spacing, 0, 24);
+    settings = gsword_window_get_settings(page->window);
+    if (settings != NULL)
+        g_settings_set_int(settings, "reader-paragraph-spacing",
+                           page->paragraph_spacing);
+    if (page->spacing_tag != NULL)
+        g_object_set(page->spacing_tag,
+                     "pixels-above-lines", page->paragraph_spacing / 2,
+                     "pixels-below-lines", page->paragraph_spacing / 2,
+                     NULL);
+    apply_paragraph_spacing(page);
+}
+
+gint
+gsword_reader_page_get_reading_width(GswordReaderPage *page)
+{
+    return page != NULL ? page->reading_width : 760;
+}
+
+void
+gsword_reader_page_set_reading_width(GswordReaderPage *page, gint width)
+{
+    GSettings *settings;
+
+    if (page == NULL)
+        return;
+    page->reading_width = CLAMP(width, 480, 1200);
+    settings = gsword_window_get_settings(page->window);
+    if (settings != NULL)
+        g_settings_set_int(settings, "reader-width", page->reading_width);
+    update_reading_margins(page);
 }
 
 static void
@@ -208,6 +328,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
     }
     set_text(page, text);
     g_free(text);
+    apply_paragraph_spacing(page);
 
     if (display_key == NULL)
         display_key = g_strdup(gsw_module_get_key_text(module));
@@ -681,6 +802,99 @@ select_verse(GswordReaderPage *page, gint verse)
     record_current_history(page);
 }
 
+static gboolean
+verse_at_position(GtkTextView *view, gdouble x, gdouble y, gint *verse)
+{
+    GtkTextBuffer *buffer;
+    GtkTextIter iter;
+    GtkTextIter line_start;
+    GtkTextIter line_end;
+    gchar *line;
+    gint bx;
+    gint by;
+    gint trailing;
+    gint line_y;
+    gint line_height;
+    gint found = 0;
+
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_WIDGET,
+                                          (gint)x, (gint)y, &bx, &by);
+    if (!gtk_text_view_get_iter_at_position(view, &iter, &trailing, bx, by))
+        return FALSE;
+    if (gtk_text_iter_get_line(&iter) == 0)
+        return FALSE;
+    gtk_text_view_get_line_yrange(view, &iter, &line_y, &line_height);
+    if (by < line_y || by >= line_y + line_height)
+        return FALSE;
+    buffer = gtk_text_view_get_buffer(view);
+    line_start = iter;
+    gtk_text_iter_set_line_offset(&line_start, 0);
+    line_end = line_start;
+    if (!gtk_text_iter_forward_line(&line_end))
+        gtk_text_buffer_get_end_iter(buffer, &line_end);
+    line = gtk_text_buffer_get_text(buffer, &line_start, &line_end, TRUE);
+    found = gsword_window_verse_number_from_line(line);
+    g_free(line);
+    if (found <= 0)
+        return FALSE;
+    if (verse != NULL)
+        *verse = found;
+    return TRUE;
+}
+
+static void
+on_context_copy(GtkButton *button, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_reader_page_copy(page);
+}
+
+static void
+on_context_note(GtkButton *button, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_window_open_current_note(page->window);
+}
+
+static void
+on_context_highlight(GtkButton *button, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_reader_page_toggle_highlight(page);
+}
+
+static void
+on_reader_context_clicked(GtkGestureClick *gesture, gint n_press,
+                          gdouble x, gdouble y, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+    GtkTextView *view;
+    GdkRectangle rect = { (gint)x, (gint)y, 1, 1 };
+    gint verse;
+
+    (void)n_press;
+    if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
+        GDK_BUTTON_SECONDARY)
+        return;
+    gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+    view = GTK_TEXT_VIEW(gtk_event_controller_get_widget(
+        GTK_EVENT_CONTROLLER(gesture)));
+    if (!verse_at_position(view, x, y, &verse))
+        return;
+    select_verse(page, verse);
+    gtk_popover_set_pointing_to(page->context_menu, &rect);
+    gtk_popover_popup(page->context_menu);
+}
+
 static void
 on_reader_clicked(GtkGestureClick *gesture, gint n_press, gdouble x,
                   gdouble y, gpointer user_data)
@@ -883,14 +1097,14 @@ gsword_reader_page_set_focus_mode(GswordReaderPage *page, gboolean focus)
             gtk_widget_get_visible(page->study_widget);
         gsword_window_set_sidebar_visible(page->window, FALSE);
         gtk_widget_set_visible(page->study_widget, FALSE);
-        gtk_text_view_set_left_margin(page->view, 64);
-        gtk_text_view_set_right_margin(page->view, 64);
+        update_reading_margins(page);
+        schedule_reading_margins(page);
     } else {
         gsword_window_set_sidebar_visible(
             page->window, page->focus_sidebar_visible);
         gtk_widget_set_visible(page->study_widget, page->focus_study_visible);
-        gtk_text_view_set_left_margin(page->view, 28);
-        gtk_text_view_set_right_margin(page->view, 28);
+        update_reading_margins(page);
+        schedule_reading_margins(page);
     }
     gsword_reader_toolbar_set_focus_mode(page->toolbar, focus);
 }
@@ -1044,6 +1258,7 @@ on_study_position_changed(GObject *object, GParamSpec *pspec,
     gint study_width = width - position;
 
     (void)pspec;
+    schedule_reading_margins(page);
     if (page->updating_study_width || settings == NULL ||
         !gtk_widget_get_visible(page->study_widget) ||
         study_width < 200 || study_width > width - 160)
@@ -1060,6 +1275,7 @@ on_paned_width_changed(GObject *object, GParamSpec *pspec,
     gint width = gtk_widget_get_width(GTK_WIDGET(object));
 
     (void)pspec;
+    schedule_reading_margins(page);
     if (page->study_width_ready || page->updating_study_width ||
         !gtk_widget_get_visible(page->study_widget) ||
         width <= page->study_width + 160)
@@ -1090,6 +1306,7 @@ on_study_visible_changed(GObject *object, GParamSpec *pspec,
             page->study_width_ready = TRUE;
         }
     }
+    schedule_reading_margins(page);
 }
 
 static gboolean
@@ -1117,6 +1334,8 @@ reader_page_free(gpointer data)
 
     if (page == NULL)
         return;
+    if (page->margin_idle != 0)
+        g_source_remove(page->margin_idle);
     gsword_reader_history_free(page->history);
     g_free(page);
 }
@@ -1135,6 +1354,15 @@ gsword_reader_page_new(GswordWindow *window)
 
     page->window = window;
     page->root = reader_box;
+    page->scrolled = scrolled;
+    page->reading_width = 760;
+    settings = gsword_window_get_settings(window);
+    if (settings != NULL) {
+        page->paragraph_spacing = CLAMP(
+            g_settings_get_int(settings, "reader-paragraph-spacing"), 0, 24);
+        page->reading_width = CLAMP(
+            g_settings_get_int(settings, "reader-width"), 480, 1200);
+    }
     page->history = gsword_reader_history_new(
         gsword_window_get_settings(window), 50);
     page->toolbar = gsword_reader_toolbar_new(window, page);
@@ -1151,6 +1379,8 @@ gsword_reader_page_new(GswordWindow *window)
     gtk_text_view_set_top_margin(page->view, 22);
     gtk_text_view_set_bottom_margin(page->view, 22);
     gtk_widget_add_css_class(GTK_WIDGET(page->view), "gsw-reader");
+    page->spacing_tag = gtk_text_buffer_create_tag(
+        gtk_text_view_get_buffer(page->view), "gsword-spacing", NULL);
     page->highlight_tag = gtk_text_buffer_create_tag(
         gtk_text_view_get_buffer(page->view), "gsword-highlight",
         "background", "#fff0a8", NULL);
@@ -1161,14 +1391,62 @@ gsword_reader_page_new(GswordWindow *window)
     page->active_verse_tag = gtk_text_buffer_create_tag(
         gtk_text_view_get_buffer(page->view), "gsword-active-verse",
         "background", "#dbeafe", "weight", PANGO_WEIGHT_SEMIBOLD, NULL);
+    g_object_set(page->spacing_tag,
+                 "pixels-above-lines", page->paragraph_spacing / 2,
+                 "pixels-below-lines", page->paragraph_spacing / 2,
+                 NULL);
     gtk_text_tag_set_priority(page->active_verse_tag, 2);
     reader_click = gtk_gesture_click_new();
     g_signal_connect(reader_click, "pressed",
                      G_CALLBACK(on_reader_clicked), page);
     gtk_widget_add_controller(GTK_WIDGET(page->view),
                               GTK_EVENT_CONTROLLER(reader_click));
+    {
+        GtkGesture *context = gtk_gesture_click_new();
+        GtkWidget *popover = gtk_popover_new();
+        GtkWidget *menu = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *copy_item = gtk_button_new_with_label(_("Copy verse"));
+        GtkWidget *note_item = gtk_button_new_with_label(_("Open note"));
+        GtkWidget *highlight_item = gtk_button_new_with_label(
+            _("Toggle highlight"));
+
+        gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context),
+                                      GDK_BUTTON_SECONDARY);
+        gtk_event_controller_set_propagation_phase(
+            GTK_EVENT_CONTROLLER(context), GTK_PHASE_CAPTURE);
+        g_signal_connect(context, "pressed",
+                         G_CALLBACK(on_reader_context_clicked), page);
+        gtk_widget_add_controller(GTK_WIDGET(page->view),
+                                  GTK_EVENT_CONTROLLER(context));
+
+        page->context_menu = GTK_POPOVER(popover);
+        gtk_popover_set_autohide(page->context_menu, TRUE);
+        gtk_popover_set_has_arrow(page->context_menu, TRUE);
+        gtk_widget_set_focusable(GTK_WIDGET(popover), FALSE);
+        gtk_widget_set_margin_top(menu, 6);
+        gtk_widget_set_margin_bottom(menu, 6);
+        gtk_widget_set_margin_start(menu, 6);
+        gtk_widget_set_margin_end(menu, 6);
+        gtk_widget_add_css_class(copy_item, "flat");
+        gtk_widget_add_css_class(note_item, "flat");
+        gtk_widget_add_css_class(highlight_item, "flat");
+        g_signal_connect(copy_item, "clicked",
+                         G_CALLBACK(on_context_copy), page);
+        g_signal_connect(note_item, "clicked",
+                         G_CALLBACK(on_context_note), page);
+        g_signal_connect(highlight_item, "clicked",
+                         G_CALLBACK(on_context_highlight), page);
+        gtk_box_append(GTK_BOX(menu), copy_item);
+        gtk_box_append(GTK_BOX(menu), note_item);
+        gtk_box_append(GTK_BOX(menu), highlight_item);
+        gtk_popover_set_child(page->context_menu, menu);
+        gtk_widget_set_parent(popover, GTK_WIDGET(page->view));
+    }
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->view));
+    g_signal_connect(scrolled, "notify::width",
+                     G_CALLBACK(on_reader_size_changed), page);
+    g_signal_connect(scrolled, "map", G_CALLBACK(on_reader_mapped), page);
     study_widget = gsword_study_panel_widget(page->study_panel);
     page->study_widget = study_widget;
     page->paned = GTK_PANED(paned);
@@ -1214,6 +1492,7 @@ gsword_reader_page_new(GswordWindow *window)
                          G_CALLBACK(on_reader_key_pressed), page);
         gtk_widget_add_controller(reader_box, keys);
     }
+    update_reading_margins(page);
     g_object_set_data_full(G_OBJECT(reader_box), "gsword-reader-page", page,
                            reader_page_free);
     return page;

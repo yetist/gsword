@@ -27,6 +27,12 @@ void gsword_reader_page_copy(GswordReaderPage *page);
 void gsword_reader_page_copy_chapter(GswordReaderPage *page);
 void gsword_reader_page_set_focus_mode(GswordReaderPage *page,
                                         gboolean focus);
+gint gsword_reader_page_get_paragraph_spacing(GswordReaderPage *page);
+void gsword_reader_page_set_paragraph_spacing(GswordReaderPage *page,
+                                              gint spacing);
+gint gsword_reader_page_get_reading_width(GswordReaderPage *page);
+void gsword_reader_page_set_reading_width(GswordReaderPage *page,
+                                          gint width);
 void gsword_reader_page_toggle_highlight(GswordReaderPage *page);
 gchar *gsword_reader_page_current_reference(GswordReaderPage *page);
 gchar *gsword_reader_page_current_start_reference(GswordReaderPage *page);
