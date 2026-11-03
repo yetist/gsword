@@ -4,6 +4,7 @@
 
 #include "reader-toolbar.h"
 #include "reader-page.h"
+#include "preferences-dialog.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -26,6 +27,7 @@ struct _GswordReaderToolbar {
     GtkWidget *highlight_button;
     GtkWidget *focus_button;
     GtkWidget *more_button;
+    GtkWidget *typography_button;
     GtkToggleButton *study_button;
     gboolean updating_list_menu;
     gboolean updating_focus;
@@ -65,6 +67,46 @@ on_focus_toggled(GtkToggleButton *button, gpointer user_data)
         return;
     gsword_reader_page_set_focus_mode(
         toolbar->page, gtk_toggle_button_get_active(button));
+}
+
+static void
+on_font_scale_changed(GtkSpinButton *spin, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+
+    gsword_preferences_set_font_scale(
+        toolbar->window, gtk_spin_button_get_value(spin));
+}
+
+static void
+on_paragraph_spacing_changed(GtkSpinButton *spin, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+
+    gsword_reader_page_set_paragraph_spacing(
+        toolbar->page, gtk_spin_button_get_value_as_int(spin));
+}
+
+static void
+on_reading_width_changed(GtkSpinButton *spin, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+
+    gsword_reader_page_set_reading_width(
+        toolbar->page, gtk_spin_button_get_value_as_int(spin));
+}
+
+static GtkWidget *
+make_typography_row(GtkGrid *grid, gint row, const gchar *label_text,
+                    GtkWidget *spin)
+{
+    GtkWidget *label = gtk_label_new(label_text);
+
+    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+    gtk_widget_set_hexpand(label, TRUE);
+    gtk_grid_attach(grid, label, 0, row, 1, 1);
+    gtk_grid_attach(grid, spin, 1, row, 1, 1);
+    return spin;
 }
 
 static void
@@ -383,6 +425,7 @@ gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
     gtk_widget_set_visible(GTK_WIDGET(toolbar->list_button), !focus);
     gtk_widget_set_visible(toolbar->highlight_button, !focus);
     gtk_widget_set_visible(GTK_WIDGET(toolbar->study_button), !focus);
+    gtk_widget_set_visible(toolbar->typography_button, !focus);
     gtk_widget_set_visible(toolbar->more_button, !focus);
     toolbar->updating_focus = FALSE;
 }
@@ -394,13 +437,13 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *copy = gtk_button_new_from_icon_name("edit-copy-symbolic");
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
-    GtkWidget *highlight = gtk_button_new_from_icon_name(
-        "emblem-favorite-symbolic");
+    GtkWidget *highlight = gtk_button_new_with_label(_("Highlight verse"));
     GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *focus_button = gtk_toggle_button_new();
     GtkWidget *more_button = gtk_menu_button_new();
+    GtkWidget *typography = gtk_menu_button_new();
     GtkWidget *more_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     GtkWidget *copy_chapter = gtk_button_new_with_label(_("Copy chapter"));
     GtkWidget *back;
@@ -451,6 +494,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     g_signal_connect(copy_chapter, "clicked",
                      G_CALLBACK(on_copy_chapter_clicked), toolbar);
     gtk_box_append(GTK_BOX(more_box), copy_chapter);
+    gtk_box_append(GTK_BOX(more_box), highlight);
     gtk_box_append(GTK_BOX(more_box), teaching);
     {
         GtkWidget *popover = gtk_popover_new();
@@ -520,6 +564,57 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
                              "dialog-information-symbolic");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), FALSE);
     toolbar->study_toggle = GTK_TOGGLE_BUTTON(study_button);
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(typography),
+                                   "font-x-generic-symbolic");
+    gtk_widget_add_css_class(typography, "flat");
+    gtk_widget_set_tooltip_text(typography, _("Reading appearance"));
+    {
+        GtkWidget *popover = gtk_popover_new();
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+        GtkWidget *title = gtk_label_new(_("Reading appearance"));
+        GtkWidget *grid = gtk_grid_new();
+        GtkWidget *font_spin;
+        GtkWidget *spacing_spin;
+        GtkWidget *width_spin;
+        GtkAdjustment *adjustment;
+
+        gtk_widget_add_css_class(title, "heading");
+        gtk_label_set_xalign(GTK_LABEL(title), 0.0f);
+        gtk_widget_set_margin_top(box, 12);
+        gtk_widget_set_margin_bottom(box, 12);
+        gtk_widget_set_margin_start(box, 12);
+        gtk_widget_set_margin_end(box, 12);
+        gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+        gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
+
+        adjustment = gtk_adjustment_new(
+            gsword_preferences_get_font_scale(window), 0.75, 2.5, 0.1, 0.25, 0);
+        font_spin = gtk_spin_button_new(adjustment, 0.1, 1);
+        g_signal_connect(font_spin, "value-changed",
+                         G_CALLBACK(on_font_scale_changed), toolbar);
+
+        adjustment = gtk_adjustment_new(
+            gsword_reader_page_get_paragraph_spacing(page), 0, 24, 2, 8, 0);
+        spacing_spin = gtk_spin_button_new(adjustment, 1, 0);
+        g_signal_connect(spacing_spin, "value-changed",
+                         G_CALLBACK(on_paragraph_spacing_changed), toolbar);
+
+        adjustment = gtk_adjustment_new(
+            gsword_reader_page_get_reading_width(page), 480, 1200, 40, 160, 0);
+        width_spin = gtk_spin_button_new(adjustment, 20, 0);
+        g_signal_connect(width_spin, "value-changed",
+                         G_CALLBACK(on_reading_width_changed), toolbar);
+
+        make_typography_row(GTK_GRID(grid), 0, _("Font size"), font_spin);
+        make_typography_row(GTK_GRID(grid), 1, _("Paragraph spacing"),
+                            spacing_spin);
+        make_typography_row(GTK_GRID(grid), 2, _("Reading width"), width_spin);
+        gtk_box_append(GTK_BOX(box), title);
+        gtk_box_append(GTK_BOX(box), grid);
+        gtk_popover_set_child(GTK_POPOVER(popover), box);
+        gtk_menu_button_set_popover(GTK_MENU_BUTTON(typography), popover);
+    }
+    toolbar->typography_button = typography;
     gtk_button_set_icon_name(GTK_BUTTON(focus_button),
                              "view-fullscreen-symbolic");
     gtk_widget_add_css_class(focus_button, "flat");
@@ -534,7 +629,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     toolbar->highlight_button = highlight;
     gtk_widget_set_tooltip_text(copy, _("Copy selection or current verse"));
     gtk_widget_set_tooltip_text(note, _("Open note for this verse"));
-    gtk_widget_set_tooltip_text(highlight, _("Toggle verse highlight"));
+    gtk_widget_add_css_class(highlight, "flat");
     gtk_widget_set_tooltip_text(study_button, _("Toggle study panel"));
 
     gtk_box_append(GTK_BOX(bar), back);
@@ -544,8 +639,8 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_box_append(GTK_BOX(bar), copy);
     gtk_box_append(GTK_BOX(bar), note);
     gtk_box_append(GTK_BOX(bar), list_add);
-    gtk_box_append(GTK_BOX(bar), highlight);
     gtk_box_append(GTK_BOX(bar), study_button);
+    gtk_box_append(GTK_BOX(bar), typography);
     gtk_box_append(GTK_BOX(bar), focus_button);
     gtk_box_append(GTK_BOX(bar), more_button);
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 18:06+0800\n"
+"POT-Creation-Date: 2026-11-03 18:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,7 +77,7 @@ msgstr ""
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:109
+#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:131
 msgid "Preferences"
 msgstr ""
 
@@ -129,7 +129,7 @@ msgstr ""
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:996 src/preferences-dialog.c:114
+#: src/window.c:996 src/preferences-dialog.c:136
 msgid "Reading"
 msgstr ""
 
@@ -447,11 +447,11 @@ msgstr ""
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:122
+#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:164
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:130
+#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:172
 msgid "Verse removed from list"
 msgstr ""
 
@@ -463,11 +463,11 @@ msgstr ""
 msgid "This list is empty"
 msgstr ""
 
-#: src/notes-page.c:1188 src/reader-toolbar.c:112
+#: src/notes-page.c:1188 src/reader-toolbar.c:154
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/notes-page.c:1204 src/reader-toolbar.c:129
+#: src/notes-page.c:1204 src/reader-toolbar.c:171
 msgid "Verse added to list"
 msgstr ""
 
@@ -475,7 +475,7 @@ msgstr ""
 msgid "Select a note first"
 msgstr ""
 
-#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:165
+#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:207
 msgid "No verse lists yet"
 msgstr ""
 
@@ -1544,134 +1544,158 @@ msgstr ""
 msgid "Close comparison"
 msgstr ""
 
-#: src/reader-page.c:179
+#: src/reader-page.c:299
 msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
 
-#: src/reader-page.c:181
+#: src/reader-page.c:301
 msgid "No modules found"
 msgstr ""
 
-#: src/reader-page.c:205
+#: src/reader-page.c:325
 msgid "Cannot read entry"
 msgstr ""
 
-#: src/reader-page.c:248 src/reader-page.c:632 src/reader-page.c:670
+#: src/reader-page.c:369 src/reader-page.c:753 src/reader-page.c:791
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:757
+#: src/reader-page.c:971
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:762
+#: src/reader-page.c:976
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:765
+#: src/reader-page.c:979
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:803
+#: src/reader-page.c:1017
 msgid "Copied to clipboard"
 msgstr ""
 
-#: src/reader-toolbar.c:152
+#: src/reader-page.c:1408
+msgid "Copy verse"
+msgstr ""
+
+#: src/reader-page.c:1409
+msgid "Open note"
+msgstr ""
+
+#: src/reader-page.c:1411
+msgid "Toggle highlight"
+msgstr ""
+
+#: src/reader-toolbar.c:194
 msgid "Open a verse first"
 msgstr ""
 
-#: src/reader-toolbar.c:224
+#: src/reader-toolbar.c:266
 msgid "No reading history yet."
 msgstr ""
 
-#: src/reader-toolbar.c:400
+#: src/reader-toolbar.c:440
+msgid "Highlight verse"
+msgstr ""
+
+#: src/reader-toolbar.c:442
 msgid "Teach"
 msgstr ""
 
-#: src/reader-toolbar.c:405
+#: src/reader-toolbar.c:448
 msgid "Copy chapter"
 msgstr ""
 
-#: src/reader-toolbar.c:434
+#: src/reader-toolbar.c:477
 msgid "Add verse to list"
 msgstr ""
 
-#: src/reader-toolbar.c:448
+#: src/reader-toolbar.c:491
 msgid "More reading actions"
 msgstr ""
 
-#: src/reader-toolbar.c:464 src/reader-toolbar.c:468
+#: src/reader-toolbar.c:508 src/reader-toolbar.c:512
 msgid "Recent reading"
 msgstr ""
 
-#: src/reader-toolbar.c:480
+#: src/reader-toolbar.c:524
 msgid "Clear history"
 msgstr ""
 
-#: src/reader-toolbar.c:494
+#: src/reader-toolbar.c:538
 msgid "Back (Alt+Left)"
 msgstr ""
 
-#: src/reader-toolbar.c:495
+#: src/reader-toolbar.c:539
 msgid "Forward (Alt+Right)"
 msgstr ""
 
-#: src/reader-toolbar.c:518
+#: src/reader-toolbar.c:562
 msgid "Open teaching layout for this passage"
 msgstr ""
 
-#: src/reader-toolbar.c:527
-msgid "Focus reading mode (F11)"
+#: src/reader-toolbar.c:570 src/reader-toolbar.c:574
+msgid "Reading appearance"
 msgstr ""
 
-#: src/reader-toolbar.c:535
-msgid "Copy selection or current verse"
-msgstr ""
-
-#: src/reader-toolbar.c:536
-msgid "Open note for this verse"
-msgstr ""
-
-#: src/reader-toolbar.c:537
-msgid "Toggle verse highlight"
-msgstr ""
-
-#: src/reader-toolbar.c:538
-msgid "Toggle study panel"
-msgstr ""
-
-#: src/preferences-dialog.c:116
-msgid "Reading appearance is applied immediately."
-msgstr ""
-
-#: src/preferences-dialog.c:120
+#: src/reader-toolbar.c:608 src/preferences-dialog.c:142
 msgid "Font size"
 msgstr ""
 
-#: src/preferences-dialog.c:121
+#: src/reader-toolbar.c:609
+msgid "Paragraph spacing"
+msgstr ""
+
+#: src/reader-toolbar.c:611
+msgid "Reading width"
+msgstr ""
+
+#: src/reader-toolbar.c:622
+msgid "Focus reading mode (F11)"
+msgstr ""
+
+#: src/reader-toolbar.c:630
+msgid "Copy selection or current verse"
+msgstr ""
+
+#: src/reader-toolbar.c:631
+msgid "Open note for this verse"
+msgstr ""
+
+#: src/reader-toolbar.c:633
+msgid "Toggle study panel"
+msgstr ""
+
+#: src/preferences-dialog.c:138
+msgid "Reading appearance is applied immediately."
+msgstr ""
+
+#: src/preferences-dialog.c:143
 msgid "Scale the scripture text size"
 msgstr ""
 
-#: src/preferences-dialog.c:132
+#: src/preferences-dialog.c:154
 msgid "Color scheme"
 msgstr ""
 
-#: src/preferences-dialog.c:134
+#: src/preferences-dialog.c:156
 msgid "Follow the desktop or force light/dark mode"
 msgstr ""
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Follow system"
 msgstr ""
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Light"
 msgstr ""
 
-#: src/preferences-dialog.c:136
+#: src/preferences-dialog.c:158
 msgid "Dark"
 msgstr ""
 

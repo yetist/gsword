@@ -84,6 +84,28 @@ on_theme_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     apply_theme(prefs);
 }
 
+gdouble
+gsword_preferences_get_font_scale(GswordWindow *window)
+{
+    GswordPreferences *prefs = get_preferences(window);
+
+    return prefs != NULL ? prefs->font_scale : 1.0;
+}
+
+void
+gsword_preferences_set_font_scale(GswordWindow *window, gdouble font_scale)
+{
+    GswordPreferences *prefs = get_preferences(window);
+    GSettings *settings = gsword_window_get_settings(window);
+
+    if (prefs == NULL)
+        return;
+    prefs->font_scale = CLAMP(font_scale, 0.75, 2.5);
+    if (settings != NULL)
+        g_settings_set_double(settings, "font-scale", prefs->font_scale);
+    apply_css(prefs);
+}
+
 void
 gsword_preferences_show(GswordWindow *window)
 {
