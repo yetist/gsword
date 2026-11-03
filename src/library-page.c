@@ -56,6 +56,10 @@ struct _GswordLibraryPage {
     GtkToggleButton *installed_view_button;
     GtkToggleButton *available_view_button;
     GtkToggleButton *updates_view_button;
+    GtkButton *update_all_button;
+    GPtrArray *update_queue;
+    GswInstallSource *update_source;
+    gboolean updating_all;
     GCancellable *install_cancellable;
     GtkEntry *local_dir_entry;
     GtkEntry *local_name_entry;
@@ -63,6 +67,14 @@ struct _GswordLibraryPage {
     gchar *selected_remote_name;
     gchar *selected_installed_name;
 };
+
+typedef struct {
+    GswordLibraryPage *page;
+    GtkEntry *caption_entry;
+    GtkEntry *host_entry;
+    GtkEntry *directory_entry;
+    AdwDialog *dialog;
+} SourceDialogData;
 
 static GswordLibraryPage *
 library_page_get(GswordWindow *self)
@@ -862,6 +874,187 @@ on_installed_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 }
 
 static void
+source_dialog_data_free(gpointer data)
+{
+    g_free(data);
+}
+
+static void
+on_add_source_clicked(GtkButton *button, gpointer user_data)
+{
+    SourceDialogData *data = user_data;
+    GswordLibraryPage *priv = data->page;
+    GswordWindow *self = priv->window;
+    const gchar *caption = gtk_editable_get_text(
+        GTK_EDITABLE(data->caption_entry));
+    const gchar *host = gtk_editable_get_text(GTK_EDITABLE(data->host_entry));
+    const gchar *directory = gtk_editable_get_text(
+        GTK_EDITABLE(data->directory_entry));
+    GswInstallSource *source;
+    GError *error = NULL;
+
+    (void)button;
+    if (caption == NULL || *caption == '\0' || host == NULL || *host == '\0') {
+        gsword_window_set_status(self, _("Enter a source name and host"));
+        return;
+    }
+    source = gsw_install_source_new(GSW_SOURCE_HTTPS, caption, host,
+                                    directory != NULL ? directory : "",
+                                    NULL, NULL, NULL);
+    if (source == NULL) {
+        gsword_window_set_status(self, _("Invalid source settings"));
+        return;
+    }
+    if (!gsw_install_manager_add_source(priv->installer, source)) {
+        gsword_window_set_status(self, _("Cannot add source"));
+        g_object_unref(source);
+        return;
+    }
+    if (!gsw_install_manager_save_config(priv->installer, &error)) {
+        gsword_window_show_error(self, _("Cannot save source"), error);
+        g_object_unref(source);
+        return;
+    }
+    g_object_unref(source);
+    gsword_window_refresh_install_sources(self);
+    gsword_window_set_status(self, _("Source added"));
+    if (data->dialog != NULL)
+        adw_dialog_close(data->dialog);
+}
+
+static void
+on_remove_source_clicked(GtkButton *button, gpointer user_data)
+{
+    SourceDialogData *data = user_data;
+    GswordLibraryPage *priv = data->page;
+    GswordWindow *self = priv->window;
+    const gchar *caption = g_object_get_data(G_OBJECT(button),
+                                             "source-caption");
+    GError *error = NULL;
+
+    if (caption == NULL)
+        return;
+    if (!gsw_install_manager_remove_source(priv->installer, caption)) {
+        gsword_window_set_status(self, _("Cannot remove source"));
+        return;
+    }
+    if (!gsw_install_manager_save_config(priv->installer, &error)) {
+        gsword_window_show_error(self, _("Cannot save source"), error);
+        return;
+    }
+    gsword_window_refresh_install_sources(self);
+    gsword_window_set_status(self, _("Source removed"));
+    if (data->dialog != NULL)
+        adw_dialog_close(data->dialog);
+}
+
+static void
+on_manage_sources(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    AdwDialog *dialog;
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *sources_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *add_label;
+    GtkWidget *add_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *caption_entry;
+    GtkWidget *host_entry;
+    GtkWidget *directory_entry;
+    GtkWidget *add_button;
+    GPtrArray *sources;
+    SourceDialogData *data;
+    guint i;
+
+    (void)button;
+    if (priv->installer == NULL)
+        return;
+    dialog = ADW_DIALOG(adw_alert_dialog_new(_("Installation sources"), NULL));
+    data = g_new0(SourceDialogData, 1);
+    data->page = priv;
+    data->dialog = dialog;
+
+    add_label = gtk_label_new(_("Configured sources"));
+    gtk_label_set_xalign(GTK_LABEL(add_label), 0.0f);
+    gtk_widget_add_css_class(add_label, "heading");
+    gtk_box_append(GTK_BOX(box), add_label);
+    sources = gsw_install_manager_get_sources(priv->installer);
+    if (sources->len == 0) {
+        GtkWidget *empty = gtk_label_new(_("No sources configured."));
+
+        gtk_label_set_xalign(GTK_LABEL(empty), 0.0f);
+        gtk_widget_add_css_class(empty, "dim-label");
+        gtk_box_append(GTK_BOX(sources_box), empty);
+    }
+    for (i = 0; i < sources->len; i++) {
+        GswInstallSource *source = g_ptr_array_index(sources, i);
+        GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *label = gtk_label_new(
+            gsw_install_source_get_caption(source));
+        GtkWidget *remove = gtk_button_new_from_icon_name(
+            "edit-delete-symbolic");
+        gchar *detail = g_strdup_printf("%s · %s",
+            gsw_install_source_get_host(source),
+            gsw_install_source_get_directory(source));
+        GtkWidget *detail_label = gtk_label_new(detail);
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_add_css_class(label, "heading");
+        gtk_label_set_xalign(GTK_LABEL(detail_label), 0.0f);
+        gtk_widget_add_css_class(detail_label, "caption");
+        gtk_widget_add_css_class(detail_label, "dim-label");
+        gtk_widget_set_hexpand(label, TRUE);
+        gtk_widget_add_css_class(remove, "flat");
+        g_object_set_data_full(G_OBJECT(remove), "source-caption",
+                               g_strdup(gsw_install_source_get_caption(source)),
+                               g_free);
+        g_signal_connect(remove, "clicked",
+                         G_CALLBACK(on_remove_source_clicked), data);
+        gtk_box_append(GTK_BOX(row), label);
+        gtk_box_append(GTK_BOX(row), detail_label);
+        gtk_box_append(GTK_BOX(row), remove);
+        gtk_box_append(GTK_BOX(sources_box), row);
+        g_free(detail);
+    }
+    g_ptr_array_unref(sources);
+    gtk_box_append(GTK_BOX(box), sources_box);
+
+    add_label = gtk_label_new(_("Add source"));
+    gtk_label_set_xalign(GTK_LABEL(add_label), 0.0f);
+    gtk_widget_add_css_class(add_label, "heading");
+    gtk_box_append(GTK_BOX(box), add_label);
+    caption_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(caption_entry),
+                                   _("Source name"));
+    host_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(host_entry), _("Host"));
+    directory_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(directory_entry),
+                                   _("Module directory"));
+    gtk_editable_set_text(GTK_EDITABLE(directory_entry),
+                          "ftpmirror/pub/sword");
+    gtk_box_append(GTK_BOX(box), caption_entry);
+    gtk_box_append(GTK_BOX(box), host_entry);
+    gtk_box_append(GTK_BOX(box), directory_entry);
+    add_button = gtk_button_new_with_label(_("Add source"));
+    gtk_box_append(GTK_BOX(add_box), add_button);
+    gtk_widget_set_halign(add_box, GTK_ALIGN_END);
+    gtk_box_append(GTK_BOX(box), add_box);
+    data->caption_entry = GTK_ENTRY(caption_entry);
+    data->host_entry = GTK_ENTRY(host_entry);
+    data->directory_entry = GTK_ENTRY(directory_entry);
+    g_signal_connect(add_button, "clicked",
+                     G_CALLBACK(on_add_source_clicked), data);
+    g_object_set_data_full(G_OBJECT(dialog), "source-dialog-data", data,
+                           source_dialog_data_free);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), box);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "close", _("Close"), NULL);
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "close");
+    adw_dialog_present(dialog, GTK_WIDGET(self));
+}
+
+static void
 on_refresh_sources_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -963,6 +1156,72 @@ on_refresh_remote_finished(GObject *source, GAsyncResult *result,
 }
 
 static void
+start_next_update(GswordWindow *self)
+{
+    GswordLibraryPage *priv = library_page_get(self);
+    const gchar *name;
+
+    if (priv->update_queue == NULL || priv->update_queue->len == 0) {
+        priv->updating_all = FALSE;
+        gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
+        gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
+        g_clear_object(&priv->install_cancellable);
+        g_clear_object(&priv->update_source);
+        gsword_window_set_status(self, _("All updates complete"));
+        gsword_window_refresh_remote_modules(self);
+        return;
+    }
+    g_free(priv->selected_remote_name);
+    priv->selected_remote_name = g_ptr_array_steal_index(priv->update_queue, 0);
+    name = priv->selected_remote_name;
+    if (priv->install_cancellable == NULL) {
+        priv->install_cancellable = g_cancellable_new();
+        gsw_install_manager_set_cancellable(priv->installer,
+                                            priv->install_cancellable);
+    }
+    gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), TRUE);
+    gtk_progress_bar_pulse(priv->install_progress);
+    gsword_window_set_status(self, _("Updating modules..."));
+    gsw_install_manager_install_module_async(
+        priv->installer, priv->manager, priv->update_source, name,
+        priv->install_cancellable, on_install_finished, self);
+}
+
+static void
+on_update_all_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    GswInstallSource *source = gsword_window_current_install_source(self);
+    guint i;
+
+    (void)button;
+    if (source == NULL || priv->remote_infos == NULL) {
+        gsword_window_set_status(self, _("No source selected"));
+        return;
+    }
+    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
+    priv->update_queue = g_ptr_array_new_with_free_func(g_free);
+    for (i = 0; i < priv->remote_infos->len; i++) {
+        GswModuleInfo *info = g_ptr_array_index(priv->remote_infos, i);
+        guint status = gsw_install_manager_get_module_status(priv->manager,
+                                                             info);
+
+        if (status & GSW_MODULE_STATUS_UPDATED)
+            g_ptr_array_add(priv->update_queue,
+                            g_strdup(gsw_module_info_get_name(info)));
+    }
+    if (priv->update_queue->len == 0) {
+        gsword_window_set_status(self, _("No updates available"));
+        return;
+    }
+    g_clear_object(&priv->update_source);
+    priv->update_source = g_object_ref(source);
+    priv->updating_all = TRUE;
+    start_next_update(self);
+}
+
+static void
 on_install_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
@@ -972,6 +1231,9 @@ on_install_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     if (source == NULL || priv->selected_remote_name == NULL)
         return;
+    priv->updating_all = FALSE;
+    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
+    g_clear_object(&priv->update_source);
     g_clear_object(&priv->install_cancellable);
     priv->install_cancellable = g_cancellable_new();
     gsw_install_manager_set_cancellable(priv->installer,
@@ -1013,6 +1275,11 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     gsword_window_refresh_installed_list(self);
     gsword_window_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
+    if (priv->updating_all) {
+        g_free(installed_name);
+        start_next_update(self);
+        return;
+    }
     if (installed && installed_name != NULL) {
         gchar *message = g_strdup_printf(_("Installed module %s"),
                                          installed_name);
@@ -1078,6 +1345,9 @@ on_cancel_install_clicked(GtkButton *button, gpointer user_data)
 
     if (priv->install_cancellable != NULL)
         g_cancellable_cancel(priv->install_cancellable);
+    priv->updating_all = FALSE;
+    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
+    g_clear_object(&priv->update_source);
     gsword_window_set_status(self, _("Cancelling..."));
 }
 
@@ -1119,6 +1389,43 @@ on_install_progress(GswStatusReporter *reporter, guint64 total, guint64 done,
     gtk_label_set_text(priv->install_status, status);
     g_free(status);
     (void)self;
+}
+
+static void
+on_browse_local_finished(GObject *source, GAsyncResult *result,
+                         gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    GError *error = NULL;
+    GFile *folder = gtk_file_dialog_select_folder_finish(
+        GTK_FILE_DIALOG(source), result, &error);
+
+    if (folder == NULL) {
+        g_clear_error(&error);
+        return;
+    }
+    {
+        gchar *path = g_file_get_path(folder);
+
+        gtk_editable_set_text(GTK_EDITABLE(priv->local_dir_entry),
+                              path != NULL ? path : "");
+        g_free(path);
+    }
+    g_object_unref(folder);
+}
+
+static void
+on_browse_local_dir(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GtkFileDialog *dialog = gtk_file_dialog_new();
+
+    (void)button;
+    gtk_file_dialog_set_title(dialog, _("Select local module directory"));
+    gtk_file_dialog_select_folder(dialog, GTK_WINDOW(self), NULL,
+                                  on_browse_local_finished, self);
+    g_object_unref(dialog);
 }
 
 static void
@@ -1229,6 +1536,8 @@ update_library_view(GswordWindow *self, gint view)
         gtk_widget_set_visible(GTK_WIDGET(priv->status_filter), view == 1);
     if (priv->local_box != NULL)
         gtk_widget_set_visible(priv->local_box, view == 0);
+    if (priv->update_all_button != NULL)
+        gtk_widget_set_visible(GTK_WIDGET(priv->update_all_button), view == 2);
     if (priv->list_stack != NULL)
         gtk_stack_set_visible_child_name(priv->list_stack,
             view == 0 ? "installed" : "remote");
@@ -1268,6 +1577,8 @@ library_page_free(gpointer data)
     g_clear_pointer(&page->install_sources, g_ptr_array_unref);
     g_clear_object(&page->source_names);
     g_clear_object(&page->install_cancellable);
+    g_clear_pointer(&page->update_queue, g_ptr_array_unref);
+    g_clear_object(&page->update_source);
     g_clear_pointer(&page->language_codes, g_ptr_array_unref);
     g_clear_object(&page->language_names);
     g_clear_pointer(&page->remote_infos, g_ptr_array_unref);
@@ -1286,6 +1597,8 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *installed_view;
     GtkWidget *available_view;
     GtkWidget *updates_view;
+    GtkWidget *update_all = gtk_button_new_with_label(_("Update all"));
+    GtkWidget *manage_sources = gtk_button_new_with_label(_("Manage sources"));
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *progress_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -1335,16 +1648,26 @@ gsword_library_page_new(GswordWindow *self)
                       GINT_TO_POINTER(1));
     g_object_set_data(G_OBJECT(updates_view), "library-view",
                       GINT_TO_POINTER(2));
+    gtk_widget_add_css_class(manage_sources, "flat");
+    g_signal_connect(manage_sources, "clicked",
+                     G_CALLBACK(on_manage_sources), self);
     g_signal_connect(installed_view, "toggled",
                      G_CALLBACK(on_view_toggled), self);
     g_signal_connect(available_view, "toggled",
                      G_CALLBACK(on_view_toggled), self);
     g_signal_connect(updates_view, "toggled",
                      G_CALLBACK(on_view_toggled), self);
+    gtk_widget_add_css_class(update_all, "flat");
+    gtk_widget_set_tooltip_text(update_all, _("Install all available updates"));
+    gtk_widget_set_visible(update_all, FALSE);
+    g_signal_connect(update_all, "clicked",
+                     G_CALLBACK(on_update_all_clicked), self);
     gtk_widget_add_css_class(view_row, "linked");
     gtk_box_append(GTK_BOX(view_row), installed_view);
     gtk_box_append(GTK_BOX(view_row), available_view);
     gtk_box_append(GTK_BOX(view_row), updates_view);
+    gtk_box_append(GTK_BOX(view_row), update_all);
+    gtk_box_append(GTK_BOX(view_row), manage_sources);
 
     priv->window = self;
     priv->manager = gsword_window_get_manager(self);
@@ -1561,7 +1884,17 @@ gsword_library_page_new(GswordWindow *self)
     g_signal_connect(priv->local_install_button, "clicked",
                      G_CALLBACK(on_local_install_clicked), self);
     gtk_box_append(GTK_BOX(local_box), local_label);
-    gtk_box_append(GTK_BOX(local_box), GTK_WIDGET(priv->local_dir_entry));
+    {
+        GtkWidget *dir_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *browse = gtk_button_new_with_label(_("Browse…"));
+
+        gtk_widget_set_hexpand(GTK_WIDGET(priv->local_dir_entry), TRUE);
+        g_signal_connect(browse, "clicked",
+                         G_CALLBACK(on_browse_local_dir), self);
+        gtk_box_append(GTK_BOX(dir_row), GTK_WIDGET(priv->local_dir_entry));
+        gtk_box_append(GTK_BOX(dir_row), browse);
+        gtk_box_append(GTK_BOX(local_box), dir_row);
+    }
     gtk_box_append(GTK_BOX(local_box), GTK_WIDGET(priv->local_name_entry));
     gtk_box_append(GTK_BOX(local_box),
                    GTK_WIDGET(priv->local_install_button));
@@ -1578,6 +1911,7 @@ gsword_library_page_new(GswordWindow *self)
     priv->installed_view_button = GTK_TOGGLE_BUTTON(installed_view);
     priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
     priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);
+    priv->update_all_button = GTK_BUTTON(update_all);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(installed_view), TRUE);
     update_library_view(self, 0);
     return priv;
