@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 16:09+0800\n"
+"POT-Creation-Date: 2026-11-03 17:09+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -41,8 +41,8 @@ msgstr "隐藏模块侧栏"
 msgid "Show module sidebar"
 msgstr "显示模块侧栏"
 
-#: src/window.c:239 src/workspace-page.c:402 src/workspace-page.c:708
-#: src/workspace-pane.c:248
+#: src/window.c:239 src/workspace-page.c:481 src/workspace-page.c:790
+#: src/workspace-pane.c:472
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
@@ -180,6 +180,10 @@ msgstr "其他"
 #: src/library-page.c:919
 msgid "Unknown"
 msgstr "未知"
+
+#: src/window-services.c:215 src/window-services.c:223
+msgid "Verse not present in this module."
+msgstr "该模块没有此节。"
 
 #: src/search-page.c:86
 #, c-format
@@ -1381,7 +1385,7 @@ msgstr "安装、更新或移除模块"
 msgid "Commentary"
 msgstr "注释"
 
-#: src/study-panel.c:119 src/workspace-pane.c:206
+#: src/study-panel.c:119 src/workspace-pane.c:418
 msgid "No commentary for this verse."
 msgstr "本节没有注释。"
 
@@ -1409,7 +1413,7 @@ msgstr "无法查询词典条目"
 msgid "Cannot read lexicon entry"
 msgstr "无法读取词典条目"
 
-#: src/study-panel.c:568 src/workspace-pane.c:591
+#: src/study-panel.c:568 src/workspace-pane.c:834
 msgid "Follow"
 msgstr "跟随"
 
@@ -1433,111 +1437,119 @@ msgstr "Strong 原文"
 msgid "Cross-refs"
 msgstr "交叉引用"
 
-#: src/workspace-page.c:429
+#: src/workspace-page.c:508
 msgid "Parallel comparison ready"
 msgstr "并行对照已就绪"
 
-#: src/workspace-page.c:611
+#: src/workspace-page.c:693
 msgid "Comparison order changed"
 msgstr "对照栏顺序已更改"
 
-#: src/workspace-page.c:633
+#: src/workspace-page.c:715
 msgid "Comparisons cleared"
 msgstr "对照栏已清空"
 
-#: src/workspace-page.c:661
+#: src/workspace-page.c:743
 msgid "Clear comparisons?"
 msgstr "清空所有对照栏？"
 
-#: src/workspace-page.c:664
+#: src/workspace-page.c:746
 msgid "All comparison panes will be removed. This cannot be undone."
 msgstr "所有对照栏都将被移除，此操作无法撤销。"
 
-#: src/workspace-page.c:667
+#: src/workspace-page.c:749
 msgid "_Cancel"
 msgstr "取消"
 
-#: src/workspace-page.c:668
+#: src/workspace-page.c:750
 msgid "_Clear"
 msgstr "清空"
 
-#: src/workspace-page.c:738
+#: src/workspace-page.c:820
 msgid "Four-way comparison ready"
 msgstr "四译本对照已就绪"
 
-#: src/workspace-page.c:803 src/workspace-page.c:815
+#: src/workspace-page.c:897 src/workspace-page.c:911
 msgid "Add comparison"
 msgstr "添加对照栏"
 
-#: src/workspace-page.c:804
+#: src/workspace-page.c:898
 msgid "Clear comparisons"
 msgstr "清空对照栏"
 
-#: src/workspace-page.c:805
+#: src/workspace-page.c:899
 msgid "Columns"
 msgstr "列数"
 
-#: src/workspace-page.c:807
+#: src/workspace-page.c:901
 msgid "Sync scroll"
 msgstr "同步滚动"
 
-#: src/workspace-page.c:809
+#: src/workspace-page.c:903
+msgid "Highlight differences"
+msgstr "差异高亮"
+
+#: src/workspace-page.c:905
 msgid "No comparisons yet"
 msgstr "尚无对照栏"
 
-#: src/workspace-page.c:811
+#: src/workspace-page.c:907
 msgid "Choose a template or add a comparison pane to begin."
 msgstr "选择模板或添加对照栏以开始。"
 
-#: src/workspace-page.c:813
+#: src/workspace-page.c:909
 msgid "Two translations"
 msgstr "两译本对照"
 
-#: src/workspace-page.c:814
+#: src/workspace-page.c:910
 msgid "Four translations"
 msgstr "四译本对照"
 
-#: src/workspace-page.c:855
+#: src/workspace-page.c:951
 msgid "Keep comparison scroll positions together"
-msgstr "保持多个对照栏的滚动位置同步"
+msgstr "按经节同步多个对照栏的滚动位置"
 
-#: src/workspace-pane.c:193
+#: src/workspace-page.c:956
+msgid "Highlight verses whose text differs between panes"
+msgstr "高亮文本不一致的经节"
+
+#: src/workspace-pane.c:404
 msgid "No module selected."
 msgstr "未选择模块。"
 
-#: src/workspace-pane.c:207
+#: src/workspace-pane.c:419
 msgid "No content for this reference."
 msgstr "此引用没有内容。"
 
-#: src/workspace-pane.c:266
+#: src/workspace-pane.c:490
 msgid "Cannot open module."
 msgstr "无法打开模块。"
 
-#: src/workspace-pane.c:475
+#: src/workspace-pane.c:718
 msgid "Comparison updated"
 msgstr "对照栏已更新"
 
-#: src/workspace-pane.c:502
+#: src/workspace-pane.c:745
 msgid "Drag to another comparison to rearrange"
 msgstr "拖到另一个对照栏以重新排列"
 
-#: src/workspace-pane.c:577
+#: src/workspace-pane.c:820
 msgid "Drag to rearrange comparison"
 msgstr "拖动以重新排列对照栏"
 
-#: src/workspace-pane.c:591
+#: src/workspace-pane.c:834
 msgid "Pinned"
 msgstr "固定"
 
-#: src/workspace-pane.c:591
+#: src/workspace-pane.c:834
 msgid "Free"
 msgstr "独立"
 
-#: src/workspace-pane.c:595
+#: src/workspace-pane.c:838
 msgid "Follow, pin, or free this comparison"
 msgstr "跟随、固定或独立此对照栏"
 
-#: src/workspace-pane.c:602
+#: src/workspace-pane.c:845
 msgid "Close comparison"
 msgstr "关闭对照栏"
 

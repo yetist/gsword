@@ -170,7 +170,8 @@ gsword_window_module_type_display(GswModuleInfo *info)
 }
 
 gchar *
-gsword_window_chapter_text_for_module(GswModule *module)
+gsword_window_chapter_text_for_module_with_missing(GswModule *module,
+                                                   gboolean show_missing)
 {
     GswVerseKey *key;
     gchar *original;
@@ -208,11 +209,18 @@ gsword_window_chapter_text_for_module(GswModule *module)
                                      gsw_module_get_key_text(module),
                                      &error)) {
             g_clear_error(&error);
-            break;
+            if (!show_missing)
+                break;
+            g_string_append_printf(result, "%d  %s\n\n", verse,
+                                   _("Verse not present in this module."));
+            continue;
         }
         text = gsw_module_get_text(module, &error);
         if (text != NULL && *text != '\0') {
             g_string_append_printf(result, "%d  %s\n\n", verse, text);
+        } else if (show_missing) {
+            g_string_append_printf(result, "%d  %s\n\n", verse,
+                                   _("Verse not present in this module."));
         }
         g_free(text);
         g_clear_error(&error);
@@ -224,6 +232,12 @@ gsword_window_chapter_text_for_module(GswModule *module)
     }
     g_free(book_name);
     return g_string_free(result, FALSE);
+}
+
+gchar *
+gsword_window_chapter_text_for_module(GswModule *module)
+{
+    return gsword_window_chapter_text_for_module_with_missing(module, FALSE);
 }
 
 void

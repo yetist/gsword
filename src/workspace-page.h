@@ -21,6 +21,9 @@ void gsword_workspace_page_remove_pane(GswordWorkspacePage *page,
                                         GswordWorkspacePane *pane);
 void gsword_workspace_page_set_active_pane(GswordWorkspacePage *page,
                                            GswordWorkspacePane *pane);
+void gsword_workspace_page_refresh_diff(GswordWorkspacePage *page);
+void gsword_workspace_page_scroll_to_reference(GswordWorkspacePage *page,
+                                               GswordWorkspacePane *source);
 void gsword_workspace_page_reflow(GswordWorkspacePage *page);
 void gsword_workspace_page_save(GswordWorkspacePage *page);
 void gsword_workspace_page_restore(GswordWorkspacePage *page);

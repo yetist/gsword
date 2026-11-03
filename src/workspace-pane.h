@@ -27,6 +27,13 @@ gint gsword_workspace_pane_get_follow_mode(GswordWorkspacePane *pane);
 void gsword_workspace_pane_set_follow_mode(GswordWorkspacePane *pane,
                                            gint mode);
 GtkScrolledWindow *gsword_workspace_pane_get_scroll(GswordWorkspacePane *pane);
+GHashTable *gsword_workspace_pane_dup_verse_texts(GswordWorkspacePane *pane);
+void gsword_workspace_pane_set_diff_verses(GswordWorkspacePane *pane,
+                                           const GHashTable *verses);
+void gsword_workspace_pane_scroll_to_active(GswordWorkspacePane *pane);
+gint gsword_workspace_pane_get_top_verse(GswordWorkspacePane *pane);
+void gsword_workspace_pane_scroll_to_verse(GswordWorkspacePane *pane,
+                                           gint verse);
 void gsword_workspace_pane_set_reference(GswordWorkspacePane *pane,
                                           const gchar *reference);
 void gsword_workspace_pane_free(GswordWorkspacePane *pane);
