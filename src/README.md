@@ -60,8 +60,9 @@ Current implementation:
   and text display
 - `memory-page.c` / `memory-page.h`: memory verse list, card masking, answer
   checking and review scheduling
-- `library-page.c` / `library-page.h`: module library, install sources, remote
-  modules, install/update/remove, progress, cancellation and local install
+- `library-page.c` / `library-page.h`: Installed/Available/Updates library
+  views, installed-module details, source management, update-all, local
+  directory picker, install/remove, progress and cancellation
 - `preferences-dialog.c` / `preferences-dialog.h`: font scale, color scheme and
   application CSS
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
