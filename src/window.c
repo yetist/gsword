@@ -130,6 +130,24 @@ set_sidebar_visible(GswordWindow *self, gboolean visible, gboolean persist)
     update_sidebar_button(self);
 }
 
+gboolean
+gsword_window_get_sidebar_visible(GswordWindow *self)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_val_if_fail(GSWORD_IS_WINDOW(self), FALSE);
+    priv = gsword_window_get_instance_private(self);
+    return priv->split_view != NULL &&
+           adw_overlay_split_view_get_show_sidebar(priv->split_view);
+}
+
+void
+gsword_window_set_sidebar_visible(GswordWindow *self, gboolean visible)
+{
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    set_sidebar_visible(self, visible, FALSE);
+}
+
 static void
 on_sidebar_visibility_changed(GObject *object, GParamSpec *pspec,
                               gpointer user_data)
@@ -742,6 +760,8 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     (void)pspec;
     if (priv->settings != NULL && name != NULL && priv->page_restored)
         g_settings_set_string(priv->settings, "active-page", name);
+    if (priv->reader_page != NULL && g_strcmp0(name, "reader") != 0)
+        gsword_reader_page_set_focus_mode(priv->reader_page, FALSE);
     if (g_strcmp0(name, "panes") == 0) {
         gsword_workspace_page_sync_from_reader(priv->workspace_page);
     } else if (g_strcmp0(name, "search") == 0) {

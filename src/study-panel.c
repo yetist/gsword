@@ -17,6 +17,7 @@ struct _GswordStudyPanel {
     gboolean commentary_follow;
     gchar *pinned_commentary_key;
     GtkTextView *commentary_view;
+    GtkWidget *commentary_action;
     GtkListBox *strongs_list;
     GtkTextView *strongs_view;
     GtkListBox *crossrefs_list;
@@ -123,6 +124,9 @@ update_study(GswordStudyPanel *panel)
         gsword_window_set_view_text(panel->commentary_view,
                                     _("No commentary module is installed."));
     }
+    if (panel->commentary_action != NULL)
+        gtk_widget_set_visible(panel->commentary_action,
+                               panel->commentary_module == NULL);
 
     gsword_window_clear_list(panel->strongs_list);
     text = g_string_new(NULL);
@@ -558,6 +562,15 @@ gsword_study_panel_load_settings(GswordStudyPanel *panel)
     g_free(pinned_key);
 }
 
+static void
+on_manage_modules_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordStudyPanel *panel = user_data;
+
+    (void)button;
+    gsword_window_show_page(panel->window, "library");
+}
+
 GswordStudyPanel *
 gsword_study_panel_new(GswordWindow *window)
 {
@@ -566,6 +579,8 @@ gsword_study_panel_new(GswordWindow *window)
     GtkWidget *commentary = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *commentary_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *study_follow = gtk_check_button_new_with_label(_("Follow"));
+    GtkWidget *commentary_action = gtk_button_new_with_label(
+        _("Manage modules"));
     GtkWidget *commentary_scroll;
     GtkWidget *strongs = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *strongs_scroll;
@@ -581,6 +596,7 @@ gsword_study_panel_new(GswordWindow *window)
 
     panel->window = window;
     panel->root = notebook;
+    gtk_widget_set_visible(notebook, FALSE);
 
     commentary_scroll = make_scrolled_text(&panel->commentary_view);
     gtk_widget_set_vexpand(commentary_scroll, TRUE);
@@ -599,7 +615,16 @@ gsword_study_panel_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(commentary_header),
                    GTK_WIDGET(panel->commentary_context));
     gtk_box_append(GTK_BOX(commentary_header), study_follow);
+    panel->commentary_action = commentary_action;
+    gtk_widget_add_css_class(commentary_action, "suggested-action");
+    gtk_widget_set_halign(commentary_action, GTK_ALIGN_START);
+    gtk_widget_set_margin_start(commentary_action, 6);
+    gtk_widget_set_margin_end(commentary_action, 6);
+    gtk_widget_set_visible(commentary_action, FALSE);
+    g_signal_connect(commentary_action, "clicked",
+                     G_CALLBACK(on_manage_modules_clicked), panel);
     gtk_box_append(GTK_BOX(commentary), commentary_header);
+    gtk_box_append(GTK_BOX(commentary), commentary_action);
     gtk_box_append(GTK_BOX(commentary), commentary_scroll);
     strongs_scroll = make_scrolled_text(&panel->strongs_view);
     gtk_widget_set_vexpand(strongs_scroll, TRUE);

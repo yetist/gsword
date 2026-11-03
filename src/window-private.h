@@ -22,6 +22,8 @@ void gsword_window_set_status(GswordWindow *self, const gchar *message);
 void gsword_window_show_error(GswordWindow *self, const gchar *prefix,
                               GError *error);
 void gsword_window_show_page(GswordWindow *self, const gchar *page);
+gboolean gsword_window_get_sidebar_visible(GswordWindow *self);
+void gsword_window_set_sidebar_visible(GswordWindow *self, gboolean visible);
 gboolean gsword_window_is_page_visible(GswordWindow *self,
                                        const gchar *page);
 void gsword_window_hide_sidebar_overlay(GswordWindow *self);

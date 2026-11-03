@@ -66,9 +66,14 @@
       <description>Identifier of the reading plan shown in the Plan workspace.</description>
     </key>
     <key name="study-visible" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Study panel visibility</summary>
       <description>Whether the study panel is shown in the reading workspace.</description>
+    </key>
+    <key name="study-width" type="i">
+      <default>320</default>
+      <summary>Study panel width</summary>
+      <description>Width in pixels of the reading workspace study panel.</description>
     </key>
     <key name="study-follow" type="b">
       <default>true</default>

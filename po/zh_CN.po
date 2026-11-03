@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 17:09+0800\n"
+"POT-Creation-Date: 2026-11-03 18:06+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,7 +33,7 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:112 src/window.c:924
+#: src/window.c:112 src/window.c:944
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
@@ -41,105 +41,105 @@ msgstr "隐藏模块侧栏"
 msgid "Show module sidebar"
 msgstr "显示模块侧栏"
 
-#: src/window.c:239 src/workspace-page.c:481 src/workspace-page.c:790
-#: src/workspace-pane.c:472
+#: src/window.c:257 src/workspace-page.c:512 src/workspace-page.c:821
+#: src/workspace-pane.c:596
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:410 src/search-page.c:613 src/resource-page.c:206
+#: src/window.c:428 src/search-page.c:613 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:474
+#: src/window.c:492
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:494
+#: src/window.c:512
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:651 src/window.c:720
+#: src/window.c:669 src/window.c:738
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:660 src/window.c:933 src/search-page.c:862
+#: src/window.c:678 src/window.c:953 src/search-page.c:862
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:661
+#: src/window.c:679
 msgid "Focus reference"
 msgstr "首选项"
 
-#: src/window.c:662 src/window.c:710 src/window.c:940 src/library-page.c:2274
+#: src/window.c:680 src/window.c:728 src/window.c:960 src/library-page.c:2274
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:109
+#: src/window.c:681 src/window.c:732 src/preferences-dialog.c:109
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:664 src/search-page.c:881 src/library-page.c:2507
+#: src/window.c:682 src/search-page.c:881 src/library-page.c:2507
 msgid "Back"
 msgstr "返回"
 
-#: src/window.c:665
+#: src/window.c:683
 msgid "Forward"
 msgstr "前进"
 
-#: src/window.c:666
+#: src/window.c:684
 msgid "Toggle sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:669 src/window-services.c:64 src/library-page.c:1264
+#: src/window.c:687 src/window-services.c:64 src/library-page.c:1264
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:685
+#: src/window.c:703
 msgid "gsword contributors"
 msgstr "gsword 贡献者"
 
-#: src/window.c:688
+#: src/window.c:706
 msgid "A GObject implementation of the SWORD Bible study library."
 msgstr "基于 GObject 的 SWORD 研经库实现。"
 
-#: src/window.c:705
+#: src/window.c:723
 msgid "Show study panel"
 msgstr "显示研经面板"
 
-#: src/window.c:706
+#: src/window.c:724
 msgid "Comparison"
 msgstr "经文对照"
 
-#: src/window.c:707
+#: src/window.c:725
 msgid "Teaching"
 msgstr "教学"
 
-#: src/window.c:721
+#: src/window.c:739
 msgid "About gsword"
 msgstr "关于此模块"
 
-#: src/window.c:724
+#: src/window.c:742
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:946
+#: src/window.c:966
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:976 src/preferences-dialog.c:114
+#: src/window.c:996 src/preferences-dialog.c:114
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:982
+#: src/window.c:1002
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:996 src/notes-page.c:190 src/notes-page.c:1869
+#: src/window.c:1016 src/notes-page.c:190 src/notes-page.c:1869
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:1001
+#: src/window.c:1021
 msgid "Plan"
 msgstr "计划"
 
@@ -445,11 +445,11 @@ msgstr "导出笔记"
 msgid "No tags yet"
 msgstr "还没有标签"
 
-#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:95
+#: src/notes-page.c:1065 src/notes-page.c:1196 src/reader-toolbar.c:122
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
-#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:103
+#: src/notes-page.c:1069 src/notes-page.c:1205 src/reader-toolbar.c:130
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
@@ -461,11 +461,11 @@ msgstr "选择经文列表"
 msgid "This list is empty"
 msgstr "此列表为空"
 
-#: src/notes-page.c:1188 src/reader-toolbar.c:85
+#: src/notes-page.c:1188 src/reader-toolbar.c:112
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/notes-page.c:1204 src/reader-toolbar.c:102
+#: src/notes-page.c:1204 src/reader-toolbar.c:129
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
@@ -473,7 +473,7 @@ msgstr "经文已加入列表"
 msgid "Select a note first"
 msgstr "请先选择笔记"
 
-#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:138
+#: src/notes-page.c:1235 src/notes-page.c:1735 src/reader-toolbar.c:165
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
 
@@ -1373,7 +1373,7 @@ msgstr "模块"
 msgid "Module details"
 msgstr "模块详情"
 
-#: src/module-sidebar.c:292
+#: src/module-sidebar.c:292 src/study-panel.c:583
 msgid "Manage modules"
 msgstr "管理模块"
 
@@ -1381,179 +1381,179 @@ msgstr "管理模块"
 msgid "Install, update or remove modules"
 msgstr "安装、更新或移除模块"
 
-#: src/study-panel.c:102 src/study-panel.c:649
+#: src/study-panel.c:103 src/study-panel.c:674
 msgid "Commentary"
 msgstr "注释"
 
-#: src/study-panel.c:119 src/workspace-pane.c:418
+#: src/study-panel.c:120 src/workspace-pane.c:541
 msgid "No commentary for this verse."
 msgstr "本节没有注释。"
 
-#: src/study-panel.c:124
+#: src/study-panel.c:125
 msgid "No commentary module is installed."
 msgstr "未安装注释模块。"
 
-#: src/study-panel.c:161
+#: src/study-panel.c:165
 msgid "No Strong's data for this verse."
 msgstr "本节没有 Strong 原文数据。"
 
-#: src/study-panel.c:213
+#: src/study-panel.c:217
 msgid "No cross-references for this verse."
 msgstr "本节没有交叉引用。"
 
-#: src/study-panel.c:228
+#: src/study-panel.c:232
 msgid "No lexicon module is installed."
 msgstr "未安装词典模块。"
 
-#: src/study-panel.c:234
+#: src/study-panel.c:238
 msgid "Cannot look up lexicon entry"
 msgstr "无法查询词典条目"
 
-#: src/study-panel.c:240
+#: src/study-panel.c:244
 msgid "Cannot read lexicon entry"
 msgstr "无法读取词典条目"
 
-#: src/study-panel.c:568 src/workspace-pane.c:834
+#: src/study-panel.c:581 src/workspace-pane.c:988
 msgid "Follow"
 msgstr "跟随"
 
-#: src/study-panel.c:579
+#: src/study-panel.c:594
 msgid "Lookup"
 msgstr "查询"
 
-#: src/study-panel.c:629 src/study-panel.c:655
+#: src/study-panel.c:654 src/study-panel.c:680
 msgid "Lexicon"
 msgstr "词典"
 
-#: src/study-panel.c:635
+#: src/study-panel.c:660
 msgid "Strong's / dictionary key"
 msgstr "Strong 编号 / 词典键"
 
-#: src/study-panel.c:651
+#: src/study-panel.c:676
 msgid "Strong's"
 msgstr "Strong 原文"
 
-#: src/study-panel.c:653
+#: src/study-panel.c:678
 msgid "Cross-refs"
 msgstr "交叉引用"
 
-#: src/workspace-page.c:508
+#: src/workspace-page.c:539
 msgid "Parallel comparison ready"
 msgstr "并行对照已就绪"
 
-#: src/workspace-page.c:693
+#: src/workspace-page.c:724
 msgid "Comparison order changed"
 msgstr "对照栏顺序已更改"
 
-#: src/workspace-page.c:715
+#: src/workspace-page.c:746
 msgid "Comparisons cleared"
 msgstr "对照栏已清空"
 
-#: src/workspace-page.c:743
+#: src/workspace-page.c:774
 msgid "Clear comparisons?"
 msgstr "清空所有对照栏？"
 
-#: src/workspace-page.c:746
+#: src/workspace-page.c:777
 msgid "All comparison panes will be removed. This cannot be undone."
 msgstr "所有对照栏都将被移除，此操作无法撤销。"
 
-#: src/workspace-page.c:749
+#: src/workspace-page.c:780
 msgid "_Cancel"
 msgstr "取消"
 
-#: src/workspace-page.c:750
+#: src/workspace-page.c:781
 msgid "_Clear"
 msgstr "清空"
 
-#: src/workspace-page.c:820
+#: src/workspace-page.c:851
 msgid "Four-way comparison ready"
 msgstr "四译本对照已就绪"
 
-#: src/workspace-page.c:897 src/workspace-page.c:911
+#: src/workspace-page.c:930 src/workspace-page.c:944
 msgid "Add comparison"
 msgstr "添加对照栏"
 
-#: src/workspace-page.c:898
+#: src/workspace-page.c:931
 msgid "Clear comparisons"
 msgstr "清空对照栏"
 
-#: src/workspace-page.c:899
+#: src/workspace-page.c:932
 msgid "Columns"
 msgstr "列数"
 
-#: src/workspace-page.c:901
+#: src/workspace-page.c:934
 msgid "Sync scroll"
 msgstr "同步滚动"
 
-#: src/workspace-page.c:903
+#: src/workspace-page.c:936
 msgid "Highlight differences"
 msgstr "差异高亮"
 
-#: src/workspace-page.c:905
+#: src/workspace-page.c:938
 msgid "No comparisons yet"
 msgstr "尚无对照栏"
 
-#: src/workspace-page.c:907
+#: src/workspace-page.c:940
 msgid "Choose a template or add a comparison pane to begin."
 msgstr "选择模板或添加对照栏以开始。"
 
-#: src/workspace-page.c:909
+#: src/workspace-page.c:942
 msgid "Two translations"
 msgstr "两译本对照"
 
-#: src/workspace-page.c:910
+#: src/workspace-page.c:943
 msgid "Four translations"
 msgstr "四译本对照"
 
-#: src/workspace-page.c:951
+#: src/workspace-page.c:984
 msgid "Keep comparison scroll positions together"
 msgstr "按经节同步多个对照栏的滚动位置"
 
-#: src/workspace-page.c:956
+#: src/workspace-page.c:989
 msgid "Highlight verses whose text differs between panes"
 msgstr "高亮文本不一致的经节"
 
-#: src/workspace-pane.c:404
+#: src/workspace-pane.c:527
 msgid "No module selected."
 msgstr "未选择模块。"
 
-#: src/workspace-pane.c:419
+#: src/workspace-pane.c:542
 msgid "No content for this reference."
 msgstr "此引用没有内容。"
 
-#: src/workspace-pane.c:490
+#: src/workspace-pane.c:614
 msgid "Cannot open module."
 msgstr "无法打开模块。"
 
-#: src/workspace-pane.c:718
+#: src/workspace-pane.c:869
 msgid "Comparison updated"
 msgstr "对照栏已更新"
 
-#: src/workspace-pane.c:745
+#: src/workspace-pane.c:897
 msgid "Drag to another comparison to rearrange"
 msgstr "拖到另一个对照栏以重新排列"
 
-#: src/workspace-pane.c:820
+#: src/workspace-pane.c:974
 msgid "Drag to rearrange comparison"
 msgstr "拖动以重新排列对照栏"
 
-#: src/workspace-pane.c:834
+#: src/workspace-pane.c:988
 msgid "Pinned"
 msgstr "固定"
 
-#: src/workspace-pane.c:834
+#: src/workspace-pane.c:988
 msgid "Free"
 msgstr "独立"
 
-#: src/workspace-pane.c:838
+#: src/workspace-pane.c:992
 msgid "Follow, pin, or free this comparison"
 msgstr "跟随、固定或独立此对照栏"
 
-#: src/workspace-pane.c:845
+#: src/workspace-pane.c:999
 msgid "Close comparison"
 msgstr "关闭对照栏"
 
-#: src/reader-page.c:171
+#: src/reader-page.c:179
 msgid ""
 "No modules found.\n"
 "\n"
@@ -1563,83 +1563,95 @@ msgstr ""
 "\n"
 "请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
-#: src/reader-page.c:173
+#: src/reader-page.c:181
 msgid "No modules found"
 msgstr "未找到模块"
 
-#: src/reader-page.c:197
+#: src/reader-page.c:205
 msgid "Cannot read entry"
 msgstr "无法读取条目"
 
-#: src/reader-page.c:240 src/reader-page.c:624 src/reader-page.c:662
+#: src/reader-page.c:248 src/reader-page.c:632 src/reader-page.c:670
 msgid "Cannot set key"
 msgstr "无法设置位置"
 
-#: src/reader-page.c:749
+#: src/reader-page.c:757
 msgid "Highlight removed"
 msgstr "高亮已移除"
 
-#: src/reader-page.c:754
+#: src/reader-page.c:762
 msgid "Verse highlighted"
 msgstr "经文已高亮"
 
-#: src/reader-page.c:757
+#: src/reader-page.c:765
 msgid "Cannot update highlight"
 msgstr "无法更新高亮"
 
-#: src/reader-page.c:807
+#: src/reader-page.c:803
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/reader-toolbar.c:125
+#: src/reader-toolbar.c:152
 msgid "Open a verse first"
 msgstr "请先打开经文"
 
-#: src/reader-toolbar.c:197
+#: src/reader-toolbar.c:224
 msgid "No reading history yet."
 msgstr "还没有阅读历史。"
 
-#: src/reader-toolbar.c:355
+#: src/reader-toolbar.c:400
 msgid "Teach"
 msgstr "教学"
 
-#: src/reader-toolbar.c:385
+#: src/reader-toolbar.c:405
+msgid "Copy chapter"
+msgstr "复制本章"
+
+#: src/reader-toolbar.c:434
 msgid "Add verse to list"
 msgstr "加入经文列表"
 
-#: src/reader-toolbar.c:398 src/reader-toolbar.c:402
+#: src/reader-toolbar.c:448
+msgid "More reading actions"
+msgstr "更多阅读操作"
+
+#: src/reader-toolbar.c:464 src/reader-toolbar.c:468
 msgid "Recent reading"
 msgstr "最近阅读"
 
-#: src/reader-toolbar.c:414
+#: src/reader-toolbar.c:480
 msgid "Clear history"
 msgstr "清除历史"
 
-#: src/reader-toolbar.c:428
+#: src/reader-toolbar.c:494
 msgid "Back (Alt+Left)"
 msgstr "返回（Alt+左箭头）"
 
-#: src/reader-toolbar.c:429
+#: src/reader-toolbar.c:495
 msgid "Forward (Alt+Right)"
 msgstr "前进（Alt+右箭头）"
 
-#: src/reader-toolbar.c:452
+#: src/reader-toolbar.c:518
 msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
-#: src/reader-toolbar.c:457
-msgid "Copy entry"
-msgstr "复制条目"
+#: src/reader-toolbar.c:527
+msgid "Focus reading mode (F11)"
+msgstr "专注阅读模式（F11）"
 
-#: src/reader-toolbar.c:458
+#: src/reader-toolbar.c:535
+msgid "Copy selection or current verse"
+msgstr "复制选中文字或当前节"
+
+#: src/reader-toolbar.c:536
 msgid "Open note for this verse"
 msgstr "打开本节笔记"
 
-#: src/reader-toolbar.c:459
+#: src/reader-toolbar.c:537
 msgid "Toggle verse highlight"
 msgstr "切换经文高亮"
 
-#: src/reader-toolbar.c:460
+#: src/reader-toolbar.c:538
 msgid "Toggle study panel"
 msgstr "切换研经面板"
 
@@ -2114,6 +2126,9 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "Copy entry"
+#~ msgstr "复制条目"
 
 #~ msgid "No comparisons yet. Add a comparison to begin."
 #~ msgstr "还没有对照栏。添加一个对照栏开始。"
