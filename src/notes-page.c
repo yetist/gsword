@@ -6,6 +6,7 @@
 #include "window-private.h"
 
 #include <glib/gi18n.h>
+#include <gdk/gdkkeysyms.h>
 
 #ifdef HAVE_GTKSOURCEVIEW
 #include <gtksourceview/gtksource.h>
@@ -20,6 +21,7 @@ struct _GswordNotesPage {
     GtkStack *left_stack;
     GtkWidget *tag_filter_bar;
     GtkLabel *tag_filter_label;
+    GtkLabel *notes_count_label;
     gchar *tag_filter;
     GtkLabel *key_label;
     GtkWidget *context_box;
@@ -115,6 +117,23 @@ on_clear_tag_filter(GtkButton *button, gpointer user_data)
     gsword_notes_page_refresh(page);
 }
 
+static gboolean
+on_notes_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                     guint keycode, GdkModifierType state, gpointer user_data)
+{
+    GswordNotesPage *page = user_data;
+
+    (void)controller;
+    (void)keycode;
+    (void)state;
+    if (keyval == GDK_KEY_Escape && page->tag_filter != NULL) {
+        g_clear_pointer(&page->tag_filter, g_free);
+        gsword_notes_page_refresh(page);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 void
 gsword_notes_page_refresh(GswordNotesPage *page)
 {
@@ -150,6 +169,33 @@ gsword_notes_page_refresh(GswordNotesPage *page)
             gtk_label_set_text(page->tag_filter_label, text);
             g_free(text);
         }
+        if (page->left_stack != NULL) {
+            GtkWidget *notes_page = gtk_stack_get_child_by_name(
+                page->left_stack, "notes");
+
+            if (notes_page != NULL) {
+                GtkStackPage *stack_page = gtk_stack_get_page(
+                    page->left_stack, notes_page);
+
+                if (stack_page != NULL) {
+                    if (filtered) {
+                        gchar *title = g_strdup_printf(_("Notes · %s"),
+                                                       page->tag_filter);
+
+                        gtk_stack_page_set_title(stack_page, title);
+                        g_free(title);
+                    } else {
+                        gtk_stack_page_set_title(stack_page, _("Notes"));
+                    }
+                }
+            }
+        }
+    }
+    if (page->notes_count_label != NULL) {
+        gchar *text = g_strdup_printf(_("%u note(s)"), notes->len);
+
+        gtk_label_set_text(page->notes_count_label, text);
+        g_free(text);
     }
 
     clear_list(page->notes_list);
@@ -693,12 +739,16 @@ on_tag_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), TRUE);
     if (page->delete_tag_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->delete_tag_button), TRUE);
-    g_free(page->tag_filter);
-    page->tag_filter = g_strdup(tag);
+    if (g_strcmp0(page->tag_filter, tag) == 0) {
+        g_clear_pointer(&page->tag_filter, g_free);
+    } else {
+        g_free(page->tag_filter);
+        page->tag_filter = g_strdup(tag);
+    }
     gsword_notes_page_refresh(page);
     if (page->left_stack != NULL)
         gtk_stack_set_visible_child_name(page->left_stack, "notes");
-    {
+    if (page->tag_filter != NULL) {
         GtkListBoxRow *first = gtk_list_box_get_row_at_index(page->notes_list,
                                                              0);
 
@@ -1726,20 +1776,29 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_label_set_xalign(page->tag_filter_label, 0.0f);
     gtk_widget_set_hexpand(GTK_WIDGET(page->tag_filter_label), TRUE);
     gtk_widget_add_css_class(GTK_WIDGET(page->tag_filter_label), "caption");
-    gtk_widget_add_css_class(GTK_WIDGET(page->tag_filter_label), "dim-label");
-    filter_clear = gtk_button_new_from_icon_name("window-close-symbolic");
+    gtk_widget_add_css_class(GTK_WIDGET(page->tag_filter_label), "accent");
+    filter_clear = gtk_button_new_with_label(_("All notes"));
     gtk_widget_add_css_class(filter_clear, "flat");
+    gtk_widget_add_css_class(filter_clear, "pill");
     gtk_widget_set_tooltip_text(filter_clear, _("Clear tag filter"));
     g_signal_connect(filter_clear, "clicked",
                      G_CALLBACK(on_clear_tag_filter), page);
     page->tag_filter_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    gtk_widget_add_css_class(page->tag_filter_bar, "card");
+    gtk_widget_set_margin_top(page->tag_filter_bar, 2);
+    gtk_widget_set_margin_bottom(page->tag_filter_bar, 2);
     gtk_box_append(GTK_BOX(page->tag_filter_bar),
                    GTK_WIDGET(page->tag_filter_label));
     gtk_box_append(GTK_BOX(page->tag_filter_bar), filter_clear);
     gtk_widget_set_visible(page->tag_filter_bar, FALSE);
+    page->notes_count_label = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(page->notes_count_label, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(page->notes_count_label), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(page->notes_count_label), "dim-label");
 
     notes_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_box_append(GTK_BOX(notes_page), GTK_WIDGET(page->search));
+    gtk_box_append(GTK_BOX(notes_page), GTK_WIDGET(page->notes_count_label));
     gtk_box_append(GTK_BOX(notes_page), page->tag_filter_bar);
     gtk_box_append(GTK_BOX(notes_page), notes_scroll);
 
@@ -1942,6 +2001,14 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), right);
     gtk_paned_set_position(GTK_PANED(paned), 440);
+    {
+        GtkEventController *keys = gtk_event_controller_key_new();
+
+        gtk_event_controller_set_propagation_phase(keys, GTK_PHASE_CAPTURE);
+        g_signal_connect(keys, "key-pressed",
+                         G_CALLBACK(on_notes_key_pressed), page);
+        gtk_widget_add_controller(paned, keys);
+    }
     page->root = paned;
     g_object_set_data_full(G_OBJECT(paned), "gsword-notes-page", page,
                            notes_page_free);
