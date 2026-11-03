@@ -50,9 +50,10 @@ Current implementation:
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource
   tree, text/picture rendering and resource navigation
-- `notes-page.c` / `notes-page.h`: Markdown note editing (toolbar and
-  GtkSourceView syntax highlighting when available), note search, tags, verse
-  lists, Markdown export and a single-verse scripture preview
+- `notes-page.c` / `notes-page.h`: tabbed notes/tags/verse-lists navigation,
+  Markdown editing with autosave and dirty-state feedback, note search and tag
+  filtering, explicit tag menu, verse-list membership and item management,
+  Markdown export and a single-verse scripture preview
 - `plan-page.c` / `plan-page.h`: reading plan notebook, plan selection,
   schedule and plan creation/deletion
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
@@ -64,7 +65,8 @@ Current implementation:
 - `preferences-dialog.c` / `preferences-dialog.h`: font scale, color scheme and
   application CSS
 - `notes-store.c` / `notes-store.h`: SQLite-backed notes, tags, verse lists and
-  highlights in `~/.local/share/gsword/app.db`
+  highlights in `~/.local/share/gsword/app.db`, including updated timestamps,
+  tag-filtered note queries and verse-list membership helpers
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
   memory review queue, and teaching notes in the same application database
 - `app-paths.c` / `app-paths.h`: unified application data directory
