@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 11:24+0800\n"
+"POT-Creation-Date: 2026-11-03 11:28+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -236,7 +236,7 @@ msgstr "搜索索引已删除"
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1044 src/plan-page.c:485 src/plan-page.c:765
+#: src/library-page.c:1044 src/plan-page.c:525 src/plan-page.c:861
 msgid "Cancel"
 msgstr "取消"
 
@@ -405,7 +405,7 @@ msgid "Delete the note for %s? This cannot be undone."
 msgstr "删除 %s 的笔记？此操作无法撤销。"
 
 #: src/notes-page.c:666 src/notes-page.c:1490 src/notes-page.c:1569
-#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:766
+#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:862
 msgid "Delete"
 msgstr "删除"
 
@@ -461,7 +461,7 @@ msgstr "标签已重命名"
 msgid "Rename tag"
 msgstr "重命名标签"
 
-#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:486
+#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:526
 msgid "Rename"
 msgstr "重命名"
 
@@ -1345,7 +1345,7 @@ msgstr ""
 "\n"
 "请从模块库安装 Daily Light 或 Morning and Evening 等灵修模块。"
 
-#: src/devotion-page.c:225 src/plan-page.c:1036
+#: src/devotion-page.c:225 src/plan-page.c:944 src/plan-page.c:1153
 msgid "Today"
 msgstr "今天"
 
@@ -1361,201 +1361,231 @@ msgstr "前一天"
 msgid "Next day"
 msgstr "后一天"
 
-#: src/plan-page.c:194
+#: src/plan-page.c:210
 msgid "No reading plans yet"
 msgstr "还没有阅读计划"
 
-#: src/plan-page.c:205 src/plan-page.c:273
+#: src/plan-page.c:221 src/plan-page.c:291
 #, fuzzy, c-format
 msgid "%d/%d days (%.0f%%) · streak %d"
 msgstr "%s  ·  %d/%d 天（%.1f%%）  ·  连续 %d 天"
 
-#: src/plan-page.c:283
+#: src/plan-page.c:301
 #, c-format
 msgid "Day %d: %s"
 msgstr "第 %d 天：%s"
 
-#: src/plan-page.c:291
+#: src/plan-page.c:309
 msgid "Plan complete"
 msgstr "计划已完成"
 
-#: src/plan-page.c:304
+#: src/plan-page.c:338
 #, c-format
-msgid "Day %d   %s"
-msgstr "第 %d 天   %s"
+msgid "Day %d   %s%s"
+msgstr "第 %d 天   %s%s"
 
-#: src/plan-page.c:319
+#: src/plan-page.c:341
+msgid "   · today"
+msgstr "   · 今天"
+
+#: src/plan-page.c:354
 msgid "Done"
 msgstr "完成"
 
-#: src/plan-page.c:458
+#: src/plan-page.c:498
 msgid "Cannot rename plan"
 msgstr "无法重命名计划"
 
-#: src/plan-page.c:464
+#: src/plan-page.c:504
 msgid "Reading plan renamed"
 msgstr "阅读计划已重命名"
 
-#: src/plan-page.c:478
+#: src/plan-page.c:518
 msgid "Rename reading plan"
 msgstr "重命名阅读计划"
 
-#: src/plan-page.c:510
+#: src/plan-page.c:550
 msgid "Cannot duplicate plan"
 msgstr "无法复制计划"
 
-#: src/plan-page.c:522
+#: src/plan-page.c:562
 msgid "Reading plan duplicated"
 msgstr "阅读计划已复制"
 
-#: src/plan-page.c:544
+#: src/plan-page.c:584
 msgid "Preview unavailable for this reference."
 msgstr "无法预览此起始经文。"
 
-#: src/plan-page.c:546
+#: src/plan-page.c:586
 #, c-format
 msgid "Day 1: %s"
 msgstr "第 1 天：%s"
 
-#: src/plan-page.c:549
+#: src/plan-page.c:589
 #, c-format
 msgid ""
 "Day 1: %s\n"
 "Day %u: %s"
-msgstr "第 1 天：%s\n第 %u 天：%s"
+msgstr ""
+"第 1 天：%s\n"
+"第 %u 天：%s"
 
-#: src/plan-page.c:590 src/plan-page.c:635
+#: src/plan-page.c:630 src/plan-page.c:675 src/plan-page.c:699
 msgid "Cannot update plan"
 msgstr "无法更新计划"
 
-#: src/plan-page.c:593
+#: src/plan-page.c:633
 msgid "Reading plan updated"
 msgstr "阅读计划已更新"
 
-#: src/plan-page.c:638
+#: src/plan-page.c:681
 msgid "Day marked complete"
 msgstr "今日已标记完成"
 
-#: src/plan-page.c:657 src/plan-page.c:667
+#: src/plan-page.c:703
+msgid "Completion undone"
+msgstr "已撤销完成"
+
+#: src/plan-page.c:753 src/plan-page.c:763
 msgid "Cannot create plan"
 msgstr "无法创建计划"
 
-#: src/plan-page.c:659
+#: src/plan-page.c:755
 msgid "Invalid start reference or empty plan"
 msgstr "起始经文无效或计划为空"
 
-#: src/plan-page.c:675
+#: src/plan-page.c:771
 msgid "Reading plan created"
 msgstr "阅读计划已创建"
 
-#: src/plan-page.c:686 src/plan-page.c:946
+#: src/plan-page.c:782 src/plan-page.c:1063
 msgid "90-day New Testament"
 msgstr "90 天读新约"
 
-#: src/plan-page.c:689 src/plan-page.c:947
+#: src/plan-page.c:785 src/plan-page.c:1064
 msgid "30-day Psalms"
 msgstr "30 天读诗篇"
 
-#: src/plan-page.c:718
+#: src/plan-page.c:814
 msgid "Enter a plan name and start reference"
 msgstr "请输入计划名称和起始经文"
 
-#: src/plan-page.c:740
+#: src/plan-page.c:836
 msgid "Cannot delete plan"
 msgstr "无法删除计划"
 
-#: src/plan-page.c:747
+#: src/plan-page.c:843
 msgid "Reading plan deleted"
 msgstr "阅读计划已删除"
 
-#: src/plan-page.c:760
+#: src/plan-page.c:856
 msgid "Delete reading plan"
 msgstr "删除阅读计划？"
 
-#: src/plan-page.c:762
+#: src/plan-page.c:858
 #, c-format
 msgid "Delete “%s” and its progress?"
 msgstr "删除“%s”及其阅读进度？此操作无法撤销。"
 
-#: src/plan-page.c:834
+#: src/plan-page.c:930
 msgid "Your plans"
 msgstr "你的计划"
 
-#: src/plan-page.c:845
+#: src/plan-page.c:941
 msgid "Open today's reading"
 msgstr "打开今日阅读"
 
-#: src/plan-page.c:846
+#: src/plan-page.c:942
 msgid "Mark today complete"
 msgstr "标记今日完成"
 
-#: src/plan-page.c:847
-msgid "Create plan"
-msgstr "创建计划"
+#: src/plan-page.c:943
+msgid "Undo"
+msgstr "撤销"
 
-#: src/plan-page.c:848 src/plan-page.c:998
-msgid "Delete plan"
-msgstr "删除计划"
-
-#: src/plan-page.c:877
-msgid "Rename plan"
-msgstr "重命名计划"
-
-#: src/plan-page.c:878
-msgid "Duplicate plan"
-msgstr "复制计划"
-
-#: src/plan-page.c:922
+#: src/plan-page.c:946
 msgid "Schedule"
 msgstr "进度安排"
 
-#: src/plan-page.c:937
+#: src/plan-page.c:948
+msgid "Create plan"
+msgstr "创建计划"
+
+#: src/plan-page.c:978
+msgid "Rename plan"
+msgstr "重命名计划"
+
+#: src/plan-page.c:979
+msgid "Duplicate plan"
+msgstr "复制计划"
+
+#: src/plan-page.c:1031
+msgid "All days"
+msgstr "全部"
+
+#: src/plan-page.c:1031
+msgid "Upcoming"
+msgstr "未完成"
+
+#: src/plan-page.c:1031
+msgid "Completed"
+msgstr "已完成"
+
+#: src/plan-page.c:1039
+msgid "Jump to today"
+msgstr "跳到今天"
+
+#: src/plan-page.c:1054
 msgid "Start a reading plan"
 msgstr "开始阅读计划"
 
-#: src/plan-page.c:941
+#: src/plan-page.c:1058
 msgid "Choose a template or create a custom plan to begin."
 msgstr "选择模板或创建自定义计划。"
 
-#: src/plan-page.c:945
+#: src/plan-page.c:1062
 msgid "Custom plan"
 msgstr "自定义计划"
 
-#: src/plan-page.c:976
+#: src/plan-page.c:1093
 msgid "Plan name"
 msgstr "计划名称"
 
-#: src/plan-page.c:979
+#: src/plan-page.c:1096
 msgid "Start, e.g. Genesis 1"
 msgstr "起始，例如 Genesis 1"
 
-#: src/plan-page.c:1004
+#: src/plan-page.c:1115
+msgid "Delete plan"
+msgstr "删除计划"
+
+#: src/plan-page.c:1121
 msgid "Days"
 msgstr "天数"
 
-#: src/plan-page.c:1006
+#: src/plan-page.c:1123
 msgid "Chapters/day"
 msgstr "每日章节数"
 
-#: src/plan-page.c:1019
+#: src/plan-page.c:1136
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr "计划从起始经文开始按章节推进。双击进度行可打开对应阅读。"
 
-#: src/plan-page.c:1025
+#: src/plan-page.c:1142
 msgid "Create a plan"
 msgstr "创建计划"
 
-#: src/plan-page.c:1038
+#: src/plan-page.c:1155
 msgid "Plans"
 msgstr "计划"
 
-#: src/plan-page.c:1041
+#: src/plan-page.c:1158
 msgid "Devotion"
 msgstr "灵修"
 
-#: src/plan-page.c:1044
+#: src/plan-page.c:1161
 msgid "Memorize"
 msgstr "背经"
 

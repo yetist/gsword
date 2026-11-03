@@ -28,6 +28,9 @@ struct _GswordPlanPage {
     GtkLabel *today;
     GtkButton *open_button;
     GtkButton *complete_button;
+    GtkButton *jump_today_button;
+    GtkButton *undo_button;
+    GtkDropDown *day_filter;
     GtkListBox *days;
     GtkListBox *plans_list;
     GtkButton *rename_plan_button;
@@ -40,6 +43,9 @@ struct _GswordPlanPage {
     GtkSpinButton *days_spin;
     GtkSpinButton *chapters_spin;
     gint64 selected_id;
+    gint64 undo_plan_id;
+    gint undo_day;
+    gboolean undo_available;
     guint refresh_source;
     guint preview_source;
 };
@@ -163,6 +169,16 @@ selected_plan(GswordPlanPage *page)
          ? g_ptr_array_index(page->items, 0) : NULL;
 }
 
+static void
+update_undo_button(GswordPlanPage *page, GswordPlan *plan)
+{
+    gboolean visible = page->undo_available && plan != NULL &&
+                       page->undo_plan_id == plan->id;
+
+    if (page->undo_button != NULL)
+        gtk_widget_set_visible(GTK_WIDGET(page->undo_button), visible);
+}
+
 static GtkWidget *
 make_plan_placeholder(const gchar *text)
 {
@@ -259,12 +275,14 @@ refresh_views(GswordPlanPage *page)
         gtk_progress_bar_set_fraction(page->progress, 0.0);
         gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(page->complete_button), FALSE);
+        update_undo_button(page, NULL);
         refresh_plan_list(page);
         return;
     }
     if (page->today_stack != NULL)
         gtk_stack_set_visible_child_name(page->today_stack, "dashboard");
     page->selected_id = plan->id;
+    update_undo_button(page, plan);
     {
         gdouble percent = plan->total_days > 0
                         ? (gdouble)plan->completed_days * 100.0 /
@@ -294,19 +312,36 @@ refresh_views(GswordPlanPage *page)
     }
     days = plans != NULL
          ? gsword_plan_store_get_plan_days(plans, plan->id) : NULL;
-    for (i = 0; days != NULL && i < days->len; i++) {
-        GswordPlanDay *day = g_ptr_array_index(days, i);
-        GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-        GtkWidget *check = gtk_check_button_new();
-        GtkWidget *label;
-        gchar *day_number = g_strdup_printf("%d", day->day);
-        gchar *text = g_strdup_printf(_("Day %d   %s"), day->day,
-                                      day->reference != NULL
-                                      ? day->reference : "");
+    {
+        guint filter = page->day_filter != NULL
+                     ? gtk_drop_down_get_selected(page->day_filter) : 0;
 
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check),
-                                    day->completed_on != NULL);
+        for (i = 0; days != NULL && i < days->len; i++) {
+            GswordPlanDay *day = g_ptr_array_index(days, i);
+            GtkWidget *row;
+            GtkWidget *box;
+            GtkWidget *check;
+            GtkWidget *label;
+            gchar *day_number;
+            gchar *text;
+            gboolean is_today;
+
+            if (filter == 1 && day->completed_on != NULL)
+                continue;
+            if (filter == 2 && day->completed_on == NULL)
+                continue;
+            row = gtk_list_box_row_new();
+            box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+            check = gtk_check_button_new();
+            is_today = day->day == plan->next_day;
+            day_number = g_strdup_printf("%d", day->day);
+            text = g_strdup_printf(_("Day %d   %s%s"), day->day,
+                                   day->reference != NULL
+                                   ? day->reference : "",
+                                   is_today ? _("   · today") : "");
+
+            gtk_check_button_set_active(GTK_CHECK_BUTTON(check),
+                                        day->completed_on != NULL);
         g_object_set_data_full(G_OBJECT(check), "plan-id",
                                g_strdup_printf("%" G_GINT64_FORMAT,
                                                plan->id), g_free);
@@ -322,8 +357,11 @@ refresh_views(GswordPlanPage *page)
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data_full(G_OBJECT(row), "plan-reference",
                                g_strdup(day->reference), g_free);
-        gtk_list_box_append(page->days, row);
-        g_free(text);
+            gtk_list_box_append(page->days, row);
+            if (is_today)
+                gtk_widget_add_css_class(label, "accent");
+            g_free(text);
+        }
     }
     if (days != NULL)
         g_ptr_array_unref(days);
@@ -637,8 +675,64 @@ on_complete_today(GtkButton *button, gpointer user_data)
         gsword_window_show_error(page->window, _("Cannot update plan"), error);
         return;
     }
+    page->undo_plan_id = plan->id;
+    page->undo_day = plan->next_day;
+    page->undo_available = TRUE;
     gsword_window_set_status(page->window, _("Day marked complete"));
     gsword_plan_page_refresh(page);
+}
+
+static void
+on_undo_complete(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlan *plan = selected_plan(page);
+    GError *error = NULL;
+
+    (void)button;
+    if (plans == NULL || plan == NULL || !page->undo_available ||
+        page->undo_plan_id != plan->id)
+        return;
+    if (!gsword_plan_store_complete_day(plans, plan->id, page->undo_day,
+                                        FALSE, &error)) {
+        gsword_window_show_error(page->window, _("Cannot update plan"), error);
+        return;
+    }
+    page->undo_available = FALSE;
+    gsword_window_set_status(page->window, _("Completion undone"));
+    gsword_plan_page_refresh(page);
+}
+
+static void
+on_day_filter_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+
+    (void)object;
+    (void)pspec;
+    refresh_views(page);
+}
+
+static void
+on_jump_today(GtkButton *button, gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+    GswordPlan *plan = selected_plan(page);
+    GtkWidget *child;
+
+    (void)button;
+    if (page->days == NULL || plan == NULL || plan->next_day <= 0)
+        return;
+    for (child = gtk_widget_get_first_child(GTK_WIDGET(page->days));
+         child != NULL; child = gtk_widget_get_next_sibling(child)) {
+        const gchar *day = g_object_get_data(G_OBJECT(child), "plan-day");
+
+        if (day != NULL && g_ascii_strtoll(day, NULL, 10) == plan->next_day) {
+            gtk_widget_grab_focus(child);
+            return;
+        }
+    }
 }
 
 static gboolean
@@ -846,6 +940,11 @@ gsword_plan_page_new(GswordWindow *window)
     GtkWidget *days_scroll = gtk_scrolled_window_new();
     GtkWidget *open = gtk_button_new_with_label(_("Open today's reading"));
     GtkWidget *complete = gtk_button_new_with_label(_("Mark today complete"));
+    GtkWidget *undo = gtk_button_new_with_label(_("Undo"));
+    GtkWidget *jump_today = gtk_button_new_with_label(_("Today"));
+    GtkWidget *schedule_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *schedule_label = gtk_label_new(_("Schedule"));
+    GtkStringList *filters;
     GtkWidget *create = gtk_button_new_with_label(_("Create plan"));
     GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
     GtkWidget *hint;
@@ -901,8 +1000,11 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_widget_add_css_class(GTK_WIDGET(page->today), "title-2");
     page->open_button = GTK_BUTTON(open);
     page->complete_button = GTK_BUTTON(complete);
+    page->undo_button = GTK_BUTTON(undo);
+    gtk_widget_set_visible(undo, FALSE);
     g_signal_connect(open, "clicked", G_CALLBACK(on_open_today), page);
     g_signal_connect(complete, "clicked", G_CALLBACK(on_complete_today), page);
+    g_signal_connect(undo, "clicked", G_CALLBACK(on_undo_complete), page);
     page->progress = GTK_PROGRESS_BAR(gtk_progress_bar_new());
     gtk_progress_bar_set_show_text(page->progress, TRUE);
     gtk_widget_set_hexpand(GTK_WIDGET(page->progress), TRUE);
@@ -915,18 +1017,31 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(today_controls), GTK_WIDGET(page->selector));
     gtk_box_append(GTK_BOX(today_controls), open);
     gtk_box_append(GTK_BOX(today_controls), complete);
+    gtk_box_append(GTK_BOX(today_controls), undo);
     gtk_box_append(GTK_BOX(dashboard), today_controls);
     gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->summary));
     gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->progress));
     gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->progress_text));
     gtk_box_append(GTK_BOX(dashboard), GTK_WIDGET(page->today));
-    {
-        GtkWidget *label = gtk_label_new(_("Schedule"));
-
-        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-        gtk_widget_add_css_class(label, "heading");
-        gtk_box_append(GTK_BOX(dashboard), label);
-    }
+    gtk_label_set_xalign(GTK_LABEL(schedule_label), 0.0f);
+    gtk_widget_set_hexpand(schedule_label, TRUE);
+    gtk_widget_add_css_class(schedule_label, "heading");
+    page->day_filter = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
+    filters = gtk_string_list_new(
+        (const gchar *[]) { _("All days"), _("Upcoming"), _("Completed"),
+                            NULL });
+    gtk_drop_down_set_model(page->day_filter, G_LIST_MODEL(filters));
+    g_object_unref(filters);
+    g_signal_connect(page->day_filter, "notify::selected",
+                     G_CALLBACK(on_day_filter_changed), page);
+    page->jump_today_button = GTK_BUTTON(jump_today);
+    gtk_widget_add_css_class(jump_today, "flat");
+    gtk_widget_set_tooltip_text(jump_today, _("Jump to today"));
+    g_signal_connect(jump_today, "clicked", G_CALLBACK(on_jump_today), page);
+    gtk_box_append(GTK_BOX(schedule_header), schedule_label);
+    gtk_box_append(GTK_BOX(schedule_header), GTK_WIDGET(page->day_filter));
+    gtk_box_append(GTK_BOX(schedule_header), jump_today);
+    gtk_box_append(GTK_BOX(dashboard), schedule_header);
     page->days = GTK_LIST_BOX(gtk_list_box_new());
     gtk_list_box_set_activate_on_single_click(page->days, FALSE);
     g_signal_connect(page->days, "row-activated",

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 11:24+0800\n"
+"POT-Creation-Date: 2026-11-03 11:28+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -238,7 +238,7 @@ msgstr ""
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1044 src/plan-page.c:485 src/plan-page.c:765
+#: src/library-page.c:1044 src/plan-page.c:525 src/plan-page.c:861
 msgid "Cancel"
 msgstr ""
 
@@ -407,7 +407,7 @@ msgid "Delete the note for %s? This cannot be undone."
 msgstr ""
 
 #: src/notes-page.c:666 src/notes-page.c:1490 src/notes-page.c:1569
-#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:766
+#: src/notes-page.c:1675 src/memory-page.c:368 src/plan-page.c:862
 msgid "Delete"
 msgstr ""
 
@@ -463,7 +463,7 @@ msgstr ""
 msgid "Rename tag"
 msgstr ""
 
-#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:486
+#: src/notes-page.c:1367 src/notes-page.c:1436 src/plan-page.c:526
 msgid "Rename"
 msgstr ""
 
@@ -1330,7 +1330,7 @@ msgid ""
 "page."
 msgstr ""
 
-#: src/devotion-page.c:225 src/plan-page.c:1036
+#: src/devotion-page.c:225 src/plan-page.c:944 src/plan-page.c:1153
 msgid "Today"
 msgstr ""
 
@@ -1346,201 +1346,229 @@ msgstr ""
 msgid "Next day"
 msgstr ""
 
-#: src/plan-page.c:194
+#: src/plan-page.c:210
 msgid "No reading plans yet"
 msgstr ""
 
-#: src/plan-page.c:205 src/plan-page.c:273
+#: src/plan-page.c:221 src/plan-page.c:291
 #, c-format
 msgid "%d/%d days (%.0f%%) · streak %d"
 msgstr ""
 
-#: src/plan-page.c:283
+#: src/plan-page.c:301
 #, c-format
 msgid "Day %d: %s"
 msgstr ""
 
-#: src/plan-page.c:291
+#: src/plan-page.c:309
 msgid "Plan complete"
 msgstr ""
 
-#: src/plan-page.c:304
+#: src/plan-page.c:338
 #, c-format
-msgid "Day %d   %s"
+msgid "Day %d   %s%s"
 msgstr ""
 
-#: src/plan-page.c:319
+#: src/plan-page.c:341
+msgid "   · today"
+msgstr ""
+
+#: src/plan-page.c:354
 msgid "Done"
 msgstr ""
 
-#: src/plan-page.c:458
+#: src/plan-page.c:498
 msgid "Cannot rename plan"
 msgstr ""
 
-#: src/plan-page.c:464
+#: src/plan-page.c:504
 msgid "Reading plan renamed"
 msgstr ""
 
-#: src/plan-page.c:478
+#: src/plan-page.c:518
 msgid "Rename reading plan"
 msgstr ""
 
-#: src/plan-page.c:510
+#: src/plan-page.c:550
 msgid "Cannot duplicate plan"
 msgstr ""
 
-#: src/plan-page.c:522
+#: src/plan-page.c:562
 msgid "Reading plan duplicated"
 msgstr ""
 
-#: src/plan-page.c:544
+#: src/plan-page.c:584
 msgid "Preview unavailable for this reference."
 msgstr ""
 
-#: src/plan-page.c:546
+#: src/plan-page.c:586
 #, c-format
 msgid "Day 1: %s"
 msgstr ""
 
-#: src/plan-page.c:549
+#: src/plan-page.c:589
 #, c-format
 msgid ""
 "Day 1: %s\n"
 "Day %u: %s"
 msgstr ""
 
-#: src/plan-page.c:590 src/plan-page.c:635
+#: src/plan-page.c:630 src/plan-page.c:675 src/plan-page.c:699
 msgid "Cannot update plan"
 msgstr ""
 
-#: src/plan-page.c:593
+#: src/plan-page.c:633
 msgid "Reading plan updated"
 msgstr ""
 
-#: src/plan-page.c:638
+#: src/plan-page.c:681
 msgid "Day marked complete"
 msgstr ""
 
-#: src/plan-page.c:657 src/plan-page.c:667
+#: src/plan-page.c:703
+msgid "Completion undone"
+msgstr ""
+
+#: src/plan-page.c:753 src/plan-page.c:763
 msgid "Cannot create plan"
 msgstr ""
 
-#: src/plan-page.c:659
+#: src/plan-page.c:755
 msgid "Invalid start reference or empty plan"
 msgstr ""
 
-#: src/plan-page.c:675
+#: src/plan-page.c:771
 msgid "Reading plan created"
 msgstr ""
 
-#: src/plan-page.c:686 src/plan-page.c:946
+#: src/plan-page.c:782 src/plan-page.c:1063
 msgid "90-day New Testament"
 msgstr ""
 
-#: src/plan-page.c:689 src/plan-page.c:947
+#: src/plan-page.c:785 src/plan-page.c:1064
 msgid "30-day Psalms"
 msgstr ""
 
-#: src/plan-page.c:718
+#: src/plan-page.c:814
 msgid "Enter a plan name and start reference"
 msgstr ""
 
-#: src/plan-page.c:740
+#: src/plan-page.c:836
 msgid "Cannot delete plan"
 msgstr ""
 
-#: src/plan-page.c:747
+#: src/plan-page.c:843
 msgid "Reading plan deleted"
 msgstr ""
 
-#: src/plan-page.c:760
+#: src/plan-page.c:856
 msgid "Delete reading plan"
 msgstr ""
 
-#: src/plan-page.c:762
+#: src/plan-page.c:858
 #, c-format
 msgid "Delete “%s” and its progress?"
 msgstr ""
 
-#: src/plan-page.c:834
+#: src/plan-page.c:930
 msgid "Your plans"
 msgstr ""
 
-#: src/plan-page.c:845
+#: src/plan-page.c:941
 msgid "Open today's reading"
 msgstr ""
 
-#: src/plan-page.c:846
+#: src/plan-page.c:942
 msgid "Mark today complete"
 msgstr ""
 
-#: src/plan-page.c:847
-msgid "Create plan"
+#: src/plan-page.c:943
+msgid "Undo"
 msgstr ""
 
-#: src/plan-page.c:848 src/plan-page.c:998
-msgid "Delete plan"
-msgstr ""
-
-#: src/plan-page.c:877
-msgid "Rename plan"
-msgstr ""
-
-#: src/plan-page.c:878
-msgid "Duplicate plan"
-msgstr ""
-
-#: src/plan-page.c:922
+#: src/plan-page.c:946
 msgid "Schedule"
 msgstr ""
 
-#: src/plan-page.c:937
-msgid "Start a reading plan"
+#: src/plan-page.c:948
+msgid "Create plan"
 msgstr ""
 
-#: src/plan-page.c:941
-msgid "Choose a template or create a custom plan to begin."
-msgstr ""
-
-#: src/plan-page.c:945
-msgid "Custom plan"
-msgstr ""
-
-#: src/plan-page.c:976
-msgid "Plan name"
+#: src/plan-page.c:978
+msgid "Rename plan"
 msgstr ""
 
 #: src/plan-page.c:979
+msgid "Duplicate plan"
+msgstr ""
+
+#: src/plan-page.c:1031
+msgid "All days"
+msgstr ""
+
+#: src/plan-page.c:1031
+msgid "Upcoming"
+msgstr ""
+
+#: src/plan-page.c:1031
+msgid "Completed"
+msgstr ""
+
+#: src/plan-page.c:1039
+msgid "Jump to today"
+msgstr ""
+
+#: src/plan-page.c:1054
+msgid "Start a reading plan"
+msgstr ""
+
+#: src/plan-page.c:1058
+msgid "Choose a template or create a custom plan to begin."
+msgstr ""
+
+#: src/plan-page.c:1062
+msgid "Custom plan"
+msgstr ""
+
+#: src/plan-page.c:1093
+msgid "Plan name"
+msgstr ""
+
+#: src/plan-page.c:1096
 msgid "Start, e.g. Genesis 1"
 msgstr ""
 
-#: src/plan-page.c:1004
+#: src/plan-page.c:1115
+msgid "Delete plan"
+msgstr ""
+
+#: src/plan-page.c:1121
 msgid "Days"
 msgstr ""
 
-#: src/plan-page.c:1006
+#: src/plan-page.c:1123
 msgid "Chapters/day"
 msgstr ""
 
-#: src/plan-page.c:1019
+#: src/plan-page.c:1136
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr ""
 
-#: src/plan-page.c:1025
+#: src/plan-page.c:1142
 msgid "Create a plan"
 msgstr ""
 
-#: src/plan-page.c:1038
+#: src/plan-page.c:1155
 msgid "Plans"
 msgstr ""
 
-#: src/plan-page.c:1041
+#: src/plan-page.c:1158
 msgid "Devotion"
 msgstr ""
 
-#: src/plan-page.c:1044
+#: src/plan-page.c:1161
 msgid "Memorize"
 msgstr ""
 

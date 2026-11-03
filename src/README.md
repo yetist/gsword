@@ -54,8 +54,8 @@ Current implementation:
   Markdown editing with autosave and dirty-state feedback, note search and tag
   filtering, explicit tag menu, verse-list membership and item management,
   Markdown export and a single-verse scripture preview
-- `plan-page.c` / `plan-page.h`: reading plan notebook, plan selection,
-  schedule and plan creation/deletion
+- `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
+  creation, plan library with rename/duplicate, schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
   and text display
 - `memory-page.c` / `memory-page.h`: memory verse list, card masking, answer
