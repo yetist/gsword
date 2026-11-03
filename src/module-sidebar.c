@@ -134,6 +134,16 @@ on_module_row_selected(GtkListBox *list, GtkListBoxRow *row,
     gsword_window_show_page(sidebar->window, "reader");
 }
 
+static void
+on_manage_modules_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordModuleSidebar *sidebar = user_data;
+
+    (void)button;
+    gsword_window_hide_sidebar_overlay(sidebar->window);
+    gsword_window_open_library(sidebar->window);
+}
+
 static gboolean
 reset_startup_selecting(gpointer user_data)
 {
@@ -279,6 +289,7 @@ gsword_module_sidebar_new(GswordWindow *window)
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *label = gtk_label_new(_("Modules"));
     GtkWidget *scrolled = gtk_scrolled_window_new();
+    GtkWidget *manage = gtk_button_new_with_label(_("Manage modules"));
 
     sidebar->window = window;
     sidebar->root = box;
@@ -302,5 +313,13 @@ gsword_module_sidebar_new(GswordWindow *window)
     gtk_widget_set_vexpand(scrolled, TRUE);
     gtk_box_append(GTK_BOX(box), label);
     gtk_box_append(GTK_BOX(box), scrolled);
+    gtk_widget_add_css_class(manage, "flat");
+    gtk_widget_set_margin_start(manage, 8);
+    gtk_widget_set_margin_end(manage, 8);
+    gtk_widget_set_margin_bottom(manage, 8);
+    gtk_widget_set_tooltip_text(manage, _("Install, update or remove modules"));
+    g_signal_connect(manage, "clicked",
+                     G_CALLBACK(on_manage_modules_clicked), sidebar);
+    gtk_box_append(GTK_BOX(box), manage);
     return sidebar;
 }

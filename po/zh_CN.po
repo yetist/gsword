@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 14:46+0800\n"
+"POT-Creation-Date: 2026-11-03 15:09+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,96 +33,96 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:111 src/window.c:799
+#: src/window.c:112 src/window.c:845
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:111
+#: src/window.c:112
 msgid "Show module sidebar"
 msgstr "显示模块侧栏"
 
-#: src/window.c:238 src/workspace-page.c:342 src/workspace-pane.c:246
+#: src/window.c:239 src/workspace-page.c:342 src/workspace-pane.c:246
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:409 src/search-page.c:613 src/resource-page.c:206
+#: src/window.c:410 src/search-page.c:613 src/resource-page.c:206
 #: src/resource-page.c:212
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:473
+#: src/window.c:474
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:493
+#: src/window.c:494
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:631 src/window.c:814
+#: src/window.c:634 src/window.c:867
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:635
+#: src/window.c:638
 msgid "Reading workspace"
 msgstr "阅读工作区"
 
-#: src/window.c:636
+#: src/window.c:639
 msgid "Study workspace"
 msgstr "研经工作区"
 
-#: src/window.c:637
+#: src/window.c:640
 msgid "Comparison workspace"
 msgstr "对照阅读"
 
-#: src/window.c:638
+#: src/window.c:641
 msgid "Parallel comparison"
 msgstr "并行对照"
 
-#: src/window.c:639
+#: src/window.c:642
 msgid "Teaching workspace"
 msgstr "教学工作区"
 
-#: src/window.c:640 src/preferences-dialog.c:108
+#: src/window.c:643 src/window.c:861 src/library-page.c:2274
+msgid "Module library"
+msgstr "模块库"
+
+#: src/window.c:644 src/preferences-dialog.c:108
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:641
+#: src/window.c:645
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:642 src/window-services.c:64 src/library-page.c:1264
+#: src/window.c:646 src/window-services.c:64 src/library-page.c:1264
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:808 src/search-page.c:862
+#: src/window.c:854 src/search-page.c:862
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:843 src/preferences-dialog.c:113
+#: src/window.c:897 src/preferences-dialog.c:113
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:849
+#: src/window.c:903
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:863 src/notes-page.c:190 src/notes-page.c:1869
+#: src/window.c:917 src/notes-page.c:190 src/notes-page.c:1869
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:868
+#: src/window.c:922
 msgid "Plan"
 msgstr "计划"
-
-#: src/window.c:887
-msgid "Library"
-msgstr "模块库"
 
 #: src/window-services.c:154 src/window-services.c:162
 msgid "Daily Devotional"
 msgstr "每日灵修"
 
-#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2309
+#: src/window-services.c:156 src/window-services.c:163 src/library-page.c:2319
 #: src/module-sidebar.c:27
 msgid "Maps"
 msgstr "地图"
@@ -131,11 +131,11 @@ msgstr "地图"
 msgid "Biblical Texts"
 msgstr "圣经文本"
 
-#: src/window-services.c:159 src/library-page.c:2307 src/module-sidebar.c:23
+#: src/window-services.c:159 src/library-page.c:2317 src/module-sidebar.c:23
 msgid "Commentaries"
 msgstr "注释书"
 
-#: src/window-services.c:160 src/library-page.c:2307 src/module-sidebar.c:24
+#: src/window-services.c:160 src/library-page.c:2317 src/module-sidebar.c:24
 msgid "Lexicons / Dictionaries"
 msgstr "词典 / 字典"
 
@@ -238,7 +238,7 @@ msgstr "搜索索引已删除"
 
 #: src/search-page.c:863 src/notes-page.c:665 src/notes-page.c:1366
 #: src/notes-page.c:1435 src/notes-page.c:1489 src/notes-page.c:1568
-#: src/library-page.c:1599 src/library-page.c:2209 src/library-page.c:2302
+#: src/library-page.c:1599 src/library-page.c:2209 src/library-page.c:2312
 #: src/plan-page.c:557 src/plan-page.c:899
 msgid "Cancel"
 msgstr "取消"
@@ -247,7 +247,7 @@ msgstr "取消"
 msgid "Recent searches"
 msgstr "最近搜索"
 
-#: src/search-page.c:881
+#: src/search-page.c:881 src/library-page.c:2507
 msgid "Back"
 msgstr "返回"
 
@@ -789,24 +789,24 @@ msgstr "全部语言"
 msgid "%u module(s)"
 msgstr "共 %u 个模块"
 
-#: src/library-page.c:570 src/library-page.c:2311
+#: src/library-page.c:570 src/library-page.c:2321
 msgid "Not installed"
 msgstr "未安装"
 
-#: src/library-page.c:572 src/library-page.c:2312
+#: src/library-page.c:572 src/library-page.c:2322
 msgid "Update available"
 msgstr "有更新"
 
-#: src/library-page.c:574 src/library-page.c:2313
+#: src/library-page.c:574 src/library-page.c:2323
 msgid "Installed - local version is newer"
 msgstr "已安装 - 本地版本较新"
 
-#: src/library-page.c:576 src/library-page.c:2314
+#: src/library-page.c:576 src/library-page.c:2324
 msgid "Installed - up to date"
 msgstr "已安装 - 已是最新"
 
-#: src/library-page.c:577 src/library-page.c:873 src/library-page.c:2312
-#: src/library-page.c:2316
+#: src/library-page.c:577 src/library-page.c:873 src/library-page.c:2322
+#: src/library-page.c:2326
 msgid "Installed"
 msgstr "已安装"
 
@@ -818,7 +818,7 @@ msgstr "安装管理器不可用"
 msgid "Source"
 msgstr "安装源"
 
-#: src/library-page.c:657 src/library-page.c:2615
+#: src/library-page.c:657 src/library-page.c:2635
 msgid "Select a module"
 msgstr "选择模块"
 
@@ -1041,7 +1041,7 @@ msgstr "远程模块列表已刷新"
 msgid "Resume"
 msgstr "继续"
 
-#: src/library-page.c:1451 src/library-page.c:1704 src/library-page.c:2271
+#: src/library-page.c:1451 src/library-page.c:1704 src/library-page.c:2281
 msgid "Pause"
 msgstr "暂停"
 
@@ -1078,7 +1078,7 @@ msgstr "解锁模块"
 msgid "Enter the encryption key for %s."
 msgstr "请输入 %s 的解密密钥。"
 
-#: src/library-page.c:1600 src/library-page.c:2301
+#: src/library-page.c:1600 src/library-page.c:2311
 msgid "Unlock"
 msgstr "解锁"
 
@@ -1188,165 +1188,173 @@ msgstr "来源名称"
 msgid "Proxy password"
 msgstr "代理密码"
 
-#: src/library-page.c:2269
+#: src/library-page.c:2279
 msgid "Update all"
 msgstr "全部更新"
 
-#: src/library-page.c:2270
+#: src/library-page.c:2280
 msgid "Retry failed"
 msgstr "搜索失败"
 
-#: src/library-page.c:2272
+#: src/library-page.c:2282
 msgid "Proxy"
 msgstr "代理"
 
-#: src/library-page.c:2273
+#: src/library-page.c:2283
 msgid "Manage sources"
 msgstr "管理来源"
 
-#: src/library-page.c:2298
+#: src/library-page.c:2308
 msgid "Test"
 msgstr "测试"
 
-#: src/library-page.c:2299
+#: src/library-page.c:2309
 msgid "Install / Update"
 msgstr "安装 / 更新"
 
-#: src/library-page.c:2300
+#: src/library-page.c:2310
 msgid "Remove"
 msgstr "移除"
 
-#: src/library-page.c:2304
+#: src/library-page.c:2314
 msgid "Install from local directory"
 msgstr "从本地目录安装"
 
-#: src/library-page.c:2306
+#: src/library-page.c:2316
 msgid "All types"
 msgstr "全部类型"
 
-#: src/library-page.c:2306 src/module-sidebar.c:22
+#: src/library-page.c:2316 src/module-sidebar.c:22
 msgid "Bibles"
 msgstr "圣经"
 
-#: src/library-page.c:2308 src/module-sidebar.c:25
+#: src/library-page.c:2318 src/module-sidebar.c:25
 msgid "Daily Devotions"
 msgstr "每日灵修"
 
-#: src/library-page.c:2308 src/module-sidebar.c:26
+#: src/library-page.c:2318 src/module-sidebar.c:26
 msgid "General Books"
 msgstr "通用书籍"
 
-#: src/library-page.c:2309 src/module-sidebar.c:30
+#: src/library-page.c:2319 src/module-sidebar.c:30
 msgid "Other Modules"
 msgstr "其他模块"
 
-#: src/library-page.c:2311
+#: src/library-page.c:2321
 msgid "All statuses"
 msgstr "全部状态"
 
-#: src/library-page.c:2317
+#: src/library-page.c:2327
 msgid "Available"
 msgstr "可安装"
 
-#: src/library-page.c:2318
+#: src/library-page.c:2328
 msgid "Updates"
 msgstr "更新"
 
-#: src/library-page.c:2341
+#: src/library-page.c:2351
 msgid "Install all available updates"
 msgstr "安装所有可用更新"
 
-#: src/library-page.c:2411
+#: src/library-page.c:2421
 msgid "Filter modules"
 msgstr "筛选模块"
 
-#: src/library-page.c:2420
+#: src/library-page.c:2430
 msgid "Clear filters"
 msgstr "清除筛选"
 
-#: src/library-page.c:2423
+#: src/library-page.c:2433
 msgid "Name"
 msgstr "名称"
 
-#: src/library-page.c:2423
+#: src/library-page.c:2433
 msgid "Type"
 msgstr "类型"
 
-#: src/library-page.c:2423
+#: src/library-page.c:2433
 msgid "Language"
 msgstr "语言"
 
-#: src/library-page.c:2424
+#: src/library-page.c:2434
 msgid "Status"
 msgstr "状态"
 
-#: src/library-page.c:2432
+#: src/library-page.c:2442
 msgid "0 module(s)"
 msgstr "共 0 个模块"
 
-#: src/library-page.c:2441
+#: src/library-page.c:2451
 msgid "Refresh the install source list"
 msgstr "刷新安装源列表"
 
-#: src/library-page.c:2443
+#: src/library-page.c:2453
 msgid "Refresh modules from the selected source"
 msgstr "从所选安装源刷新模块"
 
-#: src/library-page.c:2445
+#: src/library-page.c:2455
 msgid "Test source connection"
 msgstr "测试来源连接"
 
-#: src/library-page.c:2501
+#: src/library-page.c:2521
 msgid "Update queue"
 msgstr "更新队列"
 
-#: src/library-page.c:2577
+#: src/library-page.c:2597
 msgid "No modules match the current filters."
 msgstr "没有符合当前筛选条件的模块。"
 
-#: src/library-page.c:2594
+#: src/library-page.c:2614
 msgid "No installed modules."
 msgstr "还没有安装模块。"
 
-#: src/library-page.c:2633
+#: src/library-page.c:2653
 msgid "Technical details"
 msgstr "详细信息"
 
-#: src/library-page.c:2643
+#: src/library-page.c:2663
 msgid "Copyright & license"
 msgstr "版权与许可"
 
-#: src/library-page.c:2653
+#: src/library-page.c:2673
 msgid "About this module"
 msgstr "关于此模块"
 
-#: src/library-page.c:2675
+#: src/library-page.c:2695
 msgid "Back to modules"
 msgstr "返回模块列表"
 
-#: src/library-page.c:2705
+#: src/library-page.c:2725
 msgid "Local SWORD library directory"
 msgstr "本地 SWORD 模块库目录"
 
-#: src/library-page.c:2707
+#: src/library-page.c:2727
 msgid "Module name"
 msgstr "模块名称"
 
-#: src/library-page.c:2709
+#: src/library-page.c:2729
 msgid "Install local module"
 msgstr "安装本地模块"
 
-#: src/library-page.c:2715
+#: src/library-page.c:2735
 msgid "Browse…"
 msgstr "浏览…"
 
-#: src/library-page.c:2732 src/module-sidebar.c:280
+#: src/library-page.c:2752 src/module-sidebar.c:290
 msgid "Modules"
 msgstr "模块"
 
-#: src/library-page.c:2734
+#: src/library-page.c:2754
 msgid "Module details"
 msgstr "模块详情"
+
+#: src/module-sidebar.c:292
+msgid "Manage modules"
+msgstr "管理模块"
+
+#: src/module-sidebar.c:320
+msgid "Install, update or remove modules"
+msgstr "安装、更新或移除模块"
 
 #: src/study-panel.c:102 src/study-panel.c:649
 msgid "Commentary"
@@ -2029,6 +2037,9 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "Library"
+#~ msgstr "模块库"
 
 #~ msgid "Installed:"
 #~ msgstr "已安装："
