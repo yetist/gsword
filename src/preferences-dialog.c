@@ -35,6 +35,7 @@ apply_css(GswordPreferences *prefs)
         ".workspace-pane { border: 1px solid alpha(currentColor, 0.16);"
         " border-radius: 8px; }\n"
         ".workspace-pane.dragging { opacity: 0.55; }\n"
+        ".workspace-pane.active { border: 2px solid alpha(@accent_color, 0.85); }\n"
         ".workspace-pane-header { min-height: 34px; }", points);
     gtk_css_provider_load_from_string(prefs->css, css_text);
     g_free(css_text);

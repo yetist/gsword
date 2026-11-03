@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-03 15:22+0800\n"
+"POT-Creation-Date: 2026-11-03 16:09+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -41,7 +41,8 @@ msgstr "隐藏模块侧栏"
 msgid "Show module sidebar"
 msgstr "显示模块侧栏"
 
-#: src/window.c:239 src/workspace-page.c:342 src/workspace-pane.c:246
+#: src/window.c:239 src/workspace-page.c:402 src/workspace-page.c:708
+#: src/workspace-pane.c:248
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
@@ -74,7 +75,7 @@ msgstr "首选项"
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:108
+#: src/window.c:663 src/window.c:714 src/preferences-dialog.c:109
 msgid "Preferences"
 msgstr "首选项"
 
@@ -126,7 +127,7 @@ msgstr "退出"
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:976 src/preferences-dialog.c:113
+#: src/window.c:976 src/preferences-dialog.c:114
 msgid "Reading"
 msgstr "阅读"
 
@@ -1380,7 +1381,7 @@ msgstr "安装、更新或移除模块"
 msgid "Commentary"
 msgstr "注释"
 
-#: src/study-panel.c:119 src/workspace-pane.c:204
+#: src/study-panel.c:119 src/workspace-pane.c:206
 msgid "No commentary for this verse."
 msgstr "本节没有注释。"
 
@@ -1408,7 +1409,7 @@ msgstr "无法查询词典条目"
 msgid "Cannot read lexicon entry"
 msgstr "无法读取词典条目"
 
-#: src/study-panel.c:568 src/workspace-pane.c:575
+#: src/study-panel.c:568 src/workspace-pane.c:591
 msgid "Follow"
 msgstr "跟随"
 
@@ -1432,67 +1433,111 @@ msgstr "Strong 原文"
 msgid "Cross-refs"
 msgstr "交叉引用"
 
-#: src/workspace-page.c:379
+#: src/workspace-page.c:429
 msgid "Parallel comparison ready"
 msgstr "并行对照已就绪"
 
-#: src/workspace-page.c:544
+#: src/workspace-page.c:611
 msgid "Comparison order changed"
 msgstr "对照栏顺序已更改"
 
-#: src/workspace-page.c:626
+#: src/workspace-page.c:633
+msgid "Comparisons cleared"
+msgstr "对照栏已清空"
+
+#: src/workspace-page.c:661
+msgid "Clear comparisons?"
+msgstr "清空所有对照栏？"
+
+#: src/workspace-page.c:664
+msgid "All comparison panes will be removed. This cannot be undone."
+msgstr "所有对照栏都将被移除，此操作无法撤销。"
+
+#: src/workspace-page.c:667
+msgid "_Cancel"
+msgstr "取消"
+
+#: src/workspace-page.c:668
+msgid "_Clear"
+msgstr "清空"
+
+#: src/workspace-page.c:738
+msgid "Four-way comparison ready"
+msgstr "四译本对照已就绪"
+
+#: src/workspace-page.c:803 src/workspace-page.c:815
 msgid "Add comparison"
 msgstr "添加对照栏"
 
-#: src/workspace-page.c:627
+#: src/workspace-page.c:804
 msgid "Clear comparisons"
 msgstr "清空对照栏"
 
-#: src/workspace-page.c:628
+#: src/workspace-page.c:805
 msgid "Columns"
 msgstr "列数"
 
-#: src/workspace-page.c:629
+#: src/workspace-page.c:807
 msgid "Sync scroll"
 msgstr "同步滚动"
 
-#: src/workspace-page.c:630
-msgid "No comparisons yet. Add a comparison to begin."
-msgstr "还没有对照栏。添加一个对照栏开始。"
+#: src/workspace-page.c:809
+msgid "No comparisons yet"
+msgstr "尚无对照栏"
 
-#: src/workspace-page.c:651
+#: src/workspace-page.c:811
+msgid "Choose a template or add a comparison pane to begin."
+msgstr "选择模板或添加对照栏以开始。"
+
+#: src/workspace-page.c:813
+msgid "Two translations"
+msgstr "两译本对照"
+
+#: src/workspace-page.c:814
+msgid "Four translations"
+msgstr "四译本对照"
+
+#: src/workspace-page.c:855
 msgid "Keep comparison scroll positions together"
 msgstr "保持多个对照栏的滚动位置同步"
 
-#: src/workspace-pane.c:191
+#: src/workspace-pane.c:193
 msgid "No module selected."
 msgstr "未选择模块。"
 
-#: src/workspace-pane.c:205
+#: src/workspace-pane.c:207
 msgid "No content for this reference."
 msgstr "此引用没有内容。"
 
-#: src/workspace-pane.c:264
+#: src/workspace-pane.c:266
 msgid "Cannot open module."
 msgstr "无法打开模块。"
 
-#: src/workspace-pane.c:459
+#: src/workspace-pane.c:475
 msgid "Comparison updated"
 msgstr "对照栏已更新"
 
-#: src/workspace-pane.c:486
+#: src/workspace-pane.c:502
 msgid "Drag to another comparison to rearrange"
 msgstr "拖到另一个对照栏以重新排列"
 
-#: src/workspace-pane.c:561
+#: src/workspace-pane.c:577
 msgid "Drag to rearrange comparison"
 msgstr "拖动以重新排列对照栏"
 
-#: src/workspace-pane.c:578
-msgid "Follow the active passage"
-msgstr "跟随当前经文"
+#: src/workspace-pane.c:591
+msgid "Pinned"
+msgstr "固定"
 
-#: src/workspace-pane.c:585
+#: src/workspace-pane.c:591
+msgid "Free"
+msgstr "独立"
+
+#: src/workspace-pane.c:595
+msgid "Follow, pin, or free this comparison"
+msgstr "跟随、固定或独立此对照栏"
+
+#: src/workspace-pane.c:602
 msgid "Close comparison"
 msgstr "关闭对照栏"
 
@@ -1586,35 +1631,35 @@ msgstr "切换经文高亮"
 msgid "Toggle study panel"
 msgstr "切换研经面板"
 
-#: src/preferences-dialog.c:115
+#: src/preferences-dialog.c:116
 msgid "Reading appearance is applied immediately."
 msgstr "阅读外观会立即应用。"
 
-#: src/preferences-dialog.c:119
+#: src/preferences-dialog.c:120
 msgid "Font size"
 msgstr "字体大小"
 
-#: src/preferences-dialog.c:120
+#: src/preferences-dialog.c:121
 msgid "Scale the scripture text size"
 msgstr "调整经文文字大小"
 
-#: src/preferences-dialog.c:131
+#: src/preferences-dialog.c:132
 msgid "Color scheme"
 msgstr "配色方案"
 
-#: src/preferences-dialog.c:133
+#: src/preferences-dialog.c:134
 msgid "Follow the desktop or force light/dark mode"
 msgstr "跟随桌面或强制浅色/深色模式"
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Follow system"
 msgstr "跟随系统"
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Light"
 msgstr "浅色"
 
-#: src/preferences-dialog.c:135
+#: src/preferences-dialog.c:136
 msgid "Dark"
 msgstr "深色"
 
@@ -2057,6 +2102,12 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
+
+#~ msgid "No comparisons yet. Add a comparison to begin."
+#~ msgstr "还没有对照栏。添加一个对照栏开始。"
+
+#~ msgid "Follow the active passage"
+#~ msgstr "跟随当前经文"
 
 #~ msgid "Reading workspace"
 #~ msgstr "阅读工作区"
