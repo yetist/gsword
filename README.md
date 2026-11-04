@@ -1,5 +1,9 @@
 # GSword
 
+<p align="center">
+  <img src="data/icons/hicolor/scalable/apps/org.gsword.GSword.svg" width="128" height="128" alt="GSword logo">
+</p>
+
 **GSword 是一款使用 GTK4 / libadwaita 编写的现代研经软件。**
 
 它围绕经文阅读、跨译本对照、注释与原文研究、个人笔记和阅读计划组织界面，并直接读取 SWORD 模块。

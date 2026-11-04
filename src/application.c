@@ -64,6 +64,7 @@ gsword_application_startup(GApplication *application)
                 gtk_icon_theme_get_for_display(display), GSW_ICON_DIR);
     }
 #endif
+    gtk_window_set_default_icon_name("org.gsword.GSword");
 
     {
         gchar *locale = gsword_app_locale_name();
