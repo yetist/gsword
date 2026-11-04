@@ -375,6 +375,32 @@ gsword_window_focus_reference(GswordWindow *self)
 }
 
 void
+gsword_window_open_note_for(GswordWindow *self, const gchar *module,
+                            const gchar *storage_key,
+                            const gchar *display_key)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->notes_page != NULL)
+        gsword_notes_page_open_reference(priv->notes_page, module,
+                                         storage_key, display_key);
+}
+
+void
+gsword_window_open_compare_reference(GswordWindow *self,
+                                     const gchar *module,
+                                     const gchar *key)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    if (priv->workspace_page == NULL || module == NULL || key == NULL)
+        return;
+    if (gsword_workspace_page_add_pane(priv->workspace_page, module, key,
+                                       FALSE, TRUE) != NULL)
+        gsword_window_show_page(self, "panes");
+}
+
+void
 gsword_window_open_current_note(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);

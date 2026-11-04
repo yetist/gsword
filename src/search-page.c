@@ -33,6 +33,16 @@ struct _GswordSearchPage {
     GtkLabel *index_label;
     GCancellable *search_cancellable;
     GTask *search_task;
+    GtkPopover *context_menu;
+    GtkPopover *list_menu;
+    gchar *context_module;
+    gchar *context_key;
+    gchar *context_display;
+    gchar *context_storage;
+    gchar *context_text;
+    gboolean context_is_bible;
+    gint context_x;
+    gint context_y;
 };
 
 typedef struct {
@@ -48,6 +58,8 @@ typedef struct {
 } SearchProgressData;
 
 static void run_search(GswordSearchPage *page);
+static void clear_context(GswordSearchPage *page);
+static void ensure_result_popovers(GswordSearchPage *page);
 
 static void
 search_job_free(gpointer data)
@@ -452,6 +464,497 @@ clear_results(GswordSearchPage *page)
 }
 
 static void
+clear_context(GswordSearchPage *page)
+{
+    g_clear_pointer(&page->context_module, g_free);
+    g_clear_pointer(&page->context_key, g_free);
+    g_clear_pointer(&page->context_display, g_free);
+    g_clear_pointer(&page->context_storage, g_free);
+    g_clear_pointer(&page->context_text, g_free);
+    page->context_is_bible = FALSE;
+}
+
+static void
+prepare_context(GswordSearchPage *page, GtkListBoxRow *row)
+{
+    GswManager *manager = gsword_window_get_manager(page->window);
+    GswModule *module = NULL;
+    GswModuleInfo *info;
+    const gchar *module_name;
+    const gchar *key;
+
+    clear_context(page);
+    if (row == NULL)
+        return;
+    module_name = g_object_get_data(G_OBJECT(row), "result-module");
+    key = g_object_get_data(G_OBJECT(row), "result-key");
+    page->context_module = g_strdup(module_name);
+    page->context_key = g_strdup(key);
+    page->context_display = g_strdup(key);
+    page->context_storage = g_strdup(key);
+    if (module_name == NULL || *module_name == '\0' ||
+        key == NULL || *key == '\0' || manager == NULL)
+        return;
+
+    module = gsw_manager_create_module(manager, module_name);
+    info = gsw_manager_lookup_module_info(manager, module_name);
+    if (module == NULL || !gsw_module_set_key_text(module, key, NULL)) {
+        g_clear_object(&module);
+        return;
+    }
+    if (gsword_window_module_effective_type(info) == GSW_MODULE_TYPE_BIBLES &&
+        gsw_key_get_kind(gsw_module_get_key(module)) == GSW_KEY_KIND_VERSE) {
+        GswVerseKey *verse_key = (GswVerseKey *)gsw_module_get_key(module);
+
+        page->context_is_bible = TRUE;
+        g_free(page->context_display);
+        page->context_display = g_strdup(gsw_module_get_key_text(module));
+        g_free(page->context_storage);
+        page->context_storage = gsw_verse_key_get_osis_ref(verse_key);
+        if (page->context_storage == NULL)
+            page->context_storage = g_strdup(page->context_display);
+    }
+    page->context_text = gsw_module_get_text(module, NULL);
+    g_clear_object(&module);
+}
+
+static void
+copy_context_text(GswordSearchPage *page, const gchar *text)
+{
+    GdkClipboard *clipboard =
+        gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+
+    gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
+    gsword_window_set_status(page->window, _("Copied to clipboard"));
+}
+
+static void
+on_context_copy_text(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    copy_context_text(page, page->context_text);
+}
+
+static void
+on_context_copy_reference(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    copy_context_text(page, page->context_display);
+}
+
+static void
+on_context_copy_both(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    gchar *text;
+
+    (void)button;
+    text = g_strdup_printf("%s\n\n%s",
+                           page->context_display != NULL
+                           ? page->context_display : "",
+                           page->context_text != NULL
+                           ? page->context_text : "");
+    gtk_popover_popdown(page->context_menu);
+    copy_context_text(page, text);
+    g_free(text);
+}
+
+static void
+on_context_open_reader(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_window_open_module_reference(page->window, page->context_module,
+                                        page->context_key);
+}
+
+static void
+on_context_open_compare(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_window_open_compare_reference(page->window, page->context_module,
+                                         page->context_key);
+}
+
+static void
+on_context_open_note(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    gsword_window_open_note_for(page->window, page->context_module,
+                                page->context_storage, page->context_display);
+}
+
+static void
+on_context_add_memory(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GError *error = NULL;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    if (plans == NULL || !page->context_is_bible ||
+        page->context_text == NULL) {
+        gsword_window_set_status(page->window,
+                                 _("This result cannot be added to memory review"));
+        return;
+    }
+    if (!gsword_plan_store_add_memory_verse(
+            plans, page->context_module, page->context_storage,
+            page->context_display, page->context_text, &error)) {
+        gsword_window_show_error(page->window,
+                                 _("Cannot add memory verse"), error);
+        return;
+    }
+    gsword_window_set_status(page->window,
+                             _("Verse added to memory review"));
+}
+
+static void
+on_list_menu_choice(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
+    gint64 list_id = (gint64)GPOINTER_TO_SIZE(
+        g_object_get_data(G_OBJECT(button), "list-id"));
+    GError *error = NULL;
+
+    gtk_popover_popdown(page->list_menu);
+    if (store == NULL)
+        return;
+    if (!gsword_notes_store_add_to_list(
+            store, list_id, page->context_module, page->context_storage,
+            page->context_display, &error)) {
+        gsword_window_show_error(page->window,
+                                 _("Cannot add verse to list"), error);
+        return;
+    }
+    gsword_window_set_status(page->window, _("Verse added to list"));
+}
+
+static void
+on_list_menu_open_notes(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->list_menu);
+    gsword_window_show_page(page->window, "notes");
+}
+
+static void
+rebuild_list_menu(GswordSearchPage *page)
+{
+    GswordNotesStore *store;
+    GtkWidget *child;
+    GtkWidget *box;
+    GtkWidget *title;
+    GPtrArray *lists;
+
+    ensure_result_popovers(page);
+    if (page->list_menu == NULL)
+        return;
+    store = gsword_window_get_notes_store(page->window);
+    child = NULL;
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    title = gtk_label_new(_("Add to verse list"));
+    lists = NULL;
+    gtk_widget_add_css_class(title, "heading");
+    gtk_label_set_xalign(GTK_LABEL(title), 0.0f);
+    gtk_widget_set_margin_top(box, 8);
+    gtk_widget_set_margin_bottom(box, 8);
+    gtk_widget_set_margin_start(box, 8);
+    gtk_widget_set_margin_end(box, 8);
+    gtk_box_append(GTK_BOX(box), title);
+
+    if (store == NULL) {
+        gtk_box_append(GTK_BOX(box),
+                       gtk_label_new(_("Verse lists are unavailable.")));
+    } else {
+        lists = gsword_notes_store_list_lists(store);
+        if (lists->len == 0) {
+            GtkWidget *label = gtk_label_new(_("No verse lists yet"));
+            GtkWidget *open = gtk_button_new_with_label(_("Open notes"));
+
+            gtk_widget_add_css_class(label, "dim-label");
+            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+            g_signal_connect(open, "clicked",
+                             G_CALLBACK(on_list_menu_open_notes), page);
+            gtk_box_append(GTK_BOX(box), label);
+            gtk_box_append(GTK_BOX(box), open);
+        }
+        for (guint i = 0; i < lists->len; i++) {
+            GswordVerseList *list = g_ptr_array_index(lists, i);
+            GtkWidget *button = gtk_button_new_with_label(list->name);
+
+            gtk_widget_set_halign(button, GTK_ALIGN_FILL);
+            g_object_set_data(G_OBJECT(button), "list-id",
+                              GSIZE_TO_POINTER((gsize)list->id));
+            g_signal_connect(button, "clicked",
+                             G_CALLBACK(on_list_menu_choice), page);
+            gtk_box_append(GTK_BOX(box), button);
+        }
+        g_ptr_array_unref(lists);
+    }
+
+    child = gtk_popover_get_child(page->list_menu);
+    if (child != NULL)
+        gtk_popover_set_child(page->list_menu, NULL);
+    gtk_popover_set_child(page->list_menu, box);
+}
+
+static void
+on_context_add_list(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GdkRectangle rect = { page->context_x, page->context_y, 1, 1 };
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    rebuild_list_menu(page);
+    gtk_popover_set_pointing_to(page->list_menu, &rect);
+    gtk_popover_popup(page->list_menu);
+}
+
+static void
+on_context_module_info(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GswManager *manager = gsword_window_get_manager(page->window);
+    GswModuleInfo *info;
+    AdwDialog *dialog;
+    gchar *body;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    info = manager != NULL && page->context_module != NULL
+         ? gsw_manager_lookup_module_info(manager, page->context_module) : NULL;
+    if (info == NULL) {
+        gsword_window_set_status(page->window, _("Module information unavailable"));
+        return;
+    }
+    body = g_strdup_printf(
+        "%s\n\n%s\n%s\n\n%s: %s\n%s: %s\n%s: %s",
+        gsw_module_info_get_description(info) != NULL
+        ? gsw_module_info_get_description(info) : "",
+        gsword_window_module_type_display(info),
+        gsw_module_info_get_name(info),
+        _("Language"),
+        gsw_module_info_get_language(info) != NULL
+        ? gsw_module_info_get_language(info) : "?",
+        _("Version"),
+        gsw_module_info_get_version(info) != NULL
+        ? gsw_module_info_get_version(info) : "?",
+        _("Path"),
+        gsw_module_info_get_absolute_data_path(info) != NULL
+        ? gsw_module_info_get_absolute_data_path(info) : "?");
+    dialog = adw_alert_dialog_new(_("Module information"), NULL);
+    adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog), "%s", body);
+    adw_alert_dialog_add_response(ADW_ALERT_DIALOG(dialog), "close",
+                                  _("Close"));
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "close");
+    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    g_free(body);
+}
+
+static GtkWidget *
+add_context_button(GtkWidget *box, const gchar *label, GCallback callback,
+                   GswordSearchPage *page, gboolean sensitive)
+{
+    GtkWidget *button = gtk_button_new_with_label(label);
+
+    gtk_widget_add_css_class(button, "flat");
+    gtk_widget_set_halign(button, GTK_ALIGN_FILL);
+    gtk_widget_set_sensitive(button, sensitive);
+    g_signal_connect(button, "clicked", callback, page);
+    gtk_box_append(GTK_BOX(box), button);
+    return button;
+}
+
+static void
+on_results_unrealize(GtkWidget *widget, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)widget;
+    if (page->context_menu != NULL &&
+        gtk_widget_get_parent(GTK_WIDGET(page->context_menu)) != NULL)
+        gtk_widget_unparent(GTK_WIDGET(page->context_menu));
+    if (page->list_menu != NULL &&
+        gtk_widget_get_parent(GTK_WIDGET(page->list_menu)) != NULL)
+        gtk_widget_unparent(GTK_WIDGET(page->list_menu));
+    page->context_menu = NULL;
+    page->list_menu = NULL;
+}
+
+static void
+ensure_result_popovers(GswordSearchPage *page)
+{
+    GtkWidget *scrolled = gtk_widget_get_ancestor(GTK_WIDGET(page->results),
+                                                  GTK_TYPE_SCROLLED_WINDOW);
+
+    if (scrolled == NULL)
+        return;
+    if (page->context_menu == NULL) {
+        page->context_menu = GTK_POPOVER(gtk_popover_new());
+        gtk_popover_set_autohide(page->context_menu, TRUE);
+        gtk_popover_set_has_arrow(page->context_menu, TRUE);
+        gtk_widget_set_parent(GTK_WIDGET(page->context_menu), scrolled);
+    }
+    if (page->list_menu == NULL) {
+        page->list_menu = GTK_POPOVER(gtk_popover_new());
+        gtk_popover_set_autohide(page->list_menu, TRUE);
+        gtk_popover_set_has_arrow(page->list_menu, TRUE);
+        gtk_widget_set_parent(GTK_WIDGET(page->list_menu), scrolled);
+    }
+}
+
+static void
+show_context_menu(GswordSearchPage *page, GtkListBoxRow *row,
+                  gint x, gint y)
+{
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    GtkWidget *header;
+    GtkWidget *child;
+    GtkWidget *scrolled;
+    graphene_point_t point;
+    graphene_point_t translated;
+    gchar *module_escaped;
+    gchar *reference_escaped;
+    gchar *header_text;
+    GdkRectangle rect = { x, y, 1, 1 };
+
+    if (page == NULL || row == NULL)
+        return;
+    ensure_result_popovers(page);
+    if (page->context_menu == NULL)
+        return;
+    prepare_context(page, row);
+    scrolled = gtk_widget_get_ancestor(GTK_WIDGET(page->results),
+                                       GTK_TYPE_SCROLLED_WINDOW);
+    if (scrolled != NULL) {
+        point = GRAPHENE_POINT_INIT((gfloat)x, (gfloat)y);
+        if (gtk_widget_compute_point(GTK_WIDGET(page->results), scrolled,
+                                     &point, &translated)) {
+            rect.x = (gint)translated.x;
+            rect.y = (gint)translated.y;
+        }
+    }
+    page->context_x = rect.x;
+    page->context_y = rect.y;
+
+    module_escaped = g_markup_escape_text(
+        page->context_module != NULL ? page->context_module : "", -1);
+    reference_escaped = g_markup_escape_text(
+        page->context_display != NULL ? page->context_display : "", -1);
+    header_text = g_strdup_printf("<b>%s</b> · %s", module_escaped,
+                                  reference_escaped);
+    header = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(header), header_text);
+    gtk_label_set_xalign(GTK_LABEL(header), 0.0f);
+    gtk_label_set_ellipsize(GTK_LABEL(header), PANGO_ELLIPSIZE_MIDDLE);
+    gtk_widget_set_margin_top(header, 8);
+    gtk_widget_set_margin_bottom(header, 6);
+    gtk_widget_set_margin_start(header, 10);
+    gtk_widget_set_margin_end(header, 10);
+    gtk_box_append(GTK_BOX(box), header);
+    g_free(header_text);
+    g_free(module_escaped);
+    g_free(reference_escaped);
+
+    add_context_button(box, _("Copy verse"), G_CALLBACK(on_context_copy_text),
+                       page, page->context_text != NULL);
+    add_context_button(box, _("Copy reference"),
+                       G_CALLBACK(on_context_copy_reference), page,
+                       page->context_display != NULL);
+    add_context_button(box, _("Copy verse and reference"),
+                       G_CALLBACK(on_context_copy_both), page,
+                       page->context_text != NULL &&
+                       page->context_display != NULL);
+    gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+    add_context_button(box, _("Open in reader"),
+                       G_CALLBACK(on_context_open_reader), page,
+                       page->context_module != NULL &&
+                       page->context_key != NULL);
+    add_context_button(box, _("Open in compare"),
+                       G_CALLBACK(on_context_open_compare), page,
+                       page->context_is_bible);
+    gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+    add_context_button(box, _("Add note"), G_CALLBACK(on_context_open_note),
+                       page, page->context_is_bible);
+    add_context_button(box, _("Add to memory review"),
+                       G_CALLBACK(on_context_add_memory), page,
+                       page->context_is_bible && page->context_text != NULL);
+    add_context_button(box, _("Add to verse list"),
+                       G_CALLBACK(on_context_add_list), page,
+                       page->context_is_bible);
+    gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+    add_context_button(box, _("Module information"),
+                       G_CALLBACK(on_context_module_info), page,
+                       page->context_module != NULL);
+
+    child = gtk_popover_get_child(page->context_menu);
+    if (child != NULL)
+        gtk_popover_set_child(page->context_menu, NULL);
+    gtk_box_set_spacing(GTK_BOX(box), 2);
+    gtk_widget_set_margin_top(box, 4);
+    gtk_widget_set_margin_bottom(box, 4);
+    gtk_widget_set_margin_start(box, 4);
+    gtk_widget_set_margin_end(box, 4);
+    gtk_popover_set_child(page->context_menu, box);
+    gtk_popover_set_pointing_to(page->context_menu, &rect);
+    gtk_popover_popup(page->context_menu);
+}
+
+static void
+on_result_menu_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GtkListBoxRow *row = g_object_get_data(G_OBJECT(button), "result-row");
+    graphene_rect_t bounds;
+
+    if (row == NULL)
+        return;
+    if (gtk_widget_compute_bounds(GTK_WIDGET(button),
+                                  GTK_WIDGET(page->results), &bounds))
+        show_context_menu(page, row,
+                          (gint)(bounds.origin.x + bounds.size.width),
+                          (gint)(bounds.origin.y + bounds.size.height));
+}
+
+static void
+on_results_context_clicked(GtkGestureClick *gesture, gint n_press,
+                           gdouble x, gdouble y, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+    GtkListBoxRow *row;
+
+    (void)n_press;
+    if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) !=
+        GDK_BUTTON_SECONDARY)
+        return;
+    row = gtk_list_box_get_row_at_y(page->results, (gint)y);
+    if (row != NULL) {
+        gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+        show_context_menu(page, row, (gint)x, (gint)y);
+    }
+}
+
+static void
 populate_results(GswordSearchPage *page, GPtrArray *results)
 {
     guint i;
@@ -472,9 +975,24 @@ populate_results(GswordSearchPage *page, GPtrArray *results)
         gtk_label_set_markup(GTK_LABEL(label), text);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_label_set_wrap(GTK_LABEL(label), TRUE);
+        gtk_widget_set_hexpand(label, TRUE);
         gtk_widget_set_margin_top(label, 4);
         gtk_widget_set_margin_bottom(label, 4);
-        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        {
+            GtkWidget *row_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+            GtkWidget *more = gtk_button_new_from_icon_name(
+                "view-more-symbolic");
+
+            gtk_widget_add_css_class(more, "flat");
+            gtk_widget_set_valign(more, GTK_ALIGN_CENTER);
+            gtk_widget_set_tooltip_text(more, _("Result actions"));
+            g_object_set_data(G_OBJECT(more), "result-row", row);
+            g_signal_connect(more, "clicked",
+                             G_CALLBACK(on_result_menu_clicked), page);
+            gtk_box_append(GTK_BOX(row_box), label);
+            gtk_box_append(GTK_BOX(row_box), more);
+            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), row_box);
+        }
         g_object_set_data_full(G_OBJECT(row), "result-module",
                                g_strdup(gsw_search_result_get_module_name(result)),
                                g_free);
@@ -826,6 +1344,7 @@ search_page_free(gpointer data)
     }
     g_clear_object(&page->search_cancellable);
     g_clear_object(&page->history);
+    clear_context(page);
     g_free(page);
 }
 
@@ -1011,8 +1530,28 @@ gsword_search_page_new(GswordWindow *window)
     page->results = GTK_LIST_BOX(gtk_list_box_new());
     g_signal_connect(page->results, "row-selected",
                      G_CALLBACK(on_result_selected), page);
+    page->context_menu = GTK_POPOVER(gtk_popover_new());
+    gtk_popover_set_autohide(page->context_menu, TRUE);
+    gtk_popover_set_has_arrow(page->context_menu, TRUE);
+    gtk_widget_set_parent(GTK_WIDGET(page->context_menu), scrolled);
+    page->list_menu = GTK_POPOVER(gtk_popover_new());
+    gtk_popover_set_autohide(page->list_menu, TRUE);
+    gtk_popover_set_has_arrow(page->list_menu, TRUE);
+    gtk_widget_set_parent(GTK_WIDGET(page->list_menu), scrolled);
+    {
+        GtkGesture *context = gtk_gesture_click_new();
+
+        gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context),
+                                      GDK_BUTTON_SECONDARY);
+        g_signal_connect(context, "pressed",
+                         G_CALLBACK(on_results_context_clicked), page);
+        gtk_widget_add_controller(GTK_WIDGET(page->results),
+                                  GTK_EVENT_CONTROLLER(context));
+    }
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->results));
+    g_signal_connect(scrolled, "unrealize",
+                     G_CALLBACK(on_results_unrealize), page);
     gtk_widget_set_vexpand(scrolled, TRUE);
     page->results_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_named(page->results_stack, GTK_WIDGET(page->empty_label),
