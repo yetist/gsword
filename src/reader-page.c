@@ -300,7 +300,6 @@ gsword_reader_page_refresh(GswordReaderPage *page)
     GswModule *module;
     GError *error = NULL;
     gchar *text;
-    gchar *display_key = NULL;
     gchar *status;
 
     if (page == NULL)
@@ -328,10 +327,6 @@ gsword_reader_page_refresh(GswordReaderPage *page)
         if (gsw_verse_key_get_book(key) >= 1 &&
             gsw_verse_key_get_chapter(key) >= 1) {
             text = gsword_window_chapter_text_for_module(module);
-            display_key = g_strdup_printf(
-                "%s %d:%d", gsw_verse_key_get_book_name(key),
-                gsw_verse_key_get_chapter(key),
-                MAX(gsw_verse_key_get_verse(key), 1));
         } else {
             text = gsw_module_get_text(module, &error);
         }
@@ -341,22 +336,15 @@ gsword_reader_page_refresh(GswordReaderPage *page)
 
     if (text == NULL) {
         gsword_window_show_error(self, _("Cannot read entry"), error);
-        g_free(display_key);
         return;
     }
     set_text(page, text);
     g_free(text);
     apply_paragraph_spacing(page);
 
-    if (display_key == NULL)
-        display_key = g_strdup(gsw_module_get_key_text(module));
-
-    status = g_strdup_printf("%s  |  %s",
-                             gsw_module_get_name(module),
-                             display_key != NULL ? display_key : "");
+    status = g_strdup(gsw_module_get_name(module));
     gsword_window_set_status(self, status);
     g_free(status);
-    g_free(display_key);
 
     apply_highlights(page);
     apply_active_verse(page);
@@ -619,20 +607,11 @@ static void
 update_reference_status(GswordReaderPage *page)
 {
     GswModule *module = gsword_window_get_module(page->window);
-    gchar *reference;
-    gchar *status;
 
     if (module == NULL)
         return;
-    reference = gsword_reader_page_current_reference(page);
-    if (reference == NULL)
-        return;
     sync_reference_chooser(page);
-    status = g_strdup_printf("%s  |  %s",
-                             gsw_module_get_name(module), reference);
-    gsword_window_set_status(page->window, status);
-    g_free(status);
-    g_free(reference);
+    gsword_window_set_status(page->window, gsw_module_get_name(module));
 }
 
 static void

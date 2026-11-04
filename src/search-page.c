@@ -1375,6 +1375,7 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *search_row;
     GtkWidget *range_row;
     GtkWidget *options_row;
+    GtkWidget *index_row;
     GtkWidget *advanced;
     GtkWidget *advanced_box;
     GtkWidget *module_label;
@@ -1396,12 +1397,13 @@ gsword_search_page_new(GswordWindow *window)
     search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     range_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     options_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    index_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     search = gtk_button_new_with_label(_("Search"));
     cancel = gtk_button_new_with_label(_("Cancel"));
     history = gtk_menu_button_new();
     back = gtk_button_new_from_icon_name("go-previous-symbolic");
-    build = gtk_button_new_from_icon_name("document-save-symbolic");
-    delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
+    build = gtk_button_new_with_label(_("Build index"));
+    delete = gtk_button_new_with_label(_("Delete index"));
     scrolled = gtk_scrolled_window_new();
 
     gtk_widget_set_margin_top(controls, 8);
@@ -1410,6 +1412,7 @@ gsword_search_page_new(GswordWindow *window)
     gtk_widget_set_margin_end(controls, 12);
     gtk_widget_add_css_class(back, "flat");
     gtk_widget_add_css_class(cancel, "flat");
+    gtk_widget_add_css_class(search, "suggested-action");
     gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(history),
                                   "document-open-recent-symbolic");
     gtk_widget_add_css_class(history, "flat");
@@ -1523,13 +1526,15 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(range_row), GTK_WIDGET(page->scope_selector));
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->type));
     gtk_box_append(GTK_BOX(options_row), GTK_WIDGET(page->case_sensitive));
-    gtk_box_append(GTK_BOX(options_row), build);
-    gtk_box_append(GTK_BOX(options_row), delete);
+    gtk_box_append(GTK_BOX(index_row), GTK_WIDGET(page->index_label));
+    gtk_widget_set_hexpand(GTK_WIDGET(page->index_label), TRUE);
+    gtk_box_append(GTK_BOX(index_row), build);
+    gtk_box_append(GTK_BOX(index_row), delete);
     gtk_box_append(GTK_BOX(controls), search_row);
     gtk_box_append(GTK_BOX(controls), range_row);
     gtk_box_append(GTK_BOX(controls), options_row);
     gtk_box_append(GTK_BOX(controls), advanced);
-    gtk_box_append(GTK_BOX(controls), GTK_WIDGET(page->index_label));
+    gtk_box_append(GTK_BOX(controls), index_row);
 
     page->results_label = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(page->results_label, 0.0f);
