@@ -102,8 +102,8 @@ msgid "gsword contributors"
 msgstr "gsword 贡献者"
 
 #: src/window.c:753
-msgid "A GObject implementation of the SWORD Bible study library."
-msgstr "基于 GObject 的 SWORD 研经库实现。"
+msgid "A GObject implementation of the SWORD Bible study software."
+msgstr "基于 GObject 的 SWORD 研经软件。"
 
 #: src/window.c:770
 msgid "Show study panel"
@@ -119,7 +119,7 @@ msgstr "教学"
 
 #: src/window.c:786
 msgid "About gsword"
-msgstr "关于此模块"
+msgstr "关于"
 
 #: src/window.c:789
 msgid "Quit"
