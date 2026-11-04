@@ -19,6 +19,42 @@ get_services(GswordWindow *self)
     return g_object_get_data(G_OBJECT(self), "gsword-window-services");
 }
 
+static gboolean
+path_is_within_prefix(const gchar *prefix, const gchar *path)
+{
+    gchar *canonical_prefix;
+    gchar *canonical_path;
+    gsize prefix_len;
+    gboolean inside;
+
+    if (prefix == NULL || *prefix == '\0' || path == NULL || *path == '\0')
+        return FALSE;
+    canonical_prefix = g_canonicalize_filename(prefix, NULL);
+    canonical_path = g_canonicalize_filename(path, NULL);
+    prefix_len = strlen(canonical_prefix);
+    inside = g_strcmp0(canonical_path, canonical_prefix) == 0 ||
+             (g_str_has_prefix(canonical_path, canonical_prefix) &&
+              canonical_path[prefix_len] == G_DIR_SEPARATOR);
+    g_free(canonical_path);
+    g_free(canonical_prefix);
+    return inside;
+}
+
+gboolean
+gsword_window_module_is_writable(GswordWindow *self, GswModuleInfo *info)
+{
+    GswManager *manager = gsword_window_get_manager(self);
+    const gchar *prefix;
+
+    if (manager == NULL || info == NULL)
+        return FALSE;
+    prefix = gsw_manager_get_prefix_path(manager);
+    return path_is_within_prefix(prefix,
+                                 gsw_module_info_get_config_file(info)) ||
+           path_is_within_prefix(prefix,
+                                 gsw_module_info_get_absolute_data_path(info));
+}
+
 void
 gsword_window_services_init(GswordWindow *self, GtkLabel *status_label,
                             AdwViewStack *content_stack)

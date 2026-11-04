@@ -3,6 +3,7 @@
  */
 
 #include "preferences-dialog.h"
+#include "app-paths.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -106,6 +107,22 @@ gsword_preferences_set_font_scale(GswordWindow *window, gdouble font_scale)
     apply_css(prefs);
 }
 
+static void
+on_open_library_folder(GtkButton *button, gpointer user_data)
+{
+    const gchar *path = g_object_get_data(G_OBJECT(button), "library-path");
+    GFile *file;
+    GtkFileLauncher *launcher;
+
+    if (path == NULL || *path == '\0')
+        return;
+    file = g_file_new_for_path(path);
+    launcher = gtk_file_launcher_new(file);
+    gtk_file_launcher_launch(launcher, GTK_WINDOW(user_data), NULL, NULL, NULL);
+    g_object_unref(launcher);
+    g_object_unref(file);
+}
+
 void
 gsword_preferences_show(GswordWindow *window)
 {
@@ -113,11 +130,19 @@ gsword_preferences_show(GswordWindow *window)
     AdwPreferencesDialog *dialog;
     AdwPreferencesPage *page;
     AdwPreferencesGroup *group;
+    AdwPreferencesGroup *library_group;
     AdwActionRow *font_row;
+    AdwActionRow *library_row;
+    AdwActionRow *system_row;
     AdwComboRow *theme_row;
     GtkAdjustment *adjustment;
     GtkWidget *spin;
+    GtkWidget *open_library;
     GtkStringList *themes;
+    gchar *library_path;
+    GPtrArray *system_dirs;
+    GString *system_text;
+    guint i;
     guint selected = 0;
 
     if (prefs == NULL)
@@ -169,6 +194,49 @@ gsword_preferences_show(GswordWindow *window)
     adw_preferences_group_add(group, GTK_WIDGET(font_row));
     adw_preferences_group_add(group, GTK_WIDGET(theme_row));
     adw_preferences_page_add(page, group);
+
+    library_group = ADW_PREFERENCES_GROUP(adw_preferences_group_new());
+    adw_preferences_group_set_title(library_group, _("Module library"));
+    adw_preferences_group_set_description(
+        library_group,
+        _("Use --library or GSWORD_LIBRARY to start gsword with another "
+          "writable library."));
+
+    library_path = gsword_app_library_dir();
+    library_row = ADW_ACTION_ROW(adw_action_row_new());
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(library_row),
+                                  _("User library"));
+    adw_action_row_set_subtitle(library_row, library_path);
+    open_library = gtk_button_new_with_label(_("Open"));
+    gtk_widget_add_css_class(open_library, "flat");
+    g_object_set_data_full(G_OBJECT(open_library), "library-path",
+                           g_strdup(library_path), g_free);
+    g_signal_connect(open_library, "clicked",
+                     G_CALLBACK(on_open_library_folder), window);
+    adw_action_row_add_suffix(library_row, open_library);
+    adw_action_row_set_activatable_widget(library_row, open_library);
+    adw_preferences_group_add(library_group, GTK_WIDGET(library_row));
+
+    system_text = g_string_new(NULL);
+    system_dirs = gsword_app_system_library_dirs();
+    for (i = 0; i < system_dirs->len; i++) {
+        if (system_text->len > 0)
+            g_string_append_c(system_text, '\n');
+        g_string_append(system_text, g_ptr_array_index(system_dirs, i));
+    }
+    system_row = ADW_ACTION_ROW(adw_action_row_new());
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(system_row),
+                                  _("System libraries"));
+    adw_action_row_set_subtitle(system_row,
+                                system_text->len > 0
+                                ? system_text->str
+                                : _("No system module library found"));
+    adw_preferences_group_add(library_group, GTK_WIDGET(system_row));
+    adw_preferences_page_add(page, library_group);
+
+    g_string_free(system_text, TRUE);
+    g_ptr_array_unref(system_dirs);
+    g_free(library_path);
     adw_preferences_dialog_add(dialog, page);
 
     prefs->dialog = ADW_DIALOG(g_object_ref_sink(dialog));

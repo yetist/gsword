@@ -62,6 +62,7 @@ typedef struct {
     GtkButton *next_chapter_button;
     GtkButton *prev_verse_button;
     GtkButton *next_verse_button;
+    GtkButton *edit_button;
     GtkPopover *popover;
     GtkNotebook *book_notebook;
     GtkListBox *book_lists[2];
@@ -1015,6 +1016,13 @@ on_apply_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_edit_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    set_edit_mode(GSWORD_REFERENCE_CHOOSER(user_data), TRUE);
+}
+
+static void
 on_cancel_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -1414,6 +1422,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     GtkWidget *chapter_page;
     GtkWidget *nav_row;
     GtkWidget *separator;
+    GtkWidget *edit_button;
 
     gtk_orientable_set_orientation(GTK_ORIENTABLE(self),
                                    GTK_ORIENTATION_VERTICAL);
@@ -1453,6 +1462,13 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_button_new_from_icon_name("go-previous-symbolic"));
     priv->next_verse_button = GTK_BUTTON(
         gtk_button_new_from_icon_name("go-next-symbolic"));
+    edit_button = gtk_button_new_from_icon_name("document-edit-symbolic");
+    gtk_widget_add_css_class(edit_button, "flat");
+    gtk_widget_set_tooltip_text(edit_button,
+                                _("Edit reference (Ctrl+L)"));
+    g_signal_connect(edit_button, "clicked",
+                     G_CALLBACK(on_edit_clicked), self);
+    priv->edit_button = GTK_BUTTON(edit_button);
     priv->book_button = make_path_segment_button(
         &priv->book_label, GSWORD_PATH_BOOK_WIDTH, 12);
     priv->chapter_button = make_path_segment_button(
@@ -1514,6 +1530,7 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->prev_verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->verse_button));
     gtk_box_append(GTK_BOX(nav_row), GTK_WIDGET(priv->next_verse_button));
+    gtk_box_append(GTK_BOX(nav_row), edit_button);
 
     {
         GtkWidget *edit_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
