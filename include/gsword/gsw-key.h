@@ -69,10 +69,37 @@ void         gsw_key_unref(GswKey *self);
 GswKey      *gsw_key_clone(GswKey *self);
 
 /**
+ * gsw_key_set_locale:
+ * @self: a #GswKey
+ * @locale: locale name, or %NULL to clear the override
+ *
+ * Sets the explicit display locale for @self. This overrides the locale
+ * inherited from the key's module. Pass %NULL or an empty string to clear the
+ * override and fall back to the module language and then the locale manager's
+ * default locale.
+ *
+ * This function never reads process environment variables.
+ */
+void         gsw_key_set_locale(GswKey *self, const gchar *locale);
+/**
+ * gsw_key_get_locale:
+ * @self: a #GswKey
+ *
+ * Gets the effective display locale, including a locale inherited from the
+ * key's module. A %NULL return means the key uses the locale manager's
+ * default locale.
+ *
+ * Returns: (transfer none) (nullable): the effective display locale
+ */
+const gchar *gsw_key_get_locale(GswKey *self);
+
+/**
  * gsw_key_get_text:
  * @self: a #GswKey
  *
- * Gets the text representation of @self.
+ * Gets the display text representation of @self. For verse keys this can
+ * contain a localized book name; use gsw_verse_key_get_osis_ref() for stable
+ * storage, history, and cross-module identifiers.
  *
  * Returns: (transfer none): the key text
  */

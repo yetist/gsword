@@ -2,6 +2,7 @@
  * reader-page.c: scripture reader page for the gsword window
  */
 
+#include "app-locale.h"
 #include "reader-page.h"
 #include "reader-toolbar.h"
 #include "study-panel.h"
@@ -194,16 +195,17 @@ save_last_position(GswordReaderPage *page)
     GSettings *settings = gsword_window_get_settings(page->window);
     GswModule *module = gsword_window_get_module(page->window);
     const gchar *name;
-    const gchar *key;
+    gchar *key;
 
     if (settings == NULL || module == NULL)
         return;
     name = gsw_module_get_name(module);
-    key = gsw_module_get_key_text(module);
+    key = gsword_reader_page_current_storage_key(page);
     if (name != NULL)
         g_settings_set_string(settings, "last-module", name);
     if (key != NULL)
         g_settings_set_string(settings, "last-key", key);
+    g_free(key);
 }
 
 static void
@@ -247,14 +249,20 @@ gsword_reader_page_sync_context(GswordReaderPage *page)
     GswModule *module = gsword_window_get_module(page->window);
     GswModuleInfo *info;
     const gchar *versification = NULL;
+    const gchar *language = NULL;
     gchar *locale;
 
     if (page == NULL || page->reference_chooser == NULL || module == NULL)
         return;
     info = gsw_module_get_info(module);
-    if (info != NULL)
+    if (info != NULL) {
         versification = gsw_module_info_get_versification(info);
-    locale = gsword_window_locale_name();
+        language = gsw_module_info_get_language(info);
+    }
+    if (language != NULL && *language != '\0')
+        locale = g_strdup(language);
+    else
+        locale = gsword_app_locale_name();
     gsword_reference_chooser_set_versification(
         page->reference_chooser,
         versification != NULL && *versification != '\0'

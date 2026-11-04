@@ -107,6 +107,24 @@ test_locale(void)
     g_assert_null(gsw_locale_mgr_translate_abbreviation(mgr, "unknown",
                                                         NULL));
 
+    {
+        GswVersificationMgr *v11n_mgr = gsw_versification_mgr_get_default();
+        GswVersification *v11n = gsw_versification_mgr_get_system(
+            v11n_mgr, "KJV");
+        GswBook *book = gsw_versification_get_book(v11n, 0);
+
+        g_assert_cmpstr(gsw_book_get_name(book), ==, "Genesis");
+        g_assert_cmpstr(gsw_book_get_name_for_locale(book, "en"), ==,
+                        "Genesis");
+        g_assert_cmpstr(gsw_book_get_name_for_locale(book, "zh_Test"), ==,
+                        "创世记");
+        g_assert_cmpstr(gsw_book_get_name_for_locale(book, NULL), ==,
+                        "创世记");
+        g_assert_cmpstr(
+            gsw_book_get_preferred_abbreviation_for_locale(book, "zh_Test"),
+            ==, "創");
+    }
+
     key = gsw_verse_key_new("Genesis 1:1", "KJV");
     g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, "创世记 1:1");
     g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "创世记");
@@ -116,6 +134,20 @@ test_locale(void)
         g_assert_cmpstr(short_text, ==, "創 1:1");
         g_free(short_text);
     }
+    gsw_key_set_locale((GswKey *)key, "en");
+    g_assert_cmpstr(gsw_key_get_locale((GswKey *)key), ==, "en");
+    g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, "Genesis 1:1");
+    g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "Genesis");
+    {
+        gchar *short_text = gsw_verse_key_get_short_text(key);
+
+        g_assert_cmpstr(short_text, ==, "Gen 1:1");
+        g_free(short_text);
+    }
+    gsw_key_set_locale((GswKey *)key, NULL);
+    g_assert_null(gsw_key_get_locale((GswKey *)key));
+    g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, "创世记 1:1");
+    g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "创世记");
     gsw_key_unref((GswKey *)key);
 
     key = gsw_verse_key_new("出 2:3", "KJV");

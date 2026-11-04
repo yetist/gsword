@@ -17,7 +17,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'memory-page.c', 'library-page.c', 'module-sidebar.c',
      'study-panel.c', 'workspace-page.c', 'workspace-pane.c',
      'reader-page.c', 'reader-toolbar.c', 'preferences-dialog.c',
-     'notes-store.c', 'plan-store.c', 'app-paths.c',
+     'notes-store.c', 'plan-store.c', 'app-paths.c', 'app-locale.c',
      'gsword-reference-chooser.c', 'gsword-reference-parser.c'],
     dependencies: app_deps,
     c_args: app_c_args,

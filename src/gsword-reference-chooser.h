@@ -47,6 +47,15 @@ GtkWidget *gsword_reference_chooser_new_compact(const gchar *versification,
 
 void gsword_reference_chooser_set_versification(
     GswordReferenceChooser *self, const gchar *versification);
+/**
+ * gsword_reference_chooser_set_locale:
+ * @self: a #GswordReferenceChooser
+ * @locale: locale name such as "en" or "zh-Hans"
+ *
+ * Sets the language used for book names and abbreviations. The widget never
+ * reads the process environment; callers choose the module or UI locale
+ * explicitly.
+ */
 void gsword_reference_chooser_set_locale(
     GswordReferenceChooser *self, const gchar *locale);
 void gsword_reference_chooser_set_reference(

@@ -212,11 +212,28 @@ gboolean     gsw_versification_get_verse(GswVersification *self, glong offset,
  * gsw_book_get_name:
  * @self: a #GswBook
  *
- * Gets the localized long book name.
+ * Gets the canonical long book name, for example `Genesis`. This is the
+ * stable name stored with the versification, normally English, and is not
+ * affected by the process locale or the locale manager's default locale. Use
+ * gsw_book_get_name_for_locale() for display.
  *
- * Returns: (transfer none): the localized long book name
+ * Returns: (transfer none): the canonical long book name
  */
 const gchar *gsw_book_get_name(GswBook *self);
+/**
+ * gsw_book_get_name_for_locale:
+ * @self: a #GswBook
+ * @locale: locale name, or %NULL for the locale manager default
+ *
+ * Gets the long book name translated for an explicit locale. This function
+ * only uses @locale and the locale manager's explicit default; it never reads
+ * process environment variables.
+ *
+ * Returns: (transfer none): the translated long book name, or the canonical
+ *   name if no translation exists
+ */
+const gchar *gsw_book_get_name_for_locale(GswBook *self,
+                                          const gchar *locale);
 /**
  * gsw_book_get_osis_name:
  * @self: a #GswBook
@@ -230,11 +247,25 @@ const gchar *gsw_book_get_osis_name(GswBook *self);
  * gsw_book_get_preferred_abbreviation:
  * @self: a #GswBook
  *
- * Gets the preferred abbreviation.
+ * Gets the canonical preferred abbreviation.
  *
- * Returns: (transfer none): the preferred abbreviation
+ * Returns: (transfer none): the canonical preferred abbreviation
  */
 const gchar *gsw_book_get_preferred_abbreviation(GswBook *self);
+/**
+ * gsw_book_get_preferred_abbreviation_for_locale:
+ * @self: a #GswBook
+ * @locale: locale name, or %NULL for the locale manager default
+ *
+ * Gets the preferred abbreviation translated for an explicit locale. This
+ * function never reads process environment variables.
+ *
+ * Returns: (transfer none): the translated abbreviation, or the canonical
+ *   abbreviation if no translation exists
+ */
+const gchar *gsw_book_get_preferred_abbreviation_for_locale(
+                                                GswBook *self,
+                                                const gchar *locale);
 /**
  * gsw_book_get_chapter_max:
  * @self: a #GswBook

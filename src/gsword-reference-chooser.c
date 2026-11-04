@@ -1191,7 +1191,6 @@ on_button_clicked(GtkButton *button, gpointer user_data)
 static void
 load_books(GswordReferenceChooserPrivate *priv)
 {
-    GswLocaleMgr *locale_mgr = gsw_locale_mgr_get_default();
     gint count;
     gint i;
     gint ot_books = 0;
@@ -1210,13 +1209,9 @@ load_books(GswordReferenceChooserPrivate *priv)
 
         if (book == NULL)
             continue;
-        name = gsw_book_get_name(book);
-        if (priv->locale != NULL)
-            name = gsw_locale_mgr_translate(locale_mgr, name, priv->locale);
-        abbrev = gsw_book_get_preferred_abbreviation(book);
-        if (abbrev != NULL && priv->locale != NULL)
-            abbrev = gsw_locale_mgr_translate_preferred_abbreviation(
-                locale_mgr, abbrev, priv->locale);
+        name = gsw_book_get_name_for_locale(book, priv->locale);
+        abbrev = gsw_book_get_preferred_abbreviation_for_locale(book,
+                                                                priv->locale);
         info = g_new0(GswordBookInfo, 1);
         info->index = i;
         info->testament = i < ot_books ? 1 : 2;

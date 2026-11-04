@@ -976,6 +976,23 @@ check_module_book_name(const gchar *lang, const gchar *default_locale,
     g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, text);
     g_free(text);
 
+    /* An explicit key locale overrides the module language. */
+    {
+        const gchar *override = g_strcmp0(expected, "Genesis") == 0
+                              ? "zh-Hans" : "en";
+        const gchar *override_name = g_strcmp0(expected, "Genesis") == 0
+                                   ? "创世记" : "Genesis";
+
+        gsw_key_set_locale((GswKey *)key, override);
+        g_assert_cmpstr(gsw_key_get_locale((GswKey *)key), ==, override);
+        g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, override_name);
+        text = g_strdup_printf("%s 2:3", override_name);
+        g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, text);
+        g_free(text);
+        gsw_key_set_locale((GswKey *)key, NULL);
+        g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, expected);
+    }
+
     gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), "en");
     g_object_unref(manager);
     gsw_dir_remove_recursive(prefix, NULL);

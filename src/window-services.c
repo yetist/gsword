@@ -278,26 +278,3 @@ gsword_window_verse_number_from_line(const gchar *line)
         return 0;
     return (gint)g_ascii_strtoll(p, NULL, 10);
 }
-
-gchar *
-gsword_window_locale_name(void)
-{
-    const gchar * const *names = g_get_language_names();
-    gchar *locale;
-    gchar *suffix;
-
-    if (names == NULL || names[0] == NULL || *names[0] == '\0')
-        return g_strdup("en");
-    locale = g_strdup(names[0]);
-    suffix = strchr(locale, '.');
-    if (suffix != NULL)
-        *suffix = '\0';
-    suffix = strchr(locale, '@');
-    if (suffix != NULL)
-        *suffix = '\0';
-    if (g_strcmp0(locale, "C") == 0 || g_strcmp0(locale, "POSIX") == 0) {
-        g_free(locale);
-        return g_strdup("en");
-    }
-    return locale;
-}

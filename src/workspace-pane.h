@@ -22,6 +22,7 @@ GswordWorkspacePane *gsword_workspace_pane_new(GswordWindow *window,
 GtkWidget *gsword_workspace_pane_widget(GswordWorkspacePane *pane);
 const gchar *gsword_workspace_pane_get_module_name(GswordWorkspacePane *pane);
 GswModule *gsword_workspace_pane_get_module(GswordWorkspacePane *pane);
+gchar *gsword_workspace_pane_dup_storage_key(GswordWorkspacePane *pane);
 gboolean gsword_workspace_pane_get_follow(GswordWorkspacePane *pane);
 gint gsword_workspace_pane_get_follow_mode(GswordWorkspacePane *pane);
 void gsword_workspace_pane_set_follow_mode(GswordWorkspacePane *pane,

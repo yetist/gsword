@@ -3,6 +3,7 @@
  */
 
 #include <gsword/gsw-versification.h>
+#include <gsword/gsw-locale.h>
 #include "gsw-versification-data.h"
 
 #include <string.h>
@@ -438,6 +439,14 @@ gsw_book_get_name(GswBook *self)
 }
 
 const gchar *
+gsw_book_get_name_for_locale(GswBook *self, const gchar *locale)
+{
+    g_return_val_if_fail(self != NULL, NULL);
+    return gsw_locale_mgr_translate(gsw_locale_mgr_get_default(), self->name,
+                                    locale);
+}
+
+const gchar *
 gsw_book_get_osis_name(GswBook *self)
 {
     g_return_val_if_fail(self != NULL, NULL);
@@ -449,6 +458,20 @@ gsw_book_get_preferred_abbreviation(GswBook *self)
 {
     g_return_val_if_fail(self != NULL, NULL);
     return self->abbrev;
+}
+
+const gchar *
+gsw_book_get_preferred_abbreviation_for_locale(GswBook *self,
+                                               const gchar *locale)
+{
+    const gchar *translated;
+
+    g_return_val_if_fail(self != NULL, NULL);
+    if (self->abbrev == NULL || *self->abbrev == '\0')
+        return self->abbrev;
+    translated = gsw_locale_mgr_translate_preferred_abbreviation(
+        gsw_locale_mgr_get_default(), self->abbrev, locale);
+    return translated != NULL ? translated : self->abbrev;
 }
 
 gint

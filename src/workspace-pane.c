@@ -2,6 +2,7 @@
  * workspace-pane.c: a single comparison pane in the gsword comparison workspace
  */
 
+#include "app-locale.h"
 #include "workspace-pane.h"
 #include "workspace-page.h"
 #include "window-private.h"
@@ -25,6 +26,7 @@ struct _GswordWorkspacePane {
     GtkStringList *module_names;
     GswordReferenceChooser *reference_chooser;
     gchar *versification;
+    gchar *locale;
     GtkDropDown *follow_mode;
     GtkEventController *focus;
     gint mode;
@@ -462,20 +464,34 @@ set_context(GswordWorkspacePane *pane)
 {
     GswModuleInfo *info;
     const gchar *versification = NULL;
+    const gchar *language = NULL;
+    gchar *locale;
 
     if (pane->reference_chooser == NULL || pane->module == NULL)
         return;
     info = gsw_module_get_info(pane->module);
-    if (info != NULL)
+    if (info != NULL) {
         versification = gsw_module_info_get_versification(info);
+        language = gsw_module_info_get_language(info);
+    }
     if (versification == NULL || *versification == '\0')
         versification = "KJV";
-    if (g_strcmp0(pane->versification, versification) == 0)
-        return;
-    g_free(pane->versification);
-    pane->versification = g_strdup(versification);
-    gsword_reference_chooser_set_versification(pane->reference_chooser,
-                                               versification);
+    if (g_strcmp0(pane->versification, versification) != 0) {
+        g_free(pane->versification);
+        pane->versification = g_strdup(versification);
+        gsword_reference_chooser_set_versification(pane->reference_chooser,
+                                                   versification);
+    }
+    if (language != NULL && *language != '\0')
+        locale = g_strdup(language);
+    else
+        locale = gsword_app_locale_name();
+    if (g_strcmp0(pane->locale, locale) != 0) {
+        g_free(pane->locale);
+        pane->locale = g_strdup(locale);
+        gsword_reference_chooser_set_locale(pane->reference_chooser, locale);
+    }
+    g_free(locale);
 }
 
 static void
@@ -717,8 +733,7 @@ on_module_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     if (name == NULL || g_strcmp0(name, pane->module_name) == 0)
         return;
     {
-        gchar *key = pane->module != NULL
-                   ? g_strdup(gsw_module_get_key_text(pane->module)) : NULL;
+        gchar *key = gsword_workspace_pane_dup_storage_key(pane);
 
         set_module(pane, name, key);
         g_free(key);
@@ -1005,7 +1020,7 @@ gsword_workspace_pane_new(GswordWindow *window, GswordWorkspacePage *page,
     gtk_widget_set_margin_end(key_box, 6);
     gtk_widget_set_margin_bottom(key_box, 4);
     {
-        gchar *locale = gsword_window_locale_name();
+        gchar *locale = gsword_app_locale_name();
 
         pane->reference_chooser = GSWORD_REFERENCE_CHOOSER(
             gsword_reference_chooser_new_compact("KJV", locale));
@@ -1090,6 +1105,19 @@ gsword_workspace_pane_get_module(GswordWorkspacePane *pane)
     return pane != NULL ? pane->module : NULL;
 }
 
+gchar *
+gsword_workspace_pane_dup_storage_key(GswordWorkspacePane *pane)
+{
+    GswKey *key;
+
+    if (pane == NULL || pane->module == NULL)
+        return NULL;
+    key = gsw_module_get_key(pane->module);
+    if (gsw_key_get_kind(key) == GSW_KEY_KIND_VERSE)
+        return gsw_verse_key_get_osis_ref((GswVerseKey *)key);
+    return g_strdup(gsw_module_get_key_text(pane->module));
+}
+
 gboolean
 gsword_workspace_pane_get_follow(GswordWorkspacePane *pane)
 {
@@ -1144,5 +1172,6 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
     g_clear_object(&pane->module_names);
     g_free(pane->module_name);
     g_free(pane->versification);
+    g_free(pane->locale);
     g_free(pane);
 }

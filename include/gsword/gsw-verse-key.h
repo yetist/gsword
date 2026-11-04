@@ -168,7 +168,10 @@ gboolean     gsw_verse_key_set_verse(GswVerseKey *self, gint verse);
  * gsw_verse_key_get_book_name:
  * @self: a #GswVerseKey
  *
- * Gets the localized book name.
+ * Gets the localized book name using the key's display locale. The locale is
+ * taken from gsw_key_set_locale(), then the owning module's language, then the
+ * locale manager's default locale. It is not derived from process environment
+ * variables.
  *
  * Returns: (transfer none): the localized book name
  */
