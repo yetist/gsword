@@ -1742,9 +1742,8 @@ msgid "Open teaching layout for this passage"
 msgstr "打开本段的教学布局"
 
 #: src/reader-toolbar.c:585
-#, fuzzy
 msgid "Study panel"
-msgstr "显示研经面板"
+msgstr "研经面板"
 
 #: src/reader-toolbar.c:592 src/reader-toolbar.c:594 src/reader-toolbar.c:598
 msgid "Reading appearance"
@@ -1763,9 +1762,8 @@ msgid "Reading width"
 msgstr "阅读宽度"
 
 #: src/reader-toolbar.c:644
-#, fuzzy
 msgid "Focus reading mode"
-msgstr "专注阅读模式（F11）"
+msgstr "专注阅读模式"
 
 #: src/reader-toolbar.c:647
 msgid "Focus reading mode (F11)"
@@ -1926,9 +1924,9 @@ msgid "No reading plans yet"
 msgstr "还没有阅读计划"
 
 #: src/plan-page.c:256 src/plan-page.c:326
-#, fuzzy, c-format
+#, c-format
 msgid "%d/%d days (%.0f%%) · streak %d"
-msgstr "%s  ·  %d/%d 天（%.1f%%）  ·  连续 %d 天"
+msgstr "%d/%d 天（%.0f%%） · 连续 %d 天"
 
 #: src/plan-page.c:337
 #, c-format
