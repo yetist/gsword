@@ -754,7 +754,11 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
     adw_about_dialog_set_comments(about,
         _("A GTK4 Bible study application powered by libgsword, a "
           "GObject-based SWORD module library."));
-    adw_about_dialog_add_link(about, "GitHub", "https://github.com/yetist");
+    adw_about_dialog_set_website(about, "https://github.com/yetist/gsword");
+    adw_about_dialog_set_issue_url(about,
+                                   "https://github.com/yetist/gsword/issues");
+    adw_about_dialog_add_link(about, "GitHub",
+                              "https://github.com/yetist/gsword");
     adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_2_0);
     adw_about_dialog_set_copyright(about, "© 2026 yetist");
     adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(self));

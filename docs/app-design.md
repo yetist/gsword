@@ -4,6 +4,7 @@
   窗口已按页面对象重构，主导航使用 AdwHeaderBar + AdwViewSwitcher 自适应布局）
 - 日期：2026-11-01
 - 软件名称：GSword
+- 源码仓库：<https://github.com/yetist/gsword>
 - 基础库：`libgsword`
 - UI 技术：GTK4 + libadwaita
 - 目标平台：Linux/Unix 桌面，兼顾 Windows 和 macOS 的 GTK4 构建
