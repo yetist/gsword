@@ -1,9 +1,9 @@
-# gsword 桌面应用设计
+# GSword 桌面应用设计
 
 - 状态：阶段 1–10 已实现（阅读器、研经工作区、个人内容、模块生态、进阶功能；
   窗口已按页面对象重构，主导航使用 AdwHeaderBar + AdwViewSwitcher 自适应布局）
 - 日期：2026-11-01
-- 软件名称：`gsword`
+- 软件名称：GSword
 - 基础库：`libgsword`
 - UI 技术：GTK4 + libadwaita
 - 目标平台：Linux/Unix 桌面，兼顾 Windows 和 macOS 的 GTK4 构建
@@ -12,7 +12,7 @@
 
 ## 1. 产品定位
 
-`gsword` 是一款基于 `libgsword` 的现代 SWORD 研经桌面应用。
+GSword 是一款基于 `libgsword` 的现代研经桌面应用。
 
 目标用户：
 
@@ -26,7 +26,7 @@
 
 > 打开即读，选中即研经，随手可记，模块安装不打断阅读。
 
-`gsword` 不是 Xiphos 的逐像素复刻，而是在 GTK4/Adwaita 基础上重新设计交互，
+GSword 不是 Xiphos 的逐像素复刻，而是在 GTK4/Adwaita 基础上重新设计交互，
 同时继承现有 SWORD 桌面应用的核心能力。
 
 ---

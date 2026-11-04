@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 14:05+0800\n"
+"POT-Creation-Date: 2026-11-04 14:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:114 src/window.c:991
+#: src/window.c:114 src/window.c:992
 msgid "Hide module sidebar"
 msgstr ""
 
@@ -61,11 +61,11 @@ msgstr ""
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:716 src/window.c:785
+#: src/window.c:716 src/window.c:786
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:725 src/window.c:1000 src/search-page.c:1401
+#: src/window.c:725 src/window.c:1001 src/search-page.c:1401
 msgid "Search"
 msgstr ""
 
@@ -73,12 +73,12 @@ msgstr ""
 msgid "Focus reference"
 msgstr ""
 
-#: src/window.c:727 src/window.c:775 src/window.c:1007 src/library-page.c:2281
+#: src/window.c:727 src/window.c:776 src/window.c:1008 src/library-page.c:2281
 #: src/preferences-dialog.c:335
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:728 src/window.c:779 src/preferences-dialog.c:257
+#: src/window.c:728 src/window.c:780 src/preferences-dialog.c:257
 msgid "Preferences"
 msgstr ""
 
@@ -100,50 +100,52 @@ msgid "Close"
 msgstr ""
 
 #: src/window.c:750
-msgid "gsword contributors"
+msgid "GSword contributors"
 msgstr ""
 
 #: src/window.c:753
-msgid "A GObject implementation of the SWORD Bible study library."
-msgstr ""
-
-#: src/window.c:770
-msgid "Show study panel"
+msgid ""
+"A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
+"module library."
 msgstr ""
 
 #: src/window.c:771
-msgid "Comparison"
+msgid "Show study panel"
 msgstr ""
 
 #: src/window.c:772
+msgid "Comparison"
+msgstr ""
+
+#: src/window.c:773
 msgid "Teaching"
 msgstr ""
 
-#: src/window.c:786
-msgid "About gsword"
+#: src/window.c:787
+msgid "About GSword"
 msgstr ""
 
-#: src/window.c:789
+#: src/window.c:790
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:1013
+#: src/window.c:1014
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:1043 src/preferences-dialog.c:262
+#: src/window.c:1044 src/preferences-dialog.c:262
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:1049
+#: src/window.c:1050
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:1063 src/notes-page.c:192 src/notes-page.c:1897
+#: src/window.c:1064 src/notes-page.c:192 src/notes-page.c:1897
 msgid "Notes"
 msgstr ""
 
-#: src/window.c:1068
+#: src/window.c:1069
 msgid "Plan"
 msgstr ""
 
