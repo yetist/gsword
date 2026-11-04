@@ -718,6 +718,64 @@ locale_mgr_lookup(GswLocaleMgr *self, const gchar *name)
     return locale;
 }
 
+static gboolean
+locale_id_matches_language(const gchar *id, const gchar *language)
+{
+    gsize len;
+
+    if (id == NULL || language == NULL || *id == '\0' || *language == '\0')
+        return FALSE;
+    if (g_strcmp0(id, language) == 0)
+        return TRUE;
+    len = strlen(language);
+    if (g_str_has_prefix(id, language) && id[len] == '-')
+        return TRUE;
+    len = strlen(id);
+    if (g_str_has_prefix(language, id) && language[len] == '-')
+        return TRUE;
+    return FALSE;
+}
+
+static GswLocale *
+locale_mgr_lookup_language(GswLocaleMgr *self, const gchar *name)
+{
+    GswLocaleMgrPrivate *priv = gsw_locale_mgr_get_instance_private(self);
+    GswLocale *best = NULL;
+    gchar *best_id = NULL;
+    gchar *normalized;
+    guint i;
+
+    if (name == NULL || *name == '\0')
+        return NULL;
+    normalized = locale_id_normalize(name);
+    if (strlen(normalized) < 2) {
+        g_free(normalized);
+        return NULL;
+    }
+
+    /* A bare language such as "zh" can match several scripts. Prefer the
+     * shortest, then lexicographically first locale so the result does not
+     * depend on locale load order. */
+    for (i = 0; i < priv->order->len; i++) {
+        GswLocale *locale = g_ptr_array_index(priv->order, i);
+        gchar *candidate = locale_id_normalize(locale->name);
+        gsize candidate_len = strlen(candidate);
+
+        if (locale_id_matches_language(candidate, normalized) &&
+            (best == NULL || candidate_len < strlen(best_id) ||
+             (candidate_len == strlen(best_id) &&
+              strcmp(candidate, best_id) < 0))) {
+            g_free(best_id);
+            best_id = g_strdup(candidate);
+            best = locale;
+        }
+        g_free(candidate);
+    }
+    g_free(best_id);
+    g_free(normalized);
+    return best;
+}
+
 static GswLocale *
 locale_mgr_resolve(GswLocaleMgr *self, const gchar *locale_name)
 {
@@ -732,6 +790,8 @@ locale_mgr_resolve(GswLocaleMgr *self, const gchar *locale_name)
     if (name == NULL || *name == '\0')
         name = "en";
     locale = locale_mgr_lookup(self, name);
+    if (locale == NULL)
+        locale = locale_mgr_lookup_language(self, name);
     if (locale == NULL)
         locale = locale_mgr_lookup(self, "en");
     return locale;

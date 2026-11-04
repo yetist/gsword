@@ -6,6 +6,7 @@
 #include <gsword/gsw-error.h>
 #include <gsword/gsw-search.h>
 #include "gsw-key-internal.h"
+#include "gsw-key-private.h"
 #include "gsw-module-backend.h"
 #include "gsw-options.h"
 #include "gsw-render.h"
@@ -108,22 +109,28 @@ static GswKey *
 gsw_module_new_key(GswModuleInfo *info)
 {
     GswDriver driver = gsw_module_info_get_driver(info);
+    GswKey *key;
 
     switch (driver) {
     case GSW_DRIVER_RAW_LD:
     case GSW_DRIVER_RAW_LD4:
     case GSW_DRIVER_Z_LD:
-        return gsw_key_new_string("");
+        key = gsw_key_new_string("");
+        break;
     case GSW_DRIVER_RAW_GENBOOK:
         {
             gchar *base = gsw_module_data_base(info);
-            GswKey *key = (GswKey *)gsw_tree_key_new(base);
+
+            key = (GswKey *)gsw_tree_key_new(base);
             g_free(base);
-            return key;
         }
+        break;
     default:
-        return gsw_key_new_verse("", gsw_module_info_get_versification(info));
+        key = gsw_key_new_verse("", gsw_module_info_get_versification(info));
+        break;
     }
+    gsw_key_set_locale(key, gsw_module_info_get_language(info));
+    return key;
 }
 
 GswModule *

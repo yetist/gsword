@@ -107,6 +107,7 @@ gsw_key_unref(GswKey *self)
         return;
     if (g_atomic_ref_count_dec(&self->ref_count)) {
         g_free(self->text);
+        g_free(self->locale);
         g_clear_pointer(&self->v11n, gsw_versification_unref);
         g_free(self->tree_path);
         g_free(self->tree_name);
@@ -124,6 +125,7 @@ gsw_key_clone(GswKey *self)
 
     copy = gsw_key_alloc_internal(self->kind);
     copy->text = g_strdup(self->text);
+    copy->locale = g_strdup(self->locale);
     copy->valid = self->valid;
     copy->v11n = self->v11n != NULL ? gsw_versification_ref(self->v11n) : NULL;
     copy->testament = self->testament;
@@ -156,48 +158,36 @@ gsw_key_clone(GswKey *self)
     return copy;
 }
 
-static gchar *
-gsw_key_locale_from_lang(void)
+void
+gsw_key_set_locale(GswKey *self, const gchar *locale)
 {
-    const gchar *lang = g_getenv("LANG");
-    gchar *locale;
-    gchar *suffix;
+    if (self == NULL)
+        return;
+    g_free(self->locale);
+    self->locale = locale != NULL && *locale != '\0'
+                 ? g_strdup(locale) : NULL;
+}
 
-    if (lang == NULL || *lang == '\0')
-        return NULL;
-
-    locale = g_strdup(lang);
-
-    /* LANG commonly looks like zh_CN.UTF-8 or sr_RS.UTF-8@latin. Locale
-     * aliases in gsword are stored without the codeset/modifier. */
-    suffix = strchr(locale, '.');
-    if (suffix != NULL)
-        *suffix = '\0';
-    suffix = strchr(locale, '@');
-    if (suffix != NULL)
-        *suffix = '\0';
-    if (*locale == '\0') {
-        g_free(locale);
-        return NULL;
-    }
-    return locale;
+const gchar *
+gsw_key_get_locale(GswKey *self)
+{
+    return self != NULL ? self->locale : NULL;
 }
 
 static const gchar *
-gsw_key_book_name(GswBook *book)
+gsw_key_book_name(GswKey *self, GswBook *book)
 {
     const gchar *name = gsw_book_get_name(book);
-    gchar *locale = gsw_key_locale_from_lang();
     const gchar *translated = gsw_locale_mgr_translate(
-        gsw_locale_mgr_get_default(), name, locale);
+        gsw_locale_mgr_get_default(), name, self->locale);
 
-    g_free(locale);
     return translated;
 }
 
 static gint
-gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
+gsw_key_lookup_book(GswKey *self, const gchar *token)
 {
+    GswVersification *v11n = self->v11n;
     gchar *upper;
     gchar *normalized;
     gint best = -1;
@@ -210,7 +200,7 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
 
     {
         GPtrArray *candidates = gsw_locale_mgr_get_book_candidates(
-            gsw_locale_mgr_get_default(), token, NULL);
+            gsw_locale_mgr_get_default(), token, self->locale);
         guint i;
 
         for (i = 0; i < candidates->len; i++) {
@@ -227,9 +217,9 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
 
     {
         const gchar *reverse = gsw_locale_mgr_reverse(
-            gsw_locale_mgr_get_default(), token, NULL);
+            gsw_locale_mgr_get_default(), token, self->locale);
         if (g_strcmp0(reverse, token) != 0)
-            return gsw_key_lookup_book(v11n, reverse);
+            return gsw_key_lookup_book(self, reverse);
     }
 
     upper = g_ascii_strup(token, -1);
@@ -268,7 +258,7 @@ gsw_key_lookup_book(GswVersification *v11n, const gchar *token)
             g_strcmp0(normalized, name_upper) == 0) {
             match = TRUE;
             match_len = (gint)strlen(normalized);
-        } else if (g_strcmp0(normalized, gsw_key_book_name(book)) == 0) {
+        } else if (g_strcmp0(normalized, gsw_key_book_name(self, book)) == 0) {
             match = TRUE;
             match_len = (gint)strlen(normalized);
         } else if (g_str_has_prefix(abbrev_upper, normalized) ||
@@ -339,7 +329,7 @@ gsw_verse_key_freshtext(GswKey *self)
         global = (self->testament == 2 ? bmax0 : 0) + self->book - 1;
         book = gsw_versification_get_book(self->v11n, global);
         if (book != NULL)
-            g_string_append(text, gsw_key_book_name(book));
+            g_string_append(text, gsw_key_book_name(self, book));
         else
             g_string_append_printf(text, "Book %d", self->book);
     }
@@ -542,7 +532,7 @@ gsw_key_parse_verse(GswKey *self, const gchar *text)
             while (len > 0 && (trimmed[len - 1] == '.' || trimmed[len - 1] == ','))
                 trimmed[--len] = '\0';
 
-            book_index = gsw_key_lookup_book(self->v11n, trimmed);
+            book_index = gsw_key_lookup_book(self, trimmed);
             g_free(trimmed);
             g_free(candidate);
 
@@ -554,7 +544,7 @@ gsw_key_parse_verse(GswKey *self, const gchar *text)
     }
 
     if (split < 0) {
-        book_index = gsw_key_lookup_book(self->v11n, work);
+        book_index = gsw_key_lookup_book(self, work);
         if (book_index >= 0) {
             split = (gint)strlen(work);
         } else {
@@ -712,7 +702,7 @@ gsw_verse_key_get_global_book(GswVerseKey *self)
 gint
 gsw_verse_key_get_global_book_from_name(GswVerseKey *self, const gchar *name)
 {
-    return gsw_key_lookup_book(self->v11n, name);
+    return gsw_key_lookup_book(self, name);
 }
 
 void
@@ -982,7 +972,7 @@ gsw_verse_key_get_book_name(GswVerseKey *self)
 
     global = gsw_key_global_book(self);
     book = gsw_versification_get_book(self->v11n, global);
-    return book != NULL ? gsw_key_book_name(book) : "";
+    return book != NULL ? gsw_key_book_name(self, book) : "";
 }
 
 gboolean
@@ -991,7 +981,7 @@ gsw_verse_key_set_book_name(GswVerseKey *self, const gchar *name)
     gint index;
 
     g_return_val_if_fail(self != NULL, FALSE);
-    index = gsw_key_lookup_book(self->v11n, name);
+    index = gsw_key_lookup_book(self, name);
     if (index < 0)
         return FALSE;
 
@@ -1073,7 +1063,7 @@ gsw_verse_key_get_short_text(GswVerseKey *self)
     {
         const gchar *localized =
             gsw_locale_mgr_translate_preferred_abbreviation(
-                gsw_locale_mgr_get_default(), abbrev, NULL);
+                gsw_locale_mgr_get_default(), abbrev, self->locale);
 
         if (localized != NULL)
             abbrev = localized;

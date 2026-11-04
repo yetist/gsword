@@ -13,6 +13,7 @@ struct _GswKey {
     gatomicrefcount ref_count;
     GswKeyKind kind;
     gchar *text;
+    gchar *locale;
     gboolean valid;
 
     /* verse fields */
@@ -42,6 +43,8 @@ struct _GswKey {
 
 GswKey *gsw_key_alloc_internal(GswKeyKind kind);
 void    gsw_key_set_text_cache(GswKey *self, const gchar *text);
+void    gsw_key_set_locale(GswKey *self, const gchar *locale);
+const gchar *gsw_key_get_locale(GswKey *self);
 
 /* Implemented in gsw-tree-key.c. */
 gboolean gsw_tree_key_set_text_internal(GswKey *self, const gchar *path);
