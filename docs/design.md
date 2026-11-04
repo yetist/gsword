@@ -648,6 +648,8 @@ GType         gsw_key_get_type(void);
 GswKey       *gsw_key_ref(GswKey *self);
 void          gsw_key_unref(GswKey *self);
 GswKey       *gsw_key_clone(GswKey *self);
+void          gsw_key_set_locale(GswKey *self, const gchar *locale);
+const gchar  *gsw_key_get_locale(GswKey *self);
 
 const gchar  *gsw_key_get_text(GswKey *self);
 gboolean      gsw_key_set_text(GswKey *self, const gchar *text);
@@ -739,8 +741,13 @@ gint              gsw_versification_get_book_number_by_osis(GswVersification *se
 gint              gsw_versification_get_nt_start_offset(GswVersification *self);
 
 const gchar      *gsw_book_get_name(GswBook *self);
+const gchar      *gsw_book_get_name_for_locale(GswBook *self,
+                                               const gchar *locale);
 const gchar      *gsw_book_get_osis_name(GswBook *self);
 const gchar      *gsw_book_get_preferred_abbreviation(GswBook *self);
+const gchar      *gsw_book_get_preferred_abbreviation_for_locale(
+                                                GswBook *self,
+                                                const gchar *locale);
 gint              gsw_book_get_chapter_max(GswBook *self);
 gint              gsw_book_get_verse_max(GswBook *self, gint chapter);
 ```
@@ -805,12 +812,29 @@ Aliases=創;创世;Gen;Gn
 书卷候选会继续搜索所有已加载 locale，因此用户可以在默认英文界面下直接输入
 `启示录 1:1` 或 `来 4:1`。
 
-`gsw_key_book_name()` 生成显示书名时使用 key 所属模块的语言
-（`GswModuleInfo` 的 `Lang` 字段），不再读取进程 `LANG`。`gsw_module_new_key()`
-创建模块 key 时会保存该语言；没有模块语言的手工 key 使用 locale manager 的
-默认 locale。模块语言先按精确 Id 或别名解析，再按语言前缀回退：`zh`、
-`zh_CN`、`zh-Hans-CN` 都可解析到已加载的 `zh-Hans` locale，`en-US` 可解析
-到 `en`。
+语言来源分为三层：
+
+- `gsw_book_get_name()` 和 `gsw_book_get_preferred_abbreviation()` 返回规范名
+  （通常为英文），供持久化、解析和内部比较使用，不读取环境变量。
+- `gsw_book_get_name_for_locale()` 和
+  `gsw_book_get_preferred_abbreviation_for_locale()` 接收显式 locale，用于
+  需要本地化显示但不在 key 上下文中的调用方。
+- key 的显示 locale 优先级为：`gsw_key_set_locale()` 的显式覆盖 > 模块
+  `Lang` > locale manager 默认 locale > 内建 `en`。`gsw_key_get_locale()`
+  返回当前生效值；%NULL 表示使用 locale manager 默认值。
+
+`gsw_module_new_key()` 创建模块 key 时保存模块语言。没有模块语言的 key 使用
+locale manager 默认值。应用启动时由 `gsword_app_locale_name()` 从进程环境
+取得界面 locale，并显式设置 locale manager 默认值；库和内容显示路径不直接读取
+`LANG`。模块语言先按精确 Id 或别名解析，再按语言前缀回退：`zh`、`zh_CN`、
+`zh-Hans-CN` 都可解析到已加载的 `zh-Hans` locale，`en-US` 可解析到 `en`。
+
+显示策略：
+
+- 阅读页状态栏、搜索、历史和对比视图使用 key 所属模块语言。
+- 引用选择器绑定经文模块时使用模块语言，使导航与正文一致。
+- 计划预览等没有模块上下文的界面生成内容使用应用界面 locale。
+- 持久化读取位置和历史记录使用 OSIS 引用，不保存本地化书名。
 
 `data/locales.d` 中的文件是权威数据，允许手工维护。导入工具只用于生成缺失的
 基线文件；默认跳过已存在文件，必须显式使用 `--force` 才会覆盖人工修改。

@@ -14,6 +14,8 @@
 
 #include <string.h>
 
+static void gsw_verse_key_freshtext(GswKey *self);
+
 GswKey *
 gsw_key_alloc_internal(GswKeyKind kind)
 {
@@ -107,6 +109,7 @@ gsw_key_unref(GswKey *self)
         return;
     if (g_atomic_ref_count_dec(&self->ref_count)) {
         g_free(self->text);
+        g_free(self->module_locale);
         g_free(self->locale);
         g_clear_pointer(&self->v11n, gsw_versification_unref);
         g_free(self->tree_path);
@@ -125,6 +128,7 @@ gsw_key_clone(GswKey *self)
 
     copy = gsw_key_alloc_internal(self->kind);
     copy->text = g_strdup(self->text);
+    copy->module_locale = g_strdup(self->module_locale);
     copy->locale = g_strdup(self->locale);
     copy->valid = self->valid;
     copy->v11n = self->v11n != NULL ? gsw_versification_ref(self->v11n) : NULL;
@@ -158,30 +162,57 @@ gsw_key_clone(GswKey *self)
     return copy;
 }
 
+static void
+gsw_key_set_locale_string(gchar **field, const gchar *locale)
+{
+    gchar *copy = locale != NULL && *locale != '\0' ? g_strdup(locale) : NULL;
+
+    g_free(*field);
+    *field = copy;
+}
+
+static void
+gsw_key_refresh_locale_text(GswKey *self)
+{
+    if (self->kind == GSW_KEY_KIND_VERSE && self->v11n != NULL)
+        gsw_verse_key_freshtext(self);
+}
+
 void
 gsw_key_set_locale(GswKey *self, const gchar *locale)
 {
-    if (self == NULL)
-        return;
-    g_free(self->locale);
-    self->locale = locale != NULL && *locale != '\0'
-                 ? g_strdup(locale) : NULL;
+    g_return_if_fail(self != NULL);
+    gsw_key_set_locale_string(&self->locale, locale);
+    gsw_key_refresh_locale_text(self);
 }
 
 const gchar *
 gsw_key_get_locale(GswKey *self)
 {
-    return self != NULL ? self->locale : NULL;
+    return gsw_key_get_effective_locale(self);
+}
+
+void
+gsw_key_set_module_locale(GswKey *self, const gchar *locale)
+{
+    g_return_if_fail(self != NULL);
+    gsw_key_set_locale_string(&self->module_locale, locale);
+    gsw_key_refresh_locale_text(self);
+}
+
+const gchar *
+gsw_key_get_effective_locale(GswKey *self)
+{
+    if (self == NULL)
+        return NULL;
+    return self->locale != NULL ? self->locale : self->module_locale;
 }
 
 static const gchar *
 gsw_key_book_name(GswKey *self, GswBook *book)
 {
-    const gchar *name = gsw_book_get_name(book);
-    const gchar *translated = gsw_locale_mgr_translate(
-        gsw_locale_mgr_get_default(), name, self->locale);
-
-    return translated;
+    return gsw_book_get_name_for_locale(book,
+                                        gsw_key_get_effective_locale(self));
 }
 
 static gint
@@ -200,7 +231,8 @@ gsw_key_lookup_book(GswKey *self, const gchar *token)
 
     {
         GPtrArray *candidates = gsw_locale_mgr_get_book_candidates(
-            gsw_locale_mgr_get_default(), token, self->locale);
+            gsw_locale_mgr_get_default(), token,
+            gsw_key_get_effective_locale(self));
         guint i;
 
         for (i = 0; i < candidates->len; i++) {
@@ -217,7 +249,8 @@ gsw_key_lookup_book(GswKey *self, const gchar *token)
 
     {
         const gchar *reverse = gsw_locale_mgr_reverse(
-            gsw_locale_mgr_get_default(), token, self->locale);
+            gsw_locale_mgr_get_default(), token,
+            gsw_key_get_effective_locale(self));
         if (g_strcmp0(reverse, token) != 0)
             return gsw_key_lookup_book(self, reverse);
     }
@@ -1062,8 +1095,8 @@ gsw_verse_key_get_short_text(GswVerseKey *self)
         return NULL;
     {
         const gchar *localized =
-            gsw_locale_mgr_translate_preferred_abbreviation(
-                gsw_locale_mgr_get_default(), abbrev, self->locale);
+            gsw_book_get_preferred_abbreviation_for_locale(
+                book, gsw_key_get_effective_locale(self));
 
         if (localized != NULL)
             abbrev = localized;

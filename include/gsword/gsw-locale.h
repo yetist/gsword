@@ -85,7 +85,9 @@ const gchar  *gsw_locale_mgr_get_default_locale(GswLocaleMgr *self);
  * @self: a #GswLocaleMgr
  * @name: locale name
  *
- * Sets the default locale used for book names.
+ * Sets the default locale used by keys and book-name APIs that do not have an
+ * explicit or module-derived locale. The library does not derive this value
+ * from the process environment; applications should set it explicitly.
  */
 void          gsw_locale_mgr_set_default_locale(GswLocaleMgr *self,
                                                 const gchar *name);
@@ -96,7 +98,8 @@ void          gsw_locale_mgr_set_default_locale(GswLocaleMgr *self,
  * @text: text to translate
  * @locale: locale name, or %NULL for the default locale
  *
- * Translates text using a locale.
+ * Translates text using a locale. Localization is always explicit; this
+ * function does not consult process environment variables.
  *
  * Returns: (transfer none): the translated text, or @text if no translation exists
  */

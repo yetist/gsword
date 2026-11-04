@@ -2,6 +2,7 @@
  * plan-page.c: reading plan page for the gsword window
  */
 
+#include "app-locale.h"
 #include "plan-page.h"
 #include "devotion-page.h"
 #include "memory-page.h"
@@ -130,6 +131,7 @@ generate_plan_references(const gchar *start_ref, gint days,
 
         if (book == NULL)
             break;
+        /* Plans store canonical references; rendering uses the UI locale. */
         g_ptr_array_add(references,
             g_strdup_printf("%s %d", gsw_book_get_name(book), chapter));
 
@@ -176,11 +178,16 @@ localize_plan_reference(const gchar *reference)
     const gchar *book;
     gint chapter;
     gint verse;
+    gchar *locale;
     gchar *result;
 
     if (reference == NULL || *reference == '\0')
         return g_strdup("");
     key = gsw_verse_key_new(reference, NULL);
+    locale = gsword_app_locale_name();
+    if (key != NULL)
+        gsw_key_set_locale((GswKey *)key, locale);
+    g_free(locale);
     if (key == NULL || gsw_verse_key_get_book(key) <= 0 ||
         gsw_verse_key_get_chapter(key) <= 0) {
         g_clear_pointer(&key, gsw_key_unref);

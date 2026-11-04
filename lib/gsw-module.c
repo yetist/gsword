@@ -129,7 +129,7 @@ gsw_module_new_key(GswModuleInfo *info)
         key = gsw_key_new_verse("", gsw_module_info_get_versification(info));
         break;
     }
-    gsw_key_set_locale(key, gsw_module_info_get_language(info));
+    gsw_key_set_module_locale(key, gsw_module_info_get_language(info));
     return key;
 }
 
@@ -282,12 +282,20 @@ gboolean
 gsw_module_set_key(GswModule *self, GswKey *key, GError **error)
 {
     GswModulePrivate *priv;
+    const gchar *text;
+    gchar *osis = NULL;
+    gboolean valid;
 
     g_return_val_if_fail(GSW_IS_MODULE(self), FALSE);
     g_return_val_if_fail(key != NULL, FALSE);
 
     priv = gsw_module_priv(self);
-    if (!gsw_key_set_text(priv->key, gsw_key_get_text(key))) {
+    if (gsw_key_get_kind(key) == GSW_KEY_KIND_VERSE)
+        osis = gsw_verse_key_get_osis_ref((GswVerseKey *)key);
+    text = osis != NULL ? osis : gsw_key_get_text(key);
+    valid = gsw_key_set_text(priv->key, text);
+    g_free(osis);
+    if (!valid) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_OUT_OF_BOUNDS,
                     "Key is outside the module's bounds");
         return FALSE;

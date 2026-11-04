@@ -2,6 +2,7 @@
  * reader-toolbar.c: reader toolbar for the gsword window
  */
 
+#include "app-locale.h"
 #include "reader-toolbar.h"
 #include "reader-page.h"
 #include "preferences-dialog.h"
@@ -559,7 +560,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     g_signal_connect(history_list, "row-activated",
                      G_CALLBACK(on_history_row_activated), toolbar);
 
-    locale = gsword_window_locale_name();
+    locale = gsword_app_locale_name();
     toolbar->reference_chooser = GSWORD_REFERENCE_CHOOSER(
         gsword_reference_chooser_new("KJV", locale));
     g_free(locale);

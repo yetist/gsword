@@ -86,7 +86,6 @@ void gsword_window_set_view_text(GtkTextView *view, const gchar *text);
 
 gchar *gsword_window_normalize_reference(const gchar *text);
 gint gsword_window_verse_number_from_line(const gchar *line);
-gchar *gsword_window_locale_name(void);
 
 G_END_DECLS
 

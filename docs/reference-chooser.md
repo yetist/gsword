@@ -40,9 +40,13 @@ Chinese names and abbreviations:
 ```sh
 GDK_BACKEND=x11 \
 GSW_LOCALE_PATH="$PWD/data/locales.d" \
-LANG=zh_CN.UTF-8 \
   ./build/tests/gsword-reference-chooser-demo zh-Hans KJV "创 1:1"
 ```
+
+The chooser uses the locale passed to it; it does not read `LANG`. Applications
+should choose between the content module language and their UI language
+explicitly. The reader uses the module language when the chooser is bound to a
+scripture module.
 
 Demo arguments:
 

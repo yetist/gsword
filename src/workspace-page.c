@@ -158,15 +158,14 @@ gsword_workspace_page_save(GswordWorkspacePage *page)
     g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssi)"));
     for (i = 0; i < page->panes->len; i++) {
         GswordWorkspacePane *pane = g_ptr_array_index(page->panes, i);
-        GswModule *module = gsword_workspace_pane_get_module(pane);
         const gchar *name = gsword_workspace_pane_get_module_name(pane);
-        const gchar *key = module != NULL
-                         ? gsw_module_get_key_text(module) : NULL;
+        gchar *key = gsword_workspace_pane_dup_storage_key(pane);
 
         g_variant_builder_add(&builder, "(ssi)",
                               name != NULL ? name : "",
                               key != NULL ? key : "",
                               gsword_workspace_pane_get_follow_mode(pane));
+        g_free(key);
     }
     layout = g_variant_ref_sink(g_variant_builder_end(&builder));
     text = g_variant_print(layout, FALSE);

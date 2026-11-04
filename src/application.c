@@ -1,5 +1,6 @@
 #include "application.h"
 #include "window.h"
+#include "app-locale.h"
 #include "app-paths.h"
 
 #include <gsword/gsword.h>
@@ -51,6 +52,13 @@ gsword_application_startup(GApplication *application)
     };
 
     G_APPLICATION_CLASS(gsword_application_parent_class)->startup(application);
+
+    {
+        gchar *locale = gsword_app_locale_name();
+
+        gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), locale);
+        g_free(locale);
+    }
 
     g_action_map_add_action_entries(G_ACTION_MAP(application), app_actions,
                                     G_N_ELEMENTS(app_actions), application);
