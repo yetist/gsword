@@ -1,10 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 adw_dep = dependency('libadwaita-1', version: '>=1.4', required: false)
 sqlite3_dep = dependency('sqlite3', required: false)
 gtksourceview_dep = dependency('gtksourceview-5', required: false)
 
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
   app_deps = [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep]
-  app_c_args = []
+  app_c_args = [
+    '-DGSW_ICON_DIR="' + meson.project_source_root() + '/data/icons"',
+  ]
   if gtksourceview_dep.found()
     app_deps += gtksourceview_dep
     app_c_args += '-DHAVE_GTKSOURCEVIEW=1'

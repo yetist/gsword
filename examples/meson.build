@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 executable('gsword-list-modules', 'list-modules.c',
   dependencies: gsword_dep,
   install: false)

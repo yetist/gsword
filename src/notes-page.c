@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * notes-page.c: notes, tags and verse lists for the gsword window
  */

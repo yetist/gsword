@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-version.c: version comparison compatible with SWORD SWVersion
  */

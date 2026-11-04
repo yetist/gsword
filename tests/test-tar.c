@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <gsword/gsw-error.h>
 #include "gsw-tar.h"
 #include <gsword/gsw-error.h>

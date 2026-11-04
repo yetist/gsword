@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #ifndef GSWORD_WINDOW_H
 #define GSWORD_WINDOW_H 1
 

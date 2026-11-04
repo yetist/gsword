@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * workspace-page.c: comparison workspace container for the gsword window
  */

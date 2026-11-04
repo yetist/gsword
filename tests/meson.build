@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 tests = []
 python3 = find_program('python3')
 
@@ -112,6 +114,19 @@ if get_option('tests')
   test('locales', python3,
     args: [files('../tools/validate-locales.py')],
     timeout: 60)
+
+  desktop_file_validate = find_program('desktop-file-validate', required: false)
+  if desktop_file_validate.found()
+    test('desktop-file', desktop_file_validate,
+      args: [meson.project_source_root() / 'data/org.gsword.GSword.desktop'])
+  endif
+
+  appstreamcli = find_program('appstreamcli', required: false)
+  if appstreamcli.found()
+    test('appstream', appstreamcli,
+      args: ['validate', '--no-net',
+             meson.project_source_root() / 'data/org.gsword.GSword.metainfo.xml'])
+  endif
 
   if get_option('introspection')
     test('introspection', python3,

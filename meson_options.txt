@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 option('bzip2', type: 'feature', value: 'auto',
   description: 'Enable BZIP2 compressed module support')
 option('lzma', type: 'feature', value: 'auto',

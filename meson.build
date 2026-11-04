@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 project('gsword', 'c',
   version: '0.1.0',
   license: 'GPL-2.0-or-later',

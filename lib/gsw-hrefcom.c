@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-hrefcom.c: HREFCom backend (entry is a URL/path)
  */

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * module-sidebar.c: grouped module list and module selection for gsword
  */

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * memory-page.h: memory verse review page for the gsword window
  */

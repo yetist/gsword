@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * reference-chooser-demo.c: standalone demo for GswordReferenceChooser
  *

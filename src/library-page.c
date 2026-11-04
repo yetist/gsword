@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * library-page.c: module library and install UI for the gsword window
  */

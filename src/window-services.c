@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * window-services.c: shared services for the gsword window and its pages
  */

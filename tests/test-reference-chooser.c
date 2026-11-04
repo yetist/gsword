@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * test-reference-chooser.c: parser tests for GswordReferenceChooser
  */

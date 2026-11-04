@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * devotion-page.h: daily devotion page for the gsword window
  */

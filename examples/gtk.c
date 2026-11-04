@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gtk.c: minimal GTK4 frontend prototype for gsword
  *

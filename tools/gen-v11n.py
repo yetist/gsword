@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Generate SWORD versification tables from the upstream canon headers.
 
 Usage: tools/gen-v11n.py <sword-include-dir> <output.c>

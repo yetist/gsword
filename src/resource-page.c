@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * resource-page.c: general book and map viewer for the gsword window
  */
