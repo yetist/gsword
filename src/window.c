@@ -747,13 +747,16 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
     (void)parameter;
     adw_about_dialog_set_application_name(about, "GSword");
     adw_about_dialog_set_application_icon(about, "x-office-document-symbolic");
-    adw_about_dialog_set_developer_name(about, _("GSword contributors"));
+    adw_about_dialog_set_developer_name(about, "yetist");
+    adw_about_dialog_set_developers(about,
+        (const gchar * const[]) { "yetist", NULL });
     adw_about_dialog_set_version(about, GSW_VERSION_S);
     adw_about_dialog_set_comments(about,
         _("A GTK4 Bible study application powered by libgsword, a "
           "GObject-based SWORD module library."));
+    adw_about_dialog_add_link(about, "GitHub", "https://github.com/yetist");
     adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_2_0);
-    adw_about_dialog_set_copyright(about, "© 2026 GSword contributors");
+    adw_about_dialog_set_copyright(about, "© 2026 yetist");
     adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(self));
 }
 
