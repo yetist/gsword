@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> -->
 <schemalist>
   <schema id="org.gsword.GSword" path="/org/gsword/GSword/">
     <key name="last-module" type="s">
