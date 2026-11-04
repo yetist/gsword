@@ -750,7 +750,7 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
     adw_about_dialog_set_developer_name(about, _("gsword contributors"));
     adw_about_dialog_set_version(about, GSW_VERSION_S);
     adw_about_dialog_set_comments(about,
-        _("A GObject implementation of the SWORD Bible study library."));
+        _("A GObject implementation of the SWORD Bible study software."));
     adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_2_0);
     adw_about_dialog_set_copyright(about, "© 2026 gsword contributors");
     adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(self));
