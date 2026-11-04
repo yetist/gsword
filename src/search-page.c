@@ -187,10 +187,12 @@ refresh_modules(GswordSearchPage *page, const gchar *preferred_module)
 }
 
 static void
-configure_search_index(GswModule *module, const gchar *module_name)
+configure_search_index(GswordWindow *window, GswModule *module,
+                       const gchar *module_name)
 {
     gchar *index_path = gsword_app_search_index_path(module_name);
 
+    gsword_window_apply_book_name_locale(window, module);
     gsw_module_set_search_index_path(module, index_path);
     g_free(index_path);
 }
@@ -211,7 +213,7 @@ create_selected_module(GswordSearchPage *page)
         return NULL;
     module = gsw_manager_create_module(manager, name);
     if (module != NULL)
-        configure_search_index(module, name);
+        configure_search_index(page->window, module, name);
     return module;
 }
 
@@ -1142,7 +1144,7 @@ run_search(GswordSearchPage *page)
            ? gsw_manager_create_module(manager, module_name)
            : NULL;
     if (module != NULL)
-        configure_search_index(module, module_name);
+        configure_search_index(window, module, module_name);
     if (module == NULL) {
         gsword_window_set_status(window, _("Cannot open module"));
         return;

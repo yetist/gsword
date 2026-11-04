@@ -27,6 +27,8 @@ gboolean gsword_workspace_pane_get_follow(GswordWorkspacePane *pane);
 gint gsword_workspace_pane_get_follow_mode(GswordWorkspacePane *pane);
 void gsword_workspace_pane_set_follow_mode(GswordWorkspacePane *pane,
                                            gint mode);
+void gsword_workspace_pane_apply_book_name_policy(
+    GswordWorkspacePane *pane);
 GtkScrolledWindow *gsword_workspace_pane_get_scroll(GswordWorkspacePane *pane);
 GHashTable *gsword_workspace_pane_dup_verse_texts(GswordWorkspacePane *pane);
 void gsword_workspace_pane_set_diff_verses(GswordWorkspacePane *pane,

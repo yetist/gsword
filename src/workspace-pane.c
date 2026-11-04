@@ -464,16 +464,13 @@ set_context(GswordWorkspacePane *pane)
 {
     GswModuleInfo *info;
     const gchar *versification = NULL;
-    const gchar *language = NULL;
     gchar *locale;
 
     if (pane->reference_chooser == NULL || pane->module == NULL)
         return;
     info = gsw_module_get_info(pane->module);
-    if (info != NULL) {
+    if (info != NULL)
         versification = gsw_module_info_get_versification(info);
-        language = gsw_module_info_get_language(info);
-    }
     if (versification == NULL || *versification == '\0')
         versification = "KJV";
     if (g_strcmp0(pane->versification, versification) != 0) {
@@ -482,16 +479,23 @@ set_context(GswordWorkspacePane *pane)
         gsword_reference_chooser_set_versification(pane->reference_chooser,
                                                    versification);
     }
-    if (language != NULL && *language != '\0')
-        locale = g_strdup(language);
-    else
-        locale = gsword_app_locale_name();
+    locale = gsword_window_book_name_locale(pane->window, info);
     if (g_strcmp0(pane->locale, locale) != 0) {
         g_free(pane->locale);
         pane->locale = g_strdup(locale);
         gsword_reference_chooser_set_locale(pane->reference_chooser, locale);
     }
     g_free(locale);
+    gsword_window_apply_book_name_locale(pane->window, pane->module);
+}
+
+void
+gsword_workspace_pane_apply_book_name_policy(GswordWorkspacePane *pane)
+{
+    if (pane == NULL || pane->module == NULL)
+        return;
+    gsword_window_apply_book_name_locale(pane->window, pane->module);
+    set_context(pane);
 }
 
 static void

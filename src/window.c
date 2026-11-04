@@ -37,6 +37,7 @@ typedef struct {
     AdwViewStack *content_stack;
     gboolean page_restored;
     GtkLabel *status_label;
+    AdwToastOverlay *toast_overlay;
 
     GswordSearchPage *search_page;
     gchar *search_return_page;
@@ -476,6 +477,7 @@ gsword_window_load_module(GswordWindow *self, const gchar *name)
 
     g_clear_object(&priv->module);
     priv->module = module;
+    gsword_window_apply_book_name_locale(self, module);
     if (priv->reader_page != NULL)
         gsword_reader_page_sync_context(priv->reader_page);
 
@@ -1124,8 +1126,12 @@ gsword_window_build(GswordWindow *self)
     priv->status_label = GTK_LABEL(status);
     gsword_window_services_init(self, priv->status_label, priv->content_stack);
 
+    priv->toast_overlay = ADW_TOAST_OVERLAY(adw_toast_overlay_new());
+    adw_toast_overlay_set_child(priv->toast_overlay, GTK_WIDGET(toolbar_view));
+    g_object_set_data(G_OBJECT(self), "gsword-toast-overlay",
+                      priv->toast_overlay);
     adw_application_window_set_content(ADW_APPLICATION_WINDOW(self),
-                                       GTK_WIDGET(toolbar_view));
+                                       GTK_WIDGET(priv->toast_overlay));
 
     condition = adw_breakpoint_condition_parse("max-width: 700sp");
     if (condition != NULL) {
@@ -1299,6 +1305,25 @@ gsword_window_init(GswordWindow *self)
     gsword_window_get_instance_private(self);
 }
 
+static void
+on_book_name_language_changed(GSettings *settings, const gchar *key,
+                              gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)settings;
+    (void)key;
+    if (priv->module != NULL)
+        gsword_window_apply_book_name_locale(self, priv->module);
+    if (priv->reader_page != NULL) {
+        gsword_reader_page_sync_context(priv->reader_page);
+        gsword_reader_page_refresh(priv->reader_page);
+    }
+    if (priv->workspace_page != NULL)
+        gsword_workspace_page_apply_book_name_policy(priv->workspace_page);
+}
+
 GtkWidget *
 gsword_window_new(GtkApplication *application, GswManager *manager,
                   GSettings *settings)
@@ -1326,6 +1351,9 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     }
     gsword_window_build(self);
     gsword_window_load_settings(self);
+    if (priv->settings != NULL)
+        g_signal_connect(priv->settings, "changed::book-name-language",
+                         G_CALLBACK(on_book_name_language_changed), self);
     if (priv->reader_page != NULL)
         gsword_study_panel_refresh_lexicons(
             gsword_reader_page_get_study_panel(priv->reader_page));

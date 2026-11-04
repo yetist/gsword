@@ -2,7 +2,6 @@
  * reader-page.c: scripture reader page for the gsword window
  */
 
-#include "app-locale.h"
 #include "reader-page.h"
 #include "reader-toolbar.h"
 #include "study-panel.h"
@@ -249,20 +248,14 @@ gsword_reader_page_sync_context(GswordReaderPage *page)
     GswModule *module = gsword_window_get_module(page->window);
     GswModuleInfo *info;
     const gchar *versification = NULL;
-    const gchar *language = NULL;
     gchar *locale;
 
     if (page == NULL || page->reference_chooser == NULL || module == NULL)
         return;
     info = gsw_module_get_info(module);
-    if (info != NULL) {
+    if (info != NULL)
         versification = gsw_module_info_get_versification(info);
-        language = gsw_module_info_get_language(info);
-    }
-    if (language != NULL && *language != '\0')
-        locale = g_strdup(language);
-    else
-        locale = gsword_app_locale_name();
+    locale = gsword_window_book_name_locale(page->window, info);
     gsword_reference_chooser_set_versification(
         page->reference_chooser,
         versification != NULL && *versification != '\0'
@@ -1070,12 +1063,12 @@ gsword_reader_page_toggle_highlight(GswordReaderPage *page)
             notes, gsw_module_get_name(module), storage_key)) {
         gsword_notes_store_clear_highlight(
             notes, gsw_module_get_name(module), storage_key, &error);
-        gsword_window_set_status(self, _("Highlight removed"));
+        gsword_window_toast(self, _("Highlight removed"));
     } else {
         gsword_notes_store_set_highlight(
             notes, gsw_module_get_name(module), storage_key,
             "#fff0a8", &error);
-        gsword_window_set_status(self, _("Verse highlighted"));
+        gsword_window_toast(self, _("Verse highlighted"));
     }
     if (error != NULL)
         gsword_window_show_error(self, _("Cannot update highlight"), error);
@@ -1116,7 +1109,7 @@ copy_text_to_clipboard(GswordReaderPage *page, const gchar *text)
         gtk_widget_get_clipboard(GTK_WIDGET(page->window));
 
     gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
-    gsword_window_set_status(page->window, _("Copied to clipboard"));
+    gsword_window_toast(page->window, _("Copied to clipboard"));
 }
 
 void

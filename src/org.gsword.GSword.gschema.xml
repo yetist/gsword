@@ -21,6 +21,21 @@
       <summary>Color scheme</summary>
       <description>One of system, light, or dark.</description>
     </key>
+    <key name="library-path" type="s">
+      <default>''</default>
+      <summary>Writable module library path</summary>
+      <description>Explicit user module library. Empty uses the XDG application library; command line and GSWORD_LIBRARY take precedence.</description>
+    </key>
+    <key name="book-name-language" type="s">
+      <default>'module'</default>
+      <summary>Book name language policy</summary>
+      <description>One of module or ui.</description>
+    </key>
+    <key name="reader-font-family" type="s">
+      <default>'sans'</default>
+      <summary>Scripture font family</summary>
+      <description>One of sans or serif.</description>
+    </key>
     <key name="sidebar-visible" type="b">
       <default>true</default>
       <summary>Module sidebar visibility</summary>
