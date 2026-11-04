@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 14:20+0800\n"
+"POT-Creation-Date: 2026-11-04 14:35+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
-"Last-Translator: gsword contributors\n"
+"Last-Translator: yetist\n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -33,7 +33,7 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:114 src/window.c:992
+#: src/window.c:114 src/window.c:995
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
@@ -59,11 +59,11 @@ msgstr "注释已在研经面板中打开"
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:716 src/window.c:786
+#: src/window.c:716 src/window.c:789
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:725 src/window.c:1001 src/search-page.c:1401
+#: src/window.c:725 src/window.c:1004 src/search-page.c:1401
 msgid "Search"
 msgstr "搜索"
 
@@ -71,12 +71,12 @@ msgstr "搜索"
 msgid "Focus reference"
 msgstr "首选项"
 
-#: src/window.c:727 src/window.c:776 src/window.c:1008 src/library-page.c:2281
+#: src/window.c:727 src/window.c:779 src/window.c:1011 src/library-page.c:2281
 #: src/preferences-dialog.c:335
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:728 src/window.c:780 src/preferences-dialog.c:257
+#: src/window.c:728 src/window.c:783 src/preferences-dialog.c:257
 msgid "Preferences"
 msgstr "首选项"
 
@@ -97,53 +97,49 @@ msgstr "隐藏模块侧栏"
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:750
-msgid "GSword contributors"
-msgstr "GSword 贡献者"
-
-#: src/window.c:753
+#: src/window.c:755
 msgid ""
 "A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
 "module library."
 msgstr "基于 GTK4 的研经软件，底层使用 GObject 实现的 SWORD 模块库 libgsword。"
 
-#: src/window.c:771
+#: src/window.c:774
 msgid "Show study panel"
 msgstr "显示研经面板"
 
-#: src/window.c:772
+#: src/window.c:775
 msgid "Comparison"
 msgstr "经文对照"
 
-#: src/window.c:773
+#: src/window.c:776
 msgid "Teaching"
 msgstr "教学"
 
-#: src/window.c:787
+#: src/window.c:790
 msgid "About GSword"
 msgstr "关于 GSword"
 
-#: src/window.c:790
+#: src/window.c:793
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:1014
+#: src/window.c:1017
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:1044 src/preferences-dialog.c:262
+#: src/window.c:1047 src/preferences-dialog.c:262
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:1050
+#: src/window.c:1053
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:1064 src/notes-page.c:192 src/notes-page.c:1897
+#: src/window.c:1067 src/notes-page.c:192 src/notes-page.c:1897
 msgid "Notes"
 msgstr "笔记"
 
-#: src/window.c:1069
+#: src/window.c:1072
 msgid "Plan"
 msgstr "计划"
 
@@ -2322,9 +2318,6 @@ msgstr "第 %d 节超出范围"
 #: src/gsword-reference-parser.c:261
 msgid "Unknown versification"
 msgstr "未知章节体系"
-
-#~ msgid "A GObject implementation of the SWORD Bible study software."
-#~ msgstr "基于 GObject 的 SWORD 研经软件。"
 
 #~ msgid "Local library"
 #~ msgstr "本地模块库"

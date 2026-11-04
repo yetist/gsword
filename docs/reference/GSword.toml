@@ -2,7 +2,7 @@
 version = "0.1.0"
 description = "GObject/C SWORD module library used by the GSword Bible study application"
 license = "GPL-2.0-or-later"
-authors = "GSword contributors"
+authors = "yetist"
 dependencies = ["GObject-2.0", "Gio-2.0"]
 devhelp = true
 search_index = true
