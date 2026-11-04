@@ -1,10 +1,72 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect x="8" y="8" width="112" height="112" rx="24" fill="#3584e4"/>
-  <path d="M28 36c12-5 24-5 36 0v56c-12-5-24-5-36 0z" fill="#ffffff"/>
-  <path d="M100 36c-12-5-24-5-36 0v56c12-5 24-5 36 0z" fill="#ffffff"/>
-  <path d="M64 36v56" stroke="#3584e4" stroke-width="5" stroke-linecap="round"/>
-  <path d="M40 52h16M40 62h16M40 72h12M72 52h16M72 62h16M72 72h12"
-        stroke="#3584e4" stroke-width="4" stroke-linecap="round"/>
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> -->
+<svg
+   viewBox="0 0 1024 1024"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="gsword.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.74121094"
+     inkscape:cx="511.32543"
+     inkscape:cy="512"
+     inkscape:window-width="1920"
+     inkscape:window-height="973"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <g
+     stroke="#102F69"
+     stroke-width="18"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="g5">
+    <!-- Cross -->
+    <path
+       fill="#FFFFFF"
+       d="M476 175 Q476 160 491 160 H533 Q548 160 548 175 V315 H674 Q689 315 689 330 V371 Q689 386 674 386 H548 V607 H476 V386 H350 Q335 386 335 371 V330 Q335 315 350 315 H476 Z"
+       id="path1" />
+    <!-- Golden outer pages -->
+    <path
+       fill="#F2B83F"
+       d="M205 590 L143 613 Q126 619 118 638 L42 826 Q35 844 55 846 L481 850 L512 885 L543 850 L969 846 Q989 844 982 826 L906 638 Q898 619 881 613 L819 590 L844 758 L512 832 L180 758 Z"
+       id="path2" />
+    <!-- White open pages -->
+    <path
+       fill="#FFFFFF"
+       d="M235 555 Q337 532 435 578 Q493 605 512 660 Q531 605 589 578 Q687 532 789 555 L862 761 Q752 724 650 745 Q557 764 512 836 Q467 764 374 745 Q272 724 162 761 Z"
+       id="path3" />
+    <!-- Page center seam -->
+    <path
+       fill="none"
+       stroke="#102F69"
+       stroke-width="12"
+       d="M512 660 V836"
+       id="path4" />
+    <!-- Lower page accent -->
+    <path
+       fill="none"
+       stroke="#F2B83F"
+       stroke-width="22"
+       d="M84 821 Q300 758 431 800 Q485 817 512 856 Q539 817 593 800 Q724 758 940 821"
+       id="path5" />
+  </g>
 </svg>

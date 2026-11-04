@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> -->
 <component type="desktop-application">
   <id>org.gsword.GSword</id>
   <metadata_license>CC0-1.0</metadata_license>

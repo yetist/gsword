@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+/* SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> */
 #include <gsword/gsw-error.h>
 #include "gsw-tar.h"
 #include <gsword/gsw-error.h>

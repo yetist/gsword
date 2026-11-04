@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com>
 """Import selected SWORD locales into libgsword's native locale format.
 
 The generated .conf files are normal GKeyFile documents:
