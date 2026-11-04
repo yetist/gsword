@@ -62,6 +62,7 @@ test_manager_config(void)
 {
     GError *error = NULL;
     gchar *private_path = g_dir_make_tmp("gsword-install-XXXXXX", &error);
+    gchar *cache_path = g_dir_make_tmp("gsword-install-cache-XXXXXX", &error);
     gchar *conf_path;
     GswInstallManager *manager;
     GswInstallSource *source;
@@ -69,6 +70,7 @@ test_manager_config(void)
 
     g_assert_no_error(error);
     g_assert_nonnull(private_path);
+    g_assert_nonnull(cache_path);
 
     conf_path = g_build_filename(private_path, "InstallMgr.conf", NULL);
     g_assert_true(g_file_set_contents(conf_path,
@@ -80,9 +82,13 @@ test_manager_config(void)
         "HTTPSource=Secure|secure.example.org|/sword|||uid2\n",
         -1, NULL));
 
-    manager = gsw_install_manager_new(private_path, &error);
+    manager = gsw_install_manager_new(private_path, cache_path, &error);
     g_assert_no_error(error);
     g_assert_nonnull(manager);
+    g_assert_cmpstr(gsw_install_manager_get_config_dir(manager), ==,
+                    private_path);
+    g_assert_cmpstr(gsw_install_manager_get_cache_dir(manager), ==,
+                    cache_path);
     g_assert_cmpuint(gsw_install_manager_get_timeout(manager), ==, 12345);
     g_assert_true(gsw_install_manager_get_passive_ftp(manager));
 
@@ -116,7 +122,7 @@ test_manager_config(void)
     g_assert_no_error(error);
     g_object_unref(manager);
 
-    manager = gsw_install_manager_new(private_path, &error);
+    manager = gsw_install_manager_new(private_path, cache_path, &error);
     g_assert_no_error(error);
     g_assert_nonnull(manager);
     g_assert_nonnull(gsw_install_manager_lookup_source(manager, "Added"));
@@ -129,7 +135,9 @@ test_manager_config(void)
     g_ptr_array_unref(sources);
     g_object_unref(manager);
 
+    gsw_dir_remove_recursive(cache_path, NULL);
     gsw_dir_remove_recursive(private_path, NULL);
+    g_free(cache_path);
     g_free(conf_path);
     g_free(private_path);
 }

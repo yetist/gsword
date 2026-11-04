@@ -265,6 +265,28 @@ const gchar      *gsw_search_result_get_preview(GswSearchResult *self);
 const gchar      *gsw_search_result_get_snippet(GswSearchResult *self);
 
 /**
+ * gsw_module_set_search_index_path:
+ * @self: a #GswModule
+ * @path: (nullable): explicit index file path, or %NULL to use the module data
+ *   directory
+ *
+ * Sets where the persistent search index is stored. Applications should use an
+ * XDG cache path for writable indexes, including for read-only system modules.
+ */
+void             gsw_module_set_search_index_path(GswModule *self,
+                                                  const gchar *path);
+/**
+ * gsw_module_get_search_index_path:
+ * @self: a #GswModule
+ *
+ * Gets the explicitly configured search index path. A %NULL return means the
+ * index is stored in the module data directory.
+ *
+ * Returns: (transfer none) (nullable): the explicit index path
+ */
+const gchar     *gsw_module_get_search_index_path(GswModule *self);
+
+/**
  * gsw_module_has_search_index:
  * @self: a #GswModule
  *
@@ -282,8 +304,9 @@ gboolean         gsw_module_has_search_index(GswModule *self);
  * @error: return location for a #GError, or %NULL
  *
  * Builds or rebuilds a persistent inverted index for @self. The index is
- * stored in the module data directory and is replaced atomically. The module's
- * current key is preserved.
+ * stored at the path configured by gsw_module_set_search_index_path(), or in
+ * the module data directory when no explicit path is set. It is replaced
+ * atomically and the module's current key is preserved.
  *
  * Returns: %TRUE on success, %FALSE otherwise
  */

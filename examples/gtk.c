@@ -634,16 +634,17 @@ static void
 on_activate(GtkApplication *application, gpointer user_data)
 {
     GError *error = NULL;
-    const gchar *prefix = g_getenv("GSWORD_PREFIX");
+    const gchar *prefix = g_getenv("GSWORD_LIBRARY");
     gchar *default_prefix = NULL;
-    gchar *installmgr_path;
+    gchar *installmgr_config;
+    gchar *installmgr_cache;
     GtkWidget *notebook;
     GtkWidget *box;
     (void)user_data;
 
     if (prefix == NULL || *prefix == '\0') {
         default_prefix = g_build_filename(g_get_user_data_dir(), "gsword",
-                                          NULL);
+                                          "library", NULL);
         prefix = default_prefix;
     }
     app.manager = gsw_manager_new_for_path(prefix, &error);
@@ -656,10 +657,14 @@ on_activate(GtkApplication *application, gpointer user_data)
     }
     g_free(default_prefix);
 
-    installmgr_path = g_build_filename(g_get_user_data_dir(), "gsword",
-                                       "installmgr", NULL);
-    app.installer = gsw_install_manager_new(installmgr_path, &error);
-    g_free(installmgr_path);
+    installmgr_config = g_build_filename(g_get_user_config_dir(), "gsword",
+                                         "installmgr", NULL);
+    installmgr_cache = g_build_filename(g_get_user_cache_dir(), "gsword",
+                                        "installmgr", NULL);
+    app.installer = gsw_install_manager_new(installmgr_config,
+                                            installmgr_cache, &error);
+    g_free(installmgr_cache);
+    g_free(installmgr_config);
     if (app.installer == NULL) {
         g_printerr("Installer unavailable: %s\n", error->message);
         g_clear_error(&error);

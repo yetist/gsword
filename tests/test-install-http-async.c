@@ -67,7 +67,7 @@ main(int argc, char **argv)
         return 2;
     }
 
-    state.installer = gsw_install_manager_new(argv[1], &error);
+    state.installer = gsw_install_manager_new(argv[1], NULL, &error);
     if (state.installer == NULL) {
         g_printerr("install manager: %s\n", error->message);
         return 1;

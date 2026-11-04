@@ -8,9 +8,43 @@
 
 #include <glib/gi18n.h>
 
+#include <string.h>
+
 static const gchar *module_status_text(guint status);
 static gchar *language_display_name(const gchar *code);
 static GswModuleType filter_type_for_info(GswModuleInfo *info);
+
+static gboolean
+path_is_within_prefix(const gchar *prefix, const gchar *path)
+{
+    gchar *canonical_prefix;
+    gchar *canonical_path;
+    gsize prefix_len;
+    gboolean inside;
+
+    if (prefix == NULL || *prefix == '\0' || path == NULL || *path == '\0')
+        return FALSE;
+    canonical_prefix = g_canonicalize_filename(prefix, NULL);
+    canonical_path = g_canonicalize_filename(path, NULL);
+    prefix_len = strlen(canonical_prefix);
+    inside = g_strcmp0(canonical_path, canonical_prefix) == 0 ||
+             (g_str_has_prefix(canonical_path, canonical_prefix) &&
+              canonical_path[prefix_len] == G_DIR_SEPARATOR);
+    g_free(canonical_path);
+    g_free(canonical_prefix);
+    return inside;
+}
+
+static gboolean
+module_is_writable(GswManager *manager, GswModuleInfo *info)
+{
+    const gchar *prefix = gsw_manager_get_prefix_path(manager);
+
+    return path_is_within_prefix(prefix,
+                                 gsw_module_info_get_config_file(info)) ||
+           path_is_within_prefix(prefix,
+                                 gsw_module_info_get_absolute_data_path(info));
+}
 
 typedef struct _GswordModuleRow {
     GObject parent_instance;
@@ -847,6 +881,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     gchar *size;
     gchar *meta;
     gchar *warning = NULL;
+    gboolean writable;
     GString *technical;
     GString *license_text;
 
@@ -855,6 +890,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     info = gsw_manager_lookup_module_info(priv->manager, name);
     if (info == NULL)
         return;
+    writable = module_is_writable(priv->manager, info);
     description = gsw_module_info_get_description(info);
     license = gsw_module_info_get_distribution_license(info);
     copyright = gsw_module_info_get_copyright(info);
@@ -866,7 +902,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
         gsword_window_module_type_display(info), language,
         gsw_module_info_get_version(info) != NULL
         ? gsw_module_info_get_version(info) : "?",
-        size, _("Local library"),
+        size, writable ? _("User library") : _("System library"),
         license != NULL && *license != '\0' ? license : _("Not specified"));
 
     gtk_label_set_text(priv->remote_title, name);
@@ -933,7 +969,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), TRUE);
 
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), TRUE);
+    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), writable);
     if (priv->unlock_button != NULL) {
         guint status = gsw_install_manager_get_module_status(priv->manager,
                                                              info);
@@ -2379,10 +2415,15 @@ gsword_library_page_new(GswordWindow *self)
     g_object_set_data(G_OBJECT(self), "gsword-library-page", priv);
     {
         GError *error = NULL;
-        gchar *data_dir = gsword_app_data_dir();
-        gchar *installmgr_dir = g_build_filename(data_dir, "installmgr", NULL);
+        gchar *config_dir = gsword_app_config_dir();
+        gchar *cache_dir = gsword_app_cache_dir();
+        gchar *installmgr_config = g_build_filename(config_dir, "installmgr",
+                                                    NULL);
+        gchar *installmgr_cache = g_build_filename(cache_dir, "installmgr",
+                                                   NULL);
 
-        priv->installer = gsw_install_manager_new(installmgr_dir, &error);
+        priv->installer = gsw_install_manager_new(installmgr_config,
+                                                  installmgr_cache, &error);
         if (priv->installer == NULL) {
             g_printerr("gsword: cannot open install manager: %s\n",
                        error != NULL ? error->message : "unknown error");
@@ -2400,8 +2441,10 @@ gsword_library_page_new(GswordWindow *self)
             gsw_install_manager_set_user_disclaimer_confirmed(
                 priv->installer, TRUE);
         }
-        g_free(installmgr_dir);
-        g_free(data_dir);
+        g_free(installmgr_cache);
+        g_free(installmgr_config);
+        g_free(cache_dir);
+        g_free(config_dir);
     }
     if (priv->installer != NULL && priv->settings != NULL) {
         gchar *proxy_url = g_settings_get_string(priv->settings, "proxy-url");

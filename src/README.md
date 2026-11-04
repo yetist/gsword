@@ -74,9 +74,10 @@ Current implementation:
   tag-filtered note queries and verse-list membership helpers
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
   memory review queue, and teaching notes in the same application database
-- `app-paths.c` / `app-paths.h`: unified application data directory
-  (`~/.local/share/gsword`) and one-time migration from the old
-  `~/.local/share/gsword-app` location
+- `app-paths.c` / `app-paths.h`: XDG-based application paths:
+  `~/.local/share/gsword` for the database, `~/.local/share/gsword/library`
+  for the writable SWORD module library, `~/.config/gsword` for installer
+  configuration, and `~/.cache/gsword` for derived data
 - `org.gsword.GSword.gschema.xml`: last module/key, active workspace page,
   module sidebar visibility, comparison layout, columns and scroll sync, legacy
   parallel template modules, active plan, devotion module, study panel state,

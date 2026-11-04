@@ -60,6 +60,23 @@
 - 引用选择器拆分出独立的 `gsword-reference-parser.c`，路径栏和选择器 popover
   由 reader 和对照栏共享
 
+## 用户数据目录
+
+`gsword` 使用 XDG 目录，并按职责分离模块库、配置和缓存：
+
+```text
+~/.local/share/gsword/library/   可写的 SWORD 模块库
+~/.local/share/gsword/app.db     SQLite：笔记、计划、背经、教学讲义
+~/.local/share/gsword/exports/   默认导出目录
+~/.config/gsword/installmgr/     InstallMgr.conf
+~/.cache/gsword/installmgr/      下载缓存和远端模块列表
+~/.cache/gsword/search/          搜索索引
+```
+
+系统模块库（例如 `/usr/share/sword`）以只读方式叠加，用户库优先。
+`~/.sword` 不再隐式使用；如需指定旧库，使用 `--library PATH` 或
+`GSWORD_LIBRARY=PATH`。
+
 ## 快速开始
 
 ```sh
@@ -68,32 +85,32 @@ meson compile -C build
 meson test -C build
 
 # 列出本地模块
-./build/examples/gsword-list-modules ~/.sword
+./build/examples/gsword-list-modules ~/.local/share/gsword/library
 
 # 读取经文
-./build/examples/gsword-lookup ~/.sword KJV "John 3:16"
-./build/examples/gsword-lookup ~/.sword KJV "启示录 1:1" zh-Hans
+./build/examples/gsword-lookup ~/.local/share/gsword/library KJV "John 3:16"
+./build/examples/gsword-lookup ~/.local/share/gsword/library KJV "启示录 1:1" zh-Hans
 
 # 模块信息、章节、字典、通用书
-./build/examples/gsword-module-info ~/.sword KJV
-./build/examples/gsword-chapter ~/.sword KJV "John 3"
-./build/examples/gsword-dict-lookup ~/.sword StrongsGreek G26
-./build/examples/gsword-genbook-walk ~/.sword BookChapter 1
-./build/examples/gsword-render-options ~/.sword KJV "John 3:16" "Strong's Numbers=On"
-./build/examples/gsword-html ~/.sword KJV "John 3:16" verse > verse.html
-./build/examples/gsword-html ~/.sword KJV "John 3" chapter > chapter.html
-./build/examples/gsword-html ~/.sword KJV "John" book > john.html
-./build/examples/gsword-locale ~/.sword zh-Hans KJV "来 4:1"
-./build/examples/gsword-search ~/.sword KJV "God so loved" phrase
-./build/examples/gsword-search ~/.sword KJV "God.*world" regex
-./build/examples/gsword-index-module ~/.sword KJV build
-./build/examples/gsword-index-module ~/.sword KJV status
-./build/examples/gsword-parallel ~/.sword KJV "John 3:16" "Rom 8:1"
+./build/examples/gsword-module-info ~/.local/share/gsword/library KJV
+./build/examples/gsword-chapter ~/.local/share/gsword/library KJV "John 3"
+./build/examples/gsword-dict-lookup ~/.local/share/gsword/library StrongsGreek G26
+./build/examples/gsword-genbook-walk ~/.local/share/gsword/library BookChapter 1
+./build/examples/gsword-render-options ~/.local/share/gsword/library KJV "John 3:16" "Strong's Numbers=On"
+./build/examples/gsword-html ~/.local/share/gsword/library KJV "John 3:16" verse > verse.html
+./build/examples/gsword-html ~/.local/share/gsword/library KJV "John 3" chapter > chapter.html
+./build/examples/gsword-html ~/.local/share/gsword/library KJV "John" book > john.html
+./build/examples/gsword-locale ~/.local/share/gsword/library zh-Hans KJV "来 4:1"
+./build/examples/gsword-search ~/.local/share/gsword/library KJV "God so loved" phrase
+./build/examples/gsword-search ~/.local/share/gsword/library KJV "God.*world" regex
+./build/examples/gsword-index-module ~/.local/share/gsword/library KJV build
+./build/examples/gsword-index-module ~/.local/share/gsword/library KJV status
+./build/examples/gsword-parallel ~/.local/share/gsword/library KJV "John 3:16" "Rom 8:1"
 
 # GTK4 桌面应用
-GSWORD_PREFIX=~/.sword ./build/src/gsword
+GSWORD_LIBRARY=~/.local/share/gsword/library ./build/src/gsword
 # 或指定模块库
-./build/src/gsword --library ~/.sword
+./build/src/gsword --library ~/.local/share/gsword/library
 
 # 引用选择器 demo 和测试
 ./build/tests/gsword-reference-chooser-demo en KJV "Gen 1:1"
@@ -101,22 +118,22 @@ meson test -C build reference-chooser
 
 # 开发时使用构建目录中的中文界面翻译
 LANG=zh_CN.UTF-8 GSW_LOCALEDIR=$PWD/build/po \
-  ./build/src/gsword --library ~/.sword
+  ./build/src/gsword --library ~/.local/share/gsword/library
 
 # 安装后，应用文本翻译位于 ${prefix}/share/locale
 meson install -C build
 
 # 安装（需要预先配置 InstallMgr.conf）
-./build/examples/gsword-install-sources ~/.sword/InstallMgr
-./build/examples/gsword-install-module ~/.sword ~/.sword/InstallMgr CrossWire KJV
-./build/examples/gsword-async-install ~/.sword ~/.sword/InstallMgr CrossWire KJV
+./build/examples/gsword-install-sources ~/.config/gsword/installmgr
+./build/examples/gsword-install-module ~/.local/share/gsword/library ~/.config/gsword/installmgr CrossWire KJV
+./build/examples/gsword-async-install ~/.local/share/gsword/library ~/.config/gsword/installmgr CrossWire KJV
 ```
 
 开发构建尚未安装 locale 数据时，可以指向源码数据目录：
 
 ```sh
 GSW_LOCALE_PATH=$PWD/data/locales.d \
-  ./build/examples/gsword-lookup ~/.sword KJV "启示录 1:1" zh-Hans
+  ./build/examples/gsword-lookup ~/.local/share/gsword/library KJV "启示录 1:1" zh-Hans
 ```
 
 使用 gi-docgen 生成 API 文档：

@@ -18,7 +18,7 @@ main(int argc, char **argv)
         return 2;
     }
 
-    installer = gsw_install_manager_new(argv[1], &error);
+    installer = gsw_install_manager_new(argv[1], NULL, &error);
     if (installer == NULL) {
         g_printerr("install manager: %s\n", error->message);
         return 1;

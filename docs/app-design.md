@@ -563,18 +563,31 @@ About 使用独立折叠区，避免技术信息挤占主要阅读空间。
 ## 10. 状态与数据存储
 
 ```text
-~/.local/share/gsword/          模块库和应用私有状态
-  ├── mods.d/                   模块配置
-  ├── modules/                  模块数据
+~/.local/share/gsword/
+  ├── library/                  可写的 SWORD 模块库
+  │   ├── mods.d/               模块配置
+  │   └── modules/              模块数据
   ├── app.db                    SQLite：笔记、计划、背经、教学讲义
-  ├── installmgr/               安装源和下载缓存
-  ├── exports/                  导出文件
-  └── cache/                    HTML、搜索结果缓存
+  └── exports/                  导出文件
+
+~/.config/gsword/
+  └── installmgr/
+      └── InstallMgr.conf       安装源、代理等配置
+
+~/.cache/gsword/
+  ├── installmgr/               下载缓存和远端模块列表
+  └── search/                   搜索索引
 ```
 
-首次启动时会自动把旧版 `~/.local/share/gsword-app` 中的 `app.db` 和
-`installmgr/` 迁移到 `~/.local/share/gsword`；新目录已存在时保留新文件，
-缺失的文件从旧目录补齐。
+系统模块库只读加载：
+
+```text
+/usr/share/sword
+/usr/local/share/sword
+```
+
+用户库优先于系统库；安装、更新和删除只作用于用户库。`~/.sword` 不再作为
+默认路径，需要时通过 `--library` 或 `GSWORD_LIBRARY` 显式指定。
 
 原则：
 
@@ -582,6 +595,7 @@ About 使用独立折叠区，避免技术信息挤占主要阅读空间。
 - 笔记优先写入 SWORD 兼容模块；
 - 标签、工作区、界面状态属于应用私有数据；
 - 设置使用 GSettings；
+- 配置、缓存、用户数据按 XDG 目录分离；
 - 写操作异步执行，避免阻塞 UI。
 
 ---

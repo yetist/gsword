@@ -32,6 +32,12 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('manager', test_manager)
 
+  test_app_paths = executable('test-app-paths',
+    ['test-app-paths.c', '../src/app-paths.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, glib_dep])
+  test('app-paths', test_app_paths)
+
   test_install_source = executable('test-install-source', 'test-install-source.c',
     dependencies: [gsword_dep, glib_dep])
   test('install-source', test_install_source)

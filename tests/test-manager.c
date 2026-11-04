@@ -122,10 +122,104 @@ test_manager(void)
     g_free(empty);
 }
 
+static void
+test_manager_fallback(void)
+{
+    GError *error = NULL;
+    gchar *user = g_dir_make_tmp("gsword-user-library-XXXXXX", &error);
+    gchar *system = g_dir_make_tmp("gsword-system-library-XXXXXX", &error);
+    gchar *user_conf;
+    gchar *system_conf;
+    gchar *system_only_conf;
+    GswManager *manager;
+    GswModuleInfo *info;
+    GswInstallManager *installer;
+    GPtrArray *infos;
+
+    g_assert_no_error(error);
+    g_assert_nonnull(user);
+    g_assert_nonnull(system);
+
+    user_conf = write_conf(user, "kjv.conf",
+        "[KJV]\n"
+        "Description=User KJV\n"
+        "DataPath=./modules/texts/ztext/kjv/\n"
+        "ModDrv=zText\n");
+    {
+        gchar *user_only_conf = write_conf(user, "user-only.conf",
+            "[UserOnly]\n"
+            "Description=User only\n"
+            "DataPath=./modules/texts/rawtext/user/\n"
+            "ModDrv=RawText\n");
+
+        g_free(user_only_conf);
+    }
+    system_conf = write_conf(system, "kjv.conf",
+        "[KJV]\n"
+        "Description=System KJV\n"
+        "DataPath=./modules/texts/ztext/kjv/\n"
+        "ModDrv=zText\n");
+    system_only_conf = write_conf(system, "system-only.conf",
+        "[SystemOnly]\n"
+        "Description=System only\n"
+        "DataPath=./modules/texts/rawtext/system/\n"
+        "ModDrv=RawText\n");
+
+    manager = gsw_manager_new_for_path(user, &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(manager);
+    gsw_manager_add_fallback_path(manager, system);
+    g_assert_true(gsw_manager_reload(manager, &error));
+    g_assert_no_error(error);
+
+    infos = gsw_manager_get_module_infos(manager);
+    g_assert_cmpuint(infos->len, ==, 3);
+    g_assert_cmpstr(gsw_module_info_get_config_file(
+                        g_ptr_array_index(infos, 0)), ==, user_conf);
+    g_ptr_array_unref(infos);
+
+    info = gsw_manager_lookup_module_info(manager, "KJV");
+    g_assert_nonnull(info);
+    g_assert_cmpstr(gsw_module_info_get_description(info), ==, "User KJV");
+    g_assert_cmpstr(gsw_module_info_get_config_file(info), ==, user_conf);
+
+    info = gsw_manager_lookup_module_info(manager, "SystemOnly");
+    g_assert_nonnull(info);
+    g_assert_cmpstr(gsw_module_info_get_config_file(info), ==,
+                    system_only_conf);
+    {
+        gchar *expected = g_build_filename(
+            system, "modules", "texts", "rawtext", "system", NULL);
+
+        g_assert_cmpstr(gsw_module_info_get_absolute_data_path(info), ==,
+                        expected);
+        g_free(expected);
+    }
+
+    installer = gsw_install_manager_new(user, NULL, &error);
+    g_assert_no_error(error);
+    g_assert_nonnull(installer);
+    g_assert_false(gsw_install_manager_remove_module(installer, manager,
+                                                     "SystemOnly", &error));
+    g_assert_error(error, GSW_ERROR, GSW_ERROR_PERMISSION);
+    g_clear_error(&error);
+    g_object_unref(installer);
+
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(user, NULL);
+    gsw_dir_remove_recursive(system, NULL);
+    g_free(system_only_conf);
+    g_free(system_conf);
+    g_free(user_conf);
+    g_free(system);
+    g_free(user);
+}
+
 int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/manager/load", test_manager);
+    g_test_add_func("/manager/fallback", test_manager_fallback);
     return g_test_run();
 }

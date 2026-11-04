@@ -555,6 +555,7 @@ gboolean gsw_manager_load(GswManager *self, GError **error);
 gboolean gsw_manager_reload(GswManager *self, GError **error);
 
 void gsw_manager_add_augment_path(GswManager *self, const gchar *path);
+void gsw_manager_add_fallback_path(GswManager *self, const gchar *path);
 const gchar *gsw_manager_get_prefix_path(GswManager *self);
 const gchar *gsw_manager_get_config_path(GswManager *self);
 
@@ -570,14 +571,17 @@ gboolean       gsw_manager_remove_module_files(GswManager *self,
                                                GError **error);
 ```
 
-发现顺序（与 SWORD 兼容，但简化）：
+发现顺序（系统库，不包含用户私有库）：
 
 1. 显式 `prefix_path` / `config_path`。
 2. 当前目录 `mods.conf` 或 `mods.d/`。
 3. `SWORD_PATH` 环境变量。
-4. 当前目录 `sword.conf`、`/etc/sword.conf`、`~/.sword/sword.conf` 中的 `[Install] DataPath` 和 `AugmentPath`。
-5. `~/.sword/mods.d`、`~/sword/mods.d`。
-6. 编译期默认前缀（如 `/usr/share/sword`）。
+4. 当前目录 `sword.conf`、`/etc/sword.conf` 中的 `[Install] DataPath` 和 `AugmentPath`。
+5. XDG 系统数据目录下的 `sword/`，例如 `/usr/local/share/sword`、`/usr/share/sword`。
+
+`~/.sword` 不再隐式发现。gsword 应用使用独立的
+`~/.local/share/gsword/library`，并把它作为主库，系统库通过
+`gsw_manager_add_fallback_path()` 以只读方式叠加。
 
 `GswManager::load()` 只做元数据合并和索引；不实例化后端。`gsw_manager_get_module()` 第一次调用时才创建 `GswModule` 并打开后端。
 
@@ -952,10 +956,13 @@ gboolean       gsw_install_source_is_refreshed(GswInstallSource *self);
 G_DECLARE_FINAL_TYPE(GswInstallManager, gsw_install_manager, GSW,
                      INSTALL_MANAGER, GObject)
 
-GswInstallManager *gsw_install_manager_new(const gchar *private_path,
+GswInstallManager *gsw_install_manager_new(const gchar *config_dir,
+                                           const gchar *cache_dir,
                                            GError **error);
 
-/* 构造时自动读取 <private_path>/InstallMgr.conf；load_config() 用于重新读取。 */
+/* 构造时读取 <config_dir>/InstallMgr.conf；
+ * 远端模块列表和下载缓存写入 <cache_dir>；
+ * cache_dir 为 NULL 时与 config_dir 相同。load_config() 用于重新读取。 */
 
 void gsw_install_manager_set_status_reporter(GswInstallManager *self,
                                              GswStatusReporter *reporter);
@@ -1042,9 +1049,11 @@ g_print("%s\n", gsw_module_get_text(mod, &error));
 
 ```c
 g_autoptr(GError) error = NULL;
-g_autoptr(GswManager) mgr = gsw_manager_new_for_path("/home/me/.sword", &error);
-g_autoptr(GswInstallManager) im =
-    gsw_install_manager_new("/home/me/.sword/InstallMgr", &error);
+g_autoptr(GswManager) mgr = gsw_manager_new_for_path(
+    "/home/me/.local/share/gsword/library", &error);
+g_autoptr(GswInstallManager) im = gsw_install_manager_new(
+    "/home/me/.config/gsword/installmgr",
+    "/home/me/.cache/gsword/installmgr", &error);
 
 g_autoptr(GswStatusReporter) reporter = gsw_status_reporter_new();
 g_signal_connect(reporter, "progress",
@@ -1077,16 +1086,18 @@ gsw_install_manager_install_module(im, mgr, src, "KJV", &error);
 ```
 GswManager::load()
   1. 解析 prefix/config path（见 5.4）
-  2. 读取 mods.d/*.conf -> 合并 GswConfig
-  3. 读取 sword.conf 的 AugmentPath，按顺序 augment
-  4. 遍历 sections，构造 GswModuleInfo，加入 name -> info 索引
-  5. 记录每个 section 来自哪个 conf 文件（安装/卸载需要）
-  6. 不打开数据文件
+  2. 加载 fallback paths（系统只读库）
+  3. 读取主库 mods.d/*.conf -> 合并 GswConfig
+  4. 读取 sword.conf 的 AugmentPath，按顺序 augment
+  5. 遍历 sections，构造 GswModuleInfo，加入 name -> info 索引
+  6. 记录每个 section 来自哪个 conf 文件（安装/卸载需要）
+  7. 不打开数据文件
 ```
 
 冲突策略：
 
-- 同名 section：后加载的覆盖先加载（与 SWORD augment 行为一致）。
+- 主库优先于 fallback 路径；用户模块覆盖同名系统模块。
+- AugmentPath 后加载的覆盖先加载（与 SWORD augment 行为一致）。
 - 多模块模式下可保留多个副本，v1 不做，后加载覆盖。
 - `reload()` 会使已缓存的 `GswModule` 后端失效：关闭文件句柄，重新构造元数据；调用者持有的 `GswModuleInfo` 快照仍有效，但 `GswModule` 的当前键/缓存条目不再保证有效。
 
@@ -1569,7 +1580,8 @@ gnome.generate_vapi('gsword',
 
 ### 12.3 兼容性测试
 
-- 使用真实的 `~/.sword` 模块（KJV、ChiUns2、GerAugustinus）做可选集成测试。
+- 使用真实 SWORD 模块（KJV、ChiUns2、GerAugustinus）做可选集成测试；
+  测试库通过 `GSWORD_LIBRARY` 指向临时或现有模块目录。
 - 与上游 `diatheke` 输出对比（如果环境有 `libsword`）：
   - 经文文本、键 snap、条目大小。
 - 生成 golden 文件并纳入仓库，避免 CI 依赖 libsword。
@@ -1595,7 +1607,7 @@ gnome.generate_vapi('gsword',
 - `GswConfig`、`GswModuleInfo`、`GswManager`（metadata-only）。
 - 本地 `mods.d` 发现、augment、模块列表。
 - 单元测试覆盖配置解析和模块元数据。
-- 验收：能列出本机 `~/.sword` 所有模块的名称/类型/版本，不打开数据文件。
+- 验收：能列出指定模块库中所有模块的名称/类型/版本，不打开数据文件。
 
 ### M2：网络与安装
 

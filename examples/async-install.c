@@ -105,7 +105,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    state.installer = gsw_install_manager_new(argv[2], &error);
+    state.installer = gsw_install_manager_new(argv[2], NULL, &error);
     if (state.installer == NULL) {
         fprintf(stderr, "cannot open installer: %s\n", error->message);
         g_error_free(error);

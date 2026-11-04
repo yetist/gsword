@@ -357,6 +357,8 @@ test_search_index(void)
 {
     GError *error = NULL;
     gchar *prefix = g_dir_make_tmp("gsword-search-index-XXXXXX", &error);
+    gchar *cache_dir = g_dir_make_tmp("gsword-search-cache-XXXXXX", &error);
+    gchar *cache_index;
     GswManager *manager;
     GswModule *module;
     GswSearchOptions *options;
@@ -413,6 +415,21 @@ test_search_index(void)
     g_assert_no_error(error);
     g_assert_false(gsw_module_has_search_index(module));
 
+    cache_index = g_build_filename(cache_dir, "tiny-search.idx", NULL);
+    gsw_module_set_search_index_path(module, cache_index);
+    g_assert_cmpstr(gsw_module_get_search_index_path(module), ==,
+                    cache_index);
+    g_assert_true(gsw_module_build_search_index(module, NULL, NULL, NULL,
+                                                &error));
+    g_assert_no_error(error);
+    g_assert_true(g_file_test(cache_index, G_FILE_TEST_IS_REGULAR));
+    g_assert_true(gsw_module_has_search_index(module));
+    g_assert_true(gsw_module_delete_search_index(module, &error));
+    g_assert_no_error(error);
+    g_assert_false(g_file_test(cache_index, G_FILE_TEST_IS_REGULAR));
+    gsw_module_set_search_index_path(module, NULL);
+    g_assert_null(gsw_module_get_search_index_path(module));
+
     {
         GCancellable *cancellable = g_cancellable_new();
 
@@ -427,7 +444,10 @@ test_search_index(void)
 
     gsw_search_options_unref(options);
     g_object_unref(manager);
+    gsw_dir_remove_recursive(cache_dir, NULL);
     gsw_dir_remove_recursive(prefix, NULL);
+    g_free(cache_index);
+    g_free(cache_dir);
     g_free(prefix);
 }
 
