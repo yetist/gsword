@@ -42,6 +42,7 @@ struct _GswordReaderPage {
     gint paragraph_spacing;
     gint reading_width;
     guint margin_idle;
+    guint scroll_idle;
 };
 
 static void apply_active_verse(GswordReaderPage *page);
@@ -53,6 +54,7 @@ static void select_verse_range(GswordReaderPage *page, gint anchor,
 static void select_verse(GswordReaderPage *page, gint verse);
 static void update_reference_status(GswordReaderPage *page);
 static void record_current_history(GswordReaderPage *page);
+static void schedule_scroll_to_active(GswordReaderPage *page);
 
 static void
 set_text(GswordReaderPage *page, const gchar *text)
@@ -112,6 +114,7 @@ on_reader_mapped(GtkWidget *widget, gpointer user_data)
     (void)widget;
     update_reading_margins(user_data);
     schedule_reading_margins(user_data);
+    schedule_scroll_to_active(user_data);
 }
 
 static void
@@ -356,6 +359,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
 
     apply_highlights(page);
     apply_active_verse(page);
+    schedule_scroll_to_active(page);
     gsword_study_panel_refresh(page->study_panel);
     gsword_window_refresh_search_index(self);
     sync_reference_chooser(page);
@@ -679,6 +683,82 @@ apply_active_verse(GswordReaderPage *page)
         }
     }
     apply_range(page);
+}
+
+static void
+scroll_to_active_verse(GswordReaderPage *page)
+{
+    GtkTextBuffer *buffer;
+    gint line_count;
+    gint line;
+    gint active;
+
+    if (page == NULL || page->view == NULL)
+        return;
+    active = page->active_verse;
+    if (active < 1)
+        return;
+    buffer = gtk_text_view_get_buffer(page->view);
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gint verse;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        verse = gsword_window_verse_number_from_line(text);
+        g_free(text);
+        if (verse == active) {
+            GtkWidget *scrolled = gtk_widget_get_ancestor(
+                GTK_WIDGET(page->view), GTK_TYPE_SCROLLED_WINDOW);
+            GtkAdjustment *adjustment = scrolled != NULL
+                ? gtk_scrolled_window_get_vadjustment(
+                      GTK_SCROLLED_WINDOW(scrolled)) : NULL;
+            gint y = 0;
+            gint height = 0;
+
+            gtk_text_view_get_line_yrange(page->view, &start, &y, &height);
+            if (adjustment != NULL) {
+                gdouble page_size = gtk_adjustment_get_page_size(adjustment);
+                gdouble target = y - page_size * 0.15;
+
+                gtk_adjustment_set_value(adjustment, MAX(target, 0.0));
+            } else {
+                gtk_text_view_scroll_to_iter(page->view, &start, 0.1, TRUE,
+                                             0.0, 0.15);
+            }
+            return;
+        }
+    }
+}
+
+static gboolean
+scroll_to_active_idle(gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    page->scroll_idle = 0;
+    scroll_to_active_verse(page);
+    return G_SOURCE_REMOVE;
+}
+
+static void
+schedule_scroll_to_active(GswordReaderPage *page)
+{
+    if (page->scroll_idle != 0)
+        g_source_remove(page->scroll_idle);
+    page->scroll_idle = g_timeout_add(200, scroll_to_active_idle, page);
+}
+
+void
+gsword_reader_page_scroll_to_active(GswordReaderPage *page)
+{
+    schedule_scroll_to_active(page);
 }
 
 static void
@@ -1350,6 +1430,8 @@ reader_page_free(gpointer data)
         return;
     if (page->margin_idle != 0)
         g_source_remove(page->margin_idle);
+    if (page->scroll_idle != 0)
+        g_source_remove(page->scroll_idle);
     gsword_reader_history_free(page->history);
     g_free(page);
 }

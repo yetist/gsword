@@ -17,6 +17,7 @@ GswordReaderPage *gsword_reader_page_new(GswordWindow *window);
 GtkWidget *gsword_reader_page_widget(GswordReaderPage *page);
 GswordStudyPanel *gsword_reader_page_get_study_panel(GswordReaderPage *page);
 void gsword_reader_page_refresh(GswordReaderPage *page);
+void gsword_reader_page_scroll_to_active(GswordReaderPage *page);
 gboolean gsword_reader_page_set_key_text(GswordReaderPage *page,
                                           const gchar *text);
 void gsword_reader_page_sync_context(GswordReaderPage *page);
