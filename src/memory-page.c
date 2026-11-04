@@ -43,7 +43,7 @@ masked_text(const gchar *text, gboolean first_letters)
             if (first_letters && !in_word)
                 g_string_append_unichar(result, c);
             else
-                g_string_append_c(result, '_');
+                g_string_append_c(result, '*');
             in_word = TRUE;
         } else {
             g_string_append_unichar(result, c);
