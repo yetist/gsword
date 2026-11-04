@@ -10,6 +10,7 @@
 #include "module-sidebar.h"
 #include "study-panel.h"
 #include "workspace-page.h"
+#include "workspace-pane.h"
 #include "reader-page.h"
 #include "preferences-dialog.h"
 #include "window-private.h"
@@ -267,6 +268,12 @@ gsword_window_open_reference(GswordWindow *self, const gchar *reference)
     if (!gsword_window_set_key_text(self, reference))
         return FALSE;
     gsword_window_show_page(self, "reader");
+    {
+        GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+        if (priv->reader_page != NULL)
+            gsword_reader_page_scroll_to_active(priv->reader_page);
+    }
     return TRUE;
 }
 
@@ -288,6 +295,12 @@ gsword_window_open_module_reference(GswordWindow *self,
     if (!gsword_window_set_key_text(self, reference))
         return FALSE;
     gsword_window_show_page(self, "reader");
+    {
+        GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+        if (priv->reader_page != NULL)
+            gsword_reader_page_scroll_to_active(priv->reader_page);
+    }
     return TRUE;
 }
 
@@ -393,11 +406,17 @@ gsword_window_open_compare_reference(GswordWindow *self,
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
+    GswordWorkspacePane *pane;
+
     if (priv->workspace_page == NULL || module == NULL || key == NULL)
         return;
-    if (gsword_workspace_page_add_pane(priv->workspace_page, module, key,
-                                       FALSE, TRUE) != NULL)
+    pane = gsword_workspace_page_add_pane(priv->workspace_page, module, key,
+                                          FALSE, TRUE);
+    if (pane != NULL) {
+        gsword_workspace_page_set_active_pane(priv->workspace_page, pane);
+        gsword_workspace_pane_scroll_to_active(pane);
         gsword_window_show_page(self, "panes");
+    }
 }
 
 void
