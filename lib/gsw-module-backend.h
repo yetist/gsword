@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-module-backend.h: internal module storage backend
  */

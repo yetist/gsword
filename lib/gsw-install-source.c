@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-install-source.c: a remote SWORD installation source
  */

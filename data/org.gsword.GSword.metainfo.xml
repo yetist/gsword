@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<component type="desktop-application">
+  <id>org.gsword.GSword</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+
+  <name>GSword</name>
+  <summary>Bible study application for GNOME</summary>
+
+  <description>
+    <p>
+      GSword is a GTK4 Bible study application for reading, comparing, and
+      studying Scripture with SWORD modules.
+    </p>
+    <p>
+      It provides a focused reading view, multi-version comparison, commentary
+      and original-language resources, personal notes and highlights, reading
+      plans, and a module library for installing and updating SWORD content.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">org.gsword.GSword.desktop</launchable>
+  <provides>
+    <binary>gsword</binary>
+  </provides>
+
+  <categories>
+    <category>Education</category>
+  </categories>
+
+  <keywords>
+    <keyword>Bible</keyword>
+    <keyword>Scripture</keyword>
+    <keyword>Study</keyword>
+    <keyword>Christian</keyword>
+    <keyword>SWORD</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/yetist/gsword</url>
+  <url type="bugtracker">https://github.com/yetist/gsword/issues</url>
+
+  <developer id="github.com.yetist">
+    <name>yetist</name>
+  </developer>
+
+  <content_rating type="oars-1.1"/>
+
+  <translation type="gettext">gsword</translation>
+
+  <releases>
+    <release version="0.1.0" date="2026-11-04">
+      <description>
+        <p>Initial preview release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-backend-utils.h: path helpers shared by storage backends
  */

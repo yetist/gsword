@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-tar.c: safe tar.gz extraction for mods.d.tar.gz
  *

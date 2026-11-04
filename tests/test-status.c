@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <gsword/gsword.h>
 
 static guint progress_count = 0;

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "plan-store.h"
 #include "app-paths.h"
 

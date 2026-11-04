@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #ifndef GSWORD_PLAN_STORE_H
 #define GSWORD_PLAN_STORE_H 1
 

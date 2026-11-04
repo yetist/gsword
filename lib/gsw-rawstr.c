@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-rawstr.c: RawLD/RawLD4 backend
  */

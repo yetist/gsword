@@ -2211,7 +2211,7 @@ msgstr "无法解析引用"
 
 #: src/gsword-reference-chooser.c:1468
 msgid "Edit reference (Ctrl+L)"
-msgstr ""
+msgstr "编辑引用（Ctrl+L）"
 
 #: src/gsword-reference-chooser.c:1484
 msgid "Previous book"

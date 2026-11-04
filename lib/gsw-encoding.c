@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-encoding.c: SCSU -> UTF-8 decoder
  *

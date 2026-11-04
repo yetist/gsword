@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "gsw-codec.h"
 #include <gsword/gsw-error.h>
 #include <string.h>

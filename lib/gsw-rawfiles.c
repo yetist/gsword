@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-rawfiles.c: RawFiles backend (one file per entry)
  */

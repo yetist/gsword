@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * study-panel.h: commentary, Strong's, cross-reference and lexicon panel
  */

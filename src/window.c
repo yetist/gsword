@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "window.h"
 #include "notes-store.h"
 #include "plan-store.h"
@@ -746,7 +747,7 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
     (void)action;
     (void)parameter;
     adw_about_dialog_set_application_name(about, "GSword");
-    adw_about_dialog_set_application_icon(about, "x-office-document-symbolic");
+    adw_about_dialog_set_application_icon(about, "org.gsword.GSword");
     adw_about_dialog_set_developer_name(about, "yetist");
     adw_about_dialog_set_developers(about,
         (const gchar *[]) { "yetist", NULL });

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-tree-key.c: TreeKeyIdx key for RawGenBook modules
  */

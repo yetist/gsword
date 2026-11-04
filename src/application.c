@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "application.h"
 #include "window.h"
 #include "app-locale.h"
@@ -52,6 +53,16 @@ gsword_application_startup(GApplication *application)
     };
 
     G_APPLICATION_CLASS(gsword_application_parent_class)->startup(application);
+
+#ifdef GSW_ICON_DIR
+    {
+        GdkDisplay *display = gdk_display_get_default();
+
+        if (display != NULL)
+            gtk_icon_theme_add_search_path(
+                gtk_icon_theme_get_for_display(display), GSW_ICON_DIR);
+    }
+#endif
 
     {
         gchar *locale = gsword_app_locale_name();

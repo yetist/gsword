@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-cipher.c: SWORD SWCipher (Sapphire II) compatible decryption
  *

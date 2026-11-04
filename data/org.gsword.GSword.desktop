@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+[Desktop Entry]
+Type=Application
+Name=GSword
+GenericName=Bible Study
+Comment=Read and study the Bible with SWORD modules
+Exec=gsword
+Icon=org.gsword.GSword
+Terminal=false
+Categories=Education;
+Keywords=Bible;Scripture;Study;Christian;SWORD;
+StartupNotify=true

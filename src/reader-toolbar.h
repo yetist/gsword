@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * reader-toolbar.h: reader toolbar for the gsword window
  */

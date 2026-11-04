@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 gidocgen = find_program('gi-docgen', required: true)
 
 gsword_doc = custom_target('gsword-doc',

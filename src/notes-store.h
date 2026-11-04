@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #ifndef GSWORD_NOTES_STORE_H
 #define GSWORD_NOTES_STORE_H 1
 

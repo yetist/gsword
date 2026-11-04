@@ -251,4 +251,5 @@ meson compile -C build-doc docs
 
 ## 许可证
 
-GPL-2.0-or-later，与上游 SWORD 及旧 `gsword` 保持一致。
+GPL-2.0-or-later，与上游 SWORD 及旧 `gsword` 保持一致。完整许可证文本见
+[`COPYING`](COPYING)。

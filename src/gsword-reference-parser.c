@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsword-reference-parser.c: reference parsing and book candidate lookup
  */

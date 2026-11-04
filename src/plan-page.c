@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * plan-page.c: reading plan page for the gsword window
  */

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * workspace-pane.h: a single comparison pane in the gsword comparison workspace
  */

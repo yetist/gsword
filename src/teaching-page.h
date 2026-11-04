@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * teaching-page.h: teaching workspace for the gsword window
  */

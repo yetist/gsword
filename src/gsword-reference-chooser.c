@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsword-reference-chooser.c: standalone book/chapter reference chooser
  */

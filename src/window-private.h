@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * window-private.h: internal services shared by gsword window pages
  *

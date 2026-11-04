@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gsw-transport.c: libcurl based HTTP/HTTPS/FTP transport
  */
