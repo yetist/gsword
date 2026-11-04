@@ -416,7 +416,6 @@ gsword_memory_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->card));
     gtk_widget_set_vexpand(card_scroll, TRUE);
     page->mode = GTK_DROP_DOWN(gtk_drop_down_new(G_LIST_MODEL(modes), NULL));
-    g_object_unref(modes);
     g_signal_connect(page->mode, "notify::selected",
                      G_CALLBACK(on_mode_changed), page);
     gtk_box_append(GTK_BOX(mode_row), gtk_label_new(_("Card mode")));
