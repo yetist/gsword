@@ -20,7 +20,8 @@ struct _GswInstallManager {
 };
 
 typedef struct {
-    gchar *private_path;
+    gchar *config_path;
+    gchar *cache_path;
     GswConfig *config;
     GHashTable *sources;      /* caption -> GswInstallSource* */
     GPtrArray *source_order;  /* GswInstallSource* pointers */
@@ -54,7 +55,8 @@ gsw_install_manager_finalize(GObject *object)
     GswInstallManager *self = GSW_INSTALL_MANAGER(object);
     GswInstallManagerPrivate *priv = gsw_install_manager_priv(self);
 
-    g_free(priv->private_path);
+    g_free(priv->config_path);
+    g_free(priv->cache_path);
     g_clear_object(&priv->config);
     g_clear_pointer(&priv->sources, g_hash_table_unref);
     g_clear_pointer(&priv->source_order, g_ptr_array_unref);
@@ -144,7 +146,7 @@ gsw_install_manager_load_config_internal(GswInstallManager *self, GError **error
     gchar **keys;
     guint i;
 
-    conf_path = g_build_filename(priv->private_path, "InstallMgr.conf", NULL);
+    conf_path = g_build_filename(priv->config_path, "InstallMgr.conf", NULL);
 
     if (g_file_test(conf_path, G_FILE_TEST_IS_REGULAR)) {
         config = gsw_config_new_from_file(conf_path, &local_error);
@@ -275,8 +277,10 @@ gsw_install_manager_save_config(GswInstallManager *self, GError **error)
         g_free(value);
     }
 
-    path = g_build_filename(priv->private_path, "InstallMgr.conf", NULL);
+    path = g_build_filename(priv->config_path, "InstallMgr.conf", NULL);
     ok = gsw_config_save(config, path, error);
+    if (ok)
+        g_chmod(path, 0600);
     g_free(path);
 
     if (ok) {
@@ -289,18 +293,23 @@ gsw_install_manager_save_config(GswInstallManager *self, GError **error)
 }
 
 GswInstallManager *
-gsw_install_manager_new(const gchar *private_path, GError **error)
+gsw_install_manager_new(const gchar *config_dir, const gchar *cache_dir,
+                        GError **error)
 {
     GswInstallManager *self;
     GswInstallManagerPrivate *priv;
 
-    g_return_val_if_fail(private_path != NULL, NULL);
+    g_return_val_if_fail(config_dir != NULL, NULL);
 
     self = g_object_new(GSW_TYPE_INSTALL_MANAGER, NULL);
     priv = gsw_install_manager_priv(self);
 
-    priv->private_path = g_canonicalize_filename(private_path, NULL);
-    if (!gsw_mkdir_with_parents(priv->private_path, error)) {
+    priv->config_path = g_canonicalize_filename(config_dir, NULL);
+    priv->cache_path = g_canonicalize_filename(
+        cache_dir != NULL && *cache_dir != '\0' ? cache_dir : config_dir,
+        NULL);
+    if (!gsw_mkdir_with_parents(priv->config_path, error) ||
+        !gsw_mkdir_with_parents(priv->cache_path, error)) {
         g_object_unref(self);
         return NULL;
     }
@@ -428,9 +437,17 @@ gsw_install_manager_get_verify_peer(GswInstallManager *self)
 }
 
 const gchar *
-gsw_install_manager_get_private_path(GswInstallManager *self)
+gsw_install_manager_get_config_dir(GswInstallManager *self)
 {
-    return gsw_install_manager_priv(self)->private_path;
+    g_return_val_if_fail(GSW_IS_INSTALL_MANAGER(self), NULL);
+    return gsw_install_manager_priv(self)->config_path;
+}
+
+const gchar *
+gsw_install_manager_get_cache_dir(GswInstallManager *self)
+{
+    g_return_val_if_fail(GSW_IS_INSTALL_MANAGER(self), NULL);
+    return gsw_install_manager_priv(self)->cache_path;
 }
 
 GPtrArray *
@@ -883,7 +900,7 @@ gsw_install_manager_refresh_remote_source(GswInstallManager *self,
     if (transport == NULL)
         return FALSE;
 
-    staging = gsw_path_make_temp_dir(priv->private_path, ".refresh", error);
+    staging = gsw_path_make_temp_dir(priv->cache_path, ".refresh", error);
     if (staging == NULL)
         goto fail;
 
@@ -926,7 +943,7 @@ gsw_install_manager_refresh_remote_source(GswInstallManager *self,
             goto fail;
     }
 
-    final_root = g_build_filename(priv->private_path,
+    final_root = g_build_filename(priv->cache_path,
                                   gsw_install_source_get_uid(source), NULL);
 
     if (g_file_test(final_root, G_FILE_TEST_EXISTS)) {
@@ -991,7 +1008,7 @@ gsw_install_manager_get_shadow(GswInstallManager *self,
     if (gsw_install_source_get_source_type(source) == GSW_SOURCE_DIR) {
         root = g_strdup(gsw_install_source_get_host(source));
     } else {
-        root = g_build_filename(priv->private_path, uid, NULL);
+        root = g_build_filename(priv->cache_path, uid, NULL);
     }
     if (root == NULL || !g_file_test(root, G_FILE_TEST_IS_DIR)) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
@@ -1282,6 +1299,8 @@ gsw_install_manager_remove_module(GswInstallManager *self,
     GswModuleInfo *info;
     const gchar *prefix;
     const gchar *config_file;
+    const gchar *data_path;
+    gboolean writable;
     gboolean ok = TRUE;
 
     g_return_val_if_fail(GSW_IS_INSTALL_MANAGER(self), FALSE);
@@ -1298,6 +1317,14 @@ gsw_install_manager_remove_module(GswInstallManager *self,
 
     prefix = gsw_manager_get_prefix_path(destination);
     config_file = gsw_module_info_get_config_file(info);
+    data_path = gsw_module_info_get_absolute_data_path(info);
+    writable = gsw_path_is_within(prefix, config_file) ||
+               gsw_path_is_within(prefix, data_path);
+    if (!writable) {
+        g_set_error(error, GSW_ERROR, GSW_ERROR_PERMISSION,
+                    "Module [%s] is in a read-only library", module_name);
+        return FALSE;
+    }
 
     {
         gchar **files = gsw_module_info_get_values(info, "File");
@@ -1443,7 +1470,7 @@ gsw_install_manager_refresh_remote_source_configuration(GswInstallManager *self,
         return FALSE;
     }
 
-    master_path = g_build_filename(priv->private_path, "masterRepoList.conf", NULL);
+    master_path = g_build_filename(priv->cache_path, "masterRepoList.conf", NULL);
     {
         gsize size;
         const gchar *data = g_bytes_get_data(bytes, &size);

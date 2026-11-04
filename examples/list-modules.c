@@ -7,12 +7,23 @@ main(int argc, char **argv)
     GError *error = NULL;
     GswManager *manager;
     GPtrArray *infos;
+    gchar *default_path = NULL;
     guint i;
 
-    if (argc > 1)
+    if (argc > 1) {
         manager = gsw_manager_new_for_path(argv[1], &error);
-    else
-        manager = gsw_manager_new(&error);
+    } else {
+        const gchar *env = g_getenv("GSWORD_LIBRARY");
+
+        if (env != NULL && *env != '\0') {
+            default_path = g_strdup(env);
+        } else {
+            default_path = g_build_filename(g_get_user_data_dir(), "gsword",
+                                            "library", NULL);
+        }
+        manager = gsw_manager_new_for_path(default_path, &error);
+        g_free(default_path);
+    }
 
     if (manager == NULL) {
         fprintf(stderr, "Cannot open module library: %s\n", error->message);

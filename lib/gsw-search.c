@@ -284,11 +284,25 @@ static gchar *
 search_index_path(GswModule *self)
 {
     GswModuleInfo *info = gsw_module_get_info(self);
-    const gchar *data_path = gsw_module_info_get_absolute_data_path(info);
+    const gchar *configured = gsw_module_get_search_index_path(self);
+    const gchar *data_path;
 
+    if (configured != NULL && *configured != '\0')
+        return g_strdup(configured);
+    data_path = gsw_module_info_get_absolute_data_path(info);
     if (data_path == NULL || *data_path == '\0')
         return NULL;
     return g_build_filename(data_path, GSW_SEARCH_INDEX_FILE, NULL);
+}
+
+static gboolean
+search_index_ensure_parent(const gchar *path, GError **error)
+{
+    gchar *dir = g_path_get_dirname(path);
+    gboolean ok = gsw_mkdir_with_parents(dir, error);
+
+    g_free(dir);
+    return ok;
 }
 
 void
@@ -381,6 +395,11 @@ search_index_save(GswSearchIndex *index, const gchar *path, GError **error)
     tokens = g_variant_builder_end(&builder);
     root = g_variant_new("(su@a{sas})", GSW_SEARCH_INDEX_MAGIC,
                          (guint32)GSW_SEARCH_INDEX_VERSION, tokens);
+
+    if (!search_index_ensure_parent(path, error)) {
+        g_variant_unref(root);
+        return FALSE;
+    }
 
     tmp = g_strconcat(path, ".tmp", NULL);
     ok = g_file_set_contents(tmp, g_variant_get_data(root),
@@ -781,6 +800,10 @@ gsw_module_delete_search_index(GswModule *self, GError **error)
                     "Module has no data directory");
         return FALSE;
     }
+    if (!search_index_ensure_parent(path, error)) {
+        g_free(path);
+        return FALSE;
+    }
     lock_path = g_strconcat(path, ".lock", NULL);
     {
         GError *lock_error = NULL;
@@ -851,6 +874,8 @@ gsw_module_build_search_index(GswModule *self, GCancellable *cancellable,
                     "Module has no data directory");
         goto out;
     }
+    if (!search_index_ensure_parent(path, error))
+        goto out;
     lock_path = g_strconcat(path, ".lock", NULL);
     lock_fd = gsw_file_lock(lock_path, error);
     if (lock_fd < 0)

@@ -3,9 +3,11 @@
  */
 
 #include "notes-page.h"
+#include "app-paths.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
+#include <glib/gstdio.h>
 #include <gdk/gdkkeysyms.h>
 
 #ifdef HAVE_GTKSOURCEVIEW
@@ -734,6 +736,16 @@ on_note_export(GtkButton *button, gpointer user_data)
     dialog = gtk_file_dialog_new();
     gtk_file_dialog_set_title(dialog, _("Export note"));
     gtk_file_dialog_set_initial_name(dialog, "gsword-note.md");
+    {
+        gchar *exports_dir = gsword_app_exports_dir();
+        GFile *folder;
+
+        g_mkdir_with_parents(exports_dir, 0755);
+        folder = g_file_new_for_path(exports_dir);
+        gtk_file_dialog_set_initial_folder(dialog, folder);
+        g_object_unref(folder);
+        g_free(exports_dir);
+    }
     g_object_set_data_full(G_OBJECT(dialog), "export-content", content, g_free);
     gtk_file_dialog_save(dialog, GTK_WINDOW(page->window), NULL,
                          on_export_save, page);

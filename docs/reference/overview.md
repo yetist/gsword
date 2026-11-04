@@ -12,7 +12,8 @@ explicitly annotated as `(transfer full)` must be freed by the caller.
 
 ```c
 GError *error = NULL;
-gchar *prefix = g_build_filename(g_get_home_dir(), ".sword", NULL);
+gchar *prefix = g_build_filename(g_get_user_data_dir(), "gsword",
+                                 "library", NULL);
 GswManager *manager = gsw_manager_new_for_path(prefix, &error);
 GswModule *module;
 gchar *text;
@@ -69,12 +70,15 @@ on_progress(GswStatusReporter *reporter,
 
 GswStatusReporter *reporter = gsw_status_reporter_new();
 GswInstallSource *source;
-gchar *private_path =
-    g_build_filename(g_get_home_dir(), ".sword", "InstallMgr", NULL);
+gchar *config_dir = g_build_filename(g_get_user_config_dir(), "gsword",
+                                     "installmgr", NULL);
+gchar *cache_dir = g_build_filename(g_get_user_cache_dir(), "gsword",
+                                    "installmgr", NULL);
 GswInstallManager *installer =
-    gsw_install_manager_new(private_path, &error);
+    gsw_install_manager_new(config_dir, cache_dir, &error);
 
-g_free(private_path);
+g_free(cache_dir);
+g_free(config_dir);
 g_signal_connect(reporter, "progress", G_CALLBACK(on_progress), NULL);
 gsw_install_manager_set_status_reporter(installer, reporter);
 

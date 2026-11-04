@@ -19,9 +19,10 @@ G_BEGIN_DECLS
  * GswInstallManager:
  *
  * Downloads, installs, updates, and removes modules from remote SWORD
- * sources, and installs modules from local DIR sources. It reads and writes
- * <filename>InstallMgr.conf</filename>, caches source metadata, and reports
- * transfer progress through a #GswStatusReporter.
+ * sources, and installs modules from local DIR sources. Configuration is read
+ * from <filename>InstallMgr.conf</filename> in the config directory; downloaded
+ * source metadata is cached separately. Transfer progress is reported through a
+ * #GswStatusReporter.
  */
 #define GSW_TYPE_INSTALL_MANAGER (gsw_install_manager_get_type())
 G_DECLARE_FINAL_TYPE(GswInstallManager, gsw_install_manager, GSW,
@@ -29,14 +30,18 @@ G_DECLARE_FINAL_TYPE(GswInstallManager, gsw_install_manager, GSW,
 
 /**
  * gsw_install_manager_new:
- * @private_path: directory for cached metadata and installer state
+ * @config_dir: directory containing <filename>InstallMgr.conf</filename>
+ * @cache_dir: (nullable): directory for cached source metadata; %NULL uses
+ *   @config_dir
  * @error: return location for a #GError, or %NULL
  *
- * Creates an install manager rooted at @private_path.
+ * Creates an install manager with separate configuration and cache
+ * directories. Both directories are created when needed.
  *
  * Returns: (transfer full): a new #GswInstallManager, or %NULL on error
  */
-GswInstallManager *gsw_install_manager_new(const gchar *private_path,
+GswInstallManager *gsw_install_manager_new(const gchar *config_dir,
+                                           const gchar *cache_dir,
                                            GError **error);
 
 /**
@@ -168,14 +173,23 @@ void              gsw_install_manager_set_verify_peer(GswInstallManager *self,
 gboolean          gsw_install_manager_get_verify_peer(GswInstallManager *self);
 
 /**
- * gsw_install_manager_get_private_path:
+ * gsw_install_manager_get_config_dir:
  * @self: a #GswInstallManager
  *
- * Gets the private directory used for cached metadata and downloads.
+ * Gets the directory containing <filename>InstallMgr.conf</filename>.
  *
- * Returns: (transfer none): the private installer directory
+ * Returns: (transfer none): the installer configuration directory
  */
-const gchar      *gsw_install_manager_get_private_path(GswInstallManager *self);
+const gchar      *gsw_install_manager_get_config_dir(GswInstallManager *self);
+/**
+ * gsw_install_manager_get_cache_dir:
+ * @self: a #GswInstallManager
+ *
+ * Gets the directory used for cached source metadata and downloads.
+ *
+ * Returns: (transfer none): the installer cache directory
+ */
+const gchar      *gsw_install_manager_get_cache_dir(GswInstallManager *self);
 
 /**
  * gsw_install_manager_load_config:

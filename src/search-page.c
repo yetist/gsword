@@ -3,6 +3,7 @@
  */
 
 #include "search-page.h"
+#include "app-paths.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -185,12 +186,22 @@ refresh_modules(GswordSearchPage *page, const gchar *preferred_module)
     g_free(wanted);
 }
 
+static void
+configure_search_index(GswModule *module, const gchar *module_name)
+{
+    gchar *index_path = gsword_app_search_index_path(module_name);
+
+    gsw_module_set_search_index_path(module, index_path);
+    g_free(index_path);
+}
+
 static GswModule *
 create_selected_module(GswordSearchPage *page)
 {
     GswManager *manager = gsword_window_get_manager(page->window);
     GswModule *current = gsword_window_get_module(page->window);
     const gchar *name = selected_module_name(page);
+    GswModule *module;
 
     if (manager == NULL)
         return NULL;
@@ -198,7 +209,10 @@ create_selected_module(GswordSearchPage *page)
         name = gsw_module_get_name(current);
     if (name == NULL)
         return NULL;
-    return gsw_manager_create_module(manager, name);
+    module = gsw_manager_create_module(manager, name);
+    if (module != NULL)
+        configure_search_index(module, name);
+    return module;
 }
 
 static gboolean
@@ -1127,6 +1141,8 @@ run_search(GswordSearchPage *page)
     module = manager != NULL
            ? gsw_manager_create_module(manager, module_name)
            : NULL;
+    if (module != NULL)
+        configure_search_index(module, module_name);
     if (module == NULL) {
         gsword_window_set_status(window, _("Cannot open module"));
         return;

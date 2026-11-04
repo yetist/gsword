@@ -106,23 +106,6 @@ gsword_application_create_settings(void)
     }
 }
 
-static gchar *
-gsword_default_library_path(void)
-{
-    const gchar *env = g_getenv("GSWORD_PREFIX");
-    gchar *legacy;
-
-    if (env != NULL && *env != '\0')
-        return g_strdup(env);
-
-    /* Keep ~/.sword working for existing SWORD users. */
-    legacy = g_build_filename(g_get_home_dir(), ".sword", NULL);
-    if (g_file_test(legacy, G_FILE_TEST_IS_DIR))
-        return legacy;
-    g_free(legacy);
-    return gsword_app_data_dir();
-}
-
 static GswManager *
 gsword_application_open_library(GswordApplication *self, GError **error)
 {
@@ -130,8 +113,12 @@ gsword_application_open_library(GswordApplication *self, GError **error)
         gsword_application_get_instance_private(self);
     gchar *path = priv->library_path != NULL
                 ? g_strdup(priv->library_path)
-                : gsword_default_library_path();
+                : gsword_app_default_library_path();
+    gchar *canonical;
     gchar *mods;
+    GPtrArray *system_dirs;
+    gboolean added_fallback = FALSE;
+    guint i;
 
     if (g_mkdir_with_parents(path, 0755) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
@@ -148,7 +135,27 @@ gsword_application_open_library(GswordApplication *self, GError **error)
         g_free(path);
         return NULL;
     }
+
+    canonical = g_canonicalize_filename(path, NULL);
+    system_dirs = gsword_app_system_library_dirs();
+    for (i = 0; i < system_dirs->len; i++) {
+        const gchar *system_path = g_ptr_array_index(system_dirs, i);
+        gchar *system_canonical = g_canonicalize_filename(system_path, NULL);
+
+        if (g_strcmp0(canonical, system_canonical) != 0) {
+            gsw_manager_add_fallback_path(priv->manager, system_path);
+            added_fallback = TRUE;
+        }
+        g_free(system_canonical);
+    }
+    g_ptr_array_unref(system_dirs);
+    g_free(canonical);
     g_free(path);
+
+    if (added_fallback && !gsw_manager_reload(priv->manager, error)) {
+        g_clear_object(&priv->manager);
+        return NULL;
+    }
     return priv->manager;
 }
 
@@ -161,7 +168,6 @@ gsword_application_activate(GApplication *application)
     GtkWindow *window;
     GError *error = NULL;
 
-    gsword_app_migrate_legacy_data();
     window = gtk_application_get_active_window(GTK_APPLICATION(application));
     if (window != NULL) {
         gtk_window_present(window);

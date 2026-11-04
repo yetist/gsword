@@ -43,7 +43,7 @@ main(int argc, char **argv)
     g_assert_no_error(error);
     g_assert_nonnull(private_path);
 
-    manager = gsw_install_manager_new(private_path, &error);
+    manager = gsw_install_manager_new(private_path, NULL, &error);
     g_assert_no_error(error);
     gsw_install_manager_set_timeout(manager, 200);
     gsw_install_manager_set_user_disclaimer_confirmed(manager, TRUE);

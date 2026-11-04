@@ -25,6 +25,7 @@ typedef struct {
     GHashTable *modules;      /* name -> GswModule* */
     GPtrArray *info_order;    /* GswModuleInfo* pointers */
     GPtrArray *augment_paths; /* gchar* */
+    GPtrArray *fallback_paths; /* gchar* */
     GHashTable *options;      /* global render option defaults */
     gboolean config_is_dir;
     gboolean loaded;
@@ -59,6 +60,7 @@ gsw_manager_finalize(GObject *object)
     g_clear_pointer(&priv->modules, g_hash_table_unref);
     g_clear_pointer(&priv->info_order, g_ptr_array_unref);
     g_clear_pointer(&priv->augment_paths, g_ptr_array_unref);
+    g_clear_pointer(&priv->fallback_paths, g_ptr_array_unref);
     g_clear_pointer(&priv->options, g_hash_table_unref);
 
     G_OBJECT_CLASS(gsw_manager_parent_class)->finalize(object);
@@ -86,6 +88,7 @@ gsw_manager_init(GswManager *self)
     gsw_options_init(priv->options);
     priv->info_order = g_ptr_array_new();
     priv->augment_paths = g_ptr_array_new_with_free_func(g_free);
+    priv->fallback_paths = g_ptr_array_new_with_free_func(g_free);
 }
 
 static gboolean
@@ -299,6 +302,36 @@ gsw_manager_load_augment_path(GswManager *self, const gchar *path, GError **erro
     g_free(canonical);
 }
 
+static gchar *
+gsw_manager_module_root(const gchar *config_file, const gchar *default_prefix)
+{
+    gchar *dir;
+    gchar *base;
+
+    if (config_file == NULL || *config_file == '\0')
+        return g_strdup(default_prefix);
+
+    dir = g_path_get_dirname(config_file);
+    base = g_path_get_basename(dir);
+    if (g_strcmp0(base, "mods.d") == 0) {
+        gchar *parent = g_path_get_dirname(dir);
+
+        g_free(base);
+        g_free(dir);
+        return parent;
+    }
+    g_free(base);
+    return dir;
+}
+
+static gboolean
+gsw_manager_info_is_primary(GswManagerPrivate *priv, GswModuleInfo *info)
+{
+    const gchar *config_file = gsw_module_info_get_config_file(info);
+
+    return gsw_path_is_within(priv->prefix_path, config_file);
+}
+
 static void
 gsw_manager_build_infos(GswManager *self)
 {
@@ -311,6 +344,7 @@ gsw_manager_build_infos(GswManager *self)
         const gchar *name = sections[i];
         const gchar *driver = gsw_config_get(priv->config, name, "ModDrv");
         const gchar *config_file;
+        gchar *module_root;
         GswModuleInfo *info;
         GError *local_error = NULL;
 
@@ -318,8 +352,11 @@ gsw_manager_build_infos(GswManager *self)
             continue;
 
         config_file = g_hash_table_lookup(priv->config_files, name);
+        module_root = gsw_manager_module_root(config_file,
+                                              priv->prefix_path);
         info = gsw_module_info_new_from_config(name, priv->config, config_file,
-                                               priv->prefix_path, &local_error);
+                                               module_root, &local_error);
+        g_free(module_root);
         if (info == NULL) {
             g_warning("gsword: cannot create module info for [%s]: %s",
                       name, local_error != NULL ? local_error->message : "unknown error");
@@ -331,6 +368,26 @@ gsw_manager_build_infos(GswManager *self)
         g_ptr_array_add(priv->info_order, info);
     }
     g_strfreev(sections);
+
+    /* Present writable primary modules before read-only fallback modules. */
+    {
+        GPtrArray *primary = g_ptr_array_new();
+        GPtrArray *fallback = g_ptr_array_new();
+
+        for (i = 0; i < priv->info_order->len; i++) {
+            GswModuleInfo *info = g_ptr_array_index(priv->info_order, i);
+
+            g_ptr_array_add(gsw_manager_info_is_primary(priv, info)
+                            ? primary : fallback, info);
+        }
+        g_ptr_array_set_size(priv->info_order, 0);
+        for (i = 0; i < primary->len; i++)
+            g_ptr_array_add(priv->info_order, g_ptr_array_index(primary, i));
+        for (i = 0; i < fallback->len; i++)
+            g_ptr_array_add(priv->info_order, g_ptr_array_index(fallback, i));
+        g_ptr_array_unref(primary);
+        g_ptr_array_unref(fallback);
+    }
 }
 
 gboolean
@@ -348,6 +405,20 @@ gsw_manager_load(GswManager *self, GError **error)
         g_set_error(error, GSW_ERROR, GSW_ERROR_NOT_FOUND,
                     "No module configuration path configured");
         return FALSE;
+    }
+
+    /* Load lower-priority fallbacks first so earlier paths win. */
+    for (i = priv->fallback_paths->len; i > 0; i--) {
+        const gchar *fallback_path = g_ptr_array_index(priv->fallback_paths,
+                                                       i - 1);
+        GError *fallback_error = NULL;
+
+        gsw_manager_load_augment_path(self, fallback_path, &fallback_error);
+        if (fallback_error != NULL) {
+            g_warning("gsword: cannot load fallback library %s: %s",
+                      fallback_path, fallback_error->message);
+            g_clear_error(&fallback_error);
+        }
     }
 
     if (priv->config_is_dir) {
@@ -431,6 +502,7 @@ gsw_manager_discover(GswManager *self, GError **error)
     gchar *cwd;
     gchar *candidate;
     gboolean found = FALSE;
+    guint i;
 
     cwd = g_get_current_dir();
 
@@ -461,36 +533,16 @@ gsw_manager_discover(GswManager *self, GError **error)
         found = gsw_manager_try_sys_config(self, "/etc/sword.conf", error);
 
     if (!found) {
-        const gchar *home = g_get_home_dir();
-        if (home != NULL) {
-            candidate = g_build_filename(home, ".sword", "sword.conf", NULL);
-            found = gsw_manager_try_sys_config(self, candidate, error);
-            g_free(candidate);
-        }
-    }
+        const gchar * const *data_dirs = g_get_system_data_dirs();
 
-    if (!found) {
-        const gchar *home = g_get_home_dir();
-        if (home != NULL) {
-            candidate = g_build_filename(home, ".sword", "mods.d", NULL);
+        for (i = 0; data_dirs != NULL && data_dirs[i] != NULL; i++) {
+            candidate = g_build_filename(data_dirs[i], "sword", NULL);
             found = gsw_manager_set_from_path(self, candidate, FALSE);
             g_free(candidate);
+            if (found)
+                break;
         }
     }
-
-    if (!found) {
-        const gchar *home = g_get_home_dir();
-        if (home != NULL) {
-            candidate = g_build_filename(home, "sword", "mods.d", NULL);
-            found = gsw_manager_set_from_path(self, candidate, FALSE);
-            g_free(candidate);
-        }
-    }
-
-    if (!found)
-        found = gsw_manager_set_from_path(self, "/usr/share/sword", FALSE);
-    if (!found)
-        found = gsw_manager_set_from_path(self, "/usr/local/share/sword", FALSE);
 
     g_free(cwd);
 
@@ -571,6 +623,20 @@ gsw_manager_add_augment_path(GswManager *self, const gchar *path)
 
     priv = gsw_manager_get_instance_private(self);
     g_ptr_array_add(priv->augment_paths, g_strdup(path));
+}
+
+void
+gsw_manager_add_fallback_path(GswManager *self, const gchar *path)
+{
+    GswManagerPrivate *priv;
+
+    g_return_if_fail(GSW_IS_MANAGER(self));
+
+    if (path == NULL || *path == '\0')
+        return;
+
+    priv = gsw_manager_get_instance_private(self);
+    g_ptr_array_add(priv->fallback_paths, g_strdup(path));
 }
 
 const gchar *

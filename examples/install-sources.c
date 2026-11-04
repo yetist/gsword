@@ -17,7 +17,7 @@ main(int argc, char **argv)
 
     refresh = argc == 3 && g_strcmp0(argv[2], "refresh") == 0;
 
-    installer = gsw_install_manager_new(argv[1], &error);
+    installer = gsw_install_manager_new(argv[1], NULL, &error);
     if (installer == NULL) {
         fprintf(stderr, "cannot open installer: %s\n", error->message);
         g_error_free(error);

@@ -168,6 +168,25 @@ gsw_module_get_name(GswModule *self)
     return gsw_module_info_get_name(gsw_module_priv(self)->info);
 }
 
+void
+gsw_module_set_search_index_path(GswModule *self, const gchar *path)
+{
+    g_return_if_fail(GSW_IS_MODULE(self));
+
+    if (path != NULL && *path != '\0')
+        g_object_set_data_full(G_OBJECT(self), "gsw-search-index-path",
+                               g_strdup(path), g_free);
+    else
+        g_object_set_data(G_OBJECT(self), "gsw-search-index-path", NULL);
+}
+
+const gchar *
+gsw_module_get_search_index_path(GswModule *self)
+{
+    g_return_val_if_fail(GSW_IS_MODULE(self), NULL);
+    return g_object_get_data(G_OBJECT(self), "gsw-search-index-path");
+}
+
 gboolean
 gsw_module_is_open(GswModule *self)
 {

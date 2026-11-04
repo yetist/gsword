@@ -80,7 +80,7 @@ test_local_install(void)
     g_assert_no_error(error);
     make_source_library(source_root);
 
-    installer = gsw_install_manager_new(private_path, &error);
+    installer = gsw_install_manager_new(private_path, NULL, &error);
     g_assert_no_error(error);
     g_assert_nonnull(installer);
     destination = gsw_manager_new_for_path(dest_root, &error);

@@ -29,7 +29,11 @@ G_DECLARE_FINAL_TYPE(GswManager, gsw_manager, GSW, MANAGER, GObject)
  * gsw_manager_new:
  * @error: return location for a #GError, or %NULL
  *
- * Discovers and opens the default SWORD module library.
+ * Discovers and opens a system SWORD module library. It checks the current
+ * directory, `SWORD_PATH`, `sword.conf`, and the `sword` directory below the
+ * XDG system data directories. It does not use `~/.sword` or the gsword
+ * application library; applications should call gsw_manager_new_for_path()
+ * with their own writable library path.
  *
  * Returns: (transfer full): a new #GswManager, or %NULL on error
  */
@@ -81,9 +85,23 @@ gboolean gsw_manager_reload(GswManager *self, GError **error);
  * @self: a #GswManager
  * @path: directory containing additional module configuration files
  *
- * Adds a directory to load additional module configuration from.
+ * Adds a directory to load after the primary library. Modules from augment
+ * paths override modules with the same name from the primary library. This
+ * matches SWORD augment path behavior.
  */
 void         gsw_manager_add_augment_path(GswManager *self, const gchar *path);
+/**
+ * gsw_manager_add_fallback_path:
+ * @self: a #GswManager
+ * @path: directory containing read-only fallback module configuration files
+ *
+ * Adds a directory to load before the primary library. The primary library
+ * overrides modules with the same name from a fallback path. Earlier fallback
+ * paths take precedence over later ones. This is intended for system-wide
+ * read-only module libraries.
+ */
+void         gsw_manager_add_fallback_path(GswManager *self,
+                                            const gchar *path);
 /**
  * gsw_manager_get_prefix_path:
  * @self: a #GswManager
