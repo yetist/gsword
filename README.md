@@ -6,6 +6,9 @@
 
 GSword 的底层是 **libgsword**：一个使用 C / GObject 从零重新实现的 SWORD 模块库。它不链接上游 C++ `libsword`，同时提供 GObject Introspection 和 Vala API，便于其他 GTK/GNOME 应用复用。
 
+- 源码仓库：<https://github.com/yetist/gsword>
+- 问题反馈：<https://github.com/yetist/gsword/issues>
+
 > 当前项目仍在持续开发中，尚未正式发布。
 
 ## 功能
@@ -89,6 +92,9 @@ GSword 应用只依赖 `include/gsword/` 的公共接口。
 ## 构建
 
 ```sh
+git clone https://github.com/yetist/gsword.git
+cd gsword
+
 meson setup build
 meson compile -C build
 ```
@@ -236,6 +242,12 @@ meson compile -C build-doc docs
 - 可选：libbz2、liblzma、gobject-introspection、vala/vapigen、gi-docgen
 - GSword 桌面应用：GTK4、libadwaita、SQLite3、可选 GtkSourceView 5
 - Meson / Ninja、pkg-config
+
+## 参与贡献
+
+欢迎通过 GitHub Issues 报告问题、提出建议或提交改进：
+
+<https://github.com/yetist/gsword/issues>
 
 ## 许可证
 
