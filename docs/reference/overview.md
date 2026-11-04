@@ -1,8 +1,8 @@
 # Overview
 
-gsword is a C/GObject implementation of the SWORD module library. It is
-organized around a module library manager, immutable module metadata, and
-lazily opened module readers.
+libgsword is the C/GObject SWORD module library behind GSword, the GTK4 Bible
+study application. It is organized around a module library manager, immutable
+module metadata, and lazily opened module readers.
 
 ## Basic usage
 

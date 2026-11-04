@@ -11,6 +11,7 @@ main(int argc, char **argv)
     int status;
 
     setlocale(LC_ALL, "");
+    g_set_application_name("GSword");
     localedir = g_getenv("GSW_LOCALEDIR");
     if (localedir == NULL || *localedir == '\0')
         localedir = GSW_LOCALEDIR;

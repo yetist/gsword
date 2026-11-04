@@ -1,6 +1,6 @@
-# gsword application
+# GSword application
 
-This directory contains the GTK4/libadwaita application named **gsword**.
+This directory contains the GTK4/libadwaita Bible study application **GSword**.
 
 The reusable SWORD module library lives in `../lib/` and is installed as
 `libgsword`. The application consumes only the public API from

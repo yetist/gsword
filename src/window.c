@@ -745,14 +745,15 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
 
     (void)action;
     (void)parameter;
-    adw_about_dialog_set_application_name(about, "gsword");
-    adw_about_dialog_set_application_icon(about, "org.gsword.GSword");
-    adw_about_dialog_set_developer_name(about, _("gsword contributors"));
+    adw_about_dialog_set_application_name(about, "GSword");
+    adw_about_dialog_set_application_icon(about, "x-office-document-symbolic");
+    adw_about_dialog_set_developer_name(about, _("GSword contributors"));
     adw_about_dialog_set_version(about, GSW_VERSION_S);
     adw_about_dialog_set_comments(about,
-        _("A GObject implementation of the SWORD Bible study software."));
+        _("A GTK4 Bible study application powered by libgsword, a "
+          "GObject-based SWORD module library."));
     adw_about_dialog_set_license_type(about, GTK_LICENSE_GPL_2_0);
-    adw_about_dialog_set_copyright(about, "© 2026 gsword contributors");
+    adw_about_dialog_set_copyright(about, "© 2026 GSword contributors");
     adw_dialog_present(ADW_DIALOG(about), GTK_WIDGET(self));
 }
 
@@ -783,7 +784,7 @@ build_main_menu(GswordWindow *self)
     g_menu_append_section(menu, NULL, G_MENU_MODEL(settings));
 
     g_menu_append(help, _("Keyboard shortcuts"), "win.shortcuts");
-    g_menu_append(help, _("About gsword"), "win.about");
+    g_menu_append(help, _("About GSword"), "win.about");
     g_menu_append_section(menu, NULL, G_MENU_MODEL(help));
 
     g_menu_append(quit, _("Quit"), "app.quit");
@@ -976,7 +977,7 @@ gsword_window_build(GswordWindow *self)
     gsword_preferences_init(self);
 
     priv->sidebar_visible = TRUE;
-    gtk_window_set_title(GTK_WINDOW(self), "gsword");
+    gtk_window_set_title(GTK_WINDOW(self), "GSword");
     gtk_window_set_default_size(GTK_WINDOW(self), GSWORD_WINDOW_MIN_WIDTH, 760);
     gtk_widget_set_size_request(GTK_WIDGET(self), GSWORD_WINDOW_MIN_WIDTH, 660);
 
