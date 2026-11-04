@@ -749,7 +749,7 @@ on_about_action(GSimpleAction *action, GVariant *parameter,
     adw_about_dialog_set_application_icon(about, "x-office-document-symbolic");
     adw_about_dialog_set_developer_name(about, "yetist");
     adw_about_dialog_set_developers(about,
-        (const gchar * const[]) { "yetist", NULL });
+        (const gchar *[]) { "yetist", NULL });
     adw_about_dialog_set_version(about, GSW_VERSION_S);
     adw_about_dialog_set_comments(about,
         _("A GTK4 Bible study application powered by libgsword, a "
