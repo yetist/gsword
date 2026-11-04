@@ -1127,15 +1127,11 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
     if (pane == NULL)
         return;
     /*
-     * The pane root may outlive the pane object briefly while GTK tears it
-     * down.  Detach signal handlers and the drop-down model first so widget
-     * destruction cannot call back into freed pane memory or clear a model
-     * that is already gone.
+     * Do not touch child widgets here.  During window teardown GTK may have
+     * disposed them already, and during normal pane removal the root widget is
+     * destroyed before this function runs.  Timers are ours to clean up; widget
+     * signal handlers are removed by GTK when the widgets are finalized.
      */
-    if (pane->module_selector != NULL)
-        g_signal_handlers_disconnect_by_data(pane->module_selector, pane);
-    if (pane->follow_mode != NULL)
-        g_signal_handlers_disconnect_by_data(pane->follow_mode, pane);
     if (pane->scroll_idle != 0) {
         g_source_remove(pane->scroll_idle);
         pane->scroll_idle = 0;
@@ -1144,16 +1140,6 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
         g_source_remove(pane->scrolling_idle);
         pane->scrolling_idle = 0;
     }
-    if (pane->view != NULL)
-        g_signal_handlers_disconnect_by_data(pane->view, pane);
-    if (pane->focus != NULL)
-        g_signal_handlers_disconnect_by_data(pane->focus, pane);
-    if (pane->reference_chooser != NULL)
-        g_signal_handlers_disconnect_by_data(pane->reference_chooser, pane);
-    if (pane->scroll != NULL)
-        g_signal_handlers_disconnect_by_data(
-            gtk_scrolled_window_get_vadjustment(pane->scroll), pane);
-
     g_clear_object(&pane->module);
     g_clear_object(&pane->module_names);
     g_free(pane->module_name);

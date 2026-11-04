@@ -216,10 +216,10 @@ gsword_workspace_page_remove_pane(GswordWorkspacePage *page,
             g_object_ref(root);
             if (gtk_widget_get_parent(root) == GTK_WIDGET(page->grid))
                 gtk_grid_remove(page->grid, root);
-            g_ptr_array_remove_index(page->panes, i);
             if (page->active_pane == pane)
                 page->active_pane = NULL;
             g_object_unref(root);
+            g_ptr_array_remove_index(page->panes, i);
             break;
         }
     }
@@ -481,8 +481,8 @@ clear_panes(GswordWorkspacePage *page)
         g_object_ref(root);
         if (gtk_widget_get_parent(root) == GTK_WIDGET(page->grid))
             gtk_grid_remove(page->grid, root);
-        g_ptr_array_remove_index(page->panes, page->panes->len - 1);
         g_object_unref(root);
+        g_ptr_array_remove_index(page->panes, page->panes->len - 1);
     }
     page->active_pane = NULL;
 }

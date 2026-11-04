@@ -2239,7 +2239,6 @@ library_page_free(gpointer data)
     g_clear_object(&page->installer);
     g_clear_object(&page->install_reporter);
     g_clear_pointer(&page->install_sources, g_ptr_array_unref);
-    g_clear_object(&page->source_names);
     g_clear_object(&page->install_cancellable);
     g_clear_pointer(&page->update_queue, g_ptr_array_unref);
     g_clear_pointer(&page->failed_updates, g_ptr_array_unref);
@@ -2247,20 +2246,26 @@ library_page_free(gpointer data)
     g_clear_pointer(&page->language_codes, g_ptr_array_unref);
     g_clear_object(&page->language_names);
     g_clear_pointer(&page->remote_infos, g_ptr_array_unref);
-    g_clear_object(&page->installed_store);
-    g_clear_object(&page->remote_store);
-    g_clear_object(&page->installed_filter_model);
-    g_clear_object(&page->remote_filter_model);
-    g_clear_object(&page->installed_sort_model);
-    g_clear_object(&page->remote_sort_model);
-    g_clear_object(&page->installed_selection);
-    g_clear_object(&page->remote_selection);
-    g_clear_object(&page->installed_filter);
-    g_clear_object(&page->remote_filter);
+    g_clear_object(&page->source_names);
     g_clear_object(&page->module_sorter);
+    /*
+     * The installed/remote store -> filter -> sort -> selection -> list-view
+     * chain transfers ownership forward through the GTK constructors.  Those
+     * fields are borrowed references and must not be unref'd here.
+     */
     g_free(page->selected_remote_name);
     g_free(page->selected_installed_name);
     g_free(page);
+}
+
+static void
+library_page_root_free(gpointer data)
+{
+    GswordLibraryPage *page = data;
+
+    if (page->window != NULL)
+        g_object_set_data(G_OBJECT(page->window), "gsword-library-page", NULL);
+    library_page_free(page);
 }
 
 GswordLibraryPage *
@@ -2371,8 +2376,7 @@ gsword_library_page_new(GswordWindow *self)
     priv->window = self;
     priv->manager = gsword_window_get_manager(self);
     priv->settings = gsword_window_get_settings(self);
-    g_object_set_data_full(G_OBJECT(self), "gsword-library-page", priv,
-                           library_page_free);
+    g_object_set_data(G_OBJECT(self), "gsword-library-page", priv);
     {
         GError *error = NULL;
         gchar *data_dir = gsword_app_data_dir();
@@ -2435,7 +2439,6 @@ gsword_library_page_new(GswordWindow *self)
 
         priv->sort_dropdown = GTK_DROP_DOWN(gtk_drop_down_new(
             G_LIST_MODEL(sort_names), NULL));
-        g_object_unref(sort_names);
         g_signal_connect(priv->sort_dropdown, "notify::selected",
                          G_CALLBACK(on_sort_changed), self);
     }
@@ -2445,8 +2448,6 @@ gsword_library_page_new(GswordWindow *self)
     gtk_label_set_max_width_chars(priv->filter_count, 12);
     gtk_widget_add_css_class(GTK_WIDGET(priv->filter_count), "dim-label");
     gtk_widget_set_hexpand(GTK_WIDGET(priv->filter_count), TRUE);
-    g_object_unref(type_names);
-    g_object_unref(status_names);
     gtk_widget_set_tooltip_text(refresh_sources,
                                 _("Refresh the install source list"));
     gtk_widget_set_tooltip_text(refresh_remote,
@@ -2546,7 +2547,7 @@ gsword_library_page_new(GswordWindow *self)
         module_row_sort, priv, NULL));
     priv->installed_sort_model = gtk_sort_list_model_new(
         G_LIST_MODEL(priv->installed_filter_model),
-        GTK_SORTER(priv->module_sorter));
+        GTK_SORTER(g_object_ref(priv->module_sorter)));
     priv->installed_selection = gtk_single_selection_new(
         G_LIST_MODEL(priv->installed_sort_model));
     gtk_single_selection_set_autoselect(priv->installed_selection, FALSE);
@@ -2561,7 +2562,7 @@ gsword_library_page_new(GswordWindow *self)
         G_LIST_MODEL(priv->remote_store), GTK_FILTER(priv->remote_filter));
     priv->remote_sort_model = gtk_sort_list_model_new(
         G_LIST_MODEL(priv->remote_filter_model),
-        GTK_SORTER(priv->module_sorter));
+        GTK_SORTER(g_object_ref(priv->module_sorter)));
     priv->remote_selection = gtk_single_selection_new(
         G_LIST_MODEL(priv->remote_sort_model));
     gtk_single_selection_set_autoselect(priv->remote_selection, FALSE);
@@ -2764,6 +2765,8 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(box), controls);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(split_view));
     priv->root = box;
+    g_object_set_data_full(G_OBJECT(box), "gsword-library-page-owner", priv,
+                           library_page_root_free);
     priv->installed_view_button = GTK_TOGGLE_BUTTON(installed_view);
     priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
     priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);

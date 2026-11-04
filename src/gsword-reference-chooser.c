@@ -1320,6 +1320,20 @@ gsword_reference_chooser_begin_edit(GswordReferenceChooser *self)
 }
 
 static void
+gsword_reference_chooser_dispose(GObject *object)
+{
+    GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(object);
+    GswordReferenceChooserPrivate *priv = chooser_priv(self);
+
+    if (priv->popover != NULL) {
+        if (gtk_widget_get_parent(GTK_WIDGET(priv->popover)) != NULL)
+            gtk_widget_unparent(GTK_WIDGET(priv->popover));
+        priv->popover = NULL;
+    }
+    G_OBJECT_CLASS(gsword_reference_chooser_parent_class)->dispose(object);
+}
+
+static void
 gsword_reference_chooser_finalize(GObject *object)
 {
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(object);
@@ -1336,6 +1350,7 @@ gsword_reference_chooser_class_init(GswordReferenceChooserClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
+    object_class->dispose = gsword_reference_chooser_dispose;
     object_class->finalize = gsword_reference_chooser_finalize;
     signals[SIGNAL_CHANGED] = g_signal_new(
         "changed", G_OBJECT_CLASS_TYPE(klass), G_SIGNAL_RUN_LAST,
