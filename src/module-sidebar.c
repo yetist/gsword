@@ -7,10 +7,13 @@
 
 #include <glib/gi18n.h>
 
+#include <string.h>
+
 struct _GswordModuleSidebar {
     GswordWindow *window;
     GtkWidget *root;
     GtkListBox *list;
+    GtkSearchEntry *filter;
     gboolean selecting;
     gboolean startup_selecting;
 };
@@ -49,17 +52,22 @@ make_module_group_row(const gchar *title)
 }
 
 static GtkWidget *
-make_module_row(GswModuleInfo *info)
+make_module_row(GswordModuleSidebar *sidebar, GswModuleInfo *info)
 {
     const gchar *name = gsw_module_info_get_name(info);
     const gchar *description = gsw_module_info_get_description(info);
+    const gchar *language = gsw_module_info_get_language(info);
     const gchar *type = gsword_window_module_type_display(info);
+    gboolean writable = gsword_window_module_is_writable(sidebar->window, info);
     GtkWidget *row = gtk_list_box_row_new();
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     GtkWidget *name_label = gtk_label_new(name);
     GtkWidget *description_label = gtk_label_new(
         description != NULL ? description : "");
+    GtkWidget *meta = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *type_label = gtk_label_new(type != NULL ? type : "");
+    GtkWidget *badge = gtk_label_new(writable ? _("User") : _("System"));
+    gchar *search_text;
 
     gtk_widget_add_css_class(box, "module-row");
     gtk_widget_set_margin_top(box, 8);
@@ -76,19 +84,62 @@ make_module_row(GswModuleInfo *info)
     gtk_label_set_xalign(GTK_LABEL(type_label), 0.0f);
     gtk_widget_add_css_class(type_label, "caption");
     gtk_widget_add_css_class(type_label, "dim-label");
+    gtk_label_set_xalign(GTK_LABEL(badge), 0.0f);
+    gtk_widget_add_css_class(badge, "caption");
+    gtk_widget_add_css_class(badge, "dim-label");
+    gtk_box_append(GTK_BOX(meta), type_label);
+    gtk_box_append(GTK_BOX(meta), badge);
 
     gtk_box_append(GTK_BOX(box), name_label);
     if (description != NULL && *description != '\0')
         gtk_box_append(GTK_BOX(box), description_label);
-    if (type != NULL && *type != '\0')
-        gtk_box_append(GTK_BOX(box), type_label);
+    gtk_box_append(GTK_BOX(box), meta);
     gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
+    if (description != NULL && *description != '\0')
+        gtk_widget_set_tooltip_text(row, description);
     g_object_set_data_full(G_OBJECT(row), "module-name", g_strdup(name),
                            g_free);
     g_object_set_data(G_OBJECT(row), "module-type",
                       GINT_TO_POINTER((gint)
                           gsword_window_module_effective_type(info)));
+    search_text = g_strdup_printf("%s %s %s %s %s",
+                                  name != NULL ? name : "",
+                                  description != NULL ? description : "",
+                                  type != NULL ? type : "",
+                                  language != NULL ? language : "",
+                                  writable ? _("User") : _("System"));
+    g_object_set_data_full(G_OBJECT(row), "module-search",
+                           g_utf8_strdown(search_text, -1), g_free);
+    g_free(search_text);
     return row;
+}
+
+static gboolean
+module_row_filter(GtkListBoxRow *row, gpointer user_data)
+{
+    GswordModuleSidebar *sidebar = user_data;
+    const gchar *needle = gtk_editable_get_text(GTK_EDITABLE(sidebar->filter));
+
+    if (needle == NULL || *needle == '\0')
+        return TRUE;
+    {
+        const gchar *haystack = g_object_get_data(G_OBJECT(row),
+                                                  "module-search");
+        gchar *folded = g_utf8_strdown(needle, -1);
+        gboolean match = haystack != NULL && strstr(haystack, folded) != NULL;
+
+        g_free(folded);
+        return match;
+    }
+}
+
+static void
+on_module_filter_changed(GtkSearchEntry *entry, gpointer user_data)
+{
+    GswordModuleSidebar *sidebar = user_data;
+
+    (void)entry;
+    gtk_list_box_invalidate_filter(sidebar->list);
 }
 
 static void
@@ -242,7 +293,7 @@ gsword_module_sidebar_populate(GswordModuleSidebar *sidebar)
                         module_group_title(group_types[group])));
                 header_added = TRUE;
             }
-            row = make_module_row(info);
+            row = make_module_row(sidebar, info);
             gtk_list_box_append(sidebar->list, row);
             if (first == NULL)
                 first = GTK_LIST_BOX_ROW(row);
@@ -304,6 +355,7 @@ gsword_module_sidebar_new(GswordWindow *window)
     GswordModuleSidebar *sidebar = g_new0(GswordModuleSidebar, 1);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *label = gtk_label_new(_("Modules"));
+    GtkWidget *filter = gtk_search_entry_new();
     GtkWidget *scrolled = gtk_scrolled_window_new();
     GtkWidget *manage = gtk_button_new_with_label(_("Manage modules"));
 
@@ -317,10 +369,20 @@ gsword_module_sidebar_new(GswordWindow *window)
     gtk_widget_set_margin_start(label, 12);
     gtk_widget_set_margin_end(label, 12);
 
+    sidebar->filter = GTK_SEARCH_ENTRY(filter);
+    gtk_search_entry_set_placeholder_text(sidebar->filter,
+                                          _("Filter modules"));
+    gtk_widget_set_margin_start(filter, 8);
+    gtk_widget_set_margin_end(filter, 8);
+    g_signal_connect(filter, "search-changed",
+                     G_CALLBACK(on_module_filter_changed), sidebar);
+
     sidebar->list = GTK_LIST_BOX(gtk_list_box_new());
     gtk_widget_add_css_class(GTK_WIDGET(sidebar->list),
                              "navigation-sidebar");
     gtk_list_box_set_selection_mode(sidebar->list, GTK_SELECTION_SINGLE);
+    gtk_list_box_set_filter_func(sidebar->list, module_row_filter, sidebar,
+                                 NULL);
     g_signal_connect(sidebar->list, "row-selected",
                      G_CALLBACK(on_module_row_selected), sidebar);
 
@@ -328,6 +390,7 @@ gsword_module_sidebar_new(GswordWindow *window)
                                   GTK_WIDGET(sidebar->list));
     gtk_widget_set_vexpand(scrolled, TRUE);
     gtk_box_append(GTK_BOX(box), label);
+    gtk_box_append(GTK_BOX(box), filter);
     gtk_box_append(GTK_BOX(box), scrolled);
     gtk_widget_add_css_class(manage, "flat");
     gtk_widget_set_margin_start(manage, 8);

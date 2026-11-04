@@ -460,6 +460,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *more_button = gtk_menu_button_new();
     GtkWidget *typography = gtk_menu_button_new();
     GtkWidget *more_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    GtkWidget *more_separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *copy_chapter = gtk_button_new_with_label(_("Copy chapter"));
     GtkWidget *back;
     GtkWidget *forward;
@@ -488,6 +489,8 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
                                   "view-list-symbolic");
     gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(list_add),
                                   "list-add-symbolic");
+    gtk_menu_button_set_label(GTK_MENU_BUTTON(list_add),
+                              _("Add to verse list"));
     gtk_widget_add_css_class(list_add, "flat");
     gtk_widget_set_tooltip_text(list_add, _("Add verse to list"));
     toolbar->list_menu_box = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, 2));
@@ -508,9 +511,11 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_widget_add_css_class(teaching, "flat");
     g_signal_connect(copy_chapter, "clicked",
                      G_CALLBACK(on_copy_chapter_clicked), toolbar);
+    gtk_widget_set_size_request(more_box, 220, -1);
     gtk_box_append(GTK_BOX(more_box), copy_chapter);
     gtk_box_append(GTK_BOX(more_box), highlight);
-    gtk_box_append(GTK_BOX(more_box), teaching);
+    gtk_box_append(GTK_BOX(more_box), list_add);
+    gtk_box_append(GTK_BOX(more_box), more_separator);
     {
         GtkWidget *popover = gtk_popover_new();
 
@@ -577,10 +582,14 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
                                 _("Open teaching layout for this passage"));
     gtk_button_set_icon_name(GTK_BUTTON(study_button),
                              "dialog-information-symbolic");
+    gtk_button_set_label(GTK_BUTTON(study_button), _("Study panel"));
+    gtk_widget_add_css_class(study_button, "flat");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(study_button), FALSE);
     toolbar->study_toggle = GTK_TOGGLE_BUTTON(study_button);
     gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(typography),
                                    "font-x-generic-symbolic");
+    gtk_menu_button_set_label(GTK_MENU_BUTTON(typography),
+                              _("Reading appearance"));
     gtk_widget_add_css_class(typography, "flat");
     gtk_widget_set_tooltip_text(typography, _("Reading appearance"));
     {
@@ -632,6 +641,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     toolbar->typography_button = typography;
     gtk_button_set_icon_name(GTK_BUTTON(focus_button),
                              "view-fullscreen-symbolic");
+    gtk_button_set_label(GTK_BUTTON(focus_button), _("Focus reading mode"));
     gtk_widget_add_css_class(focus_button, "flat");
     gtk_widget_set_tooltip_text(focus_button,
                                 _("Focus reading mode (F11)"));
@@ -647,16 +657,17 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_widget_add_css_class(highlight, "flat");
     gtk_widget_set_tooltip_text(study_button, _("Toggle study panel"));
 
+    gtk_box_append(GTK_BOX(more_box), study_button);
+    gtk_box_append(GTK_BOX(more_box), typography);
+    gtk_box_append(GTK_BOX(more_box), focus_button);
+    gtk_box_append(GTK_BOX(more_box), teaching);
+
     gtk_box_append(GTK_BOX(bar), back);
     gtk_box_append(GTK_BOX(bar), forward);
     gtk_box_append(GTK_BOX(bar), history_button);
     gtk_box_append(GTK_BOX(bar), GTK_WIDGET(toolbar->reference_chooser));
     gtk_box_append(GTK_BOX(bar), copy);
     gtk_box_append(GTK_BOX(bar), note);
-    gtk_box_append(GTK_BOX(bar), list_add);
-    gtk_box_append(GTK_BOX(bar), study_button);
-    gtk_box_append(GTK_BOX(bar), typography);
-    gtk_box_append(GTK_BOX(bar), focus_button);
     gtk_box_append(GTK_BOX(bar), more_button);
 
     g_object_set_data_full(G_OBJECT(bar), "gsword-reader-toolbar", toolbar,

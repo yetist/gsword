@@ -8,43 +8,9 @@
 
 #include <glib/gi18n.h>
 
-#include <string.h>
-
 static const gchar *module_status_text(guint status);
 static gchar *language_display_name(const gchar *code);
 static GswModuleType filter_type_for_info(GswModuleInfo *info);
-
-static gboolean
-path_is_within_prefix(const gchar *prefix, const gchar *path)
-{
-    gchar *canonical_prefix;
-    gchar *canonical_path;
-    gsize prefix_len;
-    gboolean inside;
-
-    if (prefix == NULL || *prefix == '\0' || path == NULL || *path == '\0')
-        return FALSE;
-    canonical_prefix = g_canonicalize_filename(prefix, NULL);
-    canonical_path = g_canonicalize_filename(path, NULL);
-    prefix_len = strlen(canonical_prefix);
-    inside = g_strcmp0(canonical_path, canonical_prefix) == 0 ||
-             (g_str_has_prefix(canonical_path, canonical_prefix) &&
-              canonical_path[prefix_len] == G_DIR_SEPARATOR);
-    g_free(canonical_path);
-    g_free(canonical_prefix);
-    return inside;
-}
-
-static gboolean
-module_is_writable(GswManager *manager, GswModuleInfo *info)
-{
-    const gchar *prefix = gsw_manager_get_prefix_path(manager);
-
-    return path_is_within_prefix(prefix,
-                                 gsw_module_info_get_config_file(info)) ||
-           path_is_within_prefix(prefix,
-                                 gsw_module_info_get_absolute_data_path(info));
-}
 
 typedef struct _GswordModuleRow {
     GObject parent_instance;
@@ -890,7 +856,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     info = gsw_manager_lookup_module_info(priv->manager, name);
     if (info == NULL)
         return;
-    writable = module_is_writable(priv->manager, info);
+    writable = gsword_window_module_is_writable(priv->window, info);
     description = gsw_module_info_get_description(info);
     license = gsw_module_info_get_distribution_license(info);
     copyright = gsw_module_info_get_copyright(info);
