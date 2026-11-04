@@ -50,6 +50,12 @@ void gsword_window_refresh_search_index(GswordWindow *self);
 void gsword_window_sync_workspace_from_reader(GswordWindow *self);
 void gsword_window_focus_reference(GswordWindow *self);
 void gsword_window_open_current_note(GswordWindow *self);
+void gsword_window_open_note_for(GswordWindow *self, const gchar *module,
+                                 const gchar *storage_key,
+                                 const gchar *display_key);
+void gsword_window_open_compare_reference(GswordWindow *self,
+                                          const gchar *module,
+                                          const gchar *key);
 void gsword_window_open_teaching(GswordWindow *self);
 void gsword_window_open_commentary_module(GswordWindow *self,
                                            const gchar *name);

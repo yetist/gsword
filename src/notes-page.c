@@ -539,6 +539,22 @@ gsword_notes_page_has_note_key(GswordNotesPage *page)
 }
 
 void
+gsword_notes_page_open_reference(GswordNotesPage *page,
+                                 const gchar *module,
+                                 const gchar *storage_key,
+                                 const gchar *display_key)
+{
+    if (page == NULL || module == NULL || storage_key == NULL)
+        return;
+    load_note(page, module, storage_key,
+              display_key != NULL ? display_key : storage_key);
+    if (page->left_stack != NULL)
+        gtk_stack_set_visible_child_name(page->left_stack, "notes");
+    gsword_window_show_page(page->window, "notes");
+    gtk_widget_grab_focus(GTK_WIDGET(page->text));
+}
+
+void
 gsword_notes_page_open_current(GswordNotesPage *page)
 {
     GswModule *module;
