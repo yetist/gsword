@@ -29,6 +29,7 @@ void gsword_workspace_page_save(GswordWorkspacePage *page);
 void gsword_workspace_page_restore(GswordWorkspacePage *page);
 void gsword_workspace_page_sync_from_reader(GswordWorkspacePage *page);
 void gsword_workspace_page_apply_parallel_template(GswordWorkspacePage *page);
+void gsword_workspace_page_apply_book_name_policy(GswordWorkspacePage *page);
 void gsword_workspace_page_sync_reference(GswordWorkspacePage *page,
                                            const gchar *reference,
                                            GswordWorkspacePane *source);

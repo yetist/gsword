@@ -3,6 +3,7 @@
  */
 
 #include "window-private.h"
+#include "app-locale.h"
 
 #include <glib/gi18n.h>
 
@@ -55,6 +56,51 @@ gsword_window_module_is_writable(GswordWindow *self, GswModuleInfo *info)
                                  gsw_module_info_get_absolute_data_path(info));
 }
 
+gboolean
+gsword_window_book_names_follow_ui(GswordWindow *self)
+{
+    GSettings *settings = gsword_window_get_settings(self);
+    gchar *policy;
+    gboolean follow_ui;
+
+    if (settings == NULL)
+        return FALSE;
+    policy = g_settings_get_string(settings, "book-name-language");
+    follow_ui = g_strcmp0(policy, "ui") == 0;
+    g_free(policy);
+    return follow_ui;
+}
+
+gchar *
+gsword_window_book_name_locale(GswordWindow *self, GswModuleInfo *info)
+{
+    const gchar *language = info != NULL
+                          ? gsw_module_info_get_language(info) : NULL;
+
+    if (!gsword_window_book_names_follow_ui(self) &&
+        language != NULL && *language != '\0')
+        return g_strdup(language);
+    return gsword_app_locale_name();
+}
+
+void
+gsword_window_apply_book_name_locale(GswordWindow *self, GswModule *module)
+{
+    GswKey *key;
+    gchar *locale;
+
+    if (module == NULL)
+        return;
+    key = gsw_module_get_key(module);
+    if (gsword_window_book_names_follow_ui(self)) {
+        locale = gsword_app_locale_name();
+        gsw_key_set_locale(key, locale);
+        g_free(locale);
+    } else {
+        gsw_key_set_locale(key, NULL);
+    }
+}
+
 void
 gsword_window_services_init(GswordWindow *self, GtkLabel *status_label,
                             AdwViewStack *content_stack)
@@ -80,6 +126,17 @@ gsword_window_set_status(GswordWindow *self, const gchar *message)
     if (services == NULL || services->status_label == NULL)
         return;
     gtk_label_set_text(services->status_label, message != NULL ? message : "");
+}
+
+void
+gsword_window_toast(GswordWindow *self, const gchar *message)
+{
+    AdwToastOverlay *overlay = g_object_get_data(G_OBJECT(self),
+                                                 "gsword-toast-overlay");
+
+    if (overlay == NULL || message == NULL || *message == '\0')
+        return;
+    adw_toast_overlay_add_toast(overlay, adw_toast_new(message));
 }
 
 void

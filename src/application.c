@@ -111,14 +111,24 @@ gsword_application_open_library(GswordApplication *self, GError **error)
 {
     GswordApplicationPrivate *priv =
         gsword_application_get_instance_private(self);
+    const gchar *env = g_getenv("GSWORD_LIBRARY");
+    gchar *configured = priv->settings != NULL
+                      ? g_settings_get_string(priv->settings, "library-path")
+                      : NULL;
     gchar *path = priv->library_path != NULL
                 ? g_strdup(priv->library_path)
+                : env != NULL && *env != '\0'
+                ? g_strdup(env)
+                : configured != NULL && *configured != '\0'
+                ? g_strdup(configured)
                 : gsword_app_default_library_path();
     gchar *canonical;
     gchar *mods;
     GPtrArray *system_dirs;
     gboolean added_fallback = FALSE;
     guint i;
+
+    g_free(configured);
 
     if (g_mkdir_with_parents(path, 0755) != 0) {
         g_set_error(error, GSW_ERROR, GSW_ERROR_IO,
@@ -174,6 +184,9 @@ gsword_application_activate(GApplication *application)
         return;
     }
 
+    if (priv->settings == NULL)
+        priv->settings = gsword_application_create_settings();
+
     if (priv->manager == NULL &&
         gsword_application_open_library(self, &error) == NULL) {
         g_printerr(_("gsword: cannot open module library: %s\n"),
@@ -182,9 +195,6 @@ gsword_application_activate(GApplication *application)
         g_application_quit(application);
         return;
     }
-
-    if (priv->settings == NULL)
-        priv->settings = gsword_application_create_settings();
 
     window = GTK_WINDOW(gsword_window_new(GTK_APPLICATION(application),
                                           priv->manager, priv->settings));

@@ -384,6 +384,18 @@ gsword_workspace_page_get_reference(GswordWorkspacePage *page)
 }
 
 void
+gsword_workspace_page_apply_book_name_policy(GswordWorkspacePage *page)
+{
+    guint i;
+
+    if (page == NULL || page->panes == NULL)
+        return;
+    for (i = 0; i < page->panes->len; i++)
+        gsword_workspace_pane_apply_book_name_policy(
+            g_ptr_array_index(page->panes, i));
+}
+
+void
 gsword_workspace_page_sync_from_reader(GswordWorkspacePage *page)
 {
     gchar *reference;
