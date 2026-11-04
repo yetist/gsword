@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 13:18+0800\n"
+"POT-Creation-Date: 2026-11-04 14:05+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: gsword contributors\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -63,7 +63,7 @@ msgstr "词典已在研经面板中打开"
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:725 src/window.c:1000 src/search-page.c:1399
+#: src/window.c:725 src/window.c:1000 src/search-page.c:1401
 msgid "Search"
 msgstr "搜索"
 
@@ -80,7 +80,7 @@ msgstr "模块库"
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:729 src/search-page.c:1418 src/library-page.c:2517
+#: src/window.c:729 src/search-page.c:1421 src/library-page.c:2517
 msgid "Back"
 msgstr "返回"
 
@@ -197,7 +197,7 @@ msgstr "正在搜索 %s：%u/%u"
 msgid "Searching %s: %u"
 msgstr "正在搜索 %s：%u"
 
-#: src/search-page.c:245 src/search-page.c:1478
+#: src/search-page.c:245 src/search-page.c:1481
 msgid "Index: no module"
 msgstr "索引：无模块"
 
@@ -213,7 +213,7 @@ msgstr "索引：已建立（本次搜索使用）"
 msgid "Index: built (scan used for this search)"
 msgstr "索引：已建立（本次搜索使用扫描）"
 
-#: src/search-page.c:544 src/reader-page.c:1112
+#: src/search-page.c:544 src/reader-page.c:1091
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
@@ -274,7 +274,7 @@ msgstr "路径"
 msgid "Module information"
 msgstr "模块信息"
 
-#: src/search-page.c:895 src/reader-page.c:1509
+#: src/search-page.c:895 src/reader-page.c:1488
 msgid "Copy verse"
 msgstr "复制本节"
 
@@ -360,106 +360,114 @@ msgstr "无法删除索引"
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:1400 src/notes-page.c:683 src/notes-page.c:1394
+#: src/search-page.c:1402 src/notes-page.c:683 src/notes-page.c:1394
 #: src/notes-page.c:1463 src/notes-page.c:1517 src/notes-page.c:1596
 #: src/library-page.c:1601 src/library-page.c:2211 src/library-page.c:2319
 #: src/plan-page.c:564 src/plan-page.c:906
 msgid "Cancel"
 msgstr "取消"
 
-#: src/search-page.c:1417
+#: src/search-page.c:1405
+msgid "Build index"
+msgstr "建立搜索索引"
+
+#: src/search-page.c:1406
+msgid "Delete index"
+msgstr "删除搜索索引"
+
+#: src/search-page.c:1420
 msgid "Recent searches"
 msgstr "最近搜索"
 
-#: src/search-page.c:1420
+#: src/search-page.c:1423
 msgid "Build search index"
 msgstr "建立搜索索引"
 
-#: src/search-page.c:1421
+#: src/search-page.c:1424
 msgid "Delete search index"
 msgstr "删除搜索索引"
 
-#: src/search-page.c:1424
+#: src/search-page.c:1427
 msgid "Search text"
 msgstr "搜索文本"
 
-#: src/search-page.c:1431
+#: src/search-page.c:1434
 msgid "Whole module"
 msgstr "整个模块"
 
-#: src/search-page.c:1431 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1434 src/gsword-reference-chooser.c:1610
 msgid "Old Testament"
 msgstr "旧约"
 
-#: src/search-page.c:1432 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1435 src/gsword-reference-chooser.c:1610
 msgid "New Testament"
 msgstr "新约"
 
-#: src/search-page.c:1432
+#: src/search-page.c:1435
 msgid "Current book"
 msgstr "当前卷"
 
-#: src/search-page.c:1433
+#: src/search-page.c:1436
 msgid "Current chapter"
 msgstr "当前章"
 
-#: src/search-page.c:1438
+#: src/search-page.c:1441
 msgid "Module:"
 msgstr "模块："
 
-#: src/search-page.c:1439
+#: src/search-page.c:1442
 msgid "Range:"
 msgstr "范围："
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Phrase"
 msgstr "短语"
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Multiword"
 msgstr "多词"
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Regex"
 msgstr "正则"
 
-#: src/search-page.c:1446
+#: src/search-page.c:1449
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/search-page.c:1449
+#: src/search-page.c:1452
 msgid "Word"
 msgstr "Word"
 
-#: src/search-page.c:1450
+#: src/search-page.c:1453
 msgid "Lemma"
 msgstr "Lemma"
 
-#: src/search-page.c:1453
+#: src/search-page.c:1456
 msgid "Attribute 1:"
 msgstr "属性 1："
 
-#: src/search-page.c:1454
+#: src/search-page.c:1457
 msgid "Attribute 2:"
 msgstr "属性 2："
 
-#: src/search-page.c:1455
+#: src/search-page.c:1458
 msgid "Advanced"
 msgstr "高级"
 
-#: src/search-page.c:1457
+#: src/search-page.c:1460
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr "搜索 Word / Lemma 等标签。普通文本搜索请将两个字段都留空。"
 
-#: src/search-page.c:1483
+#: src/search-page.c:1486
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr "索引可加速不限定范围、不区分大小写的短语或多词搜索。"
 
-#: src/search-page.c:1540
+#: src/search-page.c:1545
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
@@ -1457,7 +1465,7 @@ msgid "No modules installed."
 msgstr "未安装模块。"
 
 #: src/module-sidebar.c:360 src/study-panel.c:583 src/workspace-page.c:976
-#: src/reader-page.c:1448
+#: src/reader-page.c:1427
 msgid "Manage modules"
 msgstr "管理模块"
 
@@ -1637,7 +1645,7 @@ msgstr "跟随、固定或独立此对照栏"
 msgid "Close comparison"
 msgstr "关闭对照栏"
 
-#: src/reader-page.c:313
+#: src/reader-page.c:312
 msgid ""
 "No modules found.\n"
 "\n"
@@ -1647,39 +1655,39 @@ msgstr ""
 "\n"
 "请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
-#: src/reader-page.c:315
+#: src/reader-page.c:314
 msgid "No modules found"
 msgstr "未找到模块"
 
-#: src/reader-page.c:343
+#: src/reader-page.c:338
 msgid "Cannot read entry"
 msgstr "无法读取条目"
 
-#: src/reader-page.c:388 src/reader-page.c:848 src/reader-page.c:886
+#: src/reader-page.c:376 src/reader-page.c:827 src/reader-page.c:865
 msgid "Cannot set key"
 msgstr "无法设置位置"
 
-#: src/reader-page.c:1066
+#: src/reader-page.c:1045
 msgid "Highlight removed"
 msgstr "高亮已移除"
 
-#: src/reader-page.c:1071
+#: src/reader-page.c:1050
 msgid "Verse highlighted"
 msgstr "经文已高亮"
 
-#: src/reader-page.c:1074
+#: src/reader-page.c:1053
 msgid "Cannot update highlight"
 msgstr "无法更新高亮"
 
-#: src/reader-page.c:1447
+#: src/reader-page.c:1426
 msgid "No Bible text module is installed."
 msgstr "未安装圣经文本模块。"
 
-#: src/reader-page.c:1510
+#: src/reader-page.c:1489
 msgid "Open note"
 msgstr "打开笔记"
 
-#: src/reader-page.c:1512
+#: src/reader-page.c:1491
 msgid "Toggle highlight"
 msgstr "切换高亮"
 

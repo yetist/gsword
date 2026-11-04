@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 13:18+0800\n"
+"POT-Creation-Date: 2026-11-04 14:05+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:725 src/window.c:1000 src/search-page.c:1399
+#: src/window.c:725 src/window.c:1000 src/search-page.c:1401
 msgid "Search"
 msgstr ""
 
@@ -82,7 +82,7 @@ msgstr ""
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:729 src/search-page.c:1418 src/library-page.c:2517
+#: src/window.c:729 src/search-page.c:1421 src/library-page.c:2517
 msgid "Back"
 msgstr ""
 
@@ -199,7 +199,7 @@ msgstr ""
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:245 src/search-page.c:1478
+#: src/search-page.c:245 src/search-page.c:1481
 msgid "Index: no module"
 msgstr ""
 
@@ -215,7 +215,7 @@ msgstr ""
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:544 src/reader-page.c:1112
+#: src/search-page.c:544 src/reader-page.c:1091
 msgid "Copied to clipboard"
 msgstr ""
 
@@ -276,7 +276,7 @@ msgstr ""
 msgid "Module information"
 msgstr ""
 
-#: src/search-page.c:895 src/reader-page.c:1509
+#: src/search-page.c:895 src/reader-page.c:1488
 msgid "Copy verse"
 msgstr ""
 
@@ -362,106 +362,114 @@ msgstr ""
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:1400 src/notes-page.c:683 src/notes-page.c:1394
+#: src/search-page.c:1402 src/notes-page.c:683 src/notes-page.c:1394
 #: src/notes-page.c:1463 src/notes-page.c:1517 src/notes-page.c:1596
 #: src/library-page.c:1601 src/library-page.c:2211 src/library-page.c:2319
 #: src/plan-page.c:564 src/plan-page.c:906
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:1417
-msgid "Recent searches"
+#: src/search-page.c:1405
+msgid "Build index"
+msgstr ""
+
+#: src/search-page.c:1406
+msgid "Delete index"
 msgstr ""
 
 #: src/search-page.c:1420
+msgid "Recent searches"
+msgstr ""
+
+#: src/search-page.c:1423
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:1421
+#: src/search-page.c:1424
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:1424
+#: src/search-page.c:1427
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:1431
+#: src/search-page.c:1434
 msgid "Whole module"
 msgstr ""
 
-#: src/search-page.c:1431 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1434 src/gsword-reference-chooser.c:1610
 msgid "Old Testament"
 msgstr ""
 
-#: src/search-page.c:1432 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1435 src/gsword-reference-chooser.c:1610
 msgid "New Testament"
 msgstr ""
 
-#: src/search-page.c:1432
+#: src/search-page.c:1435
 msgid "Current book"
 msgstr ""
 
-#: src/search-page.c:1433
+#: src/search-page.c:1436
 msgid "Current chapter"
 msgstr ""
 
-#: src/search-page.c:1438
+#: src/search-page.c:1441
 msgid "Module:"
 msgstr ""
 
-#: src/search-page.c:1439
+#: src/search-page.c:1442
 msgid "Range:"
 msgstr ""
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:1442
+#: src/search-page.c:1445
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:1446
+#: src/search-page.c:1449
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:1449
+#: src/search-page.c:1452
 msgid "Word"
 msgstr ""
 
-#: src/search-page.c:1450
+#: src/search-page.c:1453
 msgid "Lemma"
 msgstr ""
 
-#: src/search-page.c:1453
+#: src/search-page.c:1456
 msgid "Attribute 1:"
 msgstr ""
 
-#: src/search-page.c:1454
+#: src/search-page.c:1457
 msgid "Attribute 2:"
 msgstr ""
 
-#: src/search-page.c:1455
+#: src/search-page.c:1458
 msgid "Advanced"
 msgstr ""
 
-#: src/search-page.c:1457
+#: src/search-page.c:1460
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr ""
 
-#: src/search-page.c:1483
+#: src/search-page.c:1486
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr ""
 
-#: src/search-page.c:1540
+#: src/search-page.c:1545
 msgid "Enter a search term."
 msgstr ""
 
@@ -1448,7 +1456,7 @@ msgid "No modules installed."
 msgstr ""
 
 #: src/module-sidebar.c:360 src/study-panel.c:583 src/workspace-page.c:976
-#: src/reader-page.c:1448
+#: src/reader-page.c:1427
 msgid "Manage modules"
 msgstr ""
 
@@ -1628,46 +1636,46 @@ msgstr ""
 msgid "Close comparison"
 msgstr ""
 
-#: src/reader-page.c:313
+#: src/reader-page.c:312
 msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
 
-#: src/reader-page.c:315
+#: src/reader-page.c:314
 msgid "No modules found"
 msgstr ""
 
-#: src/reader-page.c:343
+#: src/reader-page.c:338
 msgid "Cannot read entry"
 msgstr ""
 
-#: src/reader-page.c:388 src/reader-page.c:848 src/reader-page.c:886
+#: src/reader-page.c:376 src/reader-page.c:827 src/reader-page.c:865
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:1066
+#: src/reader-page.c:1045
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:1071
+#: src/reader-page.c:1050
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:1074
+#: src/reader-page.c:1053
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:1447
+#: src/reader-page.c:1426
 msgid "No Bible text module is installed."
 msgstr ""
 
-#: src/reader-page.c:1510
+#: src/reader-page.c:1489
 msgid "Open note"
 msgstr ""
 
-#: src/reader-page.c:1512
+#: src/reader-page.c:1491
 msgid "Toggle highlight"
 msgstr ""
 
