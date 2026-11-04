@@ -74,11 +74,13 @@ make_raw_index(guint32 start, guint32 size, gsize count)
 }
 
 static void
-make_raw_module(const gchar *prefix)
+make_raw_module(const gchar *prefix, const gchar *lang)
 {
     gchar *dir = g_build_filename(prefix, "modules", "texts", "rawtext",
                                   "tiny", NULL);
     gchar *path;
+    gchar *lang_line;
+    gchar *conf;
     GByteArray *idx;
     const gchar *ot = "Raw OT Gen 1:1";
     const gchar *nt = "Raw NT Matt 1:1";
@@ -106,14 +108,20 @@ make_raw_module(const gchar *prefix)
 
     g_free(dir);
 
-    write_conf(prefix, "tiny-raw.conf",
+    lang_line = lang != NULL ? g_strdup_printf("Lang=%s\n", lang) : NULL;
+    conf = g_strdup_printf(
         "[TinyRaw]\n"
         "Description=Tiny RawText\n"
         "DataPath=./modules/texts/rawtext/tiny/\n"
         "ModDrv=RawText\n"
         "Encoding=UTF-8\n"
         "Version=1.0\n"
-        "Versification=KJV\n");
+        "Versification=KJV\n"
+        "%s",
+        lang_line != NULL ? lang_line : "");
+    write_conf(prefix, "tiny-raw.conf", conf);
+    g_free(conf);
+    g_free(lang_line);
 }
 
 static void
@@ -646,7 +654,7 @@ run_reader_test(void)
     g_assert_no_error(error);
     g_assert_nonnull(prefix);
 
-    make_raw_module(prefix);
+    make_raw_module(prefix, NULL);
     make_ztext_module(prefix);
     make_ztext_encrypted_module(prefix);
     make_rawld_module(prefix);
@@ -934,6 +942,68 @@ run_reader_test(void)
 }
 
 static void
+check_module_book_name(const gchar *lang, const gchar *default_locale,
+                       const gchar *expected)
+{
+#ifdef GSW_TEST_LOCALE_DIR
+    GError *error = NULL;
+    gchar *prefix = g_dir_make_tmp("gsword-reader-language-XXXXXX", &error);
+    GswManager *manager;
+    GswModule *module;
+    GswVerseKey *key;
+    gchar *text;
+
+    g_assert_no_error(error);
+    make_raw_module(prefix, lang);
+    manager = gsw_manager_new_for_path(prefix, &error);
+    g_assert_no_error(error);
+    module = gsw_manager_get_module(manager, "TinyRaw");
+    g_assert_nonnull(module);
+
+    gsw_locale_mgr_load_directory(gsw_locale_mgr_get_default(),
+                                  GSW_TEST_LOCALE_DIR, NULL);
+    gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(),
+                                      default_locale);
+
+    g_assert_true(gsw_module_set_key_text(module, "创世记 2:3", &error));
+    g_assert_no_error(error);
+    key = (GswVerseKey *)gsw_module_get_key(module);
+    g_assert_cmpint(gsw_verse_key_get_book(key), ==, 1);
+    g_assert_cmpint(gsw_verse_key_get_chapter(key), ==, 2);
+    g_assert_cmpint(gsw_verse_key_get_verse(key), ==, 3);
+    g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, expected);
+    text = g_strdup_printf("%s 2:3", expected);
+    g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, text);
+    g_free(text);
+
+    gsw_locale_mgr_set_default_locale(gsw_locale_mgr_get_default(), "en");
+    g_object_unref(manager);
+    gsw_dir_remove_recursive(prefix, NULL);
+    g_free(prefix);
+#endif
+}
+
+static void
+test_module_language_book_name(void)
+{
+    gchar *saved_lang = g_strdup(g_getenv("LANG"));
+
+    /* Book names follow the module language, not the process LANG. */
+    g_setenv("LANG", "zh_CN.UTF-8", TRUE);
+    check_module_book_name("en", "zh-Hans", "Genesis");
+    g_setenv("LANG", "en_US.UTF-8", TRUE);
+    check_module_book_name("zh-Hans", "en", "创世记");
+    check_module_book_name("zh", "en", "创世记");
+    check_module_book_name("zh-Hans-CN", "en", "创世记");
+
+    if (saved_lang != NULL)
+        g_setenv("LANG", saved_lang, TRUE);
+    else
+        g_unsetenv("LANG");
+    g_free(saved_lang);
+}
+
+static void
 test_localized_module_key(void)
 {
 #ifdef GSW_TEST_LOCALE_DIR
@@ -945,7 +1015,7 @@ test_localized_module_key(void)
     gchar *text;
 
     g_assert_no_error(error);
-    make_raw_module(prefix);
+    make_raw_module(prefix, NULL);
     manager = gsw_manager_new_for_path(prefix, &error);
     g_assert_no_error(error);
     module = gsw_manager_get_module(manager, "TinyRaw");
@@ -989,6 +1059,8 @@ main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/reader/raw-ztext-dicts-genbook", run_reader_test);
+    g_test_add_func("/reader/module-language-book-name",
+                    test_module_language_book_name);
     g_test_add_func("/reader/localized-key", test_localized_module_key);
     return g_test_run();
 }

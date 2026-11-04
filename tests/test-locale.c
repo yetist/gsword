@@ -10,7 +10,6 @@ test_locale(void)
     gchar *path;
     GswLocaleMgr *mgr = gsw_locale_mgr_get_default();
     GswVerseKey *key;
-    gchar *saved_lang = g_strdup(g_getenv("LANG"));
 
     g_assert_no_error(error);
     g_assert_cmpstr(gsw_locale_mgr_get_default_locale(mgr), ==, "en");
@@ -89,6 +88,10 @@ test_locale(void)
                     "创世记");
     g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh_CN"), ==,
                     "创世记");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh"), ==,
+                    "创世记");
+    g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Genesis", "zh-Test-CN"), ==,
+                    "创世记");
     g_assert_cmpstr(gsw_locale_mgr_translate(mgr, "Chapter", NULL), ==,
                     "章");
     g_assert_cmpstr(gsw_locale_mgr_reverse(mgr, "创世记", NULL), ==,
@@ -104,7 +107,6 @@ test_locale(void)
     g_assert_null(gsw_locale_mgr_translate_abbreviation(mgr, "unknown",
                                                         NULL));
 
-    g_setenv("LANG", "zh_CN.UTF-8", TRUE);
     key = gsw_verse_key_new("Genesis 1:1", "KJV");
     g_assert_cmpstr(gsw_key_get_text((GswKey *)key), ==, "创世记 1:1");
     g_assert_cmpstr(gsw_verse_key_get_book_name(key), ==, "创世记");
@@ -136,11 +138,6 @@ test_locale(void)
 
     gsw_locale_mgr_set_default_locale(mgr, NULL);
     g_assert_cmpstr(gsw_locale_mgr_get_default_locale(mgr), ==, "en");
-    if (saved_lang != NULL)
-        g_setenv("LANG", saved_lang, TRUE);
-    else
-        g_unsetenv("LANG");
-    g_free(saved_lang);
     g_remove(path);
     g_rmdir(dir);
     g_free(path);
