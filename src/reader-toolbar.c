@@ -148,6 +148,10 @@ gsword_reader_toolbar_update_favorite(GswordReaderToolbar *toolbar)
     gtk_widget_set_tooltip_text(
         GTK_WIDGET(toolbar->favorite_button),
         favorite ? _("Remove from favorites") : _("Add to favorites"));
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(toolbar->favorite_button),
+        GTK_ACCESSIBLE_PROPERTY_LABEL,
+        favorite ? _("Remove from favorites") : _("Add to favorites"), -1);
     gtk_widget_set_sensitive(GTK_WIDGET(toolbar->favorite_button), TRUE);
     toolbar->updating_favorite = FALSE;
 }
