@@ -155,6 +155,7 @@ libsword/
 - 从预览直接跳回阅读器
 - 经文列表增删、列表经文选择和移除；阅读器工具栏可直接把当前经文加入/移出列表
 - 当前不提供独立的“书签”和“收藏”功能；经文列表是唯一的多集合经文组织方式
+- 祷告事项管理尚未实现，设计方案见 [`personal-prayer-design.md`](personal-prayer-design.md)
 - 导出 Markdown/HTML
 
 存储策略：
