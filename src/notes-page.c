@@ -6,6 +6,7 @@
 
 #include "notes-page.h"
 #include "app-paths.h"
+#include "insight-page.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -21,6 +22,8 @@
 struct _GswordNotesPage {
     GswordWindow *window;
     GtkWidget *root;
+    GtkNotebook *notebook;
+    GswordInsightPage *insight_page;
     GtkEntry *search;
     GtkStack *left_stack;
     GtkWidget *tag_filter_bar;
@@ -319,6 +322,8 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     g_ptr_array_unref(notes);
     g_ptr_array_unref(tags);
     g_ptr_array_unref(lists);
+    if (page->insight_page != NULL)
+        gsword_insight_page_refresh(page->insight_page);
 }
 
 static void
@@ -554,6 +559,8 @@ gsword_notes_page_open_reference(GswordNotesPage *page,
               display_key != NULL ? display_key : storage_key);
     if (page->left_stack != NULL)
         gtk_stack_set_visible_child_name(page->left_stack, "notes");
+    if (page->notebook != NULL)
+        gtk_notebook_set_current_page(page->notebook, 0);
     gsword_window_show_page(page->window, "notes");
     gtk_widget_grab_focus(GTK_WIDGET(page->text));
 }
@@ -581,6 +588,8 @@ gsword_notes_page_open_current(GswordNotesPage *page)
     g_free(display_key);
     if (page->left_stack != NULL)
         gtk_stack_set_visible_child_name(page->left_stack, "notes");
+    if (page->notebook != NULL)
+        gtk_notebook_set_current_page(page->notebook, 0);
     gsword_window_show_page(page->window, "notes");
     gtk_widget_grab_focus(GTK_WIDGET(page->text));
 }
@@ -2075,9 +2084,17 @@ gsword_notes_page_new(GswordWindow *window)
                          G_CALLBACK(on_notes_key_pressed), page);
         gtk_widget_add_controller(paned, keys);
     }
-    page->root = paned;
-    g_object_set_data_full(G_OBJECT(paned), "gsword-notes-page", page,
-                           notes_page_free);
+    page->notebook = GTK_NOTEBOOK(gtk_notebook_new());
+    gtk_notebook_append_page(page->notebook, paned,
+                             gtk_label_new(_("Notes")));
+    page->insight_page = gsword_insight_page_new(window);
+    gtk_notebook_append_page(
+        page->notebook, gsword_insight_page_widget(page->insight_page),
+        gtk_label_new(_("Insights")));
+    gtk_notebook_set_scrollable(page->notebook, TRUE);
+    page->root = GTK_WIDGET(page->notebook);
+    g_object_set_data_full(G_OBJECT(page->notebook), "gsword-notes-page",
+                           page, notes_page_free);
     update_note_actions(page);
     gsword_notes_page_refresh(page);
     return page;

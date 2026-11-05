@@ -15,6 +15,7 @@
 #include "plan-store.h"
 #include "personal-page.h"
 #include "prayer-store.h"
+#include "insight-store.h"
 
 G_BEGIN_DECLS
 
@@ -49,6 +50,7 @@ void gsword_window_apply_book_name_locale(GswordWindow *self,
 GswordNotesStore *gsword_window_get_notes_store(GswordWindow *self);
 GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
 GswordPrayerStore *gsword_window_get_prayer_store(GswordWindow *self);
+GswordInsightStore *gsword_window_get_insight_store(GswordWindow *self);
 void gsword_window_show_personal(GswordWindow *self,
                                  GswordPersonalSection section);
 void gsword_window_show_personal_page(GswordWindow *self,

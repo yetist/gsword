@@ -79,10 +79,24 @@ if get_option('tests')
   test('concurrent', test_concurrent)
 
   test_prayer_store = executable('test-prayer-store',
-    ['test-prayer-store.c', '../src/prayer-store.c', '../src/app-paths.c'],
+    ['test-prayer-store.c', '../src/prayer-store.c', '../src/app-db.c',
+     '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('prayer-store', test_prayer_store)
+
+  test_app_db = executable('test-app-db',
+    ['test-app-db.c', '../src/app-db.c', '../src/app-paths.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
+  test('app-db', test_app_db)
+
+  test_insight_store = executable('test-insight-store',
+    ['test-insight-store.c', '../src/insight-store.c', '../src/app-db.c',
+     '../src/app-paths.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
+  test('insight-store', test_insight_store)
 
   test_codec = executable('test-codec', 'test-codec.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep],

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 16:44+0800\n"
+"POT-Creation-Date: 2026-11-05 17:17+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: yetist\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,109 +33,109 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:289 src/window.c:1171
+#: src/window.c:298 src/window.c:1180
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:289
+#: src/window.c:298
 msgid "Show module sidebar"
 msgstr "显示模块侧栏"
 
-#: src/window.c:434 src/workspace-page.c:525 src/workspace-page.c:755
+#: src/window.c:443 src/workspace-page.c:525 src/workspace-page.c:755
 #: src/workspace-page.c:845 src/workspace-pane.c:618
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:649 src/search-page.c:1151 src/resource-page.c:208
+#: src/window.c:658 src/search-page.c:1151 src/resource-page.c:208
 #: src/resource-page.c:214
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
-#: src/window.c:714
+#: src/window.c:723
 msgid "Commentary opened in study panel"
 msgstr "注释已在研经面板中打开"
 
-#: src/window.c:734
+#: src/window.c:743
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:891 src/window.c:968
+#: src/window.c:900 src/window.c:977
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:900 src/window.c:1180 src/search-page.c:1403
+#: src/window.c:909 src/window.c:1189 src/search-page.c:1403
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:901
+#: src/window.c:910
 msgid "Focus reference"
 msgstr "首选项"
 
-#: src/window.c:902 src/window.c:958 src/window.c:1187 src/library-page.c:2283
+#: src/window.c:911 src/window.c:967 src/window.c:1196 src/library-page.c:2283
 #: src/preferences-dialog.c:337
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:903 src/window.c:962 src/preferences-dialog.c:259
+#: src/window.c:912 src/window.c:971 src/preferences-dialog.c:259
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:904 src/search-page.c:1423 src/library-page.c:2519
+#: src/window.c:913 src/search-page.c:1423 src/library-page.c:2519
 msgid "Back"
 msgstr "返回"
 
-#: src/window.c:905
+#: src/window.c:914
 msgid "Forward"
 msgstr "前进"
 
-#: src/window.c:906
+#: src/window.c:915
 msgid "Toggle sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:909 src/window-services.c:159 src/search-page.c:786
+#: src/window.c:918 src/window-services.c:159 src/search-page.c:786
 #: src/library-page.c:1268
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:930
+#: src/window.c:939
 msgid ""
 "A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
 "module library."
 msgstr "基于 GTK4 的研经软件，底层使用 GObject 实现的 SWORD 模块库 libgsword。"
 
-#: src/window.c:953
+#: src/window.c:962
 msgid "Show study panel"
 msgstr "显示研经面板"
 
-#: src/window.c:954
+#: src/window.c:963
 msgid "Comparison"
 msgstr "经文对照"
 
-#: src/window.c:955
+#: src/window.c:964
 msgid "Teaching"
 msgstr "教学"
 
-#: src/window.c:969
+#: src/window.c:978
 msgid "About GSword"
 msgstr "关于 GSword"
 
-#: src/window.c:972
+#: src/window.c:981
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:1193
+#: src/window.c:1202
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:1234 src/preferences-dialog.c:264
+#: src/window.c:1243 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:1240
+#: src/window.c:1249
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:1254
+#: src/window.c:1263
 msgid "Personal"
 msgstr "个人"
 
@@ -223,11 +223,11 @@ msgstr "无法添加背经经文"
 msgid "Verse added to memory review"
 msgstr "经文已加入背经复习"
 
-#: src/search-page.c:661 src/notes-page.c:1218 src/reader-toolbar.c:157
+#: src/search-page.c:661 src/notes-page.c:1227 src/reader-toolbar.c:157
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/search-page.c:664 src/notes-page.c:1234 src/reader-toolbar.c:174
+#: src/search-page.c:664 src/notes-page.c:1243 src/reader-toolbar.c:174
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
@@ -239,7 +239,7 @@ msgstr "加入经文列表"
 msgid "Verse lists are unavailable."
 msgstr "经文列表不可用。"
 
-#: src/search-page.c:708 src/notes-page.c:1265 src/notes-page.c:1765
+#: src/search-page.c:708 src/notes-page.c:1274 src/notes-page.c:1774
 #: src/reader-toolbar.c:210
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
@@ -280,7 +280,7 @@ msgstr "复制引用"
 msgid "Copy verse and reference"
 msgstr "复制经文和引用"
 
-#: src/search-page.c:907 src/notes-page.c:1715 src/notes-page.c:1956
+#: src/search-page.c:907 src/notes-page.c:1724 src/notes-page.c:1965
 msgid "Open in reader"
 msgstr "在阅读器中打开"
 
@@ -354,10 +354,11 @@ msgstr "无法删除索引"
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:1404 src/notes-page.c:685 src/notes-page.c:1396
-#: src/notes-page.c:1465 src/notes-page.c:1519 src/notes-page.c:1598
+#: src/search-page.c:1404 src/notes-page.c:694 src/notes-page.c:1405
+#: src/notes-page.c:1474 src/notes-page.c:1528 src/notes-page.c:1607
 #: src/library-page.c:1603 src/library-page.c:2213 src/library-page.c:2321
 #: src/plan-page.c:566 src/plan-page.c:908 src/prayer-page.c:704
+#: src/insight-page.c:586
 msgid "Cancel"
 msgstr "取消"
 
@@ -465,285 +466,292 @@ msgstr "索引可加速不限定范围、不区分大小写的短语或多词搜
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
-#: src/notes-page.c:166
+#: src/notes-page.c:169
 msgid "No matching notes"
 msgstr "没有匹配的笔记"
 
-#: src/notes-page.c:166 src/notes-page.c:1741 src/today-page.c:314
+#: src/notes-page.c:169 src/notes-page.c:1750 src/today-page.c:314
 msgid "No notes yet"
 msgstr "还没有笔记"
 
-#: src/notes-page.c:173
+#: src/notes-page.c:176
 #, c-format
 msgid "Tag: %s"
 msgstr "标签：%s"
 
-#: src/notes-page.c:188
+#: src/notes-page.c:191
 #, c-format
 msgid "Notes · %s"
 msgstr "笔记 · %s"
 
-#: src/notes-page.c:194 src/notes-page.c:1899 src/personal-page.c:98
+#: src/notes-page.c:197 src/notes-page.c:1908 src/notes-page.c:2089
+#: src/personal-page.c:98
 msgid "Notes"
 msgstr "笔记"
 
-#: src/notes-page.c:201
+#: src/notes-page.c:204
 #, c-format
 msgid "%u note(s)"
 msgstr "%u 条笔记"
 
-#: src/notes-page.c:360
+#: src/notes-page.c:365
 msgid "Verse text unavailable"
 msgstr "经文内容不可用"
 
-#: src/notes-page.c:465
+#: src/notes-page.c:470
 msgid "Cannot save note"
 msgstr "无法保存笔记"
 
-#: src/notes-page.c:479 src/notes-page.c:534
+#: src/notes-page.c:484 src/notes-page.c:539
 msgid "Saved"
 msgstr "已保存"
 
-#: src/notes-page.c:493
+#: src/notes-page.c:498
 msgid "Unsaved changes"
 msgstr "有未保存的更改"
 
-#: src/notes-page.c:534 src/notes-page.c:657
+#: src/notes-page.c:539 src/notes-page.c:666
 msgid "Not saved"
 msgstr "未保存"
 
-#: src/notes-page.c:634
+#: src/notes-page.c:643
 msgid "Note saved"
 msgstr "笔记已保存"
 
-#: src/notes-page.c:646
+#: src/notes-page.c:655
 msgid "Cannot delete note"
 msgstr "无法删除笔记"
 
-#: src/notes-page.c:659
+#: src/notes-page.c:668
 msgid "Note deleted"
 msgstr "笔记已删除"
 
-#: src/notes-page.c:680
+#: src/notes-page.c:689
 msgid "Delete note"
 msgstr "删除笔记"
 
-#: src/notes-page.c:682
+#: src/notes-page.c:691
 #, c-format
 msgid "Delete the note for %s? This cannot be undone."
 msgstr "删除 %s 的笔记？此操作无法撤销。"
 
-#: src/notes-page.c:686 src/notes-page.c:1520 src/notes-page.c:1599
-#: src/notes-page.c:1705 src/memory-page.c:370 src/plan-page.c:909
-#: src/prayer-page.c:705 src/prayer-page.c:739
+#: src/notes-page.c:695 src/notes-page.c:1529 src/notes-page.c:1608
+#: src/notes-page.c:1714 src/memory-page.c:370 src/plan-page.c:909
+#: src/prayer-page.c:705 src/prayer-page.c:739 src/insight-page.c:587
+#: src/insight-page.c:611
 msgid "Delete"
 msgstr "删除"
 
-#: src/notes-page.c:739
+#: src/notes-page.c:748
 msgid "Export note"
 msgstr "导出笔记"
 
-#: src/notes-page.c:809 src/notes-page.c:1754
+#: src/notes-page.c:818 src/notes-page.c:1763
 msgid "No tags yet"
 msgstr "还没有标签"
 
-#: src/notes-page.c:1095 src/notes-page.c:1226 src/reader-toolbar.c:167
+#: src/notes-page.c:1104 src/notes-page.c:1235 src/reader-toolbar.c:167
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
-#: src/notes-page.c:1099 src/notes-page.c:1235 src/reader-toolbar.c:175
+#: src/notes-page.c:1108 src/notes-page.c:1244 src/reader-toolbar.c:175
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
-#: src/notes-page.c:1133 src/notes-page.c:1779
+#: src/notes-page.c:1142 src/notes-page.c:1788
 msgid "Select a verse list"
 msgstr "选择经文列表"
 
-#: src/notes-page.c:1145
+#: src/notes-page.c:1154
 msgid "This list is empty"
 msgstr "此列表为空"
 
-#: src/notes-page.c:1253
+#: src/notes-page.c:1262
 msgid "Select a note first"
 msgstr "请先选择笔记"
 
-#: src/notes-page.c:1360
+#: src/notes-page.c:1369
 msgid "Cannot rename tag"
 msgstr "无法重命名标签"
 
-#: src/notes-page.c:1371
+#: src/notes-page.c:1380
 msgid "Tag renamed"
 msgstr "标签已重命名"
 
-#: src/notes-page.c:1389 src/notes-page.c:1798
+#: src/notes-page.c:1398 src/notes-page.c:1807
 msgid "Rename tag"
 msgstr "重命名标签"
 
-#: src/notes-page.c:1397 src/notes-page.c:1466 src/plan-page.c:567
+#: src/notes-page.c:1406 src/notes-page.c:1475 src/plan-page.c:567
 msgid "Rename"
 msgstr "重命名"
 
-#: src/notes-page.c:1433
+#: src/notes-page.c:1442
 msgid "Cannot rename verse list"
 msgstr "无法重命名经文列表"
 
-#: src/notes-page.c:1439
+#: src/notes-page.c:1448
 msgid "Verse list renamed"
 msgstr "经文列表已重命名"
 
-#: src/notes-page.c:1458 src/notes-page.c:1818
+#: src/notes-page.c:1467 src/notes-page.c:1827
 msgid "Rename verse list"
 msgstr "重命名经文列表"
 
-#: src/notes-page.c:1491
+#: src/notes-page.c:1500
 msgid "Cannot delete tag"
 msgstr "无法删除标签"
 
-#: src/notes-page.c:1497
+#: src/notes-page.c:1506
 msgid "Tag deleted"
 msgstr "标签已删除"
 
-#: src/notes-page.c:1514 src/notes-page.c:1803
+#: src/notes-page.c:1523 src/notes-page.c:1812
 msgid "Delete tag"
 msgstr "删除标签"
 
-#: src/notes-page.c:1516
+#: src/notes-page.c:1525
 #, c-format
 msgid "Delete tag “%s”? Notes will remain."
 msgstr "删除标签“%s”？笔记将保留。"
 
-#: src/notes-page.c:1544
+#: src/notes-page.c:1553
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/notes-page.c:1549
+#: src/notes-page.c:1558
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/notes-page.c:1567
+#: src/notes-page.c:1576
 msgid "Cannot delete verse list"
 msgstr "无法删除经文列表"
 
-#: src/notes-page.c:1577
+#: src/notes-page.c:1586
 msgid "Verse list deleted"
 msgstr "经文列表已删除"
 
-#: src/notes-page.c:1593 src/notes-page.c:1788
+#: src/notes-page.c:1602 src/notes-page.c:1797
 msgid "Delete verse list"
 msgstr "删除经文列表"
 
-#: src/notes-page.c:1595
+#: src/notes-page.c:1604
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr "删除“%s”及其所有经文？"
 
-#: src/notes-page.c:1682
+#: src/notes-page.c:1691
 msgid "Add list"
 msgstr "添加列表"
 
-#: src/notes-page.c:1685 src/notes-page.c:1900
+#: src/notes-page.c:1694 src/notes-page.c:1909 src/insight-page.c:603
 msgid "Tags"
 msgstr "标签"
 
-#: src/notes-page.c:1696 src/notes-page.c:1902
+#: src/notes-page.c:1705 src/notes-page.c:1911
 msgid "Verse lists"
 msgstr "经文列表"
 
-#: src/notes-page.c:1697
+#: src/notes-page.c:1706
 msgid "List verses"
 msgstr "列表经文"
 
-#: src/notes-page.c:1704 src/library-page.c:2214 src/prayer-page.c:736
+#: src/notes-page.c:1713 src/library-page.c:2214 src/prayer-page.c:736
+#: src/insight-page.c:610
 msgid "Save"
 msgstr "保存"
 
-#: src/notes-page.c:1706
+#: src/notes-page.c:1715
 msgid "Export"
 msgstr "导出"
 
-#: src/notes-page.c:1708
+#: src/notes-page.c:1717
 msgid "Add to list"
 msgstr "加入列表"
 
-#: src/notes-page.c:1711
+#: src/notes-page.c:1720
 msgid "Add tag"
 msgstr "添加标签"
 
-#: src/notes-page.c:1728
+#: src/notes-page.c:1737
 msgid "Search notes"
 msgstr "搜索笔记"
 
-#: src/notes-page.c:1782
+#: src/notes-page.c:1791
 msgid "New list"
 msgstr "新列表"
 
-#: src/notes-page.c:1807
+#: src/notes-page.c:1816
 msgid "Show filtered notes"
 msgstr "查看筛选笔记"
 
-#: src/notes-page.c:1832
+#: src/notes-page.c:1841
 msgid "Open verse"
 msgstr "打开经文"
 
-#: src/notes-page.c:1833
+#: src/notes-page.c:1842
 msgid "Remove from list"
 msgstr "从列表移除"
 
-#: src/notes-page.c:1846
+#: src/notes-page.c:1855
 msgid "All notes"
 msgstr "全部笔记"
 
-#: src/notes-page.c:1849
+#: src/notes-page.c:1858
 msgid "Clear tag filter"
 msgstr "清除标签筛选"
 
-#: src/notes-page.c:1922
+#: src/notes-page.c:1931
 msgid "Tags, separated by commas"
 msgstr "标签，用逗号分隔"
 
-#: src/notes-page.c:1924
+#: src/notes-page.c:1933
 msgid "Tags:"
 msgstr "标签："
 
-#: src/notes-page.c:1950 src/teaching-page.c:224
+#: src/notes-page.c:1959 src/teaching-page.c:224
 msgid "Scripture"
 msgstr "经文"
 
-#: src/notes-page.c:1980
+#: src/notes-page.c:1989
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr "Markdown：**粗体**、*斜体*、# 标题、- 列表、> 引用"
 
-#: src/notes-page.c:1987
+#: src/notes-page.c:1996
 msgid "Bold"
 msgstr "粗体"
 
-#: src/notes-page.c:1990
+#: src/notes-page.c:1999
 msgid "Italic"
 msgstr "斜体"
 
-#: src/notes-page.c:1993
+#: src/notes-page.c:2002
 msgid "Heading"
 msgstr "标题"
 
-#: src/notes-page.c:1996
+#: src/notes-page.c:2005
 msgid "Bullet list"
 msgstr "无序列表"
 
-#: src/notes-page.c:1999
+#: src/notes-page.c:2008
 msgid "Numbered list"
 msgstr "有序列表"
 
-#: src/notes-page.c:2002
+#: src/notes-page.c:2011
 msgid "Quote"
 msgstr "引用"
 
-#: src/notes-page.c:2005
+#: src/notes-page.c:2014
 msgid "Link"
 msgstr "链接"
 
-#: src/notes-page.c:2008
+#: src/notes-page.c:2017
 msgid "Inline code"
 msgstr "行内代码"
+
+#: src/notes-page.c:2093 src/insight-page.c:699
+msgid "Insights"
+msgstr "收获"
 
 #: src/memory-page.c:105 src/memory-page.c:402
 msgid "Select a verse card"
@@ -799,7 +807,7 @@ msgstr "无法删除背经经文"
 msgid "Memory verse removed"
 msgstr "背经经文已删除"
 
-#: src/memory-page.c:369 src/prayer-page.c:728
+#: src/memory-page.c:369 src/prayer-page.c:728 src/insight-page.c:607
 msgid "Add current verse"
 msgstr "添加当前经文"
 
@@ -1699,7 +1707,7 @@ msgid "Open a verse first"
 msgstr "请先打开经文"
 
 #: src/reader-toolbar.c:255 src/reader-toolbar.c:261 src/prayer-page.c:267
-#: src/prayer-page.c:273
+#: src/prayer-page.c:273 src/insight-page.c:233 src/insight-page.c:239
 msgid "No active verse"
 msgstr "当前没有选中的经文"
 
@@ -2158,7 +2166,7 @@ msgstr "灵修"
 msgid "Memorize"
 msgstr "背经"
 
-#: src/plan-store.c:470
+#: src/plan-store.c:447
 #, c-format
 msgid "%s (copy)"
 msgstr "%s（副本）"
@@ -2266,7 +2274,7 @@ msgstr "进行中"
 msgid "Verse removed from prayer"
 msgstr "经文已从祷告移除"
 
-#: src/prayer-page.c:233
+#: src/prayer-page.c:233 src/insight-page.c:199
 msgid "Remove verse"
 msgstr "移除经文"
 
@@ -2321,7 +2329,7 @@ msgstr "新建祷告"
 msgid "Answered %s · updated %s"
 msgstr "应允于 %s · 更新于 %s"
 
-#: src/prayer-page.c:566
+#: src/prayer-page.c:566 src/insight-page.c:445
 #, c-format
 msgid "Updated %s"
 msgstr "更新于 %s"
@@ -2358,7 +2366,7 @@ msgstr "删除这条祷告及其关联经文？"
 msgid "Answered note"
 msgstr "应允备注"
 
-#: src/prayer-page.c:726
+#: src/prayer-page.c:726 src/insight-page.c:605
 msgid "Related verses"
 msgstr "关联经文"
 
@@ -2405,6 +2413,88 @@ msgstr "从列表中选择一条祷告，或新建祷告。"
 #: src/prayer-page.c:1005
 msgid "New prayer draft"
 msgstr "新祷告草稿"
+
+#: src/insight-page.c:160
+msgid "Verse removed from insight"
+msgstr "经文已从收获移除"
+
+#: src/insight-page.c:243
+msgid "Verse added to insight"
+msgstr "经文已添加到收获"
+
+#: src/insight-page.c:291 src/insight-page.c:505
+msgid "Insight storage unavailable"
+msgstr "收获存储不可用"
+
+#: src/insight-page.c:352
+#, c-format
+msgid "%d insight"
+msgid_plural "%d insights"
+msgstr[0] "%d 条收获"
+
+#: src/insight-page.c:373 src/insight-page.c:732
+msgid "All tags"
+msgstr "全部标签"
+
+#: src/insight-page.c:431 src/insight-page.c:700 src/insight-page.c:770
+msgid "New insight"
+msgstr "新建收获"
+
+#: src/insight-page.c:498
+msgid "Insight text is required"
+msgstr "请填写收获内容"
+
+#: src/insight-page.c:523
+msgid "Cannot save insight"
+msgstr "无法保存收获"
+
+#: src/insight-page.c:531 src/insight-page.c:532
+msgid "Insight saved"
+msgstr "收获已保存"
+
+#: src/insight-page.c:562
+msgid "Cannot delete insight"
+msgstr "无法删除收获"
+
+#: src/insight-page.c:569
+msgid "Insight deleted"
+msgstr "收获已删除"
+
+#: src/insight-page.c:578
+msgid "Delete insight"
+msgstr "删除收获"
+
+#: src/insight-page.c:584
+msgid "Delete this insight?"
+msgstr "删除这条收获？"
+
+#: src/insight-page.c:601
+msgid "Insight"
+msgstr "内容"
+
+#: src/insight-page.c:618
+msgid "Insight title"
+msgstr "收获标题"
+
+#: src/insight-page.c:643
+msgid "Tags, comma separated"
+msgstr "标签，用逗号分隔"
+
+#: src/insight-page.c:727
+msgid "Search insights…"
+msgstr "搜索收获…"
+
+#: src/insight-page.c:742
+msgid "No insights yet."
+msgstr "还没有收获记录。"
+
+#: src/insight-page.c:767
+msgid "Select an insight"
+msgstr "选择一条收获"
+
+#: src/insight-page.c:769
+msgid "Choose an insight from the list or create a new one."
+msgstr "从列表中选择一条收获，或新建。"
 
 #: src/collections-page.c:38
 msgid "Verse lists, bookmarks and favorites will be organized here."
