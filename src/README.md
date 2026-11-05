@@ -70,7 +70,8 @@ Current implementation:
   (verse lists, bookmarks, favorites), remembered tab selection, list CRUD and
   item open/remove; favorites is a separate system-list view
 - `bookmark-page.c` / `bookmark-page.h`: bookmark list, add-current-verse,
-  open, edit title/note and delete
+  open, edit title/note and delete; single-click selection with double-click
+  opening and a per-row action menu
 - `plan-page.c` / `plan-page.h`: Plan management / Devotion / Memorize tabs;
   plan dashboard, plan-creation dialog, plan library with rename/duplicate,
   schedule filters and undo

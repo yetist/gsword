@@ -23,6 +23,9 @@ struct _GswordBookmarkPage {
     gchar *selected_key;
 };
 
+static void on_edit_clicked(GtkButton *button, gpointer user_data);
+static void on_delete_clicked(GtkButton *button, gpointer user_data);
+
 static void
 bookmark_page_free(gpointer data)
 {
@@ -103,6 +106,89 @@ on_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 }
 
 static void
+close_row_menu(GtkWidget *button)
+{
+    GtkWidget *popover = gtk_widget_get_ancestor(button, GTK_TYPE_POPOVER);
+
+    if (popover != NULL)
+        gtk_popover_popdown(GTK_POPOVER(popover));
+}
+
+static void
+on_row_menu_open(GtkButton *button, gpointer user_data)
+{
+    GswordBookmarkPage *page = user_data;
+    const gchar *module = g_object_get_data(G_OBJECT(button),
+                                            "bookmark-module");
+    const gchar *key = g_object_get_data(G_OBJECT(button), "bookmark-key");
+
+    close_row_menu(GTK_WIDGET(button));
+    if (module != NULL && key != NULL)
+        gsword_window_open_module_reference(page->window, module, key);
+}
+
+static void
+on_row_menu_edit(GtkButton *button, gpointer user_data)
+{
+    GswordBookmarkPage *page = user_data;
+    const gchar *id = g_object_get_data(G_OBJECT(button), "bookmark-id");
+
+    close_row_menu(GTK_WIDGET(button));
+    if (id != NULL)
+        page->selected_id = g_ascii_strtoll(id, NULL, 10);
+    on_edit_clicked(NULL, page);
+}
+
+static void
+on_row_menu_delete(GtkButton *button, gpointer user_data)
+{
+    GswordBookmarkPage *page = user_data;
+    const gchar *id = g_object_get_data(G_OBJECT(button), "bookmark-id");
+
+    close_row_menu(GTK_WIDGET(button));
+    if (id != NULL)
+        page->selected_id = g_ascii_strtoll(id, NULL, 10);
+    on_delete_clicked(NULL, page);
+}
+
+static GtkWidget *
+build_row_menu(GswordBookmarkPage *page, GswordBookmark *bookmark)
+{
+    GtkWidget *menu_button = gtk_menu_button_new();
+    GtkWidget *popover = gtk_popover_new();
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    GtkWidget *open = gtk_button_new_with_label(_("Open verse"));
+    GtkWidget *edit = gtk_button_new_with_label(_("Edit"));
+    GtkWidget *delete = gtk_button_new_with_label(_("Delete"));
+    gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, bookmark->id);
+
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu_button),
+                                  "view-more-symbolic");
+    gtk_widget_add_css_class(menu_button, "flat");
+    gtk_widget_set_tooltip_text(menu_button, _("More actions"));
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(menu_button), GTK_ACCESSIBLE_PROPERTY_LABEL,
+        _("More actions"), -1);
+    g_object_set_data_full(G_OBJECT(open), "bookmark-module",
+                           g_strdup(bookmark->module), g_free);
+    g_object_set_data_full(G_OBJECT(open), "bookmark-key",
+                           g_strdup(bookmark->key), g_free);
+    g_object_set_data_full(G_OBJECT(edit), "bookmark-id", g_strdup(id), g_free);
+    g_object_set_data_full(G_OBJECT(delete), "bookmark-id", g_strdup(id),
+                           g_free);
+    g_free(id);
+    g_signal_connect(open, "clicked", G_CALLBACK(on_row_menu_open), page);
+    g_signal_connect(edit, "clicked", G_CALLBACK(on_row_menu_edit), page);
+    g_signal_connect(delete, "clicked", G_CALLBACK(on_row_menu_delete), page);
+    gtk_box_append(GTK_BOX(box), open);
+    gtk_box_append(GTK_BOX(box), edit);
+    gtk_box_append(GTK_BOX(box), delete);
+    gtk_popover_set_child(GTK_POPOVER(popover), box);
+    gtk_menu_button_set_popover(GTK_MENU_BUTTON(menu_button), popover);
+    return menu_button;
+}
+
+static void
 refresh_list(GswordBookmarkPage *page)
 {
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
@@ -123,7 +209,8 @@ refresh_list(GswordBookmarkPage *page)
     for (i = 0; i < items->len; i++) {
         GswordBookmark *bookmark = g_ptr_array_index(items, i);
         GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *labels = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
         const gchar *title_text = bookmark->title != NULL &&
                                   *bookmark->title != '\0'
                                 ? bookmark->title : bookmark->display_key;
@@ -138,21 +225,25 @@ refresh_list(GswordBookmarkPage *page)
         gtk_widget_set_margin_bottom(box, 5);
         gtk_widget_set_margin_start(box, 8);
         gtk_widget_set_margin_end(box, 8);
+        gtk_widget_set_hexpand(labels, TRUE);
         gtk_label_set_xalign(GTK_LABEL(title), 0.0f);
         gtk_label_set_ellipsize(GTK_LABEL(title), PANGO_ELLIPSIZE_END);
         gtk_label_set_xalign(GTK_LABEL(meta), 0.0f);
         gtk_widget_add_css_class(meta, "caption");
         gtk_widget_add_css_class(meta, "dim-label");
-        gtk_box_append(GTK_BOX(box), title);
-        gtk_box_append(GTK_BOX(box), meta);
+        gtk_box_append(GTK_BOX(labels), title);
+        gtk_box_append(GTK_BOX(labels), meta);
         if (bookmark->note != NULL && *bookmark->note != '\0') {
             GtkWidget *note = gtk_label_new(bookmark->note);
 
             gtk_label_set_xalign(GTK_LABEL(note), 0.0f);
             gtk_label_set_wrap(GTK_LABEL(note), TRUE);
             gtk_widget_add_css_class(note, "dim-label");
-            gtk_box_append(GTK_BOX(box), note);
+            gtk_box_append(GTK_BOX(labels), note);
         }
+        gtk_box_append(GTK_BOX(box), labels);
+        gtk_box_append(GTK_BOX(box),
+                       build_row_menu(page, bookmark));
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data_full(G_OBJECT(row), "bookmark-id",
                                g_strdup_printf("%" G_GINT64_FORMAT,
@@ -378,6 +469,7 @@ gsword_bookmark_page_new(GswordWindow *window)
 
     page->list = GTK_LIST_BOX(gtk_list_box_new());
     gtk_list_box_set_selection_mode(page->list, GTK_SELECTION_SINGLE);
+    gtk_list_box_set_activate_on_single_click(page->list, FALSE);
     gtk_list_box_set_placeholder(page->list,
                                  gtk_label_new(_("No bookmarks yet.")));
     g_signal_connect(page->list, "row-selected",
@@ -402,9 +494,19 @@ gsword_bookmark_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(footer), edit);
     gtk_box_append(GTK_BOX(footer), delete);
     gtk_widget_set_halign(footer, GTK_ALIGN_END);
-    gtk_box_append(GTK_BOX(box), header);
-    gtk_box_append(GTK_BOX(box), scroll);
-    gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->count_label));
+    {
+        GtkWidget *hint = gtk_label_new(
+            _("Click to select; double-click or press Enter to open"));
+
+        gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
+        gtk_widget_add_css_class(hint, "caption");
+        gtk_widget_add_css_class(hint, "dim-label");
+        gtk_box_append(GTK_BOX(box), header);
+        gtk_box_append(GTK_BOX(box), scroll);
+        gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->count_label));
+        gtk_box_append(GTK_BOX(box), hint);
+    }
     gtk_box_append(GTK_BOX(box), footer);
     page->root = box;
     g_object_set_data_full(G_OBJECT(box), "gsword-bookmark-page", page,
