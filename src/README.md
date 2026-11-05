@@ -72,8 +72,8 @@ Current implementation:
 - `bookmark-page.c` / `bookmark-page.h`: bookmark list, add-current-verse,
   open, edit title/note and delete
 - `plan-page.c` / `plan-page.h`: Plan management / Devotion / Memorize tabs;
-  plan dashboard, template-based creation, plan library with
-  rename/duplicate, schedule filters and undo
+  plan dashboard, plan-creation dialog, plan library with rename/duplicate,
+  schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
   and text display
 - `memory-page.c` / `memory-page.h`: memory verse list, card masking, answer
