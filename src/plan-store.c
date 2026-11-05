@@ -19,12 +19,6 @@ plan_store_error(GswordPlanStore *self, GError **error, const gchar *context)
     gsword_app_db_set_error(self->app_db, error, context);
 }
 
-static gboolean
-plan_store_exec(GswordPlanStore *self, const gchar *sql, GError **error)
-{
-    return gsword_app_db_exec(self->app_db, sql, error);
-}
-
 static gchar *
 date_today(void)
 {
@@ -168,36 +162,6 @@ GswordPlanStore *
 gsword_plan_store_new(GError **error)
 {
     GswordPlanStore *self = g_new0(GswordPlanStore, 1);
-    const gchar *schema =
-        "CREATE TABLE IF NOT EXISTS plans ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " name TEXT NOT NULL,"
-        " start_ref TEXT NOT NULL,"
-        " total_days INTEGER NOT NULL,"
-        " chapters_per_day INTEGER NOT NULL DEFAULT 1,"
-        " created INTEGER NOT NULL DEFAULT (strftime('%s','now')));"
-        "CREATE TABLE IF NOT EXISTS plan_days ("
-        " plan_id INTEGER NOT NULL REFERENCES plans(id) ON DELETE CASCADE,"
-        " day INTEGER NOT NULL,"
-        " reference TEXT NOT NULL,"
-        " completed_on TEXT,"
-        " PRIMARY KEY(plan_id, day));"
-        "CREATE TABLE IF NOT EXISTS memory_verses ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " text TEXT NOT NULL,"
-        " box INTEGER NOT NULL DEFAULT 0,"
-        " due TEXT NOT NULL,"
-        " created INTEGER NOT NULL DEFAULT (strftime('%s','now')),"
-        " UNIQUE(module, key));"
-        "CREATE TABLE IF NOT EXISTS teaching_notes ("
-        " module TEXT NOT NULL,"
-        " reference TEXT NOT NULL,"
-        " notes TEXT NOT NULL,"
-        " updated INTEGER NOT NULL DEFAULT (strftime('%s','now')),"
-        " PRIMARY KEY(module, reference));";
 
     self->app_db = gsword_app_db_open(error);
     if (self->app_db == NULL) {
@@ -205,11 +169,6 @@ gsword_plan_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!plan_store_exec(self, schema, error)) {
-        gsword_app_db_close(self->app_db);
-        g_free(self);
-        return NULL;
-    }
     return self;
 }
 

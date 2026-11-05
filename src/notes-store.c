@@ -17,12 +17,6 @@ notes_store_error(GswordNotesStore *self, GError **error, const gchar *context)
     gsword_app_db_set_error(self->app_db, error, context);
 }
 
-static gboolean
-notes_store_exec(GswordNotesStore *self, const gchar *sql, GError **error)
-{
-    return gsword_app_db_exec(self->app_db, sql, error);
-}
-
 void
 gsword_verse_list_free(GswordVerseList *list)
 {
@@ -57,66 +51,10 @@ gsword_note_free(GswordNote *note)
     g_free(note);
 }
 
-static gboolean
-notes_store_has_column(GswordNotesStore *self, const gchar *table,
-                       const gchar *column)
-{
-    sqlite3_stmt *stmt = NULL;
-    gchar *sql = g_strdup_printf("PRAGMA table_info(%s)", table);
-    gboolean found = FALSE;
-
-    if (sqlite3_prepare_v2(self->db, sql, -1, &stmt, NULL) == SQLITE_OK) {
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            const gchar *name = (const gchar *)sqlite3_column_text(stmt, 1);
-
-            if (g_strcmp0(name, column) == 0) {
-                found = TRUE;
-                break;
-            }
-        }
-    }
-    sqlite3_finalize(stmt);
-    g_free(sql);
-    return found;
-}
-
 GswordNotesStore *
 gsword_notes_store_new(GError **error)
 {
     GswordNotesStore *self = g_new0(GswordNotesStore, 1);
-    const gchar *schema =
-        "CREATE TABLE IF NOT EXISTS notes ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " text TEXT NOT NULL,"
-        " created INTEGER NOT NULL DEFAULT (strftime('%s','now')),"
-        " updated INTEGER NOT NULL DEFAULT (strftime('%s','now')),"
-        " UNIQUE(module, key));"
-        "CREATE TABLE IF NOT EXISTS tags ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " name TEXT NOT NULL UNIQUE);"
-        "CREATE TABLE IF NOT EXISTS note_tags ("
-        " note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,"
-        " tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,"
-        " PRIMARY KEY(note_id, tag_id));"
-        "CREATE TABLE IF NOT EXISTS verse_lists ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " name TEXT NOT NULL UNIQUE,"
-        " kind TEXT NOT NULL DEFAULT 'normal');"
-        "CREATE TABLE IF NOT EXISTS verse_list_items ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " list_id INTEGER NOT NULL REFERENCES verse_lists(id) ON DELETE CASCADE,"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " UNIQUE(list_id, module, key));"
-        "CREATE TABLE IF NOT EXISTS highlights ("
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " color TEXT NOT NULL DEFAULT '#fff0a8',"
-        " PRIMARY KEY(module, key));";
 
     self->app_db = gsword_app_db_open(error);
     if (self->app_db == NULL) {
@@ -124,30 +62,7 @@ gsword_notes_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!notes_store_exec(self, schema, error))
-        goto fail;
-    if (!notes_store_has_column(self, "verse_lists", "kind")) {
-        if (!notes_store_exec(
-                self,
-                "ALTER TABLE verse_lists ADD COLUMN kind TEXT NOT NULL"
-                " DEFAULT 'normal';", error))
-            goto fail;
-    }
-    if (!notes_store_exec(
-            self,
-            "INSERT OR IGNORE INTO verse_lists(name, kind)"
-            " VALUES('Favorites', 'favorites');"
-            "UPDATE verse_lists SET kind = 'favorites'"
-            " WHERE name = 'Favorites';"
-            "CREATE UNIQUE INDEX IF NOT EXISTS verse_lists_favorites"
-            " ON verse_lists(kind) WHERE kind = 'favorites';", error))
-        goto fail;
     return self;
-
-fail:
-    gsword_app_db_close(self->app_db);
-    g_free(self);
-    return NULL;
 }
 
 void

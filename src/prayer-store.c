@@ -100,29 +100,6 @@ GswordPrayerStore *
 gsword_prayer_store_new(GError **error)
 {
     GswordPrayerStore *self = g_new0(GswordPrayerStore, 1);
-    const gchar *schema =
-        "CREATE TABLE IF NOT EXISTS prayers ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " title TEXT NOT NULL,"
-        " body TEXT NOT NULL DEFAULT '',"
-        " status TEXT NOT NULL DEFAULT 'active',"
-        " created INTEGER NOT NULL,"
-        " updated INTEGER NOT NULL,"
-        " answered_at INTEGER,"
-        " answered_note TEXT);"
-        "CREATE TABLE IF NOT EXISTS prayer_entries ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " prayer_id INTEGER NOT NULL REFERENCES prayers(id) ON DELETE CASCADE,"
-        " body TEXT NOT NULL,"
-        " created INTEGER NOT NULL);"
-        "CREATE INDEX IF NOT EXISTS prayer_entries_prayer"
-        " ON prayer_entries(prayer_id, created);"
-        "CREATE TABLE IF NOT EXISTS prayer_verses ("
-        " prayer_id INTEGER NOT NULL REFERENCES prayers(id) ON DELETE CASCADE,"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " PRIMARY KEY (prayer_id, module, key));";
 
     self->app_db = gsword_app_db_open(error);
     if (self->app_db == NULL) {
@@ -130,11 +107,6 @@ gsword_prayer_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!prayer_store_exec(self, schema, error)) {
-        gsword_app_db_close(self->app_db);
-        g_free(self);
-        return NULL;
-    }
     return self;
 }
 

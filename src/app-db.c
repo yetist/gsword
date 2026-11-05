@@ -6,6 +6,7 @@
 
 #include "app-db.h"
 #include "app-paths.h"
+#include "app-schema.h"
 
 #include <glib/gstdio.h>
 
@@ -39,6 +40,13 @@ gsword_app_db_open(GError **error)
             "PRAGMA foreign_keys = ON;"
             "PRAGMA busy_timeout = 2000;",
             error)) {
+        sqlite3_close(self->db);
+        g_free(self->path);
+        g_free(self);
+        g_free(directory);
+        return NULL;
+    }
+    if (!gsword_app_schema_migrate(self, error)) {
         sqlite3_close(self->db);
         g_free(self->path);
         g_free(self);

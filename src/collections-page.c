@@ -14,6 +14,7 @@
 struct _GswordCollectionsPage {
     GswordWindow *window;
     GtkWidget *root;
+    GtkNotebook *notebook;
     GswordBookmarkPage *bookmark_page;
     GtkListBox *lists;
     GtkEntry *new_list;
@@ -643,6 +644,7 @@ gsword_collections_page_new(GswordWindow *window)
             gsword_bookmark_page_widget(page->bookmark_page),
             gtk_label_new(_("Bookmarks")));
         gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+        page->notebook = GTK_NOTEBOOK(notebook);
         page->root = notebook;
         g_object_set_data_full(G_OBJECT(notebook),
                                "gsword-collections-page", page,
@@ -667,4 +669,12 @@ gsword_collections_page_refresh(GswordCollectionsPage *page)
     refresh_lists(page);
     if (page->bookmark_page != NULL)
         gsword_bookmark_page_refresh(page->bookmark_page);
+}
+
+void
+gsword_collections_page_show_bookmarks(GswordCollectionsPage *page)
+{
+    g_return_if_fail(page != NULL);
+    if (page->notebook != NULL)
+        gtk_notebook_set_current_page(page->notebook, 1);
 }

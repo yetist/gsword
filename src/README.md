@@ -71,8 +71,9 @@ Current implementation:
   list CRUD and item open/remove
 - `bookmark-page.c` / `bookmark-page.h`: bookmark list, add-current-verse,
   open, edit title/note and delete
-- `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
-  creation, plan library with rename/duplicate, schedule filters and undo
+- `plan-page.c` / `plan-page.h`: Plan management / Devotion / Memorize tabs;
+  plan dashboard, template-based creation, plan library with
+  rename/duplicate, schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
   and text display
 - `memory-page.c` / `memory-page.h`: memory verse list, card masking, answer
@@ -100,6 +101,8 @@ Current implementation:
   bookmarks with title, note and module/key
 - `app-db.c` / `app-db.h`: shared SQLite open/exec/transaction helpers and
   `busy_timeout` setup for all application stores
+- `app-schema.c` / `app-schema.h`: centralized versioned schema migration using
+  `PRAGMA user_version`
 - `app-paths.c` / `app-paths.h`: XDG-based application paths:
   `~/.local/share/gsword` for the database, `~/.local/share/gsword/library`
   for the writable SWORD module library, `~/.config/gsword` for installer

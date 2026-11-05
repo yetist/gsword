@@ -912,6 +912,78 @@ on_teaching_action(GSimpleAction *action, GVariant *parameter,
 }
 
 static void
+on_open_prayer_action(GSimpleAction *action, GVariant *parameter,
+                      gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    gsword_window_show_personal(GSWORD_WINDOW(user_data),
+                                GSWORD_PERSONAL_SECTION_PRAYER);
+}
+
+static void
+on_open_bookmarks_action(GSimpleAction *action, GVariant *parameter,
+                         gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    (void)action;
+    (void)parameter;
+    gsword_window_show_personal(self, GSWORD_PERSONAL_SECTION_COLLECTIONS);
+    if (priv->collections_page != NULL)
+        gsword_collections_page_show_bookmarks(priv->collections_page);
+}
+
+static void
+on_open_note_action(GSimpleAction *action, GVariant *parameter,
+                    gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    gsword_window_open_current_note(GSWORD_WINDOW(user_data));
+}
+
+static void
+switch_main_page(GswordWindow *self, gint direction)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *pages[] = { "reader", "compare", "personal" };
+    const gchar *current = adw_view_stack_get_visible_child_name(
+        priv->content_stack);
+    gint index = 0;
+    guint i;
+
+    for (i = 0; i < G_N_ELEMENTS(pages); i++) {
+        if (g_strcmp0(current, pages[i]) == 0) {
+            index = (gint)i;
+            break;
+        }
+    }
+    index = (index + direction + (gint)G_N_ELEMENTS(pages)) %
+            (gint)G_N_ELEMENTS(pages);
+    gsword_window_show_page(self, pages[index]);
+}
+
+static void
+on_next_page_action(GSimpleAction *action, GVariant *parameter,
+                    gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    switch_main_page(GSWORD_WINDOW(user_data), 1);
+}
+
+static void
+on_previous_page_action(GSimpleAction *action, GVariant *parameter,
+                        gpointer user_data)
+{
+    (void)action;
+    (void)parameter;
+    switch_main_page(GSWORD_WINDOW(user_data), -1);
+}
+
+static void
 add_shortcut_row(GtkGrid *grid, gint row, const gchar *keys,
                  const gchar *description)
 {
@@ -946,7 +1018,12 @@ on_shortcuts_action(GSimpleAction *action, GVariant *parameter,
     add_shortcut_row(GTK_GRID(grid), 3, "Ctrl+,", _("Preferences"));
     add_shortcut_row(GTK_GRID(grid), 4, "Alt+Left", _("Back"));
     add_shortcut_row(GTK_GRID(grid), 5, "Alt+Right", _("Forward"));
-    add_shortcut_row(GTK_GRID(grid), 6, "F9", _("Toggle sidebar"));
+    add_shortcut_row(GTK_GRID(grid), 6, "Ctrl+Shift+N", _("Open current note"));
+    add_shortcut_row(GTK_GRID(grid), 7, "Ctrl+Shift+P", _("Open prayer"));
+    add_shortcut_row(GTK_GRID(grid), 8, "Ctrl+Shift+B", _("Open bookmarks"));
+    add_shortcut_row(GTK_GRID(grid), 9, "Ctrl+PageUp", _("Previous page"));
+    add_shortcut_row(GTK_GRID(grid), 10, "Ctrl+PageDown", _("Next page"));
+    add_shortcut_row(GTK_GRID(grid), 11, "F9", _("Toggle sidebar"));
     adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), grid);
     adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
                                    "close", _("Close"), NULL);
@@ -1446,6 +1523,37 @@ gsword_window_build(GswordWindow *self)
         g_object_unref(about);
     }
 
+    {
+        GSimpleAction *open_prayer = g_simple_action_new("open-prayer", NULL);
+        GSimpleAction *open_bookmarks = g_simple_action_new(
+            "open-bookmarks", NULL);
+        GSimpleAction *open_note = g_simple_action_new("open-note", NULL);
+        GSimpleAction *next_page = g_simple_action_new("next-page", NULL);
+        GSimpleAction *previous_page = g_simple_action_new(
+            "previous-page", NULL);
+
+        g_signal_connect(open_prayer, "activate",
+                         G_CALLBACK(on_open_prayer_action), self);
+        g_signal_connect(open_bookmarks, "activate",
+                         G_CALLBACK(on_open_bookmarks_action), self);
+        g_signal_connect(open_note, "activate",
+                         G_CALLBACK(on_open_note_action), self);
+        g_signal_connect(next_page, "activate",
+                         G_CALLBACK(on_next_page_action), self);
+        g_signal_connect(previous_page, "activate",
+                         G_CALLBACK(on_previous_page_action), self);
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(open_prayer));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(open_bookmarks));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(open_note));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(next_page));
+        g_action_map_add_action(G_ACTION_MAP(self), G_ACTION(previous_page));
+        g_object_unref(open_prayer);
+        g_object_unref(open_bookmarks);
+        g_object_unref(open_note);
+        g_object_unref(next_page);
+        g_object_unref(previous_page);
+    }
+
     history_back = g_simple_action_new("history-back", NULL);
     g_signal_connect(history_back, "activate",
                      G_CALLBACK(on_history_back_action), self);
@@ -1492,6 +1600,21 @@ gsword_window_build(GswordWindow *self)
     gtk_application_set_accels_for_action(
         gtk_window_get_application(GTK_WINDOW(self)), "win.toggle-sidebar",
         (const gchar * const[]) { "F9", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.open-note",
+        (const gchar * const[]) { "<Control><Shift>n", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.open-prayer",
+        (const gchar * const[]) { "<Control><Shift>p", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.open-bookmarks",
+        (const gchar * const[]) { "<Control><Shift>b", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.previous-page",
+        (const gchar * const[]) { "<Control>Page_Up", NULL });
+    gtk_application_set_accels_for_action(
+        gtk_window_get_application(GTK_WINDOW(self)), "win.next-page",
+        (const gchar * const[]) { "<Control>Page_Down", NULL });
 }
 
 static void

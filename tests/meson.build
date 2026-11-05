@@ -79,34 +79,34 @@ if get_option('tests')
   test('concurrent', test_concurrent)
 
   test_prayer_store = executable('test-prayer-store',
-    ['test-prayer-store.c', '../src/prayer-store.c', '../src/app-db.c',
+    ['test-prayer-store.c', '../src/prayer-store.c', '../src/app-db.c', '../src/app-schema.c',
      '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('prayer-store', test_prayer_store)
 
   test_app_db = executable('test-app-db',
-    ['test-app-db.c', '../src/app-db.c', '../src/app-paths.c'],
+    ['test-app-db.c', '../src/app-db.c', '../src/app-schema.c', '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('app-db', test_app_db)
 
   test_insight_store = executable('test-insight-store',
-    ['test-insight-store.c', '../src/insight-store.c', '../src/app-db.c',
+    ['test-insight-store.c', '../src/insight-store.c', '../src/app-db.c', '../src/app-schema.c',
      '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('insight-store', test_insight_store)
 
   test_verse_lists = executable('test-verse-lists',
-    ['test-verse-lists.c', '../src/notes-store.c', '../src/app-db.c',
+    ['test-verse-lists.c', '../src/notes-store.c', '../src/app-db.c', '../src/app-schema.c',
      '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('verse-lists', test_verse_lists)
 
   test_bookmark_store = executable('test-bookmark-store',
-    ['test-bookmark-store.c', '../src/bookmark-store.c', '../src/app-db.c',
+    ['test-bookmark-store.c', '../src/bookmark-store.c', '../src/app-db.c', '../src/app-schema.c',
      '../src/app-paths.c'],
     include_directories: include_directories('../src'),
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
