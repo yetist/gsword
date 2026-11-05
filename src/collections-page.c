@@ -5,6 +5,7 @@
  */
 
 #include "collections-page.h"
+#include "bookmark-page.h"
 #include "notes-store.h"
 #include "window-private.h"
 
@@ -13,6 +14,7 @@
 struct _GswordCollectionsPage {
     GswordWindow *window;
     GtkWidget *root;
+    GswordBookmarkPage *bookmark_page;
     GtkListBox *lists;
     GtkEntry *new_list;
     GtkButton *rename_button;
@@ -630,9 +632,22 @@ gsword_collections_page_new(GswordWindow *window)
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), right);
     gtk_paned_set_position(GTK_PANED(paned), 300);
-    page->root = paned;
-    g_object_set_data_full(G_OBJECT(paned), "gsword-collections-page", page,
-                           collections_page_free);
+    {
+        GtkWidget *notebook = gtk_notebook_new();
+
+        page->bookmark_page = gsword_bookmark_page_new(window);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), paned,
+                                 gtk_label_new(_("Lists")));
+        gtk_notebook_append_page(
+            GTK_NOTEBOOK(notebook),
+            gsword_bookmark_page_widget(page->bookmark_page),
+            gtk_label_new(_("Bookmarks")));
+        gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+        page->root = notebook;
+        g_object_set_data_full(G_OBJECT(notebook),
+                               "gsword-collections-page", page,
+                               collections_page_free);
+    }
     update_actions(page);
     refresh_lists(page);
     return page;
@@ -650,4 +665,6 @@ gsword_collections_page_refresh(GswordCollectionsPage *page)
 {
     g_return_if_fail(page != NULL);
     refresh_lists(page);
+    if (page->bookmark_page != NULL)
+        gsword_bookmark_page_refresh(page->bookmark_page);
 }

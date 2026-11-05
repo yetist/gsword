@@ -66,9 +66,11 @@ Current implementation:
 - `prayer-page.c` / `prayer-page.h`: prayer list, search/filter, editor,
   status transitions, answered notes, related-verse management and prayer-log
   timeline
-- `collections-page.c` / `collections-page.h`: verse-list and favorites
-  management, including the system favorites list, list CRUD and item
-  open/remove; bookmarks remain a later stage
+- `collections-page.c` / `collections-page.h`: Lists/Bookmarks container;
+  verse-list and favorites management, including the system favorites list,
+  list CRUD and item open/remove
+- `bookmark-page.c` / `bookmark-page.h`: bookmark list, add-current-verse,
+  open, edit title/note and delete
 - `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
   creation, plan library with rename/duplicate, schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
@@ -94,6 +96,8 @@ Current implementation:
   database
 - `insight-store.c` / `insight-store.h`: SQLite-backed free-form insights,
   optional verse associations and tags in the same application database
+- `bookmark-store.c` / `bookmark-store.h`: SQLite-backed reading-position
+  bookmarks with title, note and module/key
 - `app-db.c` / `app-db.h`: shared SQLite open/exec/transaction helpers and
   `busy_timeout` setup for all application stores
 - `app-paths.c` / `app-paths.h`: XDG-based application paths:

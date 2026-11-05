@@ -55,6 +55,7 @@ typedef struct {
     GswordPlanPage *plan_page;
     GswordPrayerStore *prayers;
     GswordInsightStore *insights;
+    GswordBookmarkStore *bookmarks;
     GswordPrayerPage *prayer_page;
     GswordTodayPage *today_page;
     GswordCollectionsPage *collections_page;
@@ -123,6 +124,14 @@ gsword_window_get_insight_store(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     return priv->insights;
+}
+
+GswordBookmarkStore *
+gsword_window_get_bookmark_store(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    return priv->bookmarks;
 }
 
 static const gchar *
@@ -281,6 +290,29 @@ gsword_window_open_memory_review(GswordWindow *self)
         gsword_window_show_page(self, "personal");
         gsword_plan_page_show_memory(priv->plan_page);
     }
+}
+
+void
+gsword_window_open_devotion(GswordWindow *self)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    priv = gsword_window_get_instance_private(self);
+    if (priv->plan_page != NULL)
+        gsword_plan_page_show_devotion(priv->plan_page);
+}
+
+void
+gsword_window_open_insights(GswordWindow *self)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    priv = gsword_window_get_instance_private(self);
+    gsword_window_show_personal(self, GSWORD_PERSONAL_SECTION_NOTES);
+    if (priv->notes_page != NULL)
+        gsword_notes_page_show_insights(priv->notes_page);
 }
 
 static void
@@ -1498,6 +1530,7 @@ gsword_window_finalize(GObject *object)
     g_clear_pointer(&priv->plans, gsword_plan_store_free);
     g_clear_pointer(&priv->prayers, gsword_prayer_store_free);
     g_clear_pointer(&priv->insights, gsword_insight_store_free);
+    g_clear_pointer(&priv->bookmarks, gsword_bookmark_store_free);
     g_free(priv->search_return_page);
     g_free(priv->library_return_page);
 
@@ -1569,6 +1602,12 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     priv->insights = gsword_insight_store_new(&error);
     if (priv->insights == NULL) {
         g_printerr("gsword: cannot open insight database: %s\n",
+                   error != NULL ? error->message : "unknown error");
+        g_clear_error(&error);
+    }
+    priv->bookmarks = gsword_bookmark_store_new(&error);
+    if (priv->bookmarks == NULL) {
+        g_printerr("gsword: cannot open bookmark database: %s\n",
                    error != NULL ? error->message : "unknown error");
         g_clear_error(&error);
     }

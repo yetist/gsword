@@ -16,6 +16,7 @@
 #include "personal-page.h"
 #include "prayer-store.h"
 #include "insight-store.h"
+#include "bookmark-store.h"
 
 G_BEGIN_DECLS
 
@@ -51,6 +52,7 @@ GswordNotesStore *gsword_window_get_notes_store(GswordWindow *self);
 GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
 GswordPrayerStore *gsword_window_get_prayer_store(GswordWindow *self);
 GswordInsightStore *gsword_window_get_insight_store(GswordWindow *self);
+GswordBookmarkStore *gsword_window_get_bookmark_store(GswordWindow *self);
 void gsword_window_show_personal(GswordWindow *self,
                                  GswordPersonalSection section);
 void gsword_window_show_personal_page(GswordWindow *self,
@@ -59,6 +61,8 @@ void gsword_window_open_prayer_for(GswordWindow *self, const gchar *module,
                                    const gchar *storage_key,
                                    const gchar *display_key);
 void gsword_window_open_memory_review(GswordWindow *self);
+void gsword_window_open_devotion(GswordWindow *self);
+void gsword_window_open_insights(GswordWindow *self);
 GswModule *gsword_window_ensure_verse_module(GswordWindow *self);
 void gsword_window_populate_modules(GswordWindow *self);
 gboolean gsword_window_module_info_is_devotional(GswModuleInfo *info);
