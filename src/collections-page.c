@@ -142,6 +142,31 @@ on_view_item_selected(GtkListBox *list, GtkListBoxRow *row,
 }
 
 static void
+on_view_row_remove_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(
+        view->page->window);
+    const gchar *module = g_object_get_data(G_OBJECT(button), "item-module");
+    const gchar *key = g_object_get_data(G_OBJECT(button), "item-key");
+    GError *error = NULL;
+
+    if (store == NULL || view->list_id == 0 || module == NULL || key == NULL)
+        return;
+    if (!gsword_notes_store_remove_from_list(
+            store, view->list_id, module, key, &error)) {
+        gsword_window_show_error(view->page->window,
+                                 _("Cannot remove verse from list"), error);
+        return;
+    }
+    gsword_window_set_status(
+        view->page->window, view->favorites
+                            ? _("Verse removed from favorites")
+                            : _("Verse removed from list"));
+    collection_view_load(view);
+}
+
+static void
 collection_view_load(GswordCollectionItemView *view)
 {
     GswordNotesStore *store = gsword_window_get_notes_store(
@@ -165,21 +190,41 @@ collection_view_load(GswordCollectionItemView *view)
     for (i = 0; i < items->len; i++) {
         GswordVerseListItem *item = g_ptr_array_index(items, i);
         GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *labels = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
         GtkWidget *verse = gtk_label_new(item->display_key);
         GtkWidget *module = gtk_label_new(item->module);
+        GtkWidget *remove = gtk_button_new_from_icon_name(
+            view->favorites ? "starred-symbolic" : "list-remove-symbolic");
 
         gtk_widget_set_margin_top(box, 5);
         gtk_widget_set_margin_bottom(box, 5);
         gtk_widget_set_margin_start(box, 8);
         gtk_widget_set_margin_end(box, 8);
+        gtk_widget_set_hexpand(labels, TRUE);
         gtk_label_set_xalign(GTK_LABEL(verse), 0.0f);
         gtk_label_set_ellipsize(GTK_LABEL(verse), PANGO_ELLIPSIZE_END);
         gtk_label_set_xalign(GTK_LABEL(module), 0.0f);
         gtk_widget_add_css_class(module, "caption");
         gtk_widget_add_css_class(module, "dim-label");
-        gtk_box_append(GTK_BOX(box), verse);
-        gtk_box_append(GTK_BOX(box), module);
+        gtk_box_append(GTK_BOX(labels), verse);
+        gtk_box_append(GTK_BOX(labels), module);
+        gtk_widget_add_css_class(remove, "flat");
+        gtk_widget_set_tooltip_text(
+            remove, view->favorites ? _("Remove from favorites")
+                                    : _("Remove from list"));
+        gtk_accessible_update_property(
+            GTK_ACCESSIBLE(remove), GTK_ACCESSIBLE_PROPERTY_LABEL,
+            view->favorites ? _("Remove from favorites")
+                            : _("Remove from list"), -1);
+        g_object_set_data_full(G_OBJECT(remove), "item-module",
+                               g_strdup(item->module), g_free);
+        g_object_set_data_full(G_OBJECT(remove), "item-key",
+                               g_strdup(item->key), g_free);
+        g_signal_connect(remove, "clicked",
+                         G_CALLBACK(on_view_row_remove_clicked), view);
+        gtk_box_append(GTK_BOX(box), labels);
+        gtk_box_append(GTK_BOX(box), remove);
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
         g_object_set_data_full(G_OBJECT(row), "item-module",
                                g_strdup(item->module), g_free);
@@ -327,6 +372,7 @@ collection_view_new(GswordCollectionsPage *page, gboolean favorites)
 
     view->items = GTK_LIST_BOX(gtk_list_box_new());
     gtk_list_box_set_selection_mode(view->items, GTK_SELECTION_SINGLE);
+    gtk_list_box_set_activate_on_single_click(view->items, FALSE);
     g_signal_connect(view->items, "row-selected",
                      G_CALLBACK(on_view_item_selected), view);
     g_signal_connect(view->items, "row-activated",
@@ -350,9 +396,19 @@ collection_view_new(GswordCollectionsPage *page, gboolean favorites)
     gtk_box_append(GTK_BOX(footer), remove);
     gtk_widget_set_halign(footer, GTK_ALIGN_END);
 
-    gtk_box_append(GTK_BOX(box), header);
-    gtk_box_append(GTK_BOX(box), scroll);
-    gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->count_label));
+    {
+        GtkWidget *hint = gtk_label_new(
+            _("Click to select; double-click or press Enter to open"));
+
+        gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
+        gtk_widget_add_css_class(hint, "caption");
+        gtk_widget_add_css_class(hint, "dim-label");
+        gtk_box_append(GTK_BOX(box), header);
+        gtk_box_append(GTK_BOX(box), scroll);
+        gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->count_label));
+        gtk_box_append(GTK_BOX(box), hint);
+    }
     gtk_box_append(GTK_BOX(box), footer);
     view->root = box;
     collection_view_update_actions(view);
