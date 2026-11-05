@@ -941,6 +941,16 @@ gsword_plan_page_show_devotion(GswordPlanPage *page)
     gsword_window_show_page(page->window, "plan");
 }
 
+void
+gsword_plan_page_show_memory(GswordPlanPage *page)
+{
+    g_return_if_fail(page != NULL);
+    if (page->notebook != NULL)
+        gtk_notebook_set_current_page(page->notebook, 3);
+    gsword_plan_page_refresh_memory(page);
+    gsword_window_show_page(page->window, "plan");
+}
+
 static void
 plan_page_free(gpointer data)
 {
@@ -1197,7 +1207,7 @@ gsword_plan_page_new(GswordWindow *window)
     page->devotion = gsword_devotion_page_new(window);
     page->memory = gsword_memory_page_new(window);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), today_page,
-                             gtk_label_new(_("Today")));
+                             gtk_label_new(_("Plan dashboard")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), plans_page,
                              gtk_label_new(_("Plans")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook),

@@ -78,6 +78,12 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('concurrent', test_concurrent)
 
+  test_prayer_store = executable('test-prayer-store',
+    ['test-prayer-store.c', '../src/prayer-store.c', '../src/app-paths.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
+  test('prayer-store', test_prayer_store)
+
   test_codec = executable('test-codec', 'test-codec.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep],
     c_args: extra_c_args)

@@ -174,8 +174,21 @@ gsword_window_show_page(GswordWindow *self, const gchar *page)
 
     if (services == NULL || services->content_stack == NULL || page == NULL)
         return;
-    adw_view_stack_set_visible_child_name(services->content_stack,
-                                           page);
+    if (g_strcmp0(page, "panes") == 0)
+        page = "compare";
+    if (g_strcmp0(page, "notes") == 0) {
+        gsword_window_show_personal_page(self, "notes");
+        return;
+    }
+    if (g_strcmp0(page, "plan") == 0) {
+        gsword_window_show_personal_page(self, "plans");
+        return;
+    }
+    if (g_str_has_prefix(page, "personal/")) {
+        gsword_window_show_personal_page(self, page + strlen("personal/"));
+        return;
+    }
+    adw_view_stack_set_visible_child_name(services->content_stack, page);
 }
 
 gboolean
@@ -186,6 +199,8 @@ gsword_window_is_page_visible(GswordWindow *self, const gchar *page)
 
     if (services == NULL || services->content_stack == NULL || page == NULL)
         return FALSE;
+    if (g_strcmp0(page, "panes") == 0)
+        page = "compare";
     visible = adw_view_stack_get_visible_child_name(
         services->content_stack);
     return g_strcmp0(visible, page) == 0;

@@ -15,6 +15,11 @@ src/preferences-dialog.c
 src/devotion-page.c
 src/plan-page.c
 src/plan-store.c
+src/prayer-store.c
+src/personal-page.c
+src/today-page.c
+src/prayer-page.c
+src/collections-page.c
 src/resource-page.c
 src/teaching-page.c
 src/gsword-reference-chooser.c
