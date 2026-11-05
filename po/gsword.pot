@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 14:35+0800\n"
+"POT-Creation-Date: 2026-11-05 15:35+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,920 +16,922 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/application.c:135
+#: src/application.c:148
 #, c-format
 msgid "Cannot create library directory %s"
 msgstr ""
 
-#: src/application.c:192
+#: src/application.c:205
 #, c-format
 msgid "gsword: cannot open module library: %s\n"
 msgstr ""
 
-#: src/application.c:193 src/window-services.c:146
+#: src/application.c:206 src/window-services.c:148
 msgid "unknown error"
 msgstr ""
 
-#: src/application.c:220
+#: src/application.c:233
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:114 src/window.c:995
+#: src/window.c:289 src/window.c:1171
 msgid "Hide module sidebar"
 msgstr ""
 
-#: src/window.c:114
+#: src/window.c:289
 msgid "Show module sidebar"
 msgstr ""
 
-#: src/window.c:259 src/workspace-page.c:523 src/workspace-page.c:753
-#: src/workspace-page.c:843 src/workspace-pane.c:616
+#: src/window.c:434 src/workspace-page.c:525 src/workspace-page.c:755
+#: src/workspace-page.c:845 src/workspace-pane.c:618
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:474 src/search-page.c:1149 src/resource-page.c:206
-#: src/resource-page.c:212
+#: src/window.c:649 src/search-page.c:1151 src/resource-page.c:208
+#: src/resource-page.c:214
 msgid "Cannot open module"
 msgstr ""
 
-#: src/window.c:539
+#: src/window.c:714
 msgid "Commentary opened in study panel"
 msgstr ""
 
-#: src/window.c:559
+#: src/window.c:734
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:716 src/window.c:789
+#: src/window.c:891 src/window.c:968
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:725 src/window.c:1004 src/search-page.c:1401
+#: src/window.c:900 src/window.c:1180 src/search-page.c:1403
 msgid "Search"
 msgstr ""
 
-#: src/window.c:726
+#: src/window.c:901
 msgid "Focus reference"
 msgstr ""
 
-#: src/window.c:727 src/window.c:779 src/window.c:1011 src/library-page.c:2281
-#: src/preferences-dialog.c:335
+#: src/window.c:902 src/window.c:958 src/window.c:1187 src/library-page.c:2283
+#: src/preferences-dialog.c:337
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:728 src/window.c:783 src/preferences-dialog.c:257
+#: src/window.c:903 src/window.c:962 src/preferences-dialog.c:259
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:729 src/search-page.c:1421 src/library-page.c:2517
+#: src/window.c:904 src/search-page.c:1423 src/library-page.c:2519
 msgid "Back"
 msgstr ""
 
-#: src/window.c:730
+#: src/window.c:905
 msgid "Forward"
 msgstr ""
 
-#: src/window.c:731
+#: src/window.c:906
 msgid "Toggle sidebar"
 msgstr ""
 
-#: src/window.c:734 src/window-services.c:157 src/search-page.c:784
-#: src/library-page.c:1266
+#: src/window.c:909 src/window-services.c:159 src/search-page.c:786
+#: src/library-page.c:1268
 msgid "Close"
 msgstr ""
 
-#: src/window.c:755
+#: src/window.c:930
 msgid ""
 "A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
 "module library."
 msgstr ""
 
-#: src/window.c:774
+#: src/window.c:953
 msgid "Show study panel"
 msgstr ""
 
-#: src/window.c:775
+#: src/window.c:954
 msgid "Comparison"
 msgstr ""
 
-#: src/window.c:776
+#: src/window.c:955
 msgid "Teaching"
 msgstr ""
 
-#: src/window.c:790
+#: src/window.c:969
 msgid "About GSword"
 msgstr ""
 
-#: src/window.c:793
+#: src/window.c:972
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:1017
+#: src/window.c:1193
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:1047 src/preferences-dialog.c:262
+#: src/window.c:1234 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:1053
+#: src/window.c:1240
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:1067 src/notes-page.c:192 src/notes-page.c:1897
-msgid "Notes"
+#: src/window.c:1254
+msgid "Personal"
 msgstr ""
 
-#: src/window.c:1072
-msgid "Plan"
-msgstr ""
-
-#: src/window-services.c:247 src/window-services.c:255
+#: src/window-services.c:264 src/window-services.c:272
 msgid "Daily Devotional"
 msgstr ""
 
-#: src/window-services.c:249 src/window-services.c:256 src/library-page.c:2326
-#: src/module-sidebar.c:30
+#: src/window-services.c:266 src/window-services.c:273 src/library-page.c:2328
+#: src/module-sidebar.c:32
 msgid "Maps"
 msgstr ""
 
-#: src/window-services.c:251
+#: src/window-services.c:268
 msgid "Biblical Texts"
 msgstr ""
 
-#: src/window-services.c:252 src/library-page.c:2324 src/module-sidebar.c:26
+#: src/window-services.c:269 src/library-page.c:2326 src/module-sidebar.c:28
 msgid "Commentaries"
 msgstr ""
 
-#: src/window-services.c:253 src/library-page.c:2324 src/module-sidebar.c:27
+#: src/window-services.c:270 src/library-page.c:2326 src/module-sidebar.c:29
 msgid "Lexicons / Dictionaries"
 msgstr ""
 
-#: src/window-services.c:254
+#: src/window-services.c:271
 msgid "Generic Books"
 msgstr ""
 
-#: src/window-services.c:257
+#: src/window-services.c:274
 msgid "Other"
 msgstr ""
 
-#: src/window-services.c:261 src/library-page.c:230 src/library-page.c:264
-#: src/library-page.c:729 src/library-page.c:730 src/library-page.c:768
-#: src/library-page.c:771 src/library-page.c:774 src/library-page.c:777
-#: src/library-page.c:781 src/library-page.c:784 src/library-page.c:908
-#: src/library-page.c:911 src/library-page.c:914 src/library-page.c:918
-#: src/library-page.c:921
+#: src/window-services.c:278 src/library-page.c:232 src/library-page.c:266
+#: src/library-page.c:731 src/library-page.c:732 src/library-page.c:770
+#: src/library-page.c:773 src/library-page.c:776 src/library-page.c:779
+#: src/library-page.c:783 src/library-page.c:786 src/library-page.c:910
+#: src/library-page.c:913 src/library-page.c:916 src/library-page.c:920
+#: src/library-page.c:923
 msgid "Unknown"
 msgstr ""
 
-#: src/window-services.c:308 src/window-services.c:316
+#: src/window-services.c:325 src/window-services.c:333
 msgid "Verse not present in this module."
 msgstr ""
 
-#: src/search-page.c:99
+#: src/search-page.c:101
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:102
+#: src/search-page.c:104
 #, c-format
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:245 src/search-page.c:1481
+#: src/search-page.c:247 src/search-page.c:1483
 msgid "Index: no module"
 msgstr ""
 
-#: src/search-page.c:248
+#: src/search-page.c:250
 msgid "Index: not built (scan used)"
 msgstr ""
 
-#: src/search-page.c:251
+#: src/search-page.c:253
 msgid "Index: built (used for this search)"
 msgstr ""
 
-#: src/search-page.c:254
+#: src/search-page.c:256
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:544 src/reader-page.c:1091
+#: src/search-page.c:546 src/reader-page.c:1093
 msgid "Copied to clipboard"
 msgstr ""
 
-#: src/search-page.c:629
+#: src/search-page.c:631
 msgid "This result cannot be added to memory review"
 msgstr ""
 
-#: src/search-page.c:636 src/memory-page.c:235
+#: src/search-page.c:638 src/memory-page.c:237
 msgid "Cannot add memory verse"
 msgstr ""
 
-#: src/search-page.c:640 src/memory-page.c:267
+#: src/search-page.c:642 src/memory-page.c:269
 msgid "Verse added to memory review"
 msgstr ""
 
-#: src/search-page.c:659 src/notes-page.c:1216 src/reader-toolbar.c:155
+#: src/search-page.c:661 src/notes-page.c:1218 src/reader-toolbar.c:157
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/search-page.c:662 src/notes-page.c:1232 src/reader-toolbar.c:172
+#: src/search-page.c:664 src/notes-page.c:1234 src/reader-toolbar.c:174
 msgid "Verse added to list"
 msgstr ""
 
-#: src/search-page.c:690 src/search-page.c:918 src/reader-toolbar.c:493
+#: src/search-page.c:692 src/search-page.c:920 src/reader-toolbar.c:522
 msgid "Add to verse list"
 msgstr ""
 
-#: src/search-page.c:702
+#: src/search-page.c:704
 msgid "Verse lists are unavailable."
 msgstr ""
 
-#: src/search-page.c:706 src/notes-page.c:1263 src/notes-page.c:1763
-#: src/reader-toolbar.c:208
+#: src/search-page.c:708 src/notes-page.c:1265 src/notes-page.c:1765
+#: src/reader-toolbar.c:210
 msgid "No verse lists yet"
 msgstr ""
 
-#: src/search-page.c:707
+#: src/search-page.c:709 src/today-page.c:164 src/collections-page.c:41
 msgid "Open notes"
 msgstr ""
 
-#: src/search-page.c:763
+#: src/search-page.c:765
 msgid "Module information unavailable"
 msgstr ""
 
-#: src/search-page.c:772 src/library-page.c:2446
+#: src/search-page.c:774 src/library-page.c:2448
 msgid "Language"
 msgstr ""
 
-#: src/search-page.c:775
+#: src/search-page.c:777
 msgid "Version"
 msgstr ""
 
-#: src/search-page.c:778
+#: src/search-page.c:780
 msgid "Path"
 msgstr ""
 
-#: src/search-page.c:781 src/search-page.c:922
+#: src/search-page.c:783 src/search-page.c:924
 msgid "Module information"
 msgstr ""
 
-#: src/search-page.c:895 src/reader-page.c:1488
+#: src/search-page.c:897 src/reader-page.c:1490
 msgid "Copy verse"
 msgstr ""
 
-#: src/search-page.c:897
+#: src/search-page.c:899
 msgid "Copy reference"
 msgstr ""
 
-#: src/search-page.c:900
+#: src/search-page.c:902
 msgid "Copy verse and reference"
 msgstr ""
 
-#: src/search-page.c:905 src/notes-page.c:1713 src/notes-page.c:1954
+#: src/search-page.c:907 src/notes-page.c:1715 src/notes-page.c:1956
 msgid "Open in reader"
 msgstr ""
 
-#: src/search-page.c:909
+#: src/search-page.c:911
 msgid "Open in compare"
 msgstr ""
 
-#: src/search-page.c:913
+#: src/search-page.c:915
 msgid "Add note"
 msgstr ""
 
-#: src/search-page.c:915
+#: src/search-page.c:917
 msgid "Add to memory review"
 msgstr ""
 
-#: src/search-page.c:1004
+#: src/search-page.c:1006
 msgid "Result actions"
 msgstr ""
 
-#: src/search-page.c:1024
+#: src/search-page.c:1026
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:1032
+#: src/search-page.c:1034
 msgid "No results."
 msgstr ""
 
-#: src/search-page.c:1043 src/search-page.c:1044 src/search-page.c:1177
+#: src/search-page.c:1045 src/search-page.c:1046 src/search-page.c:1179
 msgid "Searching..."
 msgstr ""
 
-#: src/search-page.c:1080
+#: src/search-page.c:1082
 msgid "Search cancelled"
 msgstr ""
 
-#: src/search-page.c:1082
+#: src/search-page.c:1084
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:1117
+#: src/search-page.c:1119
 msgid "Enter both attribute levels or leave both empty"
 msgstr ""
 
-#: src/search-page.c:1123
+#: src/search-page.c:1125
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:1128
+#: src/search-page.c:1130
 msgid "No active verse reference"
 msgstr ""
 
-#: src/search-page.c:1254
+#: src/search-page.c:1256
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:1318
+#: src/search-page.c:1320
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:1322
+#: src/search-page.c:1324
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:1338
+#: src/search-page.c:1340
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:1342
+#: src/search-page.c:1344
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:1402 src/notes-page.c:683 src/notes-page.c:1394
-#: src/notes-page.c:1463 src/notes-page.c:1517 src/notes-page.c:1596
-#: src/library-page.c:1601 src/library-page.c:2211 src/library-page.c:2319
-#: src/plan-page.c:564 src/plan-page.c:906
+#: src/search-page.c:1404 src/notes-page.c:685 src/notes-page.c:1396
+#: src/notes-page.c:1465 src/notes-page.c:1519 src/notes-page.c:1598
+#: src/library-page.c:1603 src/library-page.c:2213 src/library-page.c:2321
+#: src/plan-page.c:566 src/plan-page.c:908 src/prayer-page.c:574
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:1405
+#: src/search-page.c:1407
 msgid "Build index"
 msgstr ""
 
-#: src/search-page.c:1406
+#: src/search-page.c:1408
 msgid "Delete index"
 msgstr ""
 
-#: src/search-page.c:1420
+#: src/search-page.c:1422
 msgid "Recent searches"
 msgstr ""
 
-#: src/search-page.c:1423
+#: src/search-page.c:1425
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:1424
+#: src/search-page.c:1426
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:1427
+#: src/search-page.c:1429
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:1434
+#: src/search-page.c:1436
 msgid "Whole module"
 msgstr ""
 
-#: src/search-page.c:1434 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1436 src/gsword-reference-chooser.c:1612
 msgid "Old Testament"
 msgstr ""
 
-#: src/search-page.c:1435 src/gsword-reference-chooser.c:1610
+#: src/search-page.c:1437 src/gsword-reference-chooser.c:1612
 msgid "New Testament"
 msgstr ""
 
-#: src/search-page.c:1435
+#: src/search-page.c:1437
 msgid "Current book"
 msgstr ""
 
-#: src/search-page.c:1436
+#: src/search-page.c:1438
 msgid "Current chapter"
 msgstr ""
 
-#: src/search-page.c:1441
+#: src/search-page.c:1443
 msgid "Module:"
 msgstr ""
 
-#: src/search-page.c:1442
+#: src/search-page.c:1444
 msgid "Range:"
 msgstr ""
 
-#: src/search-page.c:1445
+#: src/search-page.c:1447
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:1445
+#: src/search-page.c:1447
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:1445
+#: src/search-page.c:1447
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:1449
+#: src/search-page.c:1451
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:1452
+#: src/search-page.c:1454
 msgid "Word"
 msgstr ""
 
-#: src/search-page.c:1453
+#: src/search-page.c:1455
 msgid "Lemma"
 msgstr ""
 
-#: src/search-page.c:1456
+#: src/search-page.c:1458
 msgid "Attribute 1:"
 msgstr ""
 
-#: src/search-page.c:1457
+#: src/search-page.c:1459
 msgid "Attribute 2:"
 msgstr ""
 
-#: src/search-page.c:1458
+#: src/search-page.c:1460
 msgid "Advanced"
 msgstr ""
 
-#: src/search-page.c:1460
+#: src/search-page.c:1462
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr ""
 
-#: src/search-page.c:1486
+#: src/search-page.c:1488
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr ""
 
-#: src/search-page.c:1545
+#: src/search-page.c:1547
 msgid "Enter a search term."
 msgstr ""
 
-#: src/notes-page.c:164
+#: src/notes-page.c:166
 msgid "No matching notes"
 msgstr ""
 
-#: src/notes-page.c:164 src/notes-page.c:1739
+#: src/notes-page.c:166 src/notes-page.c:1741 src/today-page.c:314
 msgid "No notes yet"
 msgstr ""
 
-#: src/notes-page.c:171
+#: src/notes-page.c:173
 #, c-format
 msgid "Tag: %s"
 msgstr ""
 
-#: src/notes-page.c:186
+#: src/notes-page.c:188
 #, c-format
 msgid "Notes · %s"
 msgstr ""
 
-#: src/notes-page.c:199
+#: src/notes-page.c:194 src/notes-page.c:1899 src/personal-page.c:98
+msgid "Notes"
+msgstr ""
+
+#: src/notes-page.c:201
 #, c-format
 msgid "%u note(s)"
 msgstr ""
 
-#: src/notes-page.c:358
+#: src/notes-page.c:360
 msgid "Verse text unavailable"
 msgstr ""
 
-#: src/notes-page.c:463
+#: src/notes-page.c:465
 msgid "Cannot save note"
 msgstr ""
 
-#: src/notes-page.c:477 src/notes-page.c:532
+#: src/notes-page.c:479 src/notes-page.c:534
 msgid "Saved"
 msgstr ""
 
-#: src/notes-page.c:491
+#: src/notes-page.c:493
 msgid "Unsaved changes"
 msgstr ""
 
-#: src/notes-page.c:532 src/notes-page.c:655
+#: src/notes-page.c:534 src/notes-page.c:657
 msgid "Not saved"
 msgstr ""
 
-#: src/notes-page.c:632
+#: src/notes-page.c:634
 msgid "Note saved"
 msgstr ""
 
-#: src/notes-page.c:644
+#: src/notes-page.c:646
 msgid "Cannot delete note"
 msgstr ""
 
-#: src/notes-page.c:657
+#: src/notes-page.c:659
 msgid "Note deleted"
 msgstr ""
 
-#: src/notes-page.c:678
+#: src/notes-page.c:680
 msgid "Delete note"
 msgstr ""
 
-#: src/notes-page.c:680
+#: src/notes-page.c:682
 #, c-format
 msgid "Delete the note for %s? This cannot be undone."
 msgstr ""
 
-#: src/notes-page.c:684 src/notes-page.c:1518 src/notes-page.c:1597
-#: src/notes-page.c:1703 src/memory-page.c:368 src/plan-page.c:907
+#: src/notes-page.c:686 src/notes-page.c:1520 src/notes-page.c:1599
+#: src/notes-page.c:1705 src/memory-page.c:370 src/plan-page.c:909
+#: src/prayer-page.c:575 src/prayer-page.c:604
 msgid "Delete"
 msgstr ""
 
-#: src/notes-page.c:737
+#: src/notes-page.c:739
 msgid "Export note"
 msgstr ""
 
-#: src/notes-page.c:807 src/notes-page.c:1752
+#: src/notes-page.c:809 src/notes-page.c:1754
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:1093 src/notes-page.c:1224 src/reader-toolbar.c:165
+#: src/notes-page.c:1095 src/notes-page.c:1226 src/reader-toolbar.c:167
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1097 src/notes-page.c:1233 src/reader-toolbar.c:173
+#: src/notes-page.c:1099 src/notes-page.c:1235 src/reader-toolbar.c:175
 msgid "Verse removed from list"
 msgstr ""
 
-#: src/notes-page.c:1131 src/notes-page.c:1777
+#: src/notes-page.c:1133 src/notes-page.c:1779
 msgid "Select a verse list"
 msgstr ""
 
-#: src/notes-page.c:1143
+#: src/notes-page.c:1145
 msgid "This list is empty"
 msgstr ""
 
-#: src/notes-page.c:1251
+#: src/notes-page.c:1253
 msgid "Select a note first"
 msgstr ""
 
-#: src/notes-page.c:1358
+#: src/notes-page.c:1360
 msgid "Cannot rename tag"
 msgstr ""
 
-#: src/notes-page.c:1369
+#: src/notes-page.c:1371
 msgid "Tag renamed"
 msgstr ""
 
-#: src/notes-page.c:1387 src/notes-page.c:1796
+#: src/notes-page.c:1389 src/notes-page.c:1798
 msgid "Rename tag"
 msgstr ""
 
-#: src/notes-page.c:1395 src/notes-page.c:1464 src/plan-page.c:565
+#: src/notes-page.c:1397 src/notes-page.c:1466 src/plan-page.c:567
 msgid "Rename"
 msgstr ""
 
-#: src/notes-page.c:1431
+#: src/notes-page.c:1433
 msgid "Cannot rename verse list"
 msgstr ""
 
-#: src/notes-page.c:1437
+#: src/notes-page.c:1439
 msgid "Verse list renamed"
 msgstr ""
 
-#: src/notes-page.c:1456 src/notes-page.c:1816
+#: src/notes-page.c:1458 src/notes-page.c:1818
 msgid "Rename verse list"
 msgstr ""
 
-#: src/notes-page.c:1489
+#: src/notes-page.c:1491
 msgid "Cannot delete tag"
 msgstr ""
 
-#: src/notes-page.c:1495
+#: src/notes-page.c:1497
 msgid "Tag deleted"
 msgstr ""
 
-#: src/notes-page.c:1512 src/notes-page.c:1801
+#: src/notes-page.c:1514 src/notes-page.c:1803
 msgid "Delete tag"
 msgstr ""
 
-#: src/notes-page.c:1514
+#: src/notes-page.c:1516
 #, c-format
 msgid "Delete tag “%s”? Notes will remain."
 msgstr ""
 
-#: src/notes-page.c:1542
+#: src/notes-page.c:1544
 msgid "Cannot create list"
 msgstr ""
 
-#: src/notes-page.c:1547
+#: src/notes-page.c:1549
 msgid "Verse list created"
 msgstr ""
 
-#: src/notes-page.c:1565
+#: src/notes-page.c:1567
 msgid "Cannot delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1575
+#: src/notes-page.c:1577
 msgid "Verse list deleted"
 msgstr ""
 
-#: src/notes-page.c:1591 src/notes-page.c:1786
+#: src/notes-page.c:1593 src/notes-page.c:1788
 msgid "Delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1593
+#: src/notes-page.c:1595
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr ""
 
-#: src/notes-page.c:1680
+#: src/notes-page.c:1682
 msgid "Add list"
 msgstr ""
 
-#: src/notes-page.c:1683 src/notes-page.c:1898
+#: src/notes-page.c:1685 src/notes-page.c:1900
 msgid "Tags"
 msgstr ""
 
-#: src/notes-page.c:1694 src/notes-page.c:1900
+#: src/notes-page.c:1696 src/notes-page.c:1902
 msgid "Verse lists"
 msgstr ""
 
-#: src/notes-page.c:1695
+#: src/notes-page.c:1697
 msgid "List verses"
 msgstr ""
 
-#: src/notes-page.c:1702 src/library-page.c:2212
+#: src/notes-page.c:1704 src/library-page.c:2214 src/prayer-page.c:601
 msgid "Save"
 msgstr ""
 
-#: src/notes-page.c:1704
+#: src/notes-page.c:1706
 msgid "Export"
 msgstr ""
 
-#: src/notes-page.c:1706
+#: src/notes-page.c:1708
 msgid "Add to list"
 msgstr ""
 
-#: src/notes-page.c:1709
+#: src/notes-page.c:1711
 msgid "Add tag"
 msgstr ""
 
-#: src/notes-page.c:1726
+#: src/notes-page.c:1728
 msgid "Search notes"
 msgstr ""
 
-#: src/notes-page.c:1780
+#: src/notes-page.c:1782
 msgid "New list"
 msgstr ""
 
-#: src/notes-page.c:1805
+#: src/notes-page.c:1807
 msgid "Show filtered notes"
 msgstr ""
 
-#: src/notes-page.c:1830
+#: src/notes-page.c:1832
 msgid "Open verse"
 msgstr ""
 
-#: src/notes-page.c:1831
+#: src/notes-page.c:1833
 msgid "Remove from list"
 msgstr ""
 
-#: src/notes-page.c:1844
+#: src/notes-page.c:1846
 msgid "All notes"
 msgstr ""
 
-#: src/notes-page.c:1847
+#: src/notes-page.c:1849
 msgid "Clear tag filter"
 msgstr ""
 
-#: src/notes-page.c:1920
+#: src/notes-page.c:1922
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:1922
+#: src/notes-page.c:1924
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:1948 src/teaching-page.c:222
+#: src/notes-page.c:1950 src/teaching-page.c:224
 msgid "Scripture"
 msgstr ""
 
-#: src/notes-page.c:1978
+#: src/notes-page.c:1980
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr ""
 
-#: src/notes-page.c:1985
+#: src/notes-page.c:1987
 msgid "Bold"
 msgstr ""
 
-#: src/notes-page.c:1988
+#: src/notes-page.c:1990
 msgid "Italic"
 msgstr ""
 
-#: src/notes-page.c:1991
+#: src/notes-page.c:1993
 msgid "Heading"
 msgstr ""
 
-#: src/notes-page.c:1994
+#: src/notes-page.c:1996
 msgid "Bullet list"
 msgstr ""
 
-#: src/notes-page.c:1997
+#: src/notes-page.c:1999
 msgid "Numbered list"
 msgstr ""
 
-#: src/notes-page.c:2000
+#: src/notes-page.c:2002
 msgid "Quote"
 msgstr ""
 
-#: src/notes-page.c:2003
+#: src/notes-page.c:2005
 msgid "Link"
 msgstr ""
 
-#: src/notes-page.c:2006
+#: src/notes-page.c:2008
 msgid "Inline code"
 msgstr ""
 
-#: src/memory-page.c:103 src/memory-page.c:400
+#: src/memory-page.c:105 src/memory-page.c:402
 msgid "Select a verse card"
 msgstr ""
 
-#: src/memory-page.c:142
+#: src/memory-page.c:144
 #, c-format
 msgid "Due %s  ·  box %d"
 msgstr ""
 
-#: src/memory-page.c:175
+#: src/memory-page.c:177
 #, c-format
 msgid ""
 "%s\n"
 "Due %s  ·  box %d"
 msgstr ""
 
-#: src/memory-page.c:245
+#: src/memory-page.c:247
 msgid "Cannot save memory verse"
 msgstr ""
 
-#: src/memory-page.c:284
+#: src/memory-page.c:286
 msgid "Cannot schedule review"
 msgstr ""
 
-#: src/memory-page.c:289
+#: src/memory-page.c:291
 msgid "Review scheduled: nice work"
 msgstr ""
 
-#: src/memory-page.c:290
+#: src/memory-page.c:292
 msgid "Card will be shown again today"
 msgstr ""
 
-#: src/memory-page.c:309
+#: src/memory-page.c:311
 msgid "Correct"
 msgstr ""
 
-#: src/memory-page.c:311
+#: src/memory-page.c:313
 msgid "Memory verse recited correctly"
 msgstr ""
 
-#: src/memory-page.c:313
+#: src/memory-page.c:315
 msgid "Keep practicing"
 msgstr ""
 
-#: src/memory-page.c:331
+#: src/memory-page.c:333
 msgid "Cannot delete memory verse"
 msgstr ""
 
-#: src/memory-page.c:336
+#: src/memory-page.c:338
 msgid "Memory verse removed"
 msgstr ""
 
-#: src/memory-page.c:367
+#: src/memory-page.c:369 src/prayer-page.c:598
 msgid "Add current verse"
 msgstr ""
 
-#: src/memory-page.c:369
+#: src/memory-page.c:371
 msgid "Check answer"
 msgstr ""
 
-#: src/memory-page.c:370
+#: src/memory-page.c:372
 msgid "Again"
 msgstr ""
 
-#: src/memory-page.c:371
+#: src/memory-page.c:373
 msgid "Good"
 msgstr ""
 
-#: src/memory-page.c:373
+#: src/memory-page.c:375
 msgid "Full text"
 msgstr ""
 
-#: src/memory-page.c:373
+#: src/memory-page.c:375
 msgid "First letters"
 msgstr ""
 
-#: src/memory-page.c:374
+#: src/memory-page.c:376
 msgid "Hide words"
 msgstr ""
 
-#: src/memory-page.c:421
+#: src/memory-page.c:423
 msgid "Card mode"
 msgstr ""
 
-#: src/memory-page.c:424
+#: src/memory-page.c:426
 msgid "Type the verse"
 msgstr ""
 
-#: src/library-page.c:232
+#: src/library-page.c:234
 msgid "Chinese"
 msgstr ""
 
-#: src/library-page.c:234
+#: src/library-page.c:236
 msgid "English"
 msgstr ""
 
-#: src/library-page.c:236
+#: src/library-page.c:238
 msgid "German"
 msgstr ""
 
-#: src/library-page.c:238
+#: src/library-page.c:240
 msgid "French"
 msgstr ""
 
-#: src/library-page.c:240
+#: src/library-page.c:242
 msgid "Spanish"
 msgstr ""
 
-#: src/library-page.c:242
+#: src/library-page.c:244
 msgid "Portuguese"
 msgstr ""
 
-#: src/library-page.c:244
+#: src/library-page.c:246
 msgid "Russian"
 msgstr ""
 
-#: src/library-page.c:246
+#: src/library-page.c:248
 msgid "Korean"
 msgstr ""
 
-#: src/library-page.c:248
+#: src/library-page.c:250
 msgid "Japanese"
 msgstr ""
 
-#: src/library-page.c:250
+#: src/library-page.c:252
 msgid "Polish"
 msgstr ""
 
-#: src/library-page.c:252
+#: src/library-page.c:254
 msgid "Ukrainian"
 msgstr ""
 
-#: src/library-page.c:254
+#: src/library-page.c:256
 msgid "Arabic"
 msgstr ""
 
-#: src/library-page.c:348
+#: src/library-page.c:350
 msgid "All languages"
 msgstr ""
 
-#: src/library-page.c:513
+#: src/library-page.c:515
 #, c-format
 msgid "%u module(s)"
 msgstr ""
 
-#: src/library-page.c:570 src/library-page.c:2328
+#: src/library-page.c:572 src/library-page.c:2330
 msgid "Not installed"
 msgstr ""
 
-#: src/library-page.c:572 src/library-page.c:2329
+#: src/library-page.c:574 src/library-page.c:2331
 msgid "Update available"
 msgstr ""
 
-#: src/library-page.c:574 src/library-page.c:2330
+#: src/library-page.c:576 src/library-page.c:2332
 msgid "Installed - local version is newer"
 msgstr ""
 
-#: src/library-page.c:576 src/library-page.c:2331
+#: src/library-page.c:578 src/library-page.c:2333
 msgid "Installed - up to date"
 msgstr ""
 
-#: src/library-page.c:577 src/library-page.c:875 src/library-page.c:2329
-#: src/library-page.c:2333
+#: src/library-page.c:579 src/library-page.c:877 src/library-page.c:2331
+#: src/library-page.c:2335
 msgid "Installed"
 msgstr ""
 
-#: src/library-page.c:613
+#: src/library-page.c:615
 msgid "Install manager is not available"
 msgstr ""
 
-#: src/library-page.c:627
+#: src/library-page.c:629
 msgid "Source"
 msgstr ""
 
-#: src/library-page.c:657 src/library-page.c:2645
+#: src/library-page.c:659 src/library-page.c:2647
 msgid "Select a module"
 msgstr ""
 
-#: src/library-page.c:722
+#: src/library-page.c:724
 #, c-format
 msgid "Local %s / Remote %s"
 msgstr ""
 
-#: src/library-page.c:728 src/library-page.c:867
+#: src/library-page.c:730 src/library-page.c:869
 #, c-format
 msgid ""
 "Type: %s\n"
@@ -940,65 +942,65 @@ msgid ""
 "License: %s"
 msgstr ""
 
-#: src/library-page.c:731 src/library-page.c:791 src/library-page.c:793
-#: src/library-page.c:872 src/library-page.c:927 src/library-page.c:928
+#: src/library-page.c:733 src/library-page.c:793 src/library-page.c:795
+#: src/library-page.c:874 src/library-page.c:929 src/library-page.c:930
 msgid "Not specified"
 msgstr ""
 
-#: src/library-page.c:740 src/library-page.c:881
+#: src/library-page.c:742 src/library-page.c:883
 msgid "⚠ This module may not be readable by this version of gsword."
 msgstr ""
 
-#: src/library-page.c:742 src/library-page.c:883
+#: src/library-page.c:744 src/library-page.c:885
 #, c-format
 msgid "Requires: %s"
 msgstr ""
 
-#: src/library-page.c:745 src/library-page.c:886
+#: src/library-page.c:747 src/library-page.c:888
 #, c-format
 msgid "Conflicts: %s"
 msgstr ""
 
-#: src/library-page.c:749 src/library-page.c:890
+#: src/library-page.c:751 src/library-page.c:892
 msgid "⚠ This module is encrypted and may require unlocking."
 msgstr ""
 
-#: src/library-page.c:766 src/library-page.c:906
+#: src/library-page.c:768 src/library-page.c:908
 #, c-format
 msgid "Driver: %s\n"
 msgstr ""
 
-#: src/library-page.c:769 src/library-page.c:909
+#: src/library-page.c:771 src/library-page.c:911
 #, c-format
 msgid "Encoding: %s\n"
 msgstr ""
 
-#: src/library-page.c:772 src/library-page.c:912
+#: src/library-page.c:774 src/library-page.c:914
 #, c-format
 msgid "Versification: %s\n"
 msgstr ""
 
-#: src/library-page.c:775
+#: src/library-page.c:777
 #, c-format
 msgid "Minimum SWORD version: %s\n"
 msgstr ""
 
-#: src/library-page.c:778 src/library-page.c:915
+#: src/library-page.c:780 src/library-page.c:917
 #, c-format
 msgid "Module ID: %s\n"
 msgstr ""
 
-#: src/library-page.c:779 src/library-page.c:916
+#: src/library-page.c:781 src/library-page.c:918
 #, c-format
 msgid "Config file: %s\n"
 msgstr ""
 
-#: src/library-page.c:782 src/library-page.c:919
+#: src/library-page.c:784 src/library-page.c:921
 #, c-format
 msgid "Data path: %s"
 msgstr ""
 
-#: src/library-page.c:789 src/library-page.c:926
+#: src/library-page.c:791 src/library-page.c:928
 #, c-format
 msgid ""
 "License: %s\n"
@@ -1006,877 +1008,886 @@ msgid ""
 "Copyright: %s"
 msgstr ""
 
-#: src/library-page.c:799 src/library-page.c:934
+#: src/library-page.c:801 src/library-page.c:936
 msgid "No additional information is available."
 msgstr ""
 
-#: src/library-page.c:871 src/preferences-dialog.c:344
+#: src/library-page.c:873 src/preferences-dialog.c:346
 msgid "User library"
 msgstr ""
 
-#: src/library-page.c:871
+#: src/library-page.c:873
 msgid "System library"
 msgstr ""
 
-#: src/library-page.c:970
+#: src/library-page.c:972
 msgid "No source selected. Refresh the source list first."
 msgstr ""
 
-#: src/library-page.c:976
+#: src/library-page.c:978
 msgid "Cannot read remote modules"
 msgstr ""
 
-#: src/library-page.c:1097
+#: src/library-page.c:1099
 msgid "Enter a source name and host"
 msgstr ""
 
-#: src/library-page.c:1104
+#: src/library-page.c:1106
 msgid "Invalid source settings"
 msgstr ""
 
-#: src/library-page.c:1108
+#: src/library-page.c:1110
 msgid "Cannot add source"
 msgstr ""
 
-#: src/library-page.c:1113 src/library-page.c:1141
+#: src/library-page.c:1115 src/library-page.c:1143
 msgid "Cannot save source"
 msgstr ""
 
-#: src/library-page.c:1119
+#: src/library-page.c:1121
 msgid "Source added"
 msgstr ""
 
-#: src/library-page.c:1137
+#: src/library-page.c:1139
 msgid "Cannot remove source"
 msgstr ""
 
-#: src/library-page.c:1145
+#: src/library-page.c:1147
 msgid "Source removed"
 msgstr ""
 
-#: src/library-page.c:1173
+#: src/library-page.c:1175
 msgid "Installation sources"
 msgstr ""
 
-#: src/library-page.c:1178
+#: src/library-page.c:1180
 msgid "Configured sources"
 msgstr ""
 
-#: src/library-page.c:1184
+#: src/library-page.c:1186
 msgid "No sources configured."
 msgstr ""
 
-#: src/library-page.c:1223 src/library-page.c:1251
+#: src/library-page.c:1225 src/library-page.c:1253
 msgid "Add source"
 msgstr ""
 
-#: src/library-page.c:1229
+#: src/library-page.c:1231
 msgid "Source name"
 msgstr ""
 
-#: src/library-page.c:1231
+#: src/library-page.c:1233
 msgid "Host"
 msgstr ""
 
-#: src/library-page.c:1234
+#: src/library-page.c:1236
 msgid "Module directory"
 msgstr ""
 
-#: src/library-page.c:1239
+#: src/library-page.c:1241
 msgid "Username (optional)"
 msgstr ""
 
-#: src/library-page.c:1242
+#: src/library-page.c:1244
 msgid "Password (optional)"
 msgstr ""
 
-#: src/library-page.c:1281
+#: src/library-page.c:1283
 msgid "Refreshing install sources..."
 msgstr ""
 
-#: src/library-page.c:1296
+#: src/library-page.c:1298
 msgid "Cannot refresh install sources"
 msgstr ""
 
-#: src/library-page.c:1298
+#: src/library-page.c:1300
 msgid "Install sources refreshed"
 msgstr ""
 
-#: src/library-page.c:1316
+#: src/library-page.c:1318
 msgid "Cannot connect to source"
 msgstr ""
 
-#: src/library-page.c:1318
+#: src/library-page.c:1320
 msgid "Source connection OK"
 msgstr ""
 
-#: src/library-page.c:1337 src/library-page.c:1513
+#: src/library-page.c:1339 src/library-page.c:1515
 msgid "No source selected"
 msgstr ""
 
-#: src/library-page.c:1341
+#: src/library-page.c:1343
 msgid "An operation is already running"
 msgstr ""
 
-#: src/library-page.c:1349
+#: src/library-page.c:1351
 msgid "Testing source connection..."
 msgstr ""
 
-#: src/library-page.c:1372
+#: src/library-page.c:1374
 msgid "Refreshing remote module list..."
 msgstr ""
 
-#: src/library-page.c:1411
+#: src/library-page.c:1413
 msgid "Cannot refresh remote modules"
 msgstr ""
 
-#: src/library-page.c:1413
+#: src/library-page.c:1415
 msgid "Remote module list refreshed"
 msgstr ""
 
-#: src/library-page.c:1453 src/library-page.c:1711
+#: src/library-page.c:1455 src/library-page.c:1713
 msgid "Resume"
 msgstr ""
 
-#: src/library-page.c:1453 src/library-page.c:1706 src/library-page.c:2288
+#: src/library-page.c:1455 src/library-page.c:1708 src/library-page.c:2290
 msgid "Pause"
 msgstr ""
 
-#: src/library-page.c:1481
+#: src/library-page.c:1483
 msgid "Updates finished with errors"
 msgstr ""
 
-#: src/library-page.c:1482
+#: src/library-page.c:1484
 msgid "All updates complete"
 msgstr ""
 
-#: src/library-page.c:1497
+#: src/library-page.c:1499
 msgid "Updating modules..."
 msgstr ""
 
-#: src/library-page.c:1532
+#: src/library-page.c:1534
 msgid "No updates available"
 msgstr ""
 
-#: src/library-page.c:1570
+#: src/library-page.c:1572
 msgid "Cannot unlock module"
 msgstr ""
 
-#: src/library-page.c:1576
+#: src/library-page.c:1578
 msgid "Module unlocked"
 msgstr ""
 
-#: src/library-page.c:1591
+#: src/library-page.c:1593
 msgid "Unlock module"
 msgstr ""
 
-#: src/library-page.c:1593
+#: src/library-page.c:1595
 #, c-format
 msgid "Enter the encryption key for %s."
 msgstr ""
 
-#: src/library-page.c:1602 src/library-page.c:2318
+#: src/library-page.c:1604 src/library-page.c:2320
 msgid "Unlock"
 msgstr ""
 
-#: src/library-page.c:1635
+#: src/library-page.c:1637
 msgid "Cannot check disk space"
 msgstr ""
 
-#: src/library-page.c:1647 src/library-page.c:1650
+#: src/library-page.c:1649 src/library-page.c:1652
 msgid "Not enough disk space"
 msgstr ""
 
-#: src/library-page.c:1652
+#: src/library-page.c:1654
 #, c-format
 msgid "This module needs %s, but only %s is available."
 msgstr ""
 
-#: src/library-page.c:1707
+#: src/library-page.c:1709
 msgid "Resuming updates"
 msgstr ""
 
-#: src/library-page.c:1712
+#: src/library-page.c:1714
 msgid "Pausing after current module..."
 msgstr ""
 
-#: src/library-page.c:1744
+#: src/library-page.c:1746
 msgid "Installing module..."
 msgstr ""
 
-#: src/library-page.c:1762
+#: src/library-page.c:1764
 msgid "Module install failed"
 msgstr ""
 
-#: src/library-page.c:1788
+#: src/library-page.c:1790
 msgid "Updates paused"
 msgstr ""
 
-#: src/library-page.c:1795
+#: src/library-page.c:1797
 #, c-format
 msgid "Installed module %s"
 msgstr ""
 
-#: src/library-page.c:1819
+#: src/library-page.c:1821
 msgid "Removing module..."
 msgstr ""
 
-#: src/library-page.c:1834
+#: src/library-page.c:1836
 msgid "Module removal failed"
 msgstr ""
 
-#: src/library-page.c:1836
+#: src/library-page.c:1838
 msgid "Module removed"
 msgstr ""
 
-#: src/library-page.c:1863
+#: src/library-page.c:1865
 msgid "Cancelling..."
 msgstr ""
 
-#: src/library-page.c:1877
+#: src/library-page.c:1879
 msgid "Installing..."
 msgstr ""
 
-#: src/library-page.c:1895 src/library-page.c:1899
+#: src/library-page.c:1897 src/library-page.c:1901
 msgid "Downloading"
 msgstr ""
 
-#: src/library-page.c:1895 src/library-page.c:1899
+#: src/library-page.c:1897 src/library-page.c:1901
 msgid "bytes"
 msgstr ""
 
-#: src/library-page.c:1937
+#: src/library-page.c:1939
 msgid "Select local module directory"
 msgstr ""
 
-#: src/library-page.c:1960
+#: src/library-page.c:1962
 msgid "Enter a local SWORD directory and module name"
 msgstr ""
 
-#: src/library-page.c:1965
+#: src/library-page.c:1967
 msgid "Local install failed"
 msgstr ""
 
-#: src/library-page.c:1977
+#: src/library-page.c:1979
 msgid "Module installed from local directory"
 msgstr ""
 
-#: src/library-page.c:2163
+#: src/library-page.c:2165
 msgid "Proxy settings saved"
 msgstr ""
 
-#: src/library-page.c:2182
+#: src/library-page.c:2184
 msgid "Proxy settings"
 msgstr ""
 
-#: src/library-page.c:2184
+#: src/library-page.c:2186
 msgid "Leave the proxy URL empty to use the environment proxy."
 msgstr ""
 
-#: src/library-page.c:2191
+#: src/library-page.c:2193
 msgid "Proxy URL, e.g. http://127.0.0.1:8080"
 msgstr ""
 
-#: src/library-page.c:2193
+#: src/library-page.c:2195
 msgid "Proxy user name"
 msgstr ""
 
-#: src/library-page.c:2195
+#: src/library-page.c:2197
 msgid "Proxy password"
 msgstr ""
 
-#: src/library-page.c:2286
+#: src/library-page.c:2288
 msgid "Update all"
 msgstr ""
 
-#: src/library-page.c:2287
+#: src/library-page.c:2289
 msgid "Retry failed"
 msgstr ""
 
-#: src/library-page.c:2289
+#: src/library-page.c:2291
 msgid "Proxy"
 msgstr ""
 
-#: src/library-page.c:2290
+#: src/library-page.c:2292
 msgid "Manage sources"
 msgstr ""
 
-#: src/library-page.c:2315
+#: src/library-page.c:2317
 msgid "Test"
 msgstr ""
 
-#: src/library-page.c:2316
+#: src/library-page.c:2318
 msgid "Install / Update"
 msgstr ""
 
-#: src/library-page.c:2317
+#: src/library-page.c:2319
 msgid "Remove"
 msgstr ""
 
-#: src/library-page.c:2321
+#: src/library-page.c:2323
 msgid "Install from local directory"
 msgstr ""
 
-#: src/library-page.c:2323
+#: src/library-page.c:2325
 msgid "All types"
 msgstr ""
 
-#: src/library-page.c:2323 src/module-sidebar.c:25
+#: src/library-page.c:2325 src/module-sidebar.c:27
 msgid "Bibles"
 msgstr ""
 
-#: src/library-page.c:2325 src/module-sidebar.c:28
+#: src/library-page.c:2327 src/module-sidebar.c:30
 msgid "Daily Devotions"
 msgstr ""
 
-#: src/library-page.c:2325 src/module-sidebar.c:29
+#: src/library-page.c:2327 src/module-sidebar.c:31
 msgid "General Books"
 msgstr ""
 
-#: src/library-page.c:2326 src/module-sidebar.c:33
+#: src/library-page.c:2328 src/module-sidebar.c:35
 msgid "Other Modules"
 msgstr ""
 
-#: src/library-page.c:2328
+#: src/library-page.c:2330
 msgid "All statuses"
 msgstr ""
 
-#: src/library-page.c:2334
+#: src/library-page.c:2336
 msgid "Available"
 msgstr ""
 
-#: src/library-page.c:2335
+#: src/library-page.c:2337
 msgid "Updates"
 msgstr ""
 
-#: src/library-page.c:2358
+#: src/library-page.c:2360
 msgid "Install all available updates"
 msgstr ""
 
-#: src/library-page.c:2434 src/module-sidebar.c:374
+#: src/library-page.c:2436 src/module-sidebar.c:376
 msgid "Filter modules"
 msgstr ""
 
-#: src/library-page.c:2443
+#: src/library-page.c:2445
 msgid "Clear filters"
 msgstr ""
 
-#: src/library-page.c:2446
+#: src/library-page.c:2448
 msgid "Name"
 msgstr ""
 
-#: src/library-page.c:2446
+#: src/library-page.c:2448
 msgid "Type"
 msgstr ""
 
-#: src/library-page.c:2447
+#: src/library-page.c:2449 src/prayer-page.c:590
 msgid "Status"
 msgstr ""
 
-#: src/library-page.c:2454
+#: src/library-page.c:2456
 msgid "0 module(s)"
 msgstr ""
 
-#: src/library-page.c:2461
+#: src/library-page.c:2463
 msgid "Refresh the install source list"
 msgstr ""
 
-#: src/library-page.c:2463
+#: src/library-page.c:2465
 msgid "Refresh modules from the selected source"
 msgstr ""
 
-#: src/library-page.c:2465
+#: src/library-page.c:2467
 msgid "Test source connection"
 msgstr ""
 
-#: src/library-page.c:2531
+#: src/library-page.c:2533
 msgid "Update queue"
 msgstr ""
 
-#: src/library-page.c:2607
+#: src/library-page.c:2609
 msgid "No modules match the current filters."
 msgstr ""
 
-#: src/library-page.c:2624
+#: src/library-page.c:2626
 msgid "No installed modules."
 msgstr ""
 
-#: src/library-page.c:2663
+#: src/library-page.c:2665
 msgid "Technical details"
 msgstr ""
 
-#: src/library-page.c:2673
+#: src/library-page.c:2675
 msgid "Copyright & license"
 msgstr ""
 
-#: src/library-page.c:2683
+#: src/library-page.c:2685
 msgid "About this module"
 msgstr ""
 
-#: src/library-page.c:2705
+#: src/library-page.c:2707
 msgid "Back to modules"
 msgstr ""
 
-#: src/library-page.c:2735
+#: src/library-page.c:2737
 msgid "Local SWORD library directory"
 msgstr ""
 
-#: src/library-page.c:2737
+#: src/library-page.c:2739
 msgid "Module name"
 msgstr ""
 
-#: src/library-page.c:2739
+#: src/library-page.c:2741
 msgid "Install local module"
 msgstr ""
 
-#: src/library-page.c:2745
+#: src/library-page.c:2747
 msgid "Browse…"
 msgstr ""
 
-#: src/library-page.c:2762 src/module-sidebar.c:357
+#: src/library-page.c:2764 src/module-sidebar.c:359
 msgid "Modules"
 msgstr ""
 
-#: src/library-page.c:2764
+#: src/library-page.c:2766
 msgid "Module details"
 msgstr ""
 
-#: src/module-sidebar.c:69 src/module-sidebar.c:110
+#: src/module-sidebar.c:71 src/module-sidebar.c:112
 msgid "User"
 msgstr ""
 
-#: src/module-sidebar.c:69 src/module-sidebar.c:110
+#: src/module-sidebar.c:71 src/module-sidebar.c:112
 msgid "System"
 msgstr ""
 
-#: src/module-sidebar.c:309
+#: src/module-sidebar.c:311
 msgid "No modules installed."
 msgstr ""
 
-#: src/module-sidebar.c:360 src/study-panel.c:583 src/workspace-page.c:976
-#: src/reader-page.c:1427
+#: src/module-sidebar.c:362 src/study-panel.c:585 src/workspace-page.c:978
+#: src/reader-page.c:1429
 msgid "Manage modules"
 msgstr ""
 
-#: src/module-sidebar.c:399
+#: src/module-sidebar.c:401
 msgid "Install, update or remove modules"
 msgstr ""
 
-#: src/study-panel.c:103 src/study-panel.c:674
+#: src/study-panel.c:105 src/study-panel.c:676
 msgid "Commentary"
 msgstr ""
 
-#: src/study-panel.c:120 src/workspace-pane.c:561
+#: src/study-panel.c:122 src/workspace-pane.c:563
 msgid "No commentary for this verse."
 msgstr ""
 
-#: src/study-panel.c:125
+#: src/study-panel.c:127
 msgid "No commentary module is installed."
 msgstr ""
 
-#: src/study-panel.c:165
+#: src/study-panel.c:167
 msgid "No Strong's data for this verse."
 msgstr ""
 
-#: src/study-panel.c:217
+#: src/study-panel.c:219
 msgid "No cross-references for this verse."
 msgstr ""
 
-#: src/study-panel.c:232
+#: src/study-panel.c:234
 msgid "No lexicon module is installed."
 msgstr ""
 
-#: src/study-panel.c:238
+#: src/study-panel.c:240
 msgid "Cannot look up lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:244
+#: src/study-panel.c:246
 msgid "Cannot read lexicon entry"
 msgstr ""
 
-#: src/study-panel.c:581 src/workspace-pane.c:1007
+#: src/study-panel.c:583 src/workspace-pane.c:1009
 msgid "Follow"
 msgstr ""
 
-#: src/study-panel.c:594
+#: src/study-panel.c:596
 msgid "Lookup"
 msgstr ""
 
-#: src/study-panel.c:654 src/study-panel.c:680
+#: src/study-panel.c:656 src/study-panel.c:682
 msgid "Lexicon"
 msgstr ""
 
-#: src/study-panel.c:660
+#: src/study-panel.c:662
 msgid "Strong's / dictionary key"
 msgstr ""
 
-#: src/study-panel.c:676
+#: src/study-panel.c:678
 msgid "Strong's"
 msgstr ""
 
-#: src/study-panel.c:678
+#: src/study-panel.c:680
 msgid "Cross-refs"
 msgstr ""
 
-#: src/workspace-page.c:550
+#: src/workspace-page.c:552
 msgid "Parallel comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:740
+#: src/workspace-page.c:742
 msgid "Comparison order changed"
 msgstr ""
 
-#: src/workspace-page.c:768
+#: src/workspace-page.c:770
 msgid "Comparisons cleared"
 msgstr ""
 
-#: src/workspace-page.c:796
+#: src/workspace-page.c:798
 msgid "Clear comparisons?"
 msgstr ""
 
-#: src/workspace-page.c:799
+#: src/workspace-page.c:801
 msgid "All comparison panes will be removed. This cannot be undone."
 msgstr ""
 
-#: src/workspace-page.c:802
+#: src/workspace-page.c:804
 msgid "_Cancel"
 msgstr ""
 
-#: src/workspace-page.c:803
+#: src/workspace-page.c:805
 msgid "_Clear"
 msgstr ""
 
-#: src/workspace-page.c:873
+#: src/workspace-page.c:875
 msgid "Four-way comparison ready"
 msgstr ""
 
-#: src/workspace-page.c:961 src/workspace-page.c:975
+#: src/workspace-page.c:963 src/workspace-page.c:977
 msgid "Add comparison"
 msgstr ""
 
-#: src/workspace-page.c:962
+#: src/workspace-page.c:964
 msgid "Clear comparisons"
 msgstr ""
 
-#: src/workspace-page.c:963
+#: src/workspace-page.c:965
 msgid "Columns"
 msgstr ""
 
-#: src/workspace-page.c:965
+#: src/workspace-page.c:967
 msgid "Sync scroll"
 msgstr ""
 
-#: src/workspace-page.c:967
+#: src/workspace-page.c:969
 msgid "Highlight differences"
 msgstr ""
 
-#: src/workspace-page.c:969
+#: src/workspace-page.c:971
 msgid "No comparisons yet"
 msgstr ""
 
-#: src/workspace-page.c:971
+#: src/workspace-page.c:973
 msgid "Choose a template or add a comparison pane to begin."
 msgstr ""
 
-#: src/workspace-page.c:973
+#: src/workspace-page.c:975
 msgid "Two translations"
 msgstr ""
 
-#: src/workspace-page.c:974
+#: src/workspace-page.c:976
 msgid "Four translations"
 msgstr ""
 
-#: src/workspace-page.c:1016
+#: src/workspace-page.c:1018
 msgid "Keep comparison scroll positions together"
 msgstr ""
 
-#: src/workspace-page.c:1021
+#: src/workspace-page.c:1023
 msgid "Highlight verses whose text differs between panes"
 msgstr ""
 
-#: src/workspace-pane.c:547
+#: src/workspace-pane.c:549
 msgid "No module selected."
 msgstr ""
 
-#: src/workspace-pane.c:562
+#: src/workspace-pane.c:564
 msgid "No content for this reference."
 msgstr ""
 
-#: src/workspace-pane.c:634
+#: src/workspace-pane.c:636
 msgid "Cannot open module."
 msgstr ""
 
-#: src/workspace-pane.c:888
+#: src/workspace-pane.c:890
 msgid "Comparison updated"
 msgstr ""
 
-#: src/workspace-pane.c:916
+#: src/workspace-pane.c:918
 msgid "Drag to another comparison to rearrange"
 msgstr ""
 
-#: src/workspace-pane.c:993
+#: src/workspace-pane.c:995
 msgid "Drag to rearrange comparison"
 msgstr ""
 
-#: src/workspace-pane.c:1007
+#: src/workspace-pane.c:1009
 msgid "Pinned"
 msgstr ""
 
-#: src/workspace-pane.c:1007
+#: src/workspace-pane.c:1009
 msgid "Free"
 msgstr ""
 
-#: src/workspace-pane.c:1011
+#: src/workspace-pane.c:1013
 msgid "Follow, pin, or free this comparison"
 msgstr ""
 
-#: src/workspace-pane.c:1018
+#: src/workspace-pane.c:1020
 msgid "Close comparison"
 msgstr ""
 
-#: src/reader-page.c:312
+#: src/reader-page.c:314
 msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
 
-#: src/reader-page.c:314
+#: src/reader-page.c:316
 msgid "No modules found"
 msgstr ""
 
-#: src/reader-page.c:338
+#: src/reader-page.c:340
 msgid "Cannot read entry"
 msgstr ""
 
-#: src/reader-page.c:376 src/reader-page.c:827 src/reader-page.c:865
+#: src/reader-page.c:378 src/reader-page.c:829 src/reader-page.c:867
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:1045
+#: src/reader-page.c:1047
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:1050
+#: src/reader-page.c:1052
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:1053
+#: src/reader-page.c:1055
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:1426
+#: src/reader-page.c:1428
 msgid "No Bible text module is installed."
 msgstr ""
 
-#: src/reader-page.c:1489
+#: src/reader-page.c:1491
 msgid "Open note"
 msgstr ""
 
-#: src/reader-page.c:1491
+#: src/reader-page.c:1493
 msgid "Toggle highlight"
 msgstr ""
 
-#: src/reader-toolbar.c:195
+#: src/reader-toolbar.c:197
 msgid "Open a verse first"
 msgstr ""
 
-#: src/reader-toolbar.c:267
+#: src/reader-toolbar.c:255 src/reader-toolbar.c:261 src/prayer-page.c:263
+#: src/prayer-page.c:269
+msgid "No active verse"
+msgstr ""
+
+#: src/reader-toolbar.c:295
 msgid "No reading history yet."
 msgstr ""
 
-#: src/reader-toolbar.c:455
+#: src/reader-toolbar.c:483
 msgid "Highlight verse"
 msgstr ""
 
-#: src/reader-toolbar.c:457
+#: src/reader-toolbar.c:485
+msgid "Add to prayer"
+msgstr ""
+
+#: src/reader-toolbar.c:486
 msgid "Teach"
 msgstr ""
 
-#: src/reader-toolbar.c:464
+#: src/reader-toolbar.c:493
 msgid "Copy chapter"
 msgstr ""
 
-#: src/reader-toolbar.c:495
+#: src/reader-toolbar.c:524
 msgid "Add verse to list"
 msgstr ""
 
-#: src/reader-toolbar.c:509
+#: src/reader-toolbar.c:538
 msgid "More reading actions"
 msgstr ""
 
-#: src/reader-toolbar.c:528 src/reader-toolbar.c:532
+#: src/reader-toolbar.c:561 src/reader-toolbar.c:565
 msgid "Recent reading"
 msgstr ""
 
-#: src/reader-toolbar.c:544
+#: src/reader-toolbar.c:577
 msgid "Clear history"
 msgstr ""
 
-#: src/reader-toolbar.c:558
+#: src/reader-toolbar.c:591
 msgid "Back (Alt+Left)"
 msgstr ""
 
-#: src/reader-toolbar.c:559
+#: src/reader-toolbar.c:592
 msgid "Forward (Alt+Right)"
 msgstr ""
 
-#: src/reader-toolbar.c:582
+#: src/reader-toolbar.c:615
 msgid "Open teaching layout for this passage"
 msgstr ""
 
-#: src/reader-toolbar.c:585
+#: src/reader-toolbar.c:618
 msgid "Study panel"
 msgstr ""
 
-#: src/reader-toolbar.c:592 src/reader-toolbar.c:594 src/reader-toolbar.c:598
+#: src/reader-toolbar.c:625 src/reader-toolbar.c:627 src/reader-toolbar.c:631
 msgid "Reading appearance"
 msgstr ""
 
-#: src/reader-toolbar.c:632 src/preferences-dialog.c:268
+#: src/reader-toolbar.c:665 src/preferences-dialog.c:270
 msgid "Font size"
 msgstr ""
 
-#: src/reader-toolbar.c:633
+#: src/reader-toolbar.c:666
 msgid "Paragraph spacing"
 msgstr ""
 
-#: src/reader-toolbar.c:635
+#: src/reader-toolbar.c:668
 msgid "Reading width"
 msgstr ""
 
-#: src/reader-toolbar.c:644
+#: src/reader-toolbar.c:677
 msgid "Focus reading mode"
 msgstr ""
 
-#: src/reader-toolbar.c:647
+#: src/reader-toolbar.c:680
 msgid "Focus reading mode (F11)"
 msgstr ""
 
-#: src/reader-toolbar.c:655
+#: src/reader-toolbar.c:688
 msgid "Copy selection or current verse"
 msgstr ""
 
-#: src/reader-toolbar.c:656
+#: src/reader-toolbar.c:689
 msgid "Open note for this verse"
 msgstr ""
 
-#: src/reader-toolbar.c:658
+#: src/reader-toolbar.c:691
 msgid "Toggle study panel"
 msgstr ""
 
-#: src/preferences-dialog.c:169
+#: src/preferences-dialog.c:171
 msgid "Restart gsword to use the selected module library"
 msgstr ""
 
-#: src/preferences-dialog.c:201
+#: src/preferences-dialog.c:203
 msgid "Choose module library"
 msgstr ""
 
-#: src/preferences-dialog.c:264
+#: src/preferences-dialog.c:266
 msgid "Reading appearance is applied immediately."
 msgstr ""
 
-#: src/preferences-dialog.c:269
+#: src/preferences-dialog.c:271
 msgid "Scale the scripture text size"
 msgstr ""
 
-#: src/preferences-dialog.c:280
+#: src/preferences-dialog.c:282
 msgid "Color scheme"
 msgstr ""
 
-#: src/preferences-dialog.c:282
+#: src/preferences-dialog.c:284
 msgid "Follow the desktop or force light/dark mode"
 msgstr ""
 
-#: src/preferences-dialog.c:284
+#: src/preferences-dialog.c:286
 msgid "Follow system"
 msgstr ""
 
-#: src/preferences-dialog.c:284
+#: src/preferences-dialog.c:286
 msgid "Light"
 msgstr ""
 
-#: src/preferences-dialog.c:284
+#: src/preferences-dialog.c:286
 msgid "Dark"
 msgstr ""
 
-#: src/preferences-dialog.c:297
+#: src/preferences-dialog.c:299
 msgid "Scripture font"
 msgstr ""
 
-#: src/preferences-dialog.c:299
+#: src/preferences-dialog.c:301
 msgid "Choose a sans or serif reading font"
 msgstr ""
 
-#: src/preferences-dialog.c:301
+#: src/preferences-dialog.c:303
 msgid "Sans"
 msgstr ""
 
-#: src/preferences-dialog.c:301
+#: src/preferences-dialog.c:303
 msgid "Serif"
 msgstr ""
 
-#: src/preferences-dialog.c:312
+#: src/preferences-dialog.c:314
 msgid "Book names"
 msgstr ""
 
-#: src/preferences-dialog.c:314
+#: src/preferences-dialog.c:316
 msgid "Choose the language for Bible book names"
 msgstr ""
 
-#: src/preferences-dialog.c:316
+#: src/preferences-dialog.c:318
 msgid "Follow module"
 msgstr ""
 
-#: src/preferences-dialog.c:316
+#: src/preferences-dialog.c:318
 msgid "Follow interface"
 msgstr ""
 
-#: src/preferences-dialog.c:338
+#: src/preferences-dialog.c:340
 msgid ""
 "Use --library or GSWORD_LIBRARY to start gsword with another writable "
 "library."
 msgstr ""
 
-#: src/preferences-dialog.c:347
+#: src/preferences-dialog.c:349
 msgid "Open"
 msgstr ""
 
-#: src/preferences-dialog.c:353
+#: src/preferences-dialog.c:355
 msgid "Change…"
 msgstr ""
 
-#: src/preferences-dialog.c:372
+#: src/preferences-dialog.c:374
 msgid "System libraries"
 msgstr ""
 
-#: src/preferences-dialog.c:376
+#: src/preferences-dialog.c:378
 msgid "No system module library found"
 msgstr ""
 
-#: src/preferences-dialog.c:383
+#: src/preferences-dialog.c:385
 msgid "Legacy SWORD library"
 msgstr ""
 
-#: src/preferences-dialog.c:385
+#: src/preferences-dialog.c:387
 msgid "Use"
 msgstr ""
 
-#: src/devotion-page.c:99
+#: src/devotion-page.c:101
 msgid "No devotional entry is available for today in this module."
 msgstr ""
 
-#: src/devotion-page.c:104
+#: src/devotion-page.c:106
 #, c-format
 msgid "Daily Devotion · %s · %s"
 msgstr ""
 
-#: src/devotion-page.c:158 src/devotion-page.c:248
+#: src/devotion-page.c:160 src/devotion-page.c:250
 msgid "Daily Devotion"
 msgstr ""
 
-#: src/devotion-page.c:161
+#: src/devotion-page.c:163
 msgid ""
 "No daily devotional module is installed.\n"
 "\n"
@@ -1884,420 +1895,639 @@ msgid ""
 "page."
 msgstr ""
 
-#: src/devotion-page.c:225 src/plan-page.c:989 src/plan-page.c:1198
+#: src/devotion-page.c:227 src/plan-page.c:1001 src/personal-page.c:96
+#: src/today-page.c:128
 msgid "Today"
 msgstr ""
 
-#: src/devotion-page.c:226
+#: src/devotion-page.c:228
 msgid "Refresh"
 msgstr ""
 
-#: src/devotion-page.c:246
+#: src/devotion-page.c:248
 msgid "Previous day"
 msgstr ""
 
-#: src/devotion-page.c:247
+#: src/devotion-page.c:249
 msgid "Next day"
 msgstr ""
 
-#: src/plan-page.c:245
+#: src/plan-page.c:247
 msgid "No reading plans yet"
 msgstr ""
 
-#: src/plan-page.c:256 src/plan-page.c:326
+#: src/plan-page.c:258 src/plan-page.c:328
 #, c-format
 msgid "%d/%d days (%.0f%%) · streak %d"
 msgstr ""
 
-#: src/plan-page.c:337
+#: src/plan-page.c:339
 #, c-format
 msgid "Day %d: %s"
 msgstr ""
 
-#: src/plan-page.c:346
+#: src/plan-page.c:348
 msgid "Plan complete"
 msgstr ""
 
-#: src/plan-page.c:377
+#: src/plan-page.c:379
 #, c-format
 msgid "Day %d   %s%s"
 msgstr ""
 
-#: src/plan-page.c:379
+#: src/plan-page.c:381
 msgid "   · today"
 msgstr ""
 
-#: src/plan-page.c:393
+#: src/plan-page.c:395
 msgid "Done"
 msgstr ""
 
-#: src/plan-page.c:537
+#: src/plan-page.c:539
 msgid "Cannot rename plan"
 msgstr ""
 
-#: src/plan-page.c:543
+#: src/plan-page.c:545
 msgid "Reading plan renamed"
 msgstr ""
 
-#: src/plan-page.c:557
+#: src/plan-page.c:559
 msgid "Rename reading plan"
 msgstr ""
 
-#: src/plan-page.c:589
+#: src/plan-page.c:591
 msgid "Cannot duplicate plan"
 msgstr ""
 
-#: src/plan-page.c:601
+#: src/plan-page.c:603
 msgid "Reading plan duplicated"
 msgstr ""
 
-#: src/plan-page.c:623
+#: src/plan-page.c:625
 msgid "Preview unavailable for this reference."
 msgstr ""
 
-#: src/plan-page.c:629
+#: src/plan-page.c:631
 #, c-format
 msgid "Day 1: %s"
 msgstr ""
 
-#: src/plan-page.c:634
+#: src/plan-page.c:636
 #, c-format
 msgid ""
 "Day 1: %s\n"
 "Day %u: %s"
 msgstr ""
 
-#: src/plan-page.c:675 src/plan-page.c:720 src/plan-page.c:744
+#: src/plan-page.c:677 src/plan-page.c:722 src/plan-page.c:746
 msgid "Cannot update plan"
 msgstr ""
 
-#: src/plan-page.c:678
+#: src/plan-page.c:680
 msgid "Reading plan updated"
 msgstr ""
 
-#: src/plan-page.c:726
+#: src/plan-page.c:728
 msgid "Day marked complete"
 msgstr ""
 
-#: src/plan-page.c:748
+#: src/plan-page.c:750
 msgid "Completion undone"
 msgstr ""
 
-#: src/plan-page.c:798 src/plan-page.c:808
+#: src/plan-page.c:800 src/plan-page.c:810
 msgid "Cannot create plan"
 msgstr ""
 
-#: src/plan-page.c:800
+#: src/plan-page.c:802
 msgid "Invalid start reference or empty plan"
 msgstr ""
 
-#: src/plan-page.c:816
+#: src/plan-page.c:818
 msgid "Reading plan created"
 msgstr ""
 
-#: src/plan-page.c:827 src/plan-page.c:1108
+#: src/plan-page.c:829 src/plan-page.c:1120
 msgid "90-day New Testament"
 msgstr ""
 
-#: src/plan-page.c:830 src/plan-page.c:1109
+#: src/plan-page.c:832 src/plan-page.c:1121
 msgid "30-day Psalms"
 msgstr ""
 
-#: src/plan-page.c:859
+#: src/plan-page.c:861
 msgid "Enter a plan name and start reference"
 msgstr ""
 
-#: src/plan-page.c:881
+#: src/plan-page.c:883
 msgid "Cannot delete plan"
 msgstr ""
 
-#: src/plan-page.c:888
+#: src/plan-page.c:890
 msgid "Reading plan deleted"
 msgstr ""
 
-#: src/plan-page.c:901
+#: src/plan-page.c:903
 msgid "Delete reading plan"
 msgstr ""
 
-#: src/plan-page.c:903
+#: src/plan-page.c:905
 #, c-format
 msgid "Delete “%s” and its progress?"
 msgstr ""
 
-#: src/plan-page.c:975
+#: src/plan-page.c:987
 msgid "Your plans"
 msgstr ""
 
-#: src/plan-page.c:986
+#: src/plan-page.c:998
 msgid "Open today's reading"
 msgstr ""
 
-#: src/plan-page.c:987
+#: src/plan-page.c:999
 msgid "Mark today complete"
 msgstr ""
 
-#: src/plan-page.c:988
+#: src/plan-page.c:1000
 msgid "Undo"
 msgstr ""
 
-#: src/plan-page.c:991
+#: src/plan-page.c:1003
 msgid "Schedule"
 msgstr ""
 
-#: src/plan-page.c:993
+#: src/plan-page.c:1005
 msgid "Create plan"
 msgstr ""
 
-#: src/plan-page.c:1023
+#: src/plan-page.c:1035
 msgid "Rename plan"
 msgstr ""
 
-#: src/plan-page.c:1024
+#: src/plan-page.c:1036
 msgid "Duplicate plan"
 msgstr ""
 
-#: src/plan-page.c:1076
+#: src/plan-page.c:1088
 msgid "All days"
 msgstr ""
 
-#: src/plan-page.c:1076
+#: src/plan-page.c:1088
 msgid "Upcoming"
 msgstr ""
 
-#: src/plan-page.c:1076
+#: src/plan-page.c:1088
 msgid "Completed"
 msgstr ""
 
-#: src/plan-page.c:1084
+#: src/plan-page.c:1096
 msgid "Jump to today"
 msgstr ""
 
-#: src/plan-page.c:1099
+#: src/plan-page.c:1111
 msgid "Start a reading plan"
 msgstr ""
 
-#: src/plan-page.c:1103
+#: src/plan-page.c:1115
 msgid "Choose a template or create a custom plan to begin."
 msgstr ""
 
-#: src/plan-page.c:1107
+#: src/plan-page.c:1119
 msgid "Custom plan"
 msgstr ""
 
-#: src/plan-page.c:1138
+#: src/plan-page.c:1150
 msgid "Plan name"
 msgstr ""
 
-#: src/plan-page.c:1141
+#: src/plan-page.c:1153
 msgid "Start, e.g. Genesis 1"
 msgstr ""
 
-#: src/plan-page.c:1160
+#: src/plan-page.c:1172
 msgid "Delete plan"
 msgstr ""
 
-#: src/plan-page.c:1166
+#: src/plan-page.c:1178
 msgid "Days"
 msgstr ""
 
-#: src/plan-page.c:1168
+#: src/plan-page.c:1180
 msgid "Chapters/day"
 msgstr ""
 
-#: src/plan-page.c:1181
+#: src/plan-page.c:1193
 msgid ""
 "The plan advances through chapters from the start reference. Reading days "
 "can be opened by double-clicking a schedule row."
 msgstr ""
 
-#: src/plan-page.c:1187
+#: src/plan-page.c:1199
 msgid "Create a plan"
 msgstr ""
 
-#: src/plan-page.c:1200
+#: src/plan-page.c:1210
+msgid "Plan dashboard"
+msgstr ""
+
+#: src/plan-page.c:1212 src/personal-page.c:104
 msgid "Plans"
 msgstr ""
 
-#: src/plan-page.c:1203
+#: src/plan-page.c:1215
 msgid "Devotion"
 msgstr ""
 
-#: src/plan-page.c:1206
+#: src/plan-page.c:1218
 msgid "Memorize"
 msgstr ""
 
-#: src/plan-store.c:468
+#: src/plan-store.c:470
 #, c-format
 msgid "%s (copy)"
 msgstr ""
 
-#: src/resource-page.c:97
+#: src/personal-page.c:101 src/today-page.c:156 src/prayer-page.c:591
+#: src/prayer-page.c:717
+msgid "Prayer"
+msgstr ""
+
+#: src/personal-page.c:107 src/collections-page.c:36
+msgid "Collections"
+msgstr ""
+
+#: src/today-page.c:47 src/today-page.c:240
+msgid "No reading position yet"
+msgstr ""
+
+#: src/today-page.c:49
+msgid "Cannot open reading position"
+msgstr ""
+
+#: src/today-page.c:130
+msgid "Continue reading and catch up with your personal study."
+msgstr ""
+
+#: src/today-page.c:148
+msgid "Continue reading"
+msgstr ""
+
+#: src/today-page.c:148
+msgid "Continue"
+msgstr ""
+
+#: src/today-page.c:152
+msgid "Today's plan"
+msgstr ""
+
+#: src/today-page.c:152
+msgid "Open plans"
+msgstr ""
+
+#: src/today-page.c:156
+msgid "Open prayer"
+msgstr ""
+
+#: src/today-page.c:160
+msgid "Memory review"
+msgstr ""
+
+#: src/today-page.c:160
+msgid "Review"
+msgstr ""
+
+#: src/today-page.c:164
+msgid "Recent notes"
+msgstr ""
+
+#: src/today-page.c:248
+msgid "No active plan"
+msgstr ""
+
+#: src/today-page.c:250
+#, c-format
+msgid "%s · Day %d · %s"
+msgstr ""
+
+#: src/today-page.c:255
+#, c-format
+msgid "%s · Complete"
+msgstr ""
+
+#: src/today-page.c:265
+#, c-format
+msgid "%d active prayer"
+msgid_plural "%d active prayers"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/today-page.c:269
+msgid "No active prayers"
+msgstr ""
+
+#: src/today-page.c:291
+#, c-format
+msgid "%d verse to review"
+msgid_plural "%d verses to review"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/today-page.c:294
+msgid "No verses due"
+msgstr ""
+
+#: src/prayer-page.c:44 src/prayer-page.c:616 src/prayer-page.c:748
+msgid "Answered"
+msgstr ""
+
+#: src/prayer-page.c:46 src/prayer-page.c:616 src/prayer-page.c:749
+msgid "Archived"
+msgstr ""
+
+#: src/prayer-page.c:49 src/prayer-page.c:616 src/prayer-page.c:748
+msgid "Active"
+msgstr ""
+
+#: src/prayer-page.c:190
+msgid "Verse removed from prayer"
+msgstr ""
+
+#: src/prayer-page.c:229
+msgid "Remove verse"
+msgstr ""
+
+#: src/prayer-page.c:272
+msgid "Verse added to prayer"
+msgstr ""
+
+#: src/prayer-page.c:330 src/prayer-page.c:475
+msgid "Prayer storage unavailable"
+msgstr ""
+
+#: src/prayer-page.c:373
+#, c-format
+msgid "%d prayer"
+msgid_plural "%d prayers"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/prayer-page.c:415 src/prayer-page.c:718 src/prayer-page.c:787
+msgid "New prayer"
+msgstr ""
+
+#: src/prayer-page.c:430
+#, c-format
+msgid "Answered %s · updated %s"
+msgstr ""
+
+#: src/prayer-page.c:437
+#, c-format
+msgid "Updated %s"
+msgstr ""
+
+#: src/prayer-page.c:468
+msgid "Prayer title is required"
+msgstr ""
+
+#: src/prayer-page.c:499
+msgid "Cannot save prayer"
+msgstr ""
+
+#: src/prayer-page.c:507 src/prayer-page.c:508
+msgid "Prayer saved"
+msgstr ""
+
+#: src/prayer-page.c:551
+msgid "Cannot delete prayer"
+msgstr ""
+
+#: src/prayer-page.c:558
+msgid "Prayer deleted"
+msgstr ""
+
+#: src/prayer-page.c:566
+msgid "Delete prayer"
+msgstr ""
+
+#: src/prayer-page.c:572
+msgid "Delete this prayer and its related verses?"
+msgstr ""
+
+#: src/prayer-page.c:593
+msgid "Answered note"
+msgstr ""
+
+#: src/prayer-page.c:596
+msgid "Related verses"
+msgstr ""
+
+#: src/prayer-page.c:602
+msgid "Mark answered"
+msgstr ""
+
+#: src/prayer-page.c:603
+msgid "Archive"
+msgstr ""
+
+#: src/prayer-page.c:612
+msgid "Prayer title"
+msgstr ""
+
+#: src/prayer-page.c:743
+msgid "Search prayers…"
+msgstr ""
+
+#: src/prayer-page.c:748
+msgid "All"
+msgstr ""
+
+#: src/prayer-page.c:784
+msgid "Select a prayer"
+msgstr ""
+
+#: src/prayer-page.c:786
+msgid "Choose a prayer from the list or create a new one."
+msgstr ""
+
+#: src/prayer-page.c:847
+msgid "New prayer draft"
+msgstr ""
+
+#: src/collections-page.c:38
+msgid "Verse lists, bookmarks and favorites will be organized here."
+msgstr ""
+
+#: src/collections-page.c:40
+msgid "For now, verse lists are managed from the Notes section."
+msgstr ""
+
+#: src/resource-page.c:99
 msgid "Cannot open resource entry"
 msgstr ""
 
-#: src/resource-page.c:135
+#: src/resource-page.c:137
 msgid "Cannot read resource entry"
 msgstr ""
 
-#: src/resource-page.c:279 src/teaching-page.c:226
+#: src/resource-page.c:281 src/teaching-page.c:228
 msgid "Back to reading"
 msgstr ""
 
-#: src/teaching-page.c:92
+#: src/teaching-page.c:94
 msgid "Cannot read teaching passage"
 msgstr ""
 
-#: src/teaching-page.c:146
+#: src/teaching-page.c:148
 msgid "Cannot save teaching notes"
 msgstr ""
 
-#: src/teaching-page.c:151
+#: src/teaching-page.c:153
 msgid "Teaching notes saved"
 msgstr ""
 
-#: src/teaching-page.c:167
+#: src/teaching-page.c:169
 msgid "Exit fullscreen"
 msgstr ""
 
-#: src/teaching-page.c:167 src/teaching-page.c:179 src/teaching-page.c:227
+#: src/teaching-page.c:169 src/teaching-page.c:181 src/teaching-page.c:229
 msgid "Fullscreen"
 msgstr ""
 
-#: src/teaching-page.c:223
+#: src/teaching-page.c:225
 msgid "Teaching notes"
 msgstr ""
 
-#: src/teaching-page.c:224
+#: src/teaching-page.c:226
 msgid "Load current passage"
 msgstr ""
 
-#: src/teaching-page.c:225
+#: src/teaching-page.c:227
 msgid "Save notes"
 msgstr ""
 
-#: src/teaching-page.c:236
+#: src/teaching-page.c:238
 msgid "Current passage"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1064 src/gsword-reference-chooser.c:1194
-#: src/gsword-reference-chooser.c:1717
+#: src/gsword-reference-chooser.c:1066 src/gsword-reference-chooser.c:1196
+#: src/gsword-reference-chooser.c:1719
 msgid "Type a reference or choose a book."
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1083 src/gsword-reference-chooser.c:1112
+#: src/gsword-reference-chooser.c:1085 src/gsword-reference-chooser.c:1114
 msgid "Multiple books match; choose one."
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1087 src/gsword-reference-chooser.c:1124
+#: src/gsword-reference-chooser.c:1089 src/gsword-reference-chooser.c:1126
 msgid "Cannot parse reference"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1468
+#: src/gsword-reference-chooser.c:1470
 msgid "Edit reference (Ctrl+L)"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1484
+#: src/gsword-reference-chooser.c:1486
 msgid "Previous book"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1486
+#: src/gsword-reference-chooser.c:1488
 msgid "Next book"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1488
+#: src/gsword-reference-chooser.c:1490
 msgid "Previous chapter"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1490
+#: src/gsword-reference-chooser.c:1492
 msgid "Next chapter"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1492
+#: src/gsword-reference-chooser.c:1494
 msgid "Choose a book"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1494
+#: src/gsword-reference-chooser.c:1496
 msgid "Choose a chapter"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1496
+#: src/gsword-reference-chooser.c:1498
 msgid "Previous verse"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1498
+#: src/gsword-reference-chooser.c:1500
 msgid "Next verse"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1500
+#: src/gsword-reference-chooser.c:1502
 msgid "Choose a verse"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1545
+#: src/gsword-reference-chooser.c:1547
 msgid "Apply reference"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1547
+#: src/gsword-reference-chooser.c:1549
 msgid "Cancel editing"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1576
+#: src/gsword-reference-chooser.c:1578
 msgid "Type to filter books / references"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1600
+#: src/gsword-reference-chooser.c:1602
 msgid "Books"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1602
+#: src/gsword-reference-chooser.c:1604
 msgid "Chapters"
 msgstr ""
 
-#: src/gsword-reference-chooser.c:1679
+#: src/gsword-reference-chooser.c:1681
 msgid "Verses"
 msgstr ""
 
-#: src/gsword-reference-parser.c:93 src/gsword-reference-parser.c:102
+#: src/gsword-reference-parser.c:95 src/gsword-reference-parser.c:104
 msgid "Reference is empty"
 msgstr ""
 
-#: src/gsword-reference-parser.c:116
+#: src/gsword-reference-parser.c:118
 msgid "Verse is empty"
 msgstr ""
 
-#: src/gsword-reference-parser.c:147
+#: src/gsword-reference-parser.c:149
 msgid "Chapter is invalid"
 msgstr ""
 
-#: src/gsword-reference-parser.c:158
+#: src/gsword-reference-parser.c:160
 msgid "Book is missing"
 msgstr ""
 
-#: src/gsword-reference-parser.c:172
+#: src/gsword-reference-parser.c:174
 msgid "No matching book"
 msgstr ""
 
-#: src/gsword-reference-parser.c:180
+#: src/gsword-reference-parser.c:182
 msgid "Book abbreviation is ambiguous"
 msgstr ""
 
-#: src/gsword-reference-parser.c:195
+#: src/gsword-reference-parser.c:197
 msgid "Book is not in this versification"
 msgstr ""
 
-#: src/gsword-reference-parser.c:209
+#: src/gsword-reference-parser.c:211
 #, c-format
 msgid "Chapter %d is out of range"
 msgstr ""
 
-#: src/gsword-reference-parser.c:220
+#: src/gsword-reference-parser.c:222
 msgid "Verse is invalid"
 msgstr ""
 
-#: src/gsword-reference-parser.c:235
+#: src/gsword-reference-parser.c:237
 #, c-format
 msgid "Verse %d is out of range"
 msgstr ""
 
-#: src/gsword-reference-parser.c:261
+#: src/gsword-reference-parser.c:263
 msgid "Unknown versification"
 msgstr ""

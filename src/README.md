@@ -19,10 +19,10 @@ Current implementation:
 - `main.c`: application entry point
 - `application.c` / `application.h`: `AdwApplication`, library-path handling,
   settings fallback, quit action
-- `window.c` / `window.h`: window shell, page composition, single-row adaptive
-  navigation, hideable module sidebar (header button and `F9`), sidebar/content
-  stack, main menu, shortcuts, shared module/reference coordination and page
-  lifetime
+- `window.c` / `window.h`: window shell, page composition, three-item main
+  navigation (Reading/Compare/Personal), hideable module sidebar (header button
+  and `F9`), sidebar/content stack, main menu, shortcuts, shared
+  module/reference coordination and page lifetime
 - `window-private.h`: internal shared service API for window pages; does not
   expose `GswordWindowPrivate`
 - `window-services.c`: shared status/error/page navigation, module metadata,
@@ -56,6 +56,15 @@ Current implementation:
   Markdown editing with autosave and dirty-state feedback, note search and tag
   filtering, explicit tag menu, verse-list membership and item management,
   Markdown export and a single-verse scripture preview
+- `personal-page.c` / `personal-page.h`: personal center shell with the
+  Today/Notes/Prayer/Plans/Collections secondary navigation and adaptive
+  switcher bar
+- `today-page.c` / `today-page.h`: daily overview cards for continue reading,
+  today's plan, active prayers, memory review and recent notes
+- `prayer-page.c` / `prayer-page.h`: prayer list, search/filter, editor,
+  status transitions, answered notes and related-verse management
+- `collections-page.c` / `collections-page.h`: placeholder for verse lists,
+  bookmarks and favorites
 - `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
   creation, plan library with rename/duplicate, schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection
@@ -76,6 +85,8 @@ Current implementation:
   tag-filtered note queries and verse-list membership helpers
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
   memory review queue, and teaching notes in the same application database
+- `prayer-store.c` / `prayer-store.h`: SQLite-backed prayer items, status,
+  answered notes and related verses in the same application database
 - `app-paths.c` / `app-paths.h`: XDG-based application paths:
   `~/.local/share/gsword` for the database, `~/.local/share/gsword/library`
   for the writable SWORD module library, `~/.config/gsword` for installer

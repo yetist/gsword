@@ -243,6 +243,32 @@ on_list_popover_show(GtkPopover *popover, gpointer user_data)
 }
 
 static void
+on_prayer_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+    GswModule *module = gsword_window_get_module(toolbar->window);
+    gchar *storage_key;
+    gchar *display_key;
+
+    (void)button;
+    if (module == NULL) {
+        gsword_window_set_status(toolbar->window, _("No active verse"));
+        return;
+    }
+    storage_key = gsword_window_current_storage_key(toolbar->window);
+    display_key = gsword_window_current_display_key(toolbar->window);
+    if (storage_key == NULL || *storage_key == '\0') {
+        gsword_window_set_status(toolbar->window, _("No active verse"));
+    } else {
+        gsword_window_open_prayer_for(toolbar->window,
+                                      gsw_module_get_name(module),
+                                      storage_key, display_key);
+    }
+    g_free(storage_key);
+    g_free(display_key);
+}
+
+static void
 on_teaching_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -456,6 +482,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *highlight = gtk_button_new_with_label(_("Highlight verse"));
     GtkWidget *list_add = gtk_menu_button_new();
+    GtkWidget *prayer = gtk_button_new_with_label(_("Add to prayer"));
     GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *focus_button = gtk_toggle_button_new();
@@ -510,13 +537,17 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_widget_add_css_class(more_button, "flat");
     gtk_widget_set_tooltip_text(more_button, _("More reading actions"));
     gtk_widget_add_css_class(copy_chapter, "flat");
+    gtk_widget_add_css_class(prayer, "flat");
     gtk_widget_add_css_class(teaching, "flat");
     g_signal_connect(copy_chapter, "clicked",
                      G_CALLBACK(on_copy_chapter_clicked), toolbar);
+    g_signal_connect(prayer, "clicked", G_CALLBACK(on_prayer_clicked),
+                     toolbar);
     gtk_widget_set_size_request(more_box, 220, -1);
     gtk_box_append(GTK_BOX(more_box), copy_chapter);
     gtk_box_append(GTK_BOX(more_box), highlight);
     gtk_box_append(GTK_BOX(more_box), list_add);
+    gtk_box_append(GTK_BOX(more_box), prayer);
     gtk_box_append(GTK_BOX(more_box), more_separator);
     {
         GtkWidget *popover = gtk_popover_new();

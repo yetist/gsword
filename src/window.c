@@ -8,6 +8,10 @@
 #include "resource-page.h"
 #include "notes-page.h"
 #include "plan-page.h"
+#include "personal-page.h"
+#include "prayer-page.h"
+#include "today-page.h"
+#include "collections-page.h"
 #include "library-page.h"
 #include "module-sidebar.h"
 #include "study-panel.h"
@@ -49,6 +53,11 @@ typedef struct {
 
     GswordPlanStore *plans;
     GswordPlanPage *plan_page;
+    GswordPrayerStore *prayers;
+    GswordPrayerPage *prayer_page;
+    GswordTodayPage *today_page;
+    GswordCollectionsPage *collections_page;
+    GswordPersonalPage *personal_page;
 
     GswordTeachingPage *teaching_page;
     GswordResourcePage *resource_page;
@@ -97,6 +106,170 @@ gsword_window_get_plan_store(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     return priv->plans;
+}
+
+GswordPrayerStore *
+gsword_window_get_prayer_store(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    return priv->prayers;
+}
+
+static const gchar *
+personal_section_name(GswordPersonalSection section)
+{
+    switch (section) {
+    case GSWORD_PERSONAL_SECTION_NOTES:
+        return "notes";
+    case GSWORD_PERSONAL_SECTION_PRAYER:
+        return "prayer";
+    case GSWORD_PERSONAL_SECTION_PLANS:
+        return "plans";
+    case GSWORD_PERSONAL_SECTION_COLLECTIONS:
+        return "collections";
+    case GSWORD_PERSONAL_SECTION_TODAY:
+    default:
+        return "today";
+    }
+}
+
+static gchar *
+personal_page_id(GswordPersonalSection section)
+{
+    return g_strdup_printf("personal/%s", personal_section_name(section));
+}
+
+static gchar *
+current_page_id(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    const gchar *name = priv->content_stack != NULL
+                      ? adw_view_stack_get_visible_child_name(
+                            priv->content_stack) : NULL;
+
+    if (g_strcmp0(name, "personal") == 0 && priv->personal_page != NULL)
+        return personal_page_id(
+            gsword_personal_page_get_section(priv->personal_page));
+    return g_strdup(name != NULL ? name : "reader");
+}
+
+static void refresh_personal_section(GswordWindow *self,
+                                     GswordPersonalSection section)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    switch (section) {
+    case GSWORD_PERSONAL_SECTION_NOTES:
+        if (priv->notes_page != NULL)
+            gsword_notes_page_refresh(priv->notes_page);
+        break;
+    case GSWORD_PERSONAL_SECTION_PRAYER:
+        if (priv->prayer_page != NULL)
+            gsword_prayer_page_refresh(priv->prayer_page);
+        break;
+    case GSWORD_PERSONAL_SECTION_PLANS:
+        if (priv->plan_page != NULL) {
+            gsword_plan_page_refresh(priv->plan_page);
+            gsword_plan_page_refresh_devotion(priv->plan_page);
+            gsword_plan_page_refresh_memory(priv->plan_page);
+        }
+        break;
+    case GSWORD_PERSONAL_SECTION_COLLECTIONS:
+        break;
+    case GSWORD_PERSONAL_SECTION_TODAY:
+    default:
+        if (priv->today_page != NULL)
+            gsword_today_page_refresh(priv->today_page);
+        break;
+    }
+}
+
+static void
+on_personal_section_changed(GswordPersonalPage *page,
+                            GswordPersonalSection section, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+    gchar *page_id;
+
+    (void)page;
+    page_id = personal_page_id(section);
+    if (priv->settings != NULL && priv->page_restored)
+        g_settings_set_string(priv->settings, "active-page", page_id);
+    g_free(page_id);
+    refresh_personal_section(self, section);
+    if (section == GSWORD_PERSONAL_SECTION_NOTES &&
+        priv->notes_page != NULL && !gsword_notes_page_has_note_key(
+            priv->notes_page) && priv->module != NULL)
+        gsword_notes_page_open_current(priv->notes_page);
+}
+
+void
+gsword_window_show_personal(GswordWindow *self, GswordPersonalSection section)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    priv = gsword_window_get_instance_private(self);
+    if (priv->personal_page != NULL)
+        gsword_personal_page_show_section(priv->personal_page, section);
+    gsword_window_show_page(self, "personal");
+    if (priv->settings != NULL && priv->page_restored) {
+        gchar *page_id = personal_page_id(section);
+
+        g_settings_set_string(priv->settings, "active-page", page_id);
+        g_free(page_id);
+    }
+    refresh_personal_section(self, section);
+}
+
+void
+gsword_window_show_personal_page(GswordWindow *self, const gchar *section_name)
+{
+    GswordPersonalSection section = GSWORD_PERSONAL_SECTION_TODAY;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    if (g_strcmp0(section_name, "notes") == 0)
+        section = GSWORD_PERSONAL_SECTION_NOTES;
+    else if (g_strcmp0(section_name, "prayer") == 0)
+        section = GSWORD_PERSONAL_SECTION_PRAYER;
+    else if (g_strcmp0(section_name, "plans") == 0)
+        section = GSWORD_PERSONAL_SECTION_PLANS;
+    else if (g_strcmp0(section_name, "collections") == 0)
+        section = GSWORD_PERSONAL_SECTION_COLLECTIONS;
+    gsword_window_show_personal(self, section);
+}
+
+void
+gsword_window_open_prayer_for(GswordWindow *self, const gchar *module,
+                              const gchar *storage_key,
+                              const gchar *display_key)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    priv = gsword_window_get_instance_private(self);
+    if (priv->prayer_page == NULL || module == NULL || storage_key == NULL)
+        return;
+    gsword_prayer_page_open_for_reference(priv->prayer_page, module,
+                                          storage_key, display_key);
+    gsword_window_show_personal(self, GSWORD_PERSONAL_SECTION_PRAYER);
+}
+
+void
+gsword_window_open_memory_review(GswordWindow *self)
+{
+    GswordWindowPrivate *priv;
+
+    g_return_if_fail(GSWORD_IS_WINDOW(self));
+    priv = gsword_window_get_instance_private(self);
+    if (priv->plan_page != NULL) {
+        gsword_personal_page_show_section(priv->personal_page,
+                                          GSWORD_PERSONAL_SECTION_PLANS);
+        gsword_window_show_page(self, "personal");
+        gsword_plan_page_show_memory(priv->plan_page);
+    }
 }
 
 static void
@@ -418,7 +591,7 @@ gsword_window_open_compare_reference(GswordWindow *self,
     if (pane != NULL) {
         gsword_workspace_page_set_active_pane(priv->workspace_page, pane);
         gsword_workspace_pane_scroll_to_active(pane);
-        gsword_window_show_page(self, "panes");
+        gsword_window_show_page(self, "compare");
     }
 }
 
@@ -658,7 +831,7 @@ gsword_window_apply_workspace(GswordWindow *self, const gchar *workspace)
         }
         gsword_window_show_page(self, "reader");
     } else if (g_strcmp0(workspace, "panes") == 0) {
-        gsword_window_show_page(self, "panes");
+        gsword_window_show_page(self, "compare");
         gsword_workspace_page_sync_from_reader(priv->workspace_page);
     } else if (g_strcmp0(workspace, "parallel") == 0) {
         gsword_workspace_page_apply_parallel_template(priv->workspace_page);
@@ -815,28 +988,23 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
         ADW_VIEW_STACK(object));
 
     (void)pspec;
-    if (priv->settings != NULL && name != NULL && priv->page_restored)
-        g_settings_set_string(priv->settings, "active-page", name);
+    if (priv->settings != NULL && name != NULL && priv->page_restored) {
+        gchar *page_id = current_page_id(self);
+
+        g_settings_set_string(priv->settings, "active-page", page_id);
+        g_free(page_id);
+    }
     if (priv->reader_page != NULL && g_strcmp0(name, "reader") != 0)
         gsword_reader_page_set_focus_mode(priv->reader_page, FALSE);
-    if (g_strcmp0(name, "panes") == 0) {
+    if (g_strcmp0(name, "compare") == 0) {
         gsword_workspace_page_sync_from_reader(priv->workspace_page);
     } else if (g_strcmp0(name, "search") == 0) {
         if (priv->search_page != NULL)
             gsword_search_page_select_current(priv->search_page);
-    } else if (g_strcmp0(name, "notes") == 0) {
-        if (priv->notes_page != NULL) {
-            gsword_notes_page_refresh(priv->notes_page);
-            if (!gsword_notes_page_has_note_key(priv->notes_page) &&
-                priv->module != NULL)
-                gsword_notes_page_open_current(priv->notes_page);
-        }
-    } else if (g_strcmp0(name, "plan") == 0) {
-        if (priv->plan_page != NULL) {
-            gsword_plan_page_refresh(priv->plan_page);
-            gsword_plan_page_refresh_devotion(priv->plan_page);
-            gsword_plan_page_refresh_memory(priv->plan_page);
-        }
+    } else if (g_strcmp0(name, "personal") == 0 &&
+               priv->personal_page != NULL) {
+        refresh_personal_section(
+            self, gsword_personal_page_get_section(priv->personal_page));
     } else if (g_strcmp0(name, "teaching") == 0) {
         if (priv->teaching_page != NULL)
             gsword_teaching_page_load(priv->teaching_page);
@@ -859,20 +1027,27 @@ gsword_window_restore_page(GswordWindow *self)
         page = g_settings_get_string(priv->settings, "active-page");
     if (g_strcmp0(page, "parallel") == 0) {
         gsword_workspace_page_apply_parallel_template(priv->workspace_page);
-        gsword_window_show_page(self, "panes");
-        if (priv->settings != NULL)
-            g_settings_set_string(priv->settings, "active-page", "panes");
+        gsword_window_show_page(self, "compare");
     } else if (page != NULL &&
                (g_strcmp0(page, "reader") == 0 ||
+                g_strcmp0(page, "compare") == 0 ||
                 g_strcmp0(page, "panes") == 0 ||
                 g_strcmp0(page, "search") == 0 ||
                 g_strcmp0(page, "notes") == 0 ||
                 g_strcmp0(page, "plan") == 0 ||
+                g_strcmp0(page, "personal") == 0 ||
+                g_str_has_prefix(page, "personal/") ||
                 g_strcmp0(page, "library") == 0 ||
                 g_strcmp0(page, "teaching") == 0)) {
         gsword_window_show_page(self, page);
     }
     priv->page_restored = TRUE;
+    if (priv->settings != NULL) {
+        gchar *page_id = current_page_id(self);
+
+        g_settings_set_string(priv->settings, "active-page", page_id);
+        g_free(page_id);
+    }
     g_free(page);
 }
 
@@ -880,13 +1055,10 @@ static void
 gsword_window_open_search(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *current = adw_view_stack_get_visible_child_name(
-        priv->content_stack);
 
-    if (g_strcmp0(current, "search") != 0) {
+    if (!gsword_window_is_page_visible(self, "search")) {
         g_free(priv->search_return_page);
-        priv->search_return_page = g_strdup(current != NULL
-                                            ? current : "reader");
+        priv->search_return_page = current_page_id(self);
     }
     gsword_window_show_page(self, "search");
     if (priv->search_page != NULL)
@@ -938,13 +1110,10 @@ void
 gsword_window_open_library(GswordWindow *self)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *current = adw_view_stack_get_visible_child_name(
-        priv->content_stack);
 
-    if (g_strcmp0(current, "library") != 0) {
+    if (!gsword_window_is_page_visible(self, "library")) {
         g_free(priv->library_return_page);
-        priv->library_return_page = g_strdup(current != NULL
-                                             ? current : "reader");
+        priv->library_return_page = current_page_id(self);
     }
     gsword_window_show_page(self, "library");
 }
@@ -1045,6 +1214,17 @@ gsword_window_build(GswordWindow *self)
     priv->resource_page = gsword_resource_page_new(self);
     priv->notes_page = gsword_notes_page_new(self);
     priv->plan_page = gsword_plan_page_new(self);
+    priv->today_page = gsword_today_page_new(self);
+    priv->prayer_page = gsword_prayer_page_new(self);
+    priv->collections_page = gsword_collections_page_new(self);
+    priv->personal_page = gsword_personal_page_new(
+        self, gsword_today_page_widget(priv->today_page),
+        gsword_notes_page_widget(priv->notes_page),
+        gsword_prayer_page_widget(priv->prayer_page),
+        gsword_plan_page_widget(priv->plan_page),
+        gsword_collections_page_widget(priv->collections_page));
+    gsword_personal_page_set_section_changed_func(
+        priv->personal_page, on_personal_section_changed, self);
     priv->library_page = gsword_library_page_new(self);
     priv->content_stack = ADW_VIEW_STACK(adw_view_stack_new());
     priv->reader_page = gsword_reader_page_new(self);
@@ -1057,7 +1237,7 @@ gsword_window_build(GswordWindow *self)
     adw_view_stack_add_titled_with_icon(priv->content_stack,
                                         gsword_workspace_page_widget(
                                             priv->workspace_page),
-                                        "panes", _("Compare"),
+                                        "compare", _("Compare"),
                                         "view-dual-symbolic");
     {
         AdwViewStackPage *page;
@@ -1069,15 +1249,10 @@ gsword_window_build(GswordWindow *self)
         adw_view_stack_page_set_visible(page, FALSE);
     }
     adw_view_stack_add_titled_with_icon(priv->content_stack,
-                                        gsword_notes_page_widget(
-                                            priv->notes_page),
-                                        "notes", _("Notes"),
-                                        "accessories-text-editor-symbolic");
-    adw_view_stack_add_titled_with_icon(priv->content_stack,
-                                        gsword_plan_page_widget(
-                                            priv->plan_page),
-                                        "plan", _("Plan"),
-                                        "x-office-calendar-symbolic");
+                                        gsword_personal_page_widget(
+                                            priv->personal_page),
+                                        "personal", _("Personal"),
+                                        "avatar-default-symbolic");
     {
         AdwViewStackPage *page;
 
@@ -1153,6 +1328,16 @@ gsword_window_build(GswordWindow *self)
                                   "reveal", &value);
         adw_breakpoint_add_setter(breakpoint, G_OBJECT(split),
                                   "collapsed", &value);
+        g_value_set_boolean(&value, FALSE);
+        adw_breakpoint_add_setter(
+            breakpoint,
+            G_OBJECT(gsword_personal_page_switcher(priv->personal_page)),
+            "visible", &value);
+        g_value_set_boolean(&value, TRUE);
+        adw_breakpoint_add_setter(
+            breakpoint,
+            G_OBJECT(gsword_personal_page_switcher_bar(priv->personal_page)),
+            "reveal", &value);
         g_value_unset(&value);
         g_value_init(&value, GTK_TYPE_WIDGET);
         g_value_set_object(&value, NULL);
@@ -1298,6 +1483,7 @@ gsword_window_finalize(GObject *object)
     g_clear_object(&priv->settings);
     g_clear_pointer(&priv->notes, gsword_notes_store_free);
     g_clear_pointer(&priv->plans, gsword_plan_store_free);
+    g_clear_pointer(&priv->prayers, gsword_prayer_store_free);
     g_free(priv->search_return_page);
     g_free(priv->library_return_page);
 
@@ -1357,6 +1543,12 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     priv->plans = gsword_plan_store_new(&error);
     if (priv->plans == NULL) {
         g_printerr("gsword: cannot open planner database: %s\n",
+                   error != NULL ? error->message : "unknown error");
+        g_clear_error(&error);
+    }
+    priv->prayers = gsword_prayer_store_new(&error);
+    if (priv->prayers == NULL) {
+        g_printerr("gsword: cannot open prayer database: %s\n",
                    error != NULL ? error->message : "unknown error");
         g_clear_error(&error);
     }

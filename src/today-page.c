@@ -1,0 +1,323 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> */
+/*
+ * today-page.c: personal center daily overview for the gsword window
+ */
+
+#include "today-page.h"
+#include "notes-store.h"
+#include "plan-store.h"
+#include "prayer-store.h"
+#include "window-private.h"
+
+#include <glib/gi18n.h>
+
+#include <string.h>
+
+struct _GswordTodayPage {
+    GswordWindow *window;
+    GtkWidget *root;
+    GtkLabel *continue_value;
+    GtkLabel *plan_value;
+    GtkLabel *prayer_value;
+    GtkLabel *memory_value;
+    GtkLabel *notes_value;
+};
+
+static void
+today_page_free(gpointer data)
+{
+    g_free(data);
+}
+
+static void
+on_continue_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordTodayPage *page = user_data;
+    GSettings *settings = gsword_window_get_settings(page->window);
+    gchar *module = NULL;
+    gchar *key = NULL;
+
+    (void)button;
+    if (settings != NULL) {
+        module = g_settings_get_string(settings, "last-module");
+        key = g_settings_get_string(settings, "last-key");
+    }
+    if (module == NULL || *module == '\0' || key == NULL || *key == '\0')
+        gsword_window_set_status(page->window, _("No reading position yet"));
+    else if (!gsword_window_open_module_reference(page->window, module, key))
+        gsword_window_set_status(page->window, _("Cannot open reading position"));
+    g_free(module);
+    g_free(key);
+}
+
+static void
+on_plans_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
+                                GSWORD_PERSONAL_SECTION_PLANS);
+}
+
+static void
+on_prayer_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
+                                GSWORD_PERSONAL_SECTION_PRAYER);
+}
+
+static void
+on_notes_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
+                                GSWORD_PERSONAL_SECTION_NOTES);
+}
+
+static void
+on_memory_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_open_memory_review(((GswordTodayPage *)user_data)->window);
+}
+
+static GtkWidget *
+create_card(const gchar *title, const gchar *action, GCallback callback,
+            gpointer user_data, GtkLabel **value_out)
+{
+    GtkWidget *card = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    GtkWidget *title_label = gtk_label_new(title);
+    GtkWidget *value = gtk_label_new("");
+    GtkWidget *button = gtk_button_new_with_label(action);
+    GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
+    gtk_widget_add_css_class(card, "card");
+    gtk_widget_set_margin_top(card, 4);
+    gtk_widget_set_margin_bottom(card, 4);
+    gtk_widget_set_margin_start(card, 12);
+    gtk_widget_set_margin_end(card, 12);
+
+    gtk_label_set_xalign(GTK_LABEL(title_label), 0.0f);
+    gtk_widget_add_css_class(title_label, "heading");
+    gtk_label_set_xalign(GTK_LABEL(value), 0.0f);
+    gtk_label_set_wrap(GTK_LABEL(value), TRUE);
+    gtk_label_set_selectable(GTK_LABEL(value), TRUE);
+    gtk_widget_add_css_class(value, "dim-label");
+
+    gtk_widget_set_halign(button, GTK_ALIGN_START);
+    gtk_widget_add_css_class(button, "flat");
+    g_signal_connect(button, "clicked", callback, user_data);
+    gtk_box_append(GTK_BOX(footer), button);
+    gtk_widget_set_halign(footer, GTK_ALIGN_END);
+
+    gtk_box_append(GTK_BOX(card), title_label);
+    gtk_box_append(GTK_BOX(card), value);
+    gtk_box_append(GTK_BOX(card), footer);
+    *value_out = GTK_LABEL(value);
+    return card;
+}
+
+GswordTodayPage *
+gsword_today_page_new(GswordWindow *window)
+{
+    GswordTodayPage *page = g_new0(GswordTodayPage, 1);
+    GtkWidget *scroll = gtk_scrolled_window_new();
+    GtkWidget *clamp = adw_clamp_new();
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget *title = gtk_label_new(_("Today"));
+    GtkWidget *subtitle = gtk_label_new(
+        _("Continue reading and catch up with your personal study."));
+
+    g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
+    page->window = window;
+
+    gtk_widget_set_margin_top(box, 18);
+    gtk_widget_set_margin_bottom(box, 18);
+    gtk_widget_set_margin_start(box, 18);
+    gtk_widget_set_margin_end(box, 18);
+    gtk_label_set_xalign(GTK_LABEL(title), 0.0f);
+    gtk_widget_add_css_class(title, "title-1");
+    gtk_label_set_xalign(GTK_LABEL(subtitle), 0.0f);
+    gtk_label_set_wrap(GTK_LABEL(subtitle), TRUE);
+    gtk_widget_add_css_class(subtitle, "dim-label");
+    gtk_box_append(GTK_BOX(box), title);
+    gtk_box_append(GTK_BOX(box), subtitle);
+
+    gtk_box_append(GTK_BOX(box),
+                   create_card(_("Continue reading"), _("Continue"),
+                               G_CALLBACK(on_continue_clicked), page,
+                               &page->continue_value));
+    gtk_box_append(GTK_BOX(box),
+                   create_card(_("Today's plan"), _("Open plans"),
+                               G_CALLBACK(on_plans_clicked), page,
+                               &page->plan_value));
+    gtk_box_append(GTK_BOX(box),
+                   create_card(_("Prayer"), _("Open prayer"),
+                               G_CALLBACK(on_prayer_clicked), page,
+                               &page->prayer_value));
+    gtk_box_append(GTK_BOX(box),
+                   create_card(_("Memory review"), _("Review"),
+                               G_CALLBACK(on_memory_clicked), page,
+                               &page->memory_value));
+    gtk_box_append(GTK_BOX(box),
+                   create_card(_("Recent notes"), _("Open notes"),
+                               G_CALLBACK(on_notes_clicked), page,
+                               &page->notes_value));
+
+    adw_clamp_set_maximum_size(ADW_CLAMP(clamp), 760);
+    adw_clamp_set_child(ADW_CLAMP(clamp), box);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), clamp);
+    gtk_widget_set_vexpand(scroll, TRUE);
+    page->root = scroll;
+    g_object_set_data_full(G_OBJECT(scroll), "gsword-today-page", page,
+                           today_page_free);
+    gsword_today_page_refresh(page);
+    return page;
+}
+
+GtkWidget *
+gsword_today_page_widget(GswordTodayPage *page)
+{
+    g_return_val_if_fail(page != NULL, NULL);
+    return page->root;
+}
+
+static gchar *
+short_text(const gchar *text, glong maximum)
+{
+    gchar *result;
+    gchar *p;
+
+    if (text == NULL || *text == '\0')
+        return NULL;
+    if (g_utf8_strlen(text, -1) > maximum) {
+        const gchar *end = g_utf8_offset_to_pointer(text, maximum);
+
+        result = g_strndup(text, (gsize)(end - text));
+    } else {
+        result = g_strdup(text);
+    }
+    for (p = result; *p != '\0'; p++) {
+        if (*p == '\n' || *p == '\r' || *p == '\t')
+            *p = ' ';
+    }
+    return result;
+}
+
+void
+gsword_today_page_refresh(GswordTodayPage *page)
+{
+    GSettings *settings;
+    GswordPlanStore *plans;
+    GswordNotesStore *notes;
+    GswordPrayerStore *prayers;
+    gchar *module = NULL;
+    gchar *key = NULL;
+    gchar *plan_id = NULL;
+    gchar *value;
+    GswordPlan *plan = NULL;
+    GPtrArray *note_items;
+    GPtrArray *memory;
+    gint active_prayers;
+    gint due_memory = 0;
+    guint i;
+
+    g_return_if_fail(page != NULL);
+    settings = gsword_window_get_settings(page->window);
+    plans = gsword_window_get_plan_store(page->window);
+    notes = gsword_window_get_notes_store(page->window);
+    prayers = gsword_window_get_prayer_store(page->window);
+
+    if (settings != NULL) {
+        module = g_settings_get_string(settings, "last-module");
+        key = g_settings_get_string(settings, "last-key");
+        plan_id = g_settings_get_string(settings, "active-plan-id");
+    }
+    if (module != NULL && *module != '\0' && key != NULL && *key != '\0')
+        value = g_strdup_printf("%s · %s", module, key);
+    else
+        value = g_strdup(_("No reading position yet"));
+    gtk_label_set_text(page->continue_value, value);
+    g_free(value);
+
+    if (plans != NULL && plan_id != NULL && *plan_id != '\0')
+        plan = gsword_plan_store_get_plan(
+            plans, g_ascii_strtoll(plan_id, NULL, 10));
+    if (plan == NULL) {
+        gtk_label_set_text(page->plan_value, _("No active plan"));
+    } else if (plan->next_day > 0 && plan->next_reference != NULL) {
+        value = g_strdup_printf(_("%s · Day %d · %s"), plan->name,
+                                plan->next_day, plan->next_reference);
+        gtk_label_set_text(page->plan_value, value);
+        g_free(value);
+    } else {
+        value = g_strdup_printf(_("%s · Complete"), plan->name);
+        gtk_label_set_text(page->plan_value, value);
+        g_free(value);
+    }
+
+    active_prayers = prayers != NULL
+                   ? gsword_prayer_store_count(
+                         prayers, GSWORD_PRAYER_STATUS_ACTIVE) : 0;
+    if (active_prayers > 0)
+        value = g_strdup_printf(
+            g_dngettext(GETTEXT_PACKAGE, "%d active prayer",
+                        "%d active prayers", active_prayers),
+            active_prayers);
+    else
+        value = g_strdup(_("No active prayers"));
+    gtk_label_set_text(page->prayer_value, value);
+    g_free(value);
+
+    if (plans != NULL) {
+        GDateTime *now = g_date_time_new_now_local();
+        gchar *today = g_date_time_format(now, "%Y-%m-%d");
+
+        memory = gsword_plan_store_list_memory_verses(plans);
+        for (i = 0; i < memory->len; i++) {
+            GswordMemoryVerse *verse = g_ptr_array_index(memory, i);
+
+            if (verse->due == NULL || *verse->due == '\0' ||
+                g_strcmp0(verse->due, today) <= 0)
+                due_memory++;
+        }
+        g_ptr_array_unref(memory);
+        g_free(today);
+        g_date_time_unref(now);
+    }
+    if (due_memory > 0)
+        value = g_strdup_printf(
+            g_dngettext(GETTEXT_PACKAGE, "%d verse to review",
+                        "%d verses to review", due_memory), due_memory);
+    else
+        value = g_strdup(_("No verses due"));
+    gtk_label_set_text(page->memory_value, value);
+    g_free(value);
+
+    if (notes != NULL) {
+        gchar *preview;
+
+        note_items = gsword_notes_store_list_notes(notes, NULL, NULL);
+        if (note_items->len > 0) {
+            GswordNote *note = g_ptr_array_index(note_items, 0);
+
+            preview = short_text(note->text, 100);
+            value = g_strdup_printf("%s · %s",
+                                    note->display_key != NULL
+                                        ? note->display_key : "",
+                                    preview != NULL ? preview : "");
+            gtk_label_set_text(page->notes_value, value);
+            g_free(value);
+            g_free(preview);
+        } else {
+            gtk_label_set_text(page->notes_value, _("No notes yet"));
+        }
+        g_ptr_array_unref(note_items);
+    }
+
+    g_clear_pointer(&plan, gsword_plan_free);
+    g_free(plan_id);
+    g_free(key);
+    g_free(module);
+}

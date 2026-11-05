@@ -46,7 +46,7 @@
     <key name="active-page" type="s">
       <default>'reader'</default>
       <summary>Active workspace page</summary>
-      <description>One of reader, panes, search, notes, plan, teaching, or library. Legacy parallel is migrated to a panes template.</description>
+      <description>One of reader, compare, personal/today, personal/notes, personal/prayer, personal/plans, personal/collections, search, teaching, or library. Legacy notes, plan, panes and parallel values are migrated.</description>
     </key>
     <key name="workspace-layout" type="s">
       <default>''</default>

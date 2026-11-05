@@ -79,6 +79,7 @@ gsword_notes_store_new(GError **error)
     gchar *path = g_build_filename(directory, "app.db", NULL);
     const gchar *schema =
         "PRAGMA foreign_keys = ON;"
+        "PRAGMA busy_timeout = 2000;"
         "CREATE TABLE IF NOT EXISTS notes ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " module TEXT NOT NULL,"

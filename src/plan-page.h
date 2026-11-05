@@ -19,6 +19,7 @@ void gsword_plan_page_refresh(GswordPlanPage *page);
 void gsword_plan_page_refresh_devotion(GswordPlanPage *page);
 void gsword_plan_page_refresh_memory(GswordPlanPage *page);
 void gsword_plan_page_show_devotion(GswordPlanPage *page);
+void gsword_plan_page_show_memory(GswordPlanPage *page);
 
 G_END_DECLS
 

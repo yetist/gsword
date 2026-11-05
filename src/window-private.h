@@ -13,6 +13,8 @@
 #include "window.h"
 #include "notes-store.h"
 #include "plan-store.h"
+#include "personal-page.h"
+#include "prayer-store.h"
 
 G_BEGIN_DECLS
 
@@ -46,6 +48,15 @@ void gsword_window_apply_book_name_locale(GswordWindow *self,
                                           GswModule *module);
 GswordNotesStore *gsword_window_get_notes_store(GswordWindow *self);
 GswordPlanStore *gsword_window_get_plan_store(GswordWindow *self);
+GswordPrayerStore *gsword_window_get_prayer_store(GswordWindow *self);
+void gsword_window_show_personal(GswordWindow *self,
+                                 GswordPersonalSection section);
+void gsword_window_show_personal_page(GswordWindow *self,
+                                      const gchar *section_name);
+void gsword_window_open_prayer_for(GswordWindow *self, const gchar *module,
+                                   const gchar *storage_key,
+                                   const gchar *display_key);
+void gsword_window_open_memory_review(GswordWindow *self);
 GswModule *gsword_window_ensure_verse_module(GswordWindow *self);
 void gsword_window_populate_modules(GswordWindow *self);
 gboolean gsword_window_module_info_is_devotional(GswModuleInfo *info);

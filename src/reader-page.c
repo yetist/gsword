@@ -949,6 +949,26 @@ on_context_highlight(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_context_prayer(GtkButton *button, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+    GswModule *module = gsword_window_get_module(page->window);
+    gchar *storage_key;
+    gchar *display_key;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    if (module == NULL)
+        return;
+    storage_key = gsword_window_current_storage_key(page->window);
+    display_key = gsword_window_current_display_key(page->window);
+    gsword_window_open_prayer_for(page->window, gsw_module_get_name(module),
+                                  storage_key, display_key);
+    g_free(storage_key);
+    g_free(display_key);
+}
+
+static void
 on_reader_context_clicked(GtkGestureClick *gesture, gint n_press,
                           gdouble x, gdouble y, gpointer user_data)
 {
@@ -1491,6 +1511,8 @@ gsword_reader_page_new(GswordWindow *window)
         GtkWidget *note_item = gtk_button_new_with_label(_("Open note"));
         GtkWidget *highlight_item = gtk_button_new_with_label(
             _("Toggle highlight"));
+        GtkWidget *prayer_item = gtk_button_new_with_label(
+            _("Add to prayer"));
 
         gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context),
                                       GDK_BUTTON_SECONDARY);
@@ -1512,15 +1534,19 @@ gsword_reader_page_new(GswordWindow *window)
         gtk_widget_add_css_class(copy_item, "flat");
         gtk_widget_add_css_class(note_item, "flat");
         gtk_widget_add_css_class(highlight_item, "flat");
+        gtk_widget_add_css_class(prayer_item, "flat");
         g_signal_connect(copy_item, "clicked",
                          G_CALLBACK(on_context_copy), page);
         g_signal_connect(note_item, "clicked",
                          G_CALLBACK(on_context_note), page);
         g_signal_connect(highlight_item, "clicked",
                          G_CALLBACK(on_context_highlight), page);
+        g_signal_connect(prayer_item, "clicked",
+                         G_CALLBACK(on_context_prayer), page);
         gtk_box_append(GTK_BOX(menu), copy_item);
         gtk_box_append(GTK_BOX(menu), note_item);
         gtk_box_append(GTK_BOX(menu), highlight_item);
+        gtk_box_append(GTK_BOX(menu), prayer_item);
         gtk_popover_set_child(page->context_menu, menu);
         gtk_widget_set_parent(popover, GTK_WIDGET(page->view));
     }
