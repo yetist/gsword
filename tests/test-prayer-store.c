@@ -110,6 +110,57 @@ test_status(void)
 }
 
 static void
+test_entries(void)
+{
+    GError *error = NULL;
+    GswordPrayerStore *store = gsword_prayer_store_new(&error);
+    GPtrArray *entries;
+    GswordPrayerEntry *entry;
+    gint64 id;
+    gint64 entry_id;
+
+    g_assert_no_error(error);
+    g_assert_nonnull(store);
+    id = gsword_prayer_store_create(store, "Entries", "", &error);
+    g_assert_no_error(error);
+    g_assert_cmpint(id, >, 0);
+
+    g_assert_cmpint(gsword_prayer_store_add_entry(store, id, "", &error), ==,
+                    0);
+    g_assert_error(error, G_FILE_ERROR, G_FILE_ERROR_INVAL);
+    g_clear_error(&error);
+
+    entry_id = gsword_prayer_store_add_entry(store, id, "First update",
+                                             &error);
+    g_assert_no_error(error);
+    g_assert_cmpint(entry_id, >, 0);
+    g_assert_cmpint(gsword_prayer_store_add_entry(store, id, "Second update",
+                                                  &error), >, 0);
+    g_assert_no_error(error);
+
+    entries = gsword_prayer_store_list_entries(store, id);
+    g_assert_cmpuint(entries->len, ==, 2);
+    entry = g_ptr_array_index(entries, 0);
+    g_assert_cmpstr(entry->body, ==, "Second update");
+    g_ptr_array_unref(entries);
+
+    g_assert_true(gsword_prayer_store_delete_entry(store, entry_id, &error));
+    g_assert_no_error(error);
+    entries = gsword_prayer_store_list_entries(store, id);
+    g_assert_cmpuint(entries->len, ==, 1);
+    entry = g_ptr_array_index(entries, 0);
+    g_assert_cmpstr(entry->body, ==, "Second update");
+    g_ptr_array_unref(entries);
+
+    g_assert_true(gsword_prayer_store_delete(store, id, &error));
+    g_assert_no_error(error);
+    entries = gsword_prayer_store_list_entries(store, id);
+    g_assert_cmpuint(entries->len, ==, 0);
+    g_ptr_array_unref(entries);
+    gsword_prayer_store_free(store);
+}
+
+static void
 test_verses(void)
 {
     GError *error = NULL;
@@ -177,6 +228,7 @@ main(int argc, char **argv)
     g_test_add_func("/prayer-store/create-update-filter",
                     test_create_update_filter);
     g_test_add_func("/prayer-store/status", test_status);
+    g_test_add_func("/prayer-store/entries", test_entries);
     g_test_add_func("/prayer-store/verses", test_verses);
     {
         int status = g_test_run();

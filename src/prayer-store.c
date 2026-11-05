@@ -96,6 +96,15 @@ gsword_prayer_free(GswordPrayer *prayer)
     g_free(prayer);
 }
 
+void
+gsword_prayer_entry_free(GswordPrayerEntry *entry)
+{
+    if (entry == NULL)
+        return;
+    g_free(entry->body);
+    g_free(entry);
+}
+
 GswordPrayerStore *
 gsword_prayer_store_new(GError **error)
 {
@@ -119,6 +128,8 @@ gsword_prayer_store_new(GError **error)
         " prayer_id INTEGER NOT NULL REFERENCES prayers(id) ON DELETE CASCADE,"
         " body TEXT NOT NULL,"
         " created INTEGER NOT NULL);"
+        "CREATE INDEX IF NOT EXISTS prayer_entries_prayer"
+        " ON prayer_entries(prayer_id, created);"
         "CREATE TABLE IF NOT EXISTS prayer_verses ("
         " prayer_id INTEGER NOT NULL REFERENCES prayers(id) ON DELETE CASCADE,"
         " module TEXT NOT NULL,"
@@ -508,5 +519,93 @@ gsword_prayer_store_set_verses(GswordPrayerStore *self, gint64 id,
         prayer_store_exec(self, "COMMIT", error);
     else
         prayer_store_exec(self, "ROLLBACK", NULL);
+    return ok;
+}
+
+gint64
+gsword_prayer_store_add_entry(GswordPrayerStore *self, gint64 prayer_id,
+                              const gchar *body, GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gint64 id = 0;
+
+    if (prayer_id <= 0 || body == NULL || *body == '\0') {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                    "Prayer entry text must not be empty");
+        return 0;
+    }
+    if (sqlite3_prepare_v2(self->db,
+            "INSERT INTO prayer_entries(prayer_id, body, created)"
+            " VALUES(?, ?, strftime('%s','now'))", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, prayer_id) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 2, body, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        prayer_store_error(self, error, "Cannot add prayer entry");
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+    sqlite3_finalize(stmt);
+    stmt = NULL;
+    id = sqlite3_last_insert_rowid(self->db);
+    if (sqlite3_prepare_v2(self->db,
+            "UPDATE prayers SET updated = strftime('%s','now')"
+            " WHERE id = ?", -1, &stmt, NULL) != SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, prayer_id) != SQLITE_OK ||
+        sqlite3_step(stmt) != SQLITE_DONE) {
+        prayer_store_error(self, error, "Cannot update prayer timestamp");
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+    sqlite3_finalize(stmt);
+    return id;
+}
+
+GPtrArray *
+gsword_prayer_store_list_entries(GswordPrayerStore *self, gint64 prayer_id)
+{
+    GPtrArray *entries = g_ptr_array_new_with_free_func(
+        (GDestroyNotify)gsword_prayer_entry_free);
+    sqlite3_stmt *stmt = NULL;
+    const gchar *sql =
+        "SELECT id, prayer_id, body, created FROM prayer_entries"
+        " WHERE prayer_id = ? ORDER BY created DESC, id DESC";
+
+    if (sqlite3_prepare_v2(self->db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, prayer_id);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            GswordPrayerEntry *entry = g_new0(GswordPrayerEntry, 1);
+
+            entry->id = sqlite3_column_int64(stmt, 0);
+            entry->prayer_id = sqlite3_column_int64(stmt, 1);
+            entry->body = g_strdup(
+                (const gchar *)sqlite3_column_text(stmt, 2));
+            entry->created = sqlite3_column_int64(stmt, 3);
+            g_ptr_array_add(entries, entry);
+        }
+    }
+    sqlite3_finalize(stmt);
+    return entries;
+}
+
+gboolean
+gsword_prayer_store_delete_entry(GswordPrayerStore *self, gint64 entry_id,
+                                 GError **error)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean ok;
+
+    if (sqlite3_prepare_v2(self->db,
+            "DELETE FROM prayer_entries WHERE id = ?", -1, &stmt, NULL) !=
+            SQLITE_OK ||
+        sqlite3_bind_int64(stmt, 1, entry_id) != SQLITE_OK) {
+        prayer_store_error(self, error, "Cannot prepare prayer entry deletion");
+        sqlite3_finalize(stmt);
+        return FALSE;
+    }
+    ok = sqlite3_step(stmt) == SQLITE_DONE;
+    if (!ok)
+        prayer_store_error(self, error, "Cannot delete prayer entry");
+    sqlite3_finalize(stmt);
     return ok;
 }

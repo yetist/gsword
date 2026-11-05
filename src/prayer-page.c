@@ -24,6 +24,9 @@ struct _GswordPrayerPage {
     GtkWidget *answered_box;
     GtkTextView *answered_note;
     GtkListBox *verse_list;
+    GtkWidget *log_box;
+    GtkListBox *entry_list;
+    GtkEntry *entry_input;
     GtkLabel *updated_label;
     GtkButton *delete_button;
     gint64 selected_id;
@@ -35,6 +38,7 @@ static void refresh_list(GswordPrayerPage *page);
 static void load_prayer(GswordPrayerPage *page, gint64 id);
 static gboolean save_prayer(GswordPrayerPage *page, gint status_override);
 static void rebuild_verse_list(GswordPrayerPage *page);
+static void rebuild_entry_list(GswordPrayerPage *page);
 
 static const gchar *
 status_label(GswordPrayerStatus status)
@@ -313,6 +317,131 @@ format_date(gint64 timestamp)
 }
 
 static void
+on_entry_remove(GtkButton *button, gpointer user_data)
+{
+    GswordPrayerPage *page = user_data;
+    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    const gchar *id_text = g_object_get_data(G_OBJECT(button), "entry-id");
+    GError *error = NULL;
+
+    if (store == NULL || id_text == NULL)
+        return;
+    if (!gsword_prayer_store_delete_entry(
+            store, g_ascii_strtoll(id_text, NULL, 10), &error)) {
+        gsword_window_show_error(page->window,
+                                 _("Cannot remove prayer update"), error);
+        return;
+    }
+    rebuild_entry_list(page);
+    refresh_list(page);
+    gsword_window_set_status(page->window, _("Prayer update removed"));
+}
+
+static void
+rebuild_entry_list(GswordPrayerPage *page)
+{
+    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GPtrArray *entries;
+    guint i;
+
+    while (gtk_widget_get_first_child(GTK_WIDGET(page->entry_list)) != NULL) {
+        gtk_list_box_remove(
+            page->entry_list,
+            gtk_widget_get_first_child(GTK_WIDGET(page->entry_list)));
+    }
+    gtk_widget_set_visible(page->log_box, page->selected_id > 0);
+    if (page->selected_id <= 0 || store == NULL)
+        return;
+
+    entries = gsword_prayer_store_list_entries(store, page->selected_id);
+    if (entries->len == 0) {
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *label = gtk_label_new(_("No prayer updates yet."));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_widget_set_margin_top(label, 6);
+        gtk_widget_set_margin_bottom(label, 6);
+        gtk_widget_set_margin_start(label, 8);
+        gtk_widget_set_margin_end(label, 8);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
+        gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
+        gtk_list_box_append(page->entry_list, row);
+    }
+    for (i = 0; i < entries->len; i++) {
+        GswordPrayerEntry *entry = g_ptr_array_index(entries, i);
+        GtkWidget *row = gtk_list_box_row_new();
+        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *labels = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget *body = gtk_label_new(entry->body);
+        gchar *date = format_date(entry->created);
+        GtkWidget *date_label = gtk_label_new(date);
+        GtkWidget *remove = gtk_button_new_from_icon_name(
+            "list-remove-symbolic");
+
+        gtk_widget_set_margin_top(box, 4);
+        gtk_widget_set_margin_bottom(box, 4);
+        gtk_widget_set_margin_start(box, 6);
+        gtk_widget_set_margin_end(box, 6);
+        gtk_label_set_xalign(GTK_LABEL(body), 0.0f);
+        gtk_label_set_wrap(GTK_LABEL(body), TRUE);
+        gtk_label_set_selectable(GTK_LABEL(body), TRUE);
+        gtk_label_set_xalign(GTK_LABEL(date_label), 0.0f);
+        gtk_widget_add_css_class(date_label, "caption");
+        gtk_widget_add_css_class(date_label, "dim-label");
+        gtk_widget_add_css_class(remove, "flat");
+        gtk_widget_set_tooltip_text(remove, _("Remove prayer update"));
+        g_object_set_data_full(G_OBJECT(remove), "entry-id",
+                               g_strdup_printf("%" G_GINT64_FORMAT,
+                                               entry->id),
+                               g_free);
+        g_signal_connect(remove, "clicked", G_CALLBACK(on_entry_remove),
+                         page);
+        gtk_box_append(GTK_BOX(labels), body);
+        gtk_box_append(GTK_BOX(labels), date_label);
+        gtk_box_append(GTK_BOX(box), labels);
+        gtk_box_append(GTK_BOX(box), remove);
+        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
+        gtk_list_box_append(page->entry_list, row);
+        g_free(date);
+    }
+    g_ptr_array_unref(entries);
+}
+
+static void
+on_add_entry_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordPrayerPage *page = user_data;
+    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    gchar *body = g_strdup(
+        gtk_editable_get_text(GTK_EDITABLE(page->entry_input)));
+    GError *error = NULL;
+
+    (void)button;
+    g_strstrip(body);
+    if (body == NULL || *body == '\0') {
+        gsword_window_set_status(page->window,
+                                 _("Prayer update text is required"));
+        g_free(body);
+        return;
+    }
+    if (store == NULL || page->selected_id <= 0 ||
+        gsword_prayer_store_add_entry(store, page->selected_id, body,
+                                      &error) == 0) {
+        gsword_window_show_error(page->window,
+                                 _("Cannot add prayer update"), error);
+        g_free(body);
+        return;
+    }
+    gtk_editable_set_text(GTK_EDITABLE(page->entry_input), "");
+    rebuild_entry_list(page);
+    refresh_list(page);
+    gsword_window_set_status(page->window, _("Prayer update added"));
+    g_free(body);
+}
+
+static void
 refresh_list(GswordPrayerPage *page)
 {
     GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
@@ -445,6 +574,7 @@ load_prayer(GswordPrayerPage *page, gint64 id)
     }
     update_answered_visibility(page);
     rebuild_verse_list(page);
+    rebuild_entry_list(page);
     page->loading = FALSE;
     g_clear_pointer(&prayer, gsword_prayer_free);
     refresh_list(page);
@@ -597,6 +727,11 @@ build_editor(GswordPrayerPage *page)
     GtkWidget *add_current = gtk_button_new_with_label(
         _("Add current verse"));
     GtkWidget *verse_scroll = gtk_scrolled_window_new();
+    GtkWidget *log_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *log_title = gtk_label_new(_("Prayer log"));
+    GtkWidget *entry_scroll = gtk_scrolled_window_new();
+    GtkWidget *entry_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *entry_add = gtk_button_new_with_label(_("Add update"));
     GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *save = gtk_button_new_with_label(_("Save"));
     GtkWidget *answered = gtk_button_new_with_label(_("Mark answered"));
@@ -671,6 +806,28 @@ build_editor(GswordPrayerPage *page)
     gtk_box_append(GTK_BOX(page->answered_box), answered_label);
     gtk_box_append(GTK_BOX(page->answered_box), answered_scroll);
 
+    page->log_box = log_box;
+    gtk_label_set_xalign(GTK_LABEL(log_title), 0.0f);
+    gtk_widget_add_css_class(log_title, "heading");
+    page->entry_list = GTK_LIST_BOX(gtk_list_box_new());
+    gtk_list_box_set_selection_mode(page->entry_list, GTK_SELECTION_NONE);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(entry_scroll),
+                                  GTK_WIDGET(page->entry_list));
+    gtk_widget_set_size_request(entry_scroll, -1, 120);
+    page->entry_input = GTK_ENTRY(gtk_entry_new());
+    gtk_entry_set_placeholder_text(page->entry_input,
+                                   _("Add a prayer update…"));
+    gtk_widget_set_hexpand(GTK_WIDGET(page->entry_input), TRUE);
+    g_signal_connect(page->entry_input, "activate",
+                     G_CALLBACK(on_add_entry_clicked), page);
+    g_signal_connect(entry_add, "clicked",
+                     G_CALLBACK(on_add_entry_clicked), page);
+    gtk_box_append(GTK_BOX(entry_row), GTK_WIDGET(page->entry_input));
+    gtk_box_append(GTK_BOX(entry_row), entry_add);
+    gtk_box_append(GTK_BOX(log_box), log_title);
+    gtk_box_append(GTK_BOX(log_box), entry_row);
+    gtk_box_append(GTK_BOX(log_box), entry_scroll);
+
     page->delete_button = GTK_BUTTON(delete);
     gtk_widget_add_css_class(save, "suggested-action");
     gtk_widget_add_css_class(delete, "destructive-action");
@@ -691,6 +848,7 @@ build_editor(GswordPrayerPage *page)
     gtk_box_append(GTK_BOX(box), body_scroll);
     gtk_box_append(GTK_BOX(box), verse_header);
     gtk_box_append(GTK_BOX(box), verse_scroll);
+    gtk_box_append(GTK_BOX(box), log_box);
     gtk_box_append(GTK_BOX(box), page->answered_box);
     gtk_box_append(GTK_BOX(box), footer);
     return box;

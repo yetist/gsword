@@ -38,6 +38,13 @@ typedef struct {
     GPtrArray *verses;
 } GswordPrayer;
 
+typedef struct {
+    gint64 id;
+    gint64 prayer_id;
+    gchar *body;
+    gint64 created;
+} GswordPrayerEntry;
+
 GswordPrayerStore *gsword_prayer_store_new(GError **error);
 void gsword_prayer_store_free(GswordPrayerStore *self);
 
@@ -64,7 +71,15 @@ gboolean gsword_prayer_store_set_status(GswordPrayerStore *self, gint64 id,
 gboolean gsword_prayer_store_set_verses(GswordPrayerStore *self, gint64 id,
                                         GPtrArray *verses, GError **error);
 
+gint64 gsword_prayer_store_add_entry(GswordPrayerStore *self, gint64 prayer_id,
+                                     const gchar *body, GError **error);
+GPtrArray *gsword_prayer_store_list_entries(GswordPrayerStore *self,
+                                            gint64 prayer_id);
+gboolean gsword_prayer_store_delete_entry(GswordPrayerStore *self,
+                                          gint64 entry_id, GError **error);
+
 void gsword_prayer_free(GswordPrayer *prayer);
+void gsword_prayer_entry_free(GswordPrayerEntry *entry);
 void gsword_prayer_verse_free(GswordPrayerVerse *verse);
 GswordPrayerVerse *gsword_prayer_verse_new(const gchar *module,
                                            const gchar *key,
