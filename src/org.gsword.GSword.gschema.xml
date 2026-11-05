@@ -48,6 +48,11 @@
       <summary>Active workspace page</summary>
       <description>One of reader, compare, personal/today, personal/notes, personal/prayer, personal/plans, personal/collections, search, teaching, or library. Legacy notes, plan, panes and parallel values are migrated.</description>
     </key>
+    <key name="collections-tab" type="s">
+      <default>'lists'</default>
+      <summary>Active collections tab</summary>
+      <description>One of lists, bookmarks, or favorites.</description>
+    </key>
     <key name="workspace-layout" type="s">
       <default>''</default>
       <summary>Comparison workspace layout</summary>

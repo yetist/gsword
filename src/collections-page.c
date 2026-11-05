@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> */
 /*
- * collections-page.c: verse lists and favorites for the gsword window
+ * collections-page.c: verse lists, bookmarks and favorites
  */
 
 #include "collections-page.h"
@@ -10,6 +10,8 @@
 #include "window-private.h"
 
 #include <glib/gi18n.h>
+
+typedef struct _GswordCollectionItemView GswordCollectionItemView;
 
 struct _GswordCollectionsPage {
     GswordWindow *window;
@@ -20,31 +22,27 @@ struct _GswordCollectionsPage {
     GtkEntry *new_list;
     GtkButton *rename_button;
     GtkButton *delete_button;
+    GswordCollectionItemView *list_view;
+    GswordCollectionItemView *favorites_view;
+    gint64 selected_list_id;
+};
+
+struct _GswordCollectionItemView {
+    GswordCollectionsPage *page;
+    GtkWidget *root;
     GtkLabel *title_label;
     GtkLabel *count_label;
     GtkListBox *items;
     GtkButton *open_button;
     GtkButton *remove_button;
-    gint64 selected_list_id;
-    gboolean selected_is_favorites;
-    gchar *selected_item_module;
-    gchar *selected_item_key;
+    gint64 list_id;
+    gboolean favorites;
+    gchar *selected_module;
+    gchar *selected_key;
 };
 
 static void refresh_lists(GswordCollectionsPage *page);
-static void load_items(GswordCollectionsPage *page);
-
-static void
-collections_page_free(gpointer data)
-{
-    GswordCollectionsPage *page = data;
-
-    if (page == NULL)
-        return;
-    g_free(page->selected_item_module);
-    g_free(page->selected_item_key);
-    g_free(page);
-}
+static void collection_view_load(GswordCollectionItemView *view);
 
 static void
 clear_list(GtkListBox *list)
@@ -55,32 +53,60 @@ clear_list(GtkListBox *list)
 }
 
 static void
-update_actions(GswordCollectionsPage *page)
+collection_view_free(GswordCollectionItemView *view)
 {
-    gboolean has_item = page->selected_item_module != NULL &&
-                        page->selected_item_key != NULL;
-    gboolean has_list = page->selected_list_id != 0;
-
-    gtk_widget_set_sensitive(GTK_WIDGET(page->rename_button),
-                             has_list && !page->selected_is_favorites);
-    gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button),
-                             has_list && !page->selected_is_favorites);
-    gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), has_item);
-    gtk_widget_set_sensitive(GTK_WIDGET(page->remove_button), has_item);
+    if (view == NULL)
+        return;
+    g_free(view->selected_module);
+    g_free(view->selected_key);
+    g_free(view);
 }
 
 static void
-clear_selected_item(GswordCollectionsPage *page)
+collections_page_free(gpointer data)
 {
-    g_clear_pointer(&page->selected_item_module, g_free);
-    g_clear_pointer(&page->selected_item_key, g_free);
-    update_actions(page);
+    GswordCollectionsPage *page = data;
+
+    if (page == NULL)
+        return;
+    collection_view_free(page->list_view);
+    collection_view_free(page->favorites_view);
+    g_free(page);
 }
 
 static void
-on_item_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+collection_view_update_actions(GswordCollectionItemView *view)
 {
-    GswordCollectionsPage *page = user_data;
+    gboolean has_item = view->selected_module != NULL &&
+                        view->selected_key != NULL;
+
+    gtk_widget_set_sensitive(GTK_WIDGET(view->open_button), has_item);
+    gtk_widget_set_sensitive(GTK_WIDGET(view->remove_button), has_item);
+}
+
+static void
+collection_view_clear_selection(GswordCollectionItemView *view)
+{
+    g_clear_pointer(&view->selected_module, g_free);
+    g_clear_pointer(&view->selected_key, g_free);
+    collection_view_update_actions(view);
+}
+
+static void
+collection_view_set_list(GswordCollectionItemView *view, gint64 list_id,
+                         const gchar *title)
+{
+    view->list_id = list_id;
+    if (title != NULL)
+        gtk_label_set_text(view->title_label, title);
+    collection_view_load(view);
+}
+
+static void
+on_view_item_activated(GtkListBox *list, GtkListBoxRow *row,
+                       gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
     const gchar *module;
     const gchar *key;
 
@@ -90,24 +116,51 @@ on_item_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     module = g_object_get_data(G_OBJECT(row), "item-module");
     key = g_object_get_data(G_OBJECT(row), "item-key");
     if (module != NULL && key != NULL)
-        gsword_window_open_module_reference(page->window, module, key);
+        gsword_window_open_module_reference(view->page->window, module, key);
 }
 
 static void
-load_items(GswordCollectionsPage *page)
+on_view_item_selected(GtkListBox *list, GtkListBoxRow *row,
+                      gpointer user_data)
 {
-    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
-    GPtrArray *items;
-    guint count = 0;
-    guint i;
+    GswordCollectionItemView *view = user_data;
+    const gchar *module;
+    const gchar *key;
 
-    clear_list(page->items);
-    clear_selected_item(page);
-    if (store == NULL || page->selected_list_id == 0) {
-        gtk_label_set_text(page->count_label, "");
+    (void)list;
+    if (row == NULL) {
+        collection_view_clear_selection(view);
         return;
     }
-    items = gsword_notes_store_list_items(store, page->selected_list_id);
+    module = g_object_get_data(G_OBJECT(row), "item-module");
+    key = g_object_get_data(G_OBJECT(row), "item-key");
+    g_free(view->selected_module);
+    g_free(view->selected_key);
+    view->selected_module = g_strdup(module);
+    view->selected_key = g_strdup(key);
+    collection_view_update_actions(view);
+}
+
+static void
+collection_view_load(GswordCollectionItemView *view)
+{
+    GswordNotesStore *store = gsword_window_get_notes_store(
+        view->page->window);
+    GPtrArray *items;
+    guint count;
+    guint i;
+
+    clear_list(view->items);
+    collection_view_clear_selection(view);
+    gtk_label_set_text(view->count_label, "");
+    if (store == NULL)
+        return;
+    if (view->favorites && view->list_id == 0)
+        view->list_id = gsword_notes_store_get_favorites_list_id(store);
+    if (view->list_id == 0)
+        return;
+
+    items = gsword_notes_store_list_items(store, view->list_id);
     count = items->len;
     for (i = 0; i < items->len; i++) {
         GswordVerseListItem *item = g_ptr_array_index(items, i);
@@ -132,7 +185,7 @@ load_items(GswordCollectionsPage *page)
                                g_strdup(item->module), g_free);
         g_object_set_data_full(G_OBJECT(row), "item-key",
                                g_strdup(item->key), g_free);
-        gtk_list_box_append(page->items, row);
+        gtk_list_box_append(view->items, row);
     }
     g_ptr_array_unref(items);
     {
@@ -140,30 +193,171 @@ load_items(GswordCollectionsPage *page)
             g_dngettext(GETTEXT_PACKAGE, "%d verse", "%d verses", count),
             count);
 
-        gtk_label_set_text(page->count_label, text);
+        gtk_label_set_text(view->count_label, text);
         g_free(text);
     }
 }
 
 static void
-on_item_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+on_view_remove_clicked(GtkButton *button, gpointer user_data)
 {
-    GswordCollectionsPage *page = user_data;
-    const gchar *module;
-    const gchar *key;
+    GswordCollectionItemView *view = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(
+        view->page->window);
+    GError *error = NULL;
 
-    (void)list;
-    if (row == NULL) {
-        clear_selected_item(page);
+    (void)button;
+    if (store == NULL || view->list_id == 0 ||
+        view->selected_module == NULL || view->selected_key == NULL)
+        return;
+    if (!gsword_notes_store_remove_from_list(
+            store, view->list_id, view->selected_module, view->selected_key,
+            &error)) {
+        gsword_window_show_error(view->page->window,
+                                 _("Cannot remove verse from list"), error);
         return;
     }
-    module = g_object_get_data(G_OBJECT(row), "item-module");
-    key = g_object_get_data(G_OBJECT(row), "item-key");
-    g_free(page->selected_item_module);
-    g_free(page->selected_item_key);
-    page->selected_item_module = g_strdup(module);
-    page->selected_item_key = g_strdup(key);
-    update_actions(page);
+    gsword_window_set_status(
+        view->page->window, view->favorites
+                            ? _("Verse removed from favorites")
+                            : _("Verse removed from list"));
+    collection_view_load(view);
+}
+
+static void
+on_view_open_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
+
+    (void)button;
+    if (view->selected_module != NULL && view->selected_key != NULL)
+        gsword_window_open_module_reference(
+            view->page->window, view->selected_module, view->selected_key);
+}
+
+static void
+on_view_add_current_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(
+        view->page->window);
+    GswModule *module = gsword_window_get_module(view->page->window);
+    gchar *storage_key;
+    gchar *display_key;
+    GError *error = NULL;
+    gboolean ok;
+
+    (void)button;
+    if (store == NULL || module == NULL) {
+        gsword_window_set_status(view->page->window, _("No active verse"));
+        return;
+    }
+    if (view->favorites && view->list_id == 0)
+        view->list_id = gsword_notes_store_get_favorites_list_id(store);
+    if (view->list_id == 0) {
+        gsword_window_set_status(view->page->window,
+                                 _("No verse list selected"));
+        return;
+    }
+    storage_key = gsword_window_current_storage_key(view->page->window);
+    display_key = gsword_window_current_display_key(view->page->window);
+    if (storage_key == NULL || *storage_key == '\0') {
+        gsword_window_set_status(view->page->window, _("No active verse"));
+        g_free(display_key);
+        return;
+    }
+    if (display_key == NULL || *display_key == '\0') {
+        g_free(display_key);
+        display_key = g_strdup(storage_key);
+    }
+    if (view->favorites) {
+        ok = gsword_notes_store_add_favorite(
+            store, gsw_module_get_name(module), storage_key, display_key,
+            &error);
+    } else {
+        ok = gsword_notes_store_add_to_list(
+            store, view->list_id, gsw_module_get_name(module), storage_key,
+            display_key, &error);
+    }
+    if (!ok) {
+        gsword_window_show_error(view->page->window,
+                                 _("Cannot add verse to list"), error);
+    } else {
+        gsword_window_set_status(
+            view->page->window, view->favorites
+                                ? _("Verse added to favorites")
+                                : _("Verse added to list"));
+        collection_view_load(view);
+    }
+    g_free(storage_key);
+    g_free(display_key);
+}
+
+static GswordCollectionItemView *
+collection_view_new(GswordCollectionsPage *page, gboolean favorites)
+{
+    GswordCollectionItemView *view = g_new0(GswordCollectionItemView, 1);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *scroll = gtk_scrolled_window_new();
+    GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *open = gtk_button_new_with_label(_("Open verse"));
+    GtkWidget *remove = gtk_button_new_with_label(
+        favorites ? _("Remove from favorites") : _("Remove from list"));
+    GtkWidget *add_current = gtk_button_new_with_label(
+        _("Add current verse"));
+
+    view->page = page;
+    view->favorites = favorites;
+    gtk_widget_set_margin_top(box, 10);
+    gtk_widget_set_margin_bottom(box, 10);
+    gtk_widget_set_margin_start(box, 10);
+    gtk_widget_set_margin_end(box, 10);
+
+    view->title_label = GTK_LABEL(gtk_label_new(
+        favorites ? _("Favorites") : _("No verse list selected")));
+    gtk_label_set_xalign(view->title_label, 0.0f);
+    gtk_widget_set_hexpand(GTK_WIDGET(view->title_label), TRUE);
+    gtk_widget_add_css_class(GTK_WIDGET(view->title_label), "title-2");
+    gtk_widget_add_css_class(add_current, "flat");
+    g_signal_connect(add_current, "clicked",
+                     G_CALLBACK(on_view_add_current_clicked), view);
+    gtk_box_append(GTK_BOX(header), GTK_WIDGET(view->title_label));
+    gtk_box_append(GTK_BOX(header), add_current);
+
+    view->items = GTK_LIST_BOX(gtk_list_box_new());
+    gtk_list_box_set_selection_mode(view->items, GTK_SELECTION_SINGLE);
+    g_signal_connect(view->items, "row-selected",
+                     G_CALLBACK(on_view_item_selected), view);
+    g_signal_connect(view->items, "row-activated",
+                     G_CALLBACK(on_view_item_activated), view);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),
+                                  GTK_WIDGET(view->items));
+    gtk_widget_set_vexpand(scroll, TRUE);
+
+    view->count_label = GTK_LABEL(gtk_label_new(""));
+    gtk_label_set_xalign(view->count_label, 0.0f);
+    gtk_widget_add_css_class(GTK_WIDGET(view->count_label), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(view->count_label), "dim-label");
+    view->open_button = GTK_BUTTON(open);
+    view->remove_button = GTK_BUTTON(remove);
+    g_signal_connect(open, "clicked", G_CALLBACK(on_view_open_clicked), view);
+    g_signal_connect(remove, "clicked", G_CALLBACK(on_view_remove_clicked),
+                     view);
+    gtk_box_append(GTK_BOX(footer), open);
+    gtk_box_append(GTK_BOX(footer), remove);
+    gtk_widget_set_halign(footer, GTK_ALIGN_END);
+
+    gtk_box_append(GTK_BOX(box), header);
+    gtk_box_append(GTK_BOX(box), scroll);
+    gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->count_label));
+    gtk_box_append(GTK_BOX(box), footer);
+    view->root = box;
+    collection_view_update_actions(view);
+    collection_view_load(view);
+    return view;
 }
 
 static void
@@ -171,31 +365,20 @@ on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
     GswordCollectionsPage *page = user_data;
     const gchar *id_text;
-    const gchar *kind;
     const gchar *name;
 
     (void)list;
     if (row == NULL)
         return;
     id_text = g_object_get_data(G_OBJECT(row), "list-id");
-    kind = g_object_get_data(G_OBJECT(row), "list-kind");
     name = g_object_get_data(G_OBJECT(row), "list-name");
     page->selected_list_id = id_text != NULL
                            ? g_ascii_strtoll(id_text, NULL, 10) : 0;
-    page->selected_is_favorites = g_strcmp0(kind, "favorites") == 0;
-    if (page->selected_is_favorites)
-        gtk_label_set_text(page->title_label, _("Favorites"));
-    else
-        gtk_label_set_text(page->title_label, name != NULL ? name : "");
-    update_actions(page);
-    load_items(page);
-}
-
-static gchar *
-list_display_name(const gchar *name, const gchar *kind)
-{
-    return g_strcmp0(kind, "favorites") == 0 ? g_strdup(_("Favorites"))
-                                             : g_strdup(name);
+    gtk_widget_set_sensitive(GTK_WIDGET(page->rename_button),
+                             page->selected_list_id != 0);
+    gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button),
+                             page->selected_list_id != 0);
+    collection_view_set_list(page->list_view, page->selected_list_id, name);
 }
 
 static void
@@ -213,18 +396,15 @@ refresh_lists(GswordCollectionsPage *page)
     lists = gsword_notes_store_list_lists(store);
     for (i = 0; i < lists->len; i++) {
         GswordVerseList *list = g_ptr_array_index(lists, i);
-        GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        GtkWidget *row;
+        GtkWidget *box;
         GtkWidget *label;
-        gchar *display = list_display_name(list->name, list->kind);
 
-        if (g_strcmp0(list->kind, "favorites") == 0) {
-            GtkWidget *icon = gtk_image_new_from_icon_name(
-                "starred-symbolic");
-
-            gtk_box_append(GTK_BOX(box), icon);
-        }
-        label = gtk_label_new(display);
+        if (g_strcmp0(list->kind, "favorites") == 0)
+            continue;
+        row = gtk_list_box_row_new();
+        box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+        label = gtk_label_new(list->name);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
         gtk_widget_set_hexpand(label, TRUE);
         gtk_box_append(GTK_BOX(box), label);
@@ -233,26 +413,19 @@ refresh_lists(GswordCollectionsPage *page)
                                g_strdup_printf("%" G_GINT64_FORMAT,
                                                list->id),
                                g_free);
-        g_object_set_data_full(G_OBJECT(row), "list-kind",
-                               g_strdup(list->kind), g_free);
         g_object_set_data_full(G_OBJECT(row), "list-name",
                                g_strdup(list->name), g_free);
         gtk_list_box_append(page->lists, row);
         if (list->id == page->selected_list_id)
             selected = GTK_LIST_BOX_ROW(row);
-        if (g_strcmp0(list->kind, "normal") == 0 && fallback_id == 0)
+        if (fallback_id == 0)
             fallback_id = list->id;
-        g_free(display);
     }
     g_ptr_array_unref(lists);
 
-    if (selected == NULL) {
-        if (fallback_id != 0) {
-            page->selected_list_id = fallback_id;
-        } else {
-            page->selected_list_id =
-                gsword_notes_store_get_favorites_list_id(store);
-        }
+    if (selected == NULL)
+        page->selected_list_id = fallback_id;
+    if (page->selected_list_id != 0) {
         for (GtkWidget *child = gtk_widget_get_first_child(
                  GTK_WIDGET(page->lists));
              child != NULL; child = gtk_widget_get_next_sibling(child)) {
@@ -267,10 +440,15 @@ refresh_lists(GswordCollectionsPage *page)
             }
         }
     }
-    if (selected != NULL)
+    if (selected != NULL) {
         gtk_list_box_select_row(page->lists, selected);
-    else
-        load_items(page);
+    } else {
+        page->selected_list_id = 0;
+        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_button), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button), FALSE);
+        collection_view_set_list(page->list_view, 0,
+                                 _("No verse list selected"));
+    }
 }
 
 static void
@@ -345,90 +523,6 @@ on_add_list_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
-on_add_current_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordCollectionsPage *page = user_data;
-    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
-    GswModule *module = gsword_window_get_module(page->window);
-    gchar *storage_key;
-    gchar *display_key;
-    GError *error = NULL;
-    gboolean ok;
-
-    (void)button;
-    if (store == NULL || module == NULL || page->selected_list_id == 0) {
-        gsword_window_set_status(page->window, _("No active verse"));
-        return;
-    }
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
-    if (storage_key == NULL || *storage_key == '\0') {
-        gsword_window_set_status(page->window, _("No active verse"));
-        g_free(display_key);
-        return;
-    }
-    if (display_key == NULL || *display_key == '\0') {
-        g_free(display_key);
-        display_key = g_strdup(storage_key);
-    }
-    if (page->selected_is_favorites) {
-        ok = gsword_notes_store_add_favorite(
-            store, gsw_module_get_name(module), storage_key, display_key,
-            &error);
-    } else {
-        ok = gsword_notes_store_add_to_list(
-            store, page->selected_list_id, gsw_module_get_name(module),
-            storage_key, display_key, &error);
-    }
-    if (!ok) {
-        gsword_window_show_error(page->window, _("Cannot add verse to list"),
-                                 error);
-    } else {
-        gsword_window_set_status(
-            page->window, page->selected_is_favorites
-                          ? _("Verse added to favorites")
-                          : _("Verse added to list"));
-        load_items(page);
-    }
-    g_free(storage_key);
-    g_free(display_key);
-}
-
-static void
-on_remove_item_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordCollectionsPage *page = user_data;
-    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
-    GError *error = NULL;
-
-    (void)button;
-    if (store == NULL || page->selected_list_id == 0 ||
-        page->selected_item_module == NULL || page->selected_item_key == NULL)
-        return;
-    if (!gsword_notes_store_remove_from_list(
-            store, page->selected_list_id, page->selected_item_module,
-            page->selected_item_key, &error)) {
-        gsword_window_show_error(page->window,
-                                 _("Cannot remove verse from list"), error);
-        return;
-    }
-    gsword_window_set_status(page->window, _("Verse removed from list"));
-    load_items(page);
-}
-
-static void
-on_open_item_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordCollectionsPage *page = user_data;
-
-    (void)button;
-    if (page->selected_item_module != NULL && page->selected_item_key != NULL)
-        gsword_window_open_module_reference(page->window,
-                                            page->selected_item_module,
-                                            page->selected_item_key);
-}
-
-static void
 on_rename_response(AdwAlertDialog *dialog, const gchar *response,
                    gpointer user_data)
 {
@@ -462,12 +556,12 @@ on_rename_clicked(GtkButton *button, gpointer user_data)
     GtkWidget *entry;
 
     (void)button;
-    if (page->selected_list_id == 0 || page->selected_is_favorites)
+    if (page->selected_list_id == 0)
         return;
     dialog = adw_alert_dialog_new(_("Rename verse list"), NULL);
     entry = gtk_entry_new();
     gtk_editable_set_text(GTK_EDITABLE(entry),
-                          gtk_label_get_text(page->title_label));
+                          gtk_label_get_text(page->list_view->title_label));
     gtk_widget_set_margin_top(entry, 4);
     gtk_widget_set_margin_bottom(entry, 4);
     g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
@@ -510,13 +604,13 @@ on_delete_clicked(GtkButton *button, gpointer user_data)
     AdwDialog *dialog;
 
     (void)button;
-    if (page->selected_list_id == 0 || page->selected_is_favorites)
+    if (page->selected_list_id == 0)
         return;
     dialog = adw_alert_dialog_new(_("Delete verse list"), NULL);
     adw_alert_dialog_format_body(
         ADW_ALERT_DIALOG(dialog),
         _("Delete “%s” and all its verses?"),
-        gtk_label_get_text(page->title_label));
+        gtk_label_get_text(page->list_view->title_label));
     adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
                                    "cancel", _("Cancel"),
                                    "delete", _("Delete"), NULL);
@@ -528,10 +622,52 @@ on_delete_clicked(GtkButton *button, gpointer user_data)
     adw_dialog_present(dialog, GTK_WIDGET(page->window));
 }
 
-GswordCollectionsPage *
-gsword_collections_page_new(GswordWindow *window)
+static gint
+tab_index_from_name(const gchar *name)
 {
-    GswordCollectionsPage *page = g_new0(GswordCollectionsPage, 1);
+    if (g_strcmp0(name, "bookmarks") == 0)
+        return 1;
+    if (g_strcmp0(name, "favorites") == 0)
+        return 2;
+    return 0;
+}
+
+static const gchar *
+tab_name_from_index(gint index)
+{
+    switch (index) {
+    case 1:
+        return "bookmarks";
+    case 2:
+        return "favorites";
+    default:
+        return "lists";
+    }
+}
+
+static void
+on_tab_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+    GswordCollectionsPage *page = user_data;
+    GSettings *settings = gsword_window_get_settings(page->window);
+    gint index = gtk_notebook_get_current_page(page->notebook);
+
+    (void)object;
+    (void)pspec;
+    if (settings != NULL)
+        g_settings_set_string(settings, "collections-tab",
+                              tab_name_from_index(index));
+    if (index == 0)
+        refresh_lists(page);
+    else if (index == 1 && page->bookmark_page != NULL)
+        gsword_bookmark_page_refresh(page->bookmark_page);
+    else if (index == 2 && page->favorites_view != NULL)
+        collection_view_load(page->favorites_view);
+}
+
+static GtkWidget *
+build_lists_tab(GswordCollectionsPage *page)
+{
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *left_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -539,20 +675,9 @@ gsword_collections_page_new(GswordWindow *window)
     GtkWidget *lists_scroll = gtk_scrolled_window_new();
     GtkWidget *new_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *add_list = gtk_button_new_with_label(_("Add list"));
-    GtkWidget *right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-    GtkWidget *right_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *add_current = gtk_button_new_with_label(
-        _("Add current verse"));
-    GtkWidget *items_scroll = gtk_scrolled_window_new();
-    GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *open = gtk_button_new_with_label(_("Open verse"));
-    GtkWidget *remove = gtk_button_new_with_label(_("Remove from list"));
     GtkWidget *rename = gtk_button_new_from_icon_name(
         "document-edit-symbolic");
     GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
-
-    g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
-    page->window = window;
 
     gtk_widget_set_margin_top(left, 10);
     gtk_widget_set_margin_bottom(left, 10);
@@ -582,39 +707,8 @@ gsword_collections_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(left), lists_scroll);
     gtk_box_append(GTK_BOX(left), new_row);
 
-    page->title_label = GTK_LABEL(gtk_label_new(_("Favorites")));
-    gtk_label_set_xalign(page->title_label, 0.0f);
-    gtk_widget_set_hexpand(GTK_WIDGET(page->title_label), TRUE);
-    gtk_widget_add_css_class(GTK_WIDGET(page->title_label), "title-2");
-    gtk_widget_add_css_class(add_current, "flat");
-    g_signal_connect(add_current, "clicked",
-                     G_CALLBACK(on_add_current_clicked), page);
-    gtk_box_append(GTK_BOX(right_header), GTK_WIDGET(page->title_label));
-    gtk_box_append(GTK_BOX(right_header), add_current);
-
-    page->items = GTK_LIST_BOX(gtk_list_box_new());
-    gtk_list_box_set_selection_mode(page->items, GTK_SELECTION_SINGLE);
-    g_signal_connect(page->items, "row-selected",
-                     G_CALLBACK(on_item_selected), page);
-    g_signal_connect(page->items, "row-activated",
-                     G_CALLBACK(on_item_activated), page);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(items_scroll),
-                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(items_scroll),
-                                  GTK_WIDGET(page->items));
-    gtk_widget_set_vexpand(items_scroll, TRUE);
-
-    page->count_label = GTK_LABEL(gtk_label_new(""));
-    gtk_label_set_xalign(page->count_label, 0.0f);
-    gtk_widget_add_css_class(GTK_WIDGET(page->count_label), "caption");
-    gtk_widget_add_css_class(GTK_WIDGET(page->count_label), "dim-label");
-    page->open_button = GTK_BUTTON(open);
-    page->remove_button = GTK_BUTTON(remove);
     page->rename_button = GTK_BUTTON(rename);
     page->delete_button = GTK_BUTTON(delete);
-    g_signal_connect(open, "clicked", G_CALLBACK(on_open_item_clicked), page);
-    g_signal_connect(remove, "clicked",
-                     G_CALLBACK(on_remove_item_clicked), page);
     g_signal_connect(rename, "clicked", G_CALLBACK(on_rename_clicked), page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete_clicked), page);
     gtk_widget_add_css_class(rename, "flat");
@@ -627,37 +721,59 @@ gsword_collections_page_new(GswordWindow *window)
     gtk_accessible_update_property(
         GTK_ACCESSIBLE(delete), GTK_ACCESSIBLE_PROPERTY_LABEL,
         _("Delete verse list"), -1);
-    gtk_box_append(GTK_BOX(footer), GTK_WIDGET(rename));
-    gtk_box_append(GTK_BOX(footer), GTK_WIDGET(delete));
-    gtk_box_append(GTK_BOX(footer), open);
-    gtk_box_append(GTK_BOX(footer), remove);
+    gtk_widget_set_sensitive(rename, FALSE);
+    gtk_widget_set_sensitive(delete, FALSE);
+    gtk_box_append(GTK_BOX(left_header), rename);
+    gtk_box_append(GTK_BOX(left_header), delete);
 
-    gtk_box_append(GTK_BOX(right), right_header);
-    gtk_box_append(GTK_BOX(right), items_scroll);
-    gtk_box_append(GTK_BOX(right), GTK_WIDGET(page->count_label));
-    gtk_box_append(GTK_BOX(right), footer);
     gtk_paned_set_start_child(GTK_PANED(paned), left);
-    gtk_paned_set_end_child(GTK_PANED(paned), right);
-    gtk_paned_set_position(GTK_PANED(paned), 300);
-    {
-        GtkWidget *notebook = gtk_notebook_new();
+    gtk_paned_set_end_child(GTK_PANED(paned), page->list_view->root);
+    gtk_paned_set_position(GTK_PANED(paned), 280);
+    return paned;
+}
 
-        page->bookmark_page = gsword_bookmark_page_new(window);
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), paned,
-                                 gtk_label_new(_("Lists")));
-        gtk_notebook_append_page(
-            GTK_NOTEBOOK(notebook),
-            gsword_bookmark_page_widget(page->bookmark_page),
-            gtk_label_new(_("Bookmarks")));
-        gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
-        page->notebook = GTK_NOTEBOOK(notebook);
-        page->root = notebook;
-        g_object_set_data_full(G_OBJECT(notebook),
-                               "gsword-collections-page", page,
-                               collections_page_free);
+GswordCollectionsPage *
+gsword_collections_page_new(GswordWindow *window)
+{
+    GswordCollectionsPage *page = g_new0(GswordCollectionsPage, 1);
+    GtkWidget *notebook;
+    GSettings *settings;
+    gint index = 0;
+
+    g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
+    page->window = window;
+    page->list_view = collection_view_new(page, FALSE);
+    page->favorites_view = collection_view_new(page, TRUE);
+    page->bookmark_page = gsword_bookmark_page_new(window);
+    notebook = gtk_notebook_new();
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
+                             build_lists_tab(page),
+                             gtk_label_new(_("Verse lists")));
+    gtk_notebook_append_page(
+        GTK_NOTEBOOK(notebook),
+        gsword_bookmark_page_widget(page->bookmark_page),
+        gtk_label_new(_("Bookmarks")));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
+                             page->favorites_view->root,
+                             gtk_label_new(_("Favorites")));
+    gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+    page->notebook = GTK_NOTEBOOK(notebook);
+    page->root = notebook;
+    g_object_set_data_full(G_OBJECT(notebook), "gsword-collections-page",
+                           page, collections_page_free);
+
+    settings = gsword_window_get_settings(window);
+    if (settings != NULL) {
+        gchar *tab = g_settings_get_string(settings, "collections-tab");
+
+        index = tab_index_from_name(tab);
+        g_free(tab);
     }
-    update_actions(page);
+    gtk_notebook_set_current_page(page->notebook, index);
+    g_signal_connect(page->notebook, "notify::page",
+                     G_CALLBACK(on_tab_changed), page);
     refresh_lists(page);
+    collection_view_load(page->favorites_view);
     return page;
 }
 
@@ -673,6 +789,7 @@ gsword_collections_page_refresh(GswordCollectionsPage *page)
 {
     g_return_if_fail(page != NULL);
     refresh_lists(page);
+    collection_view_load(page->favorites_view);
     if (page->bookmark_page != NULL)
         gsword_bookmark_page_refresh(page->bookmark_page);
 }
