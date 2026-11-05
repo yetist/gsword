@@ -548,6 +548,14 @@ gsword_notes_page_has_note_key(GswordNotesPage *page)
 }
 
 void
+gsword_notes_page_show_insights(GswordNotesPage *page)
+{
+    g_return_if_fail(page != NULL);
+    if (page->notebook != NULL)
+        gtk_notebook_set_current_page(page->notebook, 1);
+}
+
+void
 gsword_notes_page_open_reference(GswordNotesPage *page,
                                  const gchar *module,
                                  const gchar *storage_key,

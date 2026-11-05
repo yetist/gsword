@@ -371,6 +371,109 @@ on_prayer_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_bookmark_response(AdwAlertDialog *dialog, const gchar *response,
+                     gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+    GswordBookmarkStore *store;
+    GtkEntry *title;
+    GtkEntry *note;
+    const gchar *module;
+    const gchar *key;
+    const gchar *display_key;
+    GError *error = NULL;
+    const gchar *title_text;
+
+    if (g_strcmp0(response, "add") != 0)
+        return;
+    store = gsword_window_get_bookmark_store(toolbar->window);
+    title = g_object_get_data(G_OBJECT(dialog), "title-entry");
+    note = g_object_get_data(G_OBJECT(dialog), "note-entry");
+    module = g_object_get_data(G_OBJECT(dialog), "bookmark-module");
+    key = g_object_get_data(G_OBJECT(dialog), "bookmark-key");
+    display_key = g_object_get_data(G_OBJECT(dialog), "bookmark-display");
+    if (store == NULL || title == NULL || note == NULL || module == NULL ||
+        key == NULL)
+        return;
+    title_text = gtk_editable_get_text(GTK_EDITABLE(title));
+    if (title_text == NULL || *title_text == '\0')
+        title_text = display_key != NULL ? display_key : key;
+    if (gsword_bookmark_store_create(
+            store, title_text, module, key, display_key,
+            gtk_editable_get_text(GTK_EDITABLE(note)), &error) == 0) {
+        gsword_window_show_error(toolbar->window, _("Cannot add bookmark"),
+                                 error);
+        return;
+    }
+    gsword_window_set_status(toolbar->window, _("Bookmark added"));
+}
+
+static void
+on_add_bookmark_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+    GswModule *module = gsword_window_get_module(toolbar->window);
+    gchar *storage_key;
+    gchar *display_key;
+    AdwDialog *dialog;
+    GtkWidget *grid;
+    GtkWidget *title_entry;
+    GtkWidget *note_entry;
+
+    (void)button;
+    if (module == NULL) {
+        gsword_window_set_status(toolbar->window, _("No active verse"));
+        return;
+    }
+    storage_key = gsword_window_current_storage_key(toolbar->window);
+    display_key = gsword_window_current_display_key(toolbar->window);
+    if (storage_key == NULL || *storage_key == '\0') {
+        gsword_window_set_status(toolbar->window, _("No active verse"));
+        g_free(storage_key);
+        g_free(display_key);
+        return;
+    }
+    if (display_key == NULL || *display_key == '\0') {
+        g_free(display_key);
+        display_key = g_strdup(storage_key);
+    }
+    dialog = adw_alert_dialog_new(_("Add bookmark"), NULL);
+    grid = gtk_grid_new();
+    title_entry = gtk_entry_new();
+    note_entry = gtk_entry_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 6);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
+    gtk_entry_set_placeholder_text(GTK_ENTRY(title_entry),
+                                   _("Bookmark title"));
+    gtk_entry_set_placeholder_text(GTK_ENTRY(note_entry),
+                                   _("Bookmark note"));
+    gtk_editable_set_text(GTK_EDITABLE(title_entry), display_key);
+    gtk_grid_attach(GTK_GRID(grid), gtk_label_new(_("Title")), 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), title_entry, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), gtk_label_new(_("Note")), 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), note_entry, 1, 1, 1, 1);
+    g_object_set_data(G_OBJECT(dialog), "title-entry", title_entry);
+    g_object_set_data(G_OBJECT(dialog), "note-entry", note_entry);
+    g_object_set_data_full(G_OBJECT(dialog), "bookmark-module",
+                           g_strdup(gsw_module_get_name(module)), g_free);
+    g_object_set_data_full(G_OBJECT(dialog), "bookmark-key",
+                           g_strdup(storage_key), g_free);
+    g_object_set_data_full(G_OBJECT(dialog), "bookmark-display",
+                           g_strdup(display_key), g_free);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), grid);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "add", _("Add"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "add");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    g_signal_connect(dialog, "response", G_CALLBACK(on_bookmark_response),
+                     toolbar);
+    adw_dialog_present(dialog, GTK_WIDGET(toolbar->window));
+    g_free(storage_key);
+    g_free(display_key);
+}
+
+static void
 on_teaching_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -587,6 +690,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *highlight = gtk_button_new_with_label(_("Highlight verse"));
     GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *prayer = gtk_button_new_with_label(_("Add to prayer"));
+    GtkWidget *bookmark = gtk_button_new_with_label(_("Add bookmark"));
     GtkWidget *teaching = gtk_button_new_with_label(_("Teach"));
     GtkWidget *study_button = gtk_toggle_button_new();
     GtkWidget *focus_button = gtk_toggle_button_new();
@@ -642,16 +746,20 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_widget_set_tooltip_text(more_button, _("More reading actions"));
     gtk_widget_add_css_class(copy_chapter, "flat");
     gtk_widget_add_css_class(prayer, "flat");
+    gtk_widget_add_css_class(bookmark, "flat");
     gtk_widget_add_css_class(teaching, "flat");
     g_signal_connect(copy_chapter, "clicked",
                      G_CALLBACK(on_copy_chapter_clicked), toolbar);
     g_signal_connect(prayer, "clicked", G_CALLBACK(on_prayer_clicked),
                      toolbar);
+    g_signal_connect(bookmark, "clicked",
+                     G_CALLBACK(on_add_bookmark_clicked), toolbar);
     gtk_widget_set_size_request(more_box, 220, -1);
     gtk_box_append(GTK_BOX(more_box), copy_chapter);
     gtk_box_append(GTK_BOX(more_box), highlight);
     gtk_box_append(GTK_BOX(more_box), list_add);
     gtk_box_append(GTK_BOX(more_box), prayer);
+    gtk_box_append(GTK_BOX(more_box), bookmark);
     gtk_box_append(GTK_BOX(more_box), more_separator);
     {
         GtkWidget *popover = gtk_popover_new();

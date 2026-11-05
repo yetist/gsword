@@ -23,7 +23,7 @@
 
 主内容区在重构时使用 `GtkStack` + `GtkStackSwitcher`，不是 `GtkNotebook`；后续主导航已迁移为 `AdwViewStack` + `AdwViewSwitcher`，并在窄窗口使用 `AdwViewSwitcherBar`。内部使用 `GtkNotebook` 的部分是：
 
-- 计划页：计划概览 / 计划 / 灵修 / 背经
+- 计划页：计划管理 / 计划 / 灵修 / 背经
 - 研究面板：注释 / Strong's / 交叉引用 / 词典
 
 因此本次重构按“页面功能”拆分，同时覆盖这些内部 notebook 子页。

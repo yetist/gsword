@@ -5,6 +5,7 @@
  */
 
 #include "today-page.h"
+#include "insight-store.h"
 #include "notes-store.h"
 #include "plan-store.h"
 #include "prayer-store.h"
@@ -19,9 +20,11 @@ struct _GswordTodayPage {
     GtkWidget *root;
     GtkLabel *continue_value;
     GtkLabel *plan_value;
+    GtkLabel *devotion_value;
     GtkLabel *prayer_value;
     GtkLabel *memory_value;
     GtkLabel *notes_value;
+    gboolean recent_is_insight;
 };
 
 static void
@@ -60,6 +63,13 @@ on_plans_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_devotion_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    gsword_window_open_devotion(((GswordTodayPage *)user_data)->window);
+}
+
+static void
 on_prayer_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -68,11 +78,16 @@ on_prayer_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
-on_notes_clicked(GtkButton *button, gpointer user_data)
+on_recent_clicked(GtkButton *button, gpointer user_data)
 {
+    GswordTodayPage *page = user_data;
+
     (void)button;
-    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
-                                GSWORD_PERSONAL_SECTION_NOTES);
+    if (page->recent_is_insight)
+        gsword_window_open_insights(page->window);
+    else
+        gsword_window_show_personal(page->window,
+                                    GSWORD_PERSONAL_SECTION_NOTES);
 }
 
 static void
@@ -153,6 +168,10 @@ gsword_today_page_new(GswordWindow *window)
                                G_CALLBACK(on_plans_clicked), page,
                                &page->plan_value));
     gtk_box_append(GTK_BOX(box),
+                   create_card(_("Today's devotion"), _("Open devotion"),
+                               G_CALLBACK(on_devotion_clicked), page,
+                               &page->devotion_value));
+    gtk_box_append(GTK_BOX(box),
                    create_card(_("Prayer"), _("Open prayer"),
                                G_CALLBACK(on_prayer_clicked), page,
                                &page->prayer_value));
@@ -161,8 +180,8 @@ gsword_today_page_new(GswordWindow *window)
                                G_CALLBACK(on_memory_clicked), page,
                                &page->memory_value));
     gtk_box_append(GTK_BOX(box),
-                   create_card(_("Recent notes"), _("Open notes"),
-                               G_CALLBACK(on_notes_clicked), page,
+                   create_card(_("Recent notes & insights"), _("Open"),
+                               G_CALLBACK(on_recent_clicked), page,
                                &page->notes_value));
 
     adw_clamp_set_maximum_size(ADW_CLAMP(clamp), 760);
@@ -205,19 +224,63 @@ short_text(const gchar *text, glong maximum)
     return result;
 }
 
+static gchar *
+load_devotion_preview(GswordWindow *window, const gchar *name)
+{
+    GswManager *manager = gsword_window_get_manager(window);
+    GDateTime *now;
+    gchar *text = NULL;
+    const gchar *formats[] = {
+        "%m.%d", "%m%d", "%m-%d", "%m/%d", "%B %-d", "%b %-d", "%B %d",
+        "%b %d", NULL
+    };
+    guint i;
+
+    if (manager == NULL || name == NULL || *name == '\0')
+        return NULL;
+    now = g_date_time_new_now_local();
+    for (i = 0; formats[i] != NULL; i++) {
+        gchar *key = g_date_time_format(now, formats[i]);
+        GswModule *module = gsw_manager_create_module(manager, name);
+
+        if (module != NULL &&
+            gsw_module_set_key_text(module, key, NULL) &&
+            gsw_module_has_entry(module)) {
+            text = gsw_module_get_text(module, NULL);
+            if (text != NULL && *text == '\0')
+                g_clear_pointer(&text, g_free);
+        }
+        g_clear_object(&module);
+        g_free(key);
+        if (text != NULL)
+            break;
+    }
+    g_date_time_unref(now);
+    if (text != NULL) {
+        gchar *preview = short_text(text, 120);
+
+        g_free(text);
+        return preview;
+    }
+    return NULL;
+}
+
 void
 gsword_today_page_refresh(GswordTodayPage *page)
 {
     GSettings *settings;
     GswordPlanStore *plans;
     GswordNotesStore *notes;
+    GswordInsightStore *insights;
     GswordPrayerStore *prayers;
     gchar *module = NULL;
     gchar *key = NULL;
     gchar *plan_id = NULL;
+    gchar *devotion_name = NULL;
     gchar *value;
     GswordPlan *plan = NULL;
-    GPtrArray *note_items;
+    GPtrArray *note_items = NULL;
+    GPtrArray *insight_items = NULL;
     GPtrArray *memory;
     gint active_prayers;
     gint due_memory = 0;
@@ -227,12 +290,14 @@ gsword_today_page_refresh(GswordTodayPage *page)
     settings = gsword_window_get_settings(page->window);
     plans = gsword_window_get_plan_store(page->window);
     notes = gsword_window_get_notes_store(page->window);
+    insights = gsword_window_get_insight_store(page->window);
     prayers = gsword_window_get_prayer_store(page->window);
 
     if (settings != NULL) {
         module = g_settings_get_string(settings, "last-module");
         key = g_settings_get_string(settings, "last-key");
         plan_id = g_settings_get_string(settings, "active-plan-id");
+        devotion_name = g_settings_get_string(settings, "devotion-module");
     }
     if (module != NULL && *module != '\0' && key != NULL && *key != '\0')
         value = g_strdup_printf("%s · %s", module, key);
@@ -255,6 +320,25 @@ gsword_today_page_refresh(GswordTodayPage *page)
         value = g_strdup_printf(_("%s · Complete"), plan->name);
         gtk_label_set_text(page->plan_value, value);
         g_free(value);
+    }
+
+    {
+        gchar *preview = NULL;
+
+        if (devotion_name != NULL && *devotion_name != '\0')
+            preview = load_devotion_preview(page->window, devotion_name);
+        if (preview != NULL) {
+            value = g_strdup_printf("%s · %s", devotion_name, preview);
+            gtk_label_set_text(page->devotion_value, value);
+            g_free(value);
+            g_free(preview);
+        } else if (devotion_name != NULL && *devotion_name != '\0') {
+            gtk_label_set_text(page->devotion_value,
+                               _("No devotional entry today"));
+        } else {
+            gtk_label_set_text(page->devotion_value,
+                               _("No devotional module"));
+        }
     }
 
     active_prayers = prayers != NULL
@@ -295,14 +379,23 @@ gsword_today_page_refresh(GswordTodayPage *page)
     gtk_label_set_text(page->memory_value, value);
     g_free(value);
 
-    if (notes != NULL) {
-        gchar *preview;
-
+    if (notes != NULL)
         note_items = gsword_notes_store_list_notes(notes, NULL, NULL);
-        if (note_items->len > 0) {
-            GswordNote *note = g_ptr_array_index(note_items, 0);
+    if (insights != NULL)
+        insight_items = gsword_insight_store_list(insights, NULL, NULL);
 
-            preview = short_text(note->text, 100);
+    {
+        GswordNote *note = note_items != NULL && note_items->len > 0
+                         ? g_ptr_array_index(note_items, 0) : NULL;
+        GswordInsight *insight = insight_items != NULL &&
+                                 insight_items->len > 0
+                               ? g_ptr_array_index(insight_items, 0) : NULL;
+
+        if (note != NULL &&
+            (insight == NULL || note->updated >= insight->updated)) {
+            gchar *preview = short_text(note->text, 100);
+
+            page->recent_is_insight = FALSE;
             value = g_strdup_printf("%s · %s",
                                     note->display_key != NULL
                                         ? note->display_key : "",
@@ -310,13 +403,32 @@ gsword_today_page_refresh(GswordTodayPage *page)
             gtk_label_set_text(page->notes_value, value);
             g_free(value);
             g_free(preview);
+        } else if (insight != NULL) {
+            const gchar *title = insight->title != NULL &&
+                                 *insight->title != '\0'
+                               ? insight->title : insight->body;
+            gchar *preview = short_text(title, 100);
+            gchar *body_preview = short_text(insight->body, 80);
+
+            page->recent_is_insight = TRUE;
+            value = g_strdup_printf("%s · %s",
+                                    preview != NULL ? preview : "",
+                                    body_preview != NULL ? body_preview : "");
+            gtk_label_set_text(page->notes_value, value);
+            g_free(value);
+            g_free(body_preview);
+            g_free(preview);
         } else {
-            gtk_label_set_text(page->notes_value, _("No notes yet"));
+            page->recent_is_insight = FALSE;
+            gtk_label_set_text(page->notes_value,
+                               _("No notes or insights yet"));
         }
-        g_ptr_array_unref(note_items);
     }
+    g_clear_pointer(&note_items, g_ptr_array_unref);
+    g_clear_pointer(&insight_items, g_ptr_array_unref);
 
     g_clear_pointer(&plan, gsword_plan_free);
+    g_free(devotion_name);
     g_free(plan_id);
     g_free(key);
     g_free(module);

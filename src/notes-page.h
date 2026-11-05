@@ -22,6 +22,7 @@ void gsword_notes_page_open_reference(GswordNotesPage *page,
                                       const gchar *storage_key,
                                       const gchar *display_key);
 gboolean gsword_notes_page_has_note_key(GswordNotesPage *page);
+void gsword_notes_page_show_insights(GswordNotesPage *page);
 
 G_END_DECLS
 

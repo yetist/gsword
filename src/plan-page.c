@@ -1207,7 +1207,7 @@ gsword_plan_page_new(GswordWindow *window)
     page->devotion = gsword_devotion_page_new(window);
     page->memory = gsword_memory_page_new(window);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), today_page,
-                             gtk_label_new(_("Plan dashboard")));
+                             gtk_label_new(_("Plan management")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), plans_page,
                              gtk_label_new(_("Plans")));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook),

@@ -17,10 +17,12 @@ src/plan-page.c
 src/plan-store.c
 src/prayer-store.c
 src/insight-store.c
+src/bookmark-store.c
 src/personal-page.c
 src/today-page.c
 src/prayer-page.c
 src/insight-page.c
+src/bookmark-page.c
 src/collections-page.c
 src/resource-page.c
 src/teaching-page.c
