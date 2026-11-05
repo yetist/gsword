@@ -233,6 +233,7 @@ meson compile -C build-doc docs
 - [`docs/formats.md`](docs/formats.md)：配置文件、模块目录、Raw/z 存储格式和安装源
 - [`docs/upstream-analysis.md`](docs/upstream-analysis.md)：上游 SWORD 1.9 源码分析
 - [`docs/app-design.md`](docs/app-design.md)：GSword 桌面应用的功能与界面设计
+- [`docs/personal-prayer-design.md`](docs/personal-prayer-design.md)：个人中心与祷告事项管理规划
 - [`docs/workspace-design.md`](docs/workspace-design.md)：阅读工作区、活动经文和多资源协同设计
 - [`docs/reference-chooser.md`](docs/reference-chooser.md)：书卷/章/节引用选择器设计
 - [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md)：GTK4 窗口页面对象拆分计划
