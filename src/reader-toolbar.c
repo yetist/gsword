@@ -27,6 +27,7 @@ struct _GswordReaderToolbar {
     GtkBox *list_menu_box;
     GtkWidget *copy_button;
     GtkWidget *note_button;
+    GtkToggleButton *favorite_button;
     GtkWidget *highlight_button;
     GtkWidget *focus_button;
     GtkWidget *more_button;
@@ -34,6 +35,7 @@ struct _GswordReaderToolbar {
     GtkToggleButton *study_button;
     gboolean updating_list_menu;
     gboolean updating_focus;
+    gboolean updating_favorite;
 };
 
 static void
@@ -112,6 +114,100 @@ make_typography_row(GtkGrid *grid, gint row, const gchar *label_text,
     return spin;
 }
 
+void
+gsword_reader_toolbar_update_favorite(GswordReaderToolbar *toolbar)
+{
+    GswordNotesStore *store;
+    GswModule *module;
+    gchar *storage_key;
+    gboolean favorite = FALSE;
+
+    if (toolbar == NULL || toolbar->favorite_button == NULL)
+        return;
+    store = gsword_window_get_notes_store(toolbar->window);
+    module = gsword_window_get_module(toolbar->window);
+    if (store == NULL || module == NULL ||
+        gsw_key_get_kind(gsw_module_get_key(module)) != GSW_KEY_KIND_VERSE) {
+        toolbar->updating_favorite = TRUE;
+        gtk_toggle_button_set_active(toolbar->favorite_button, FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(toolbar->favorite_button), FALSE);
+        toolbar->updating_favorite = FALSE;
+        return;
+    }
+    storage_key = gsword_window_current_storage_key(toolbar->window);
+    if (storage_key != NULL && *storage_key != '\0')
+        favorite = gsword_notes_store_is_favorite(
+            store, gsw_module_get_name(module), storage_key);
+    g_free(storage_key);
+
+    toolbar->updating_favorite = TRUE;
+    gtk_toggle_button_set_active(toolbar->favorite_button, favorite);
+    gtk_button_set_icon_name(
+        GTK_BUTTON(toolbar->favorite_button),
+        favorite ? "starred-symbolic" : "non-starred-symbolic");
+    gtk_widget_set_tooltip_text(
+        GTK_WIDGET(toolbar->favorite_button),
+        favorite ? _("Remove from favorites") : _("Add to favorites"));
+    gtk_widget_set_sensitive(GTK_WIDGET(toolbar->favorite_button), TRUE);
+    toolbar->updating_favorite = FALSE;
+}
+
+static void
+on_favorite_toggled(GtkToggleButton *button, gpointer user_data)
+{
+    GswordReaderToolbar *toolbar = user_data;
+    GswordNotesStore *store = gsword_window_get_notes_store(toolbar->window);
+    GswModule *module = gsword_window_get_module(toolbar->window);
+    gchar *storage_key;
+    gchar *display_key;
+    GError *error = NULL;
+    gboolean active;
+
+    if (toolbar->updating_favorite)
+        return;
+    active = gtk_toggle_button_get_active(button);
+    if (store == NULL || module == NULL) {
+        gsword_reader_toolbar_update_favorite(toolbar);
+        return;
+    }
+    storage_key = gsword_window_current_storage_key(toolbar->window);
+    display_key = gsword_window_current_display_key(toolbar->window);
+    if (storage_key == NULL || *storage_key == '\0') {
+        gsword_window_set_status(toolbar->window, _("No active verse"));
+        g_free(storage_key);
+        g_free(display_key);
+        gsword_reader_toolbar_update_favorite(toolbar);
+        return;
+    }
+    if (display_key == NULL || *display_key == '\0') {
+        g_free(display_key);
+        display_key = g_strdup(storage_key);
+    }
+    if (active) {
+        if (!gsword_notes_store_add_favorite(
+                store, gsw_module_get_name(module), storage_key, display_key,
+                &error))
+            gsword_window_show_error(toolbar->window,
+                                     _("Cannot add verse to favorites"),
+                                     error);
+        else
+            gsword_window_set_status(toolbar->window,
+                                     _("Verse added to favorites"));
+    } else {
+        if (!gsword_notes_store_remove_favorite(
+                store, gsw_module_get_name(module), storage_key, &error))
+            gsword_window_show_error(toolbar->window,
+                                     _("Cannot remove verse from favorites"),
+                                     error);
+        else
+            gsword_window_set_status(toolbar->window,
+                                     _("Verse removed from favorites"));
+    }
+    g_free(storage_key);
+    g_free(display_key);
+    gsword_reader_toolbar_update_favorite(toolbar);
+}
+
 static void
 on_note_clicked(GtkButton *button, gpointer user_data)
 {
@@ -185,6 +281,7 @@ rebuild_list_menu(GswordReaderToolbar *toolbar)
     gchar *storage_key = gsword_window_current_storage_key(toolbar->window);
     GPtrArray *lists;
     GtkWidget *child;
+    gboolean has_normal = FALSE;
     guint i;
 
     if (toolbar->list_menu_box == NULL)
@@ -206,20 +303,16 @@ rebuild_list_menu(GswordReaderToolbar *toolbar)
         return;
     }
     lists = gsword_notes_store_list_lists(store);
-    if (lists->len == 0) {
-        GtkWidget *label = gtk_label_new(_("No verse lists yet"));
-
-        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-        gtk_widget_set_margin_top(label, 6);
-        gtk_widget_set_margin_bottom(label, 6);
-        gtk_widget_add_css_class(label, "dim-label");
-        gtk_box_append(toolbar->list_menu_box, label);
-    }
     for (i = 0; i < lists->len; i++) {
         GswordVerseList *list = g_ptr_array_index(lists, i);
-        GtkWidget *check = gtk_check_button_new_with_label(list->name);
-        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, list->id);
+        GtkWidget *check;
+        gchar *id;
 
+        if (g_strcmp0(list->kind, "favorites") == 0)
+            continue;
+        has_normal = TRUE;
+        check = gtk_check_button_new_with_label(list->name);
+        id = g_strdup_printf("%" G_GINT64_FORMAT, list->id);
         g_object_set_data_full(G_OBJECT(check), "list-id", id, g_free);
         gtk_check_button_set_active(
             GTK_CHECK_BUTTON(check),
@@ -229,6 +322,15 @@ rebuild_list_menu(GswordReaderToolbar *toolbar)
         g_signal_connect(check, "toggled",
                          G_CALLBACK(on_list_check_toggled), toolbar);
         gtk_box_append(toolbar->list_menu_box, check);
+    }
+    if (!has_normal) {
+        GtkWidget *label = gtk_label_new(_("No verse lists yet"));
+
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
+        gtk_widget_set_margin_top(label, 6);
+        gtk_widget_set_margin_bottom(label, 6);
+        gtk_widget_add_css_class(label, "dim-label");
+        gtk_box_append(toolbar->list_menu_box, label);
     }
     g_ptr_array_unref(lists);
     g_free(storage_key);
@@ -467,6 +569,7 @@ gsword_reader_toolbar_set_available(GswordReaderToolbar *toolbar,
         return;
     gtk_widget_set_sensitive(toolbar->copy_button, available);
     gtk_widget_set_sensitive(toolbar->note_button, available);
+    gtk_widget_set_sensitive(GTK_WIDGET(toolbar->favorite_button), available);
     gtk_widget_set_sensitive(GTK_WIDGET(toolbar->list_button), available);
     gtk_widget_set_sensitive(toolbar->highlight_button, available);
     gtk_widget_set_sensitive(GTK_WIDGET(toolbar->study_button), available);
@@ -480,6 +583,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *copy = gtk_button_new_from_icon_name("edit-copy-symbolic");
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
+    GtkWidget *favorite = gtk_toggle_button_new();
     GtkWidget *highlight = gtk_button_new_with_label(_("Highlight verse"));
     GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *prayer = gtk_button_new_with_label(_("Add to prayer"));
@@ -557,6 +661,12 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     }
     toolbar->more_button = more_button;
     toolbar->list_button = GTK_MENU_BUTTON(list_add);
+    gtk_button_set_icon_name(GTK_BUTTON(favorite), "non-starred-symbolic");
+    gtk_widget_add_css_class(favorite, "flat");
+    gtk_widget_set_tooltip_text(favorite, _("Add to favorites"));
+    g_signal_connect(favorite, "toggled", G_CALLBACK(on_favorite_toggled),
+                     toolbar);
+    toolbar->favorite_button = GTK_TOGGLE_BUTTON(favorite);
     gtk_widget_add_css_class(history_button, "flat");
     gtk_widget_set_tooltip_text(history_button, _("Recent reading"));
     history_popover = gtk_popover_new();
@@ -701,10 +811,12 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_box_append(GTK_BOX(bar), GTK_WIDGET(toolbar->reference_chooser));
     gtk_box_append(GTK_BOX(bar), copy);
     gtk_box_append(GTK_BOX(bar), note);
+    gtk_box_append(GTK_BOX(bar), favorite);
     gtk_box_append(GTK_BOX(bar), more_button);
 
     g_object_set_data_full(G_OBJECT(bar), "gsword-reader-toolbar", toolbar,
                            g_free);
     gsword_reader_toolbar_update_history(toolbar);
+    gsword_reader_toolbar_update_favorite(toolbar);
     return toolbar;
 }

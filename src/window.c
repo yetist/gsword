@@ -185,6 +185,8 @@ static void refresh_personal_section(GswordWindow *self,
         }
         break;
     case GSWORD_PERSONAL_SECTION_COLLECTIONS:
+        if (priv->collections_page != NULL)
+            gsword_collections_page_refresh(priv->collections_page);
         break;
     case GSWORD_PERSONAL_SECTION_TODAY:
     default:
@@ -1005,6 +1007,8 @@ on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     }
     if (priv->reader_page != NULL && g_strcmp0(name, "reader") != 0)
         gsword_reader_page_set_focus_mode(priv->reader_page, FALSE);
+    if (priv->reader_page != NULL && g_strcmp0(name, "reader") == 0)
+        gsword_reader_page_update_favorite(priv->reader_page);
     if (g_strcmp0(name, "compare") == 0) {
         gsword_workspace_page_sync_from_reader(priv->workspace_page);
     } else if (g_strcmp0(name, "search") == 0) {

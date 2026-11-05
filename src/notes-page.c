@@ -1909,6 +1909,13 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_stack_add_titled(page->left_stack, tags_page, "tags", _("Tags"));
     gtk_stack_add_titled(page->left_stack, lists_page, "lists",
                          _("Verse lists"));
+    {
+        GtkStackPage *lists_stack_page = gtk_stack_get_page(
+            page->left_stack, lists_page);
+
+        if (lists_stack_page != NULL)
+            gtk_stack_page_set_visible(lists_stack_page, FALSE);
+    }
     gtk_widget_set_vexpand(GTK_WIDGET(page->left_stack), TRUE);
 
     gtk_box_append(GTK_BOX(left), stack_switcher);

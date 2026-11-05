@@ -23,6 +23,7 @@ void gsword_reader_page_scroll_to_active(GswordReaderPage *page);
 gboolean gsword_reader_page_set_key_text(GswordReaderPage *page,
                                           const gchar *text);
 void gsword_reader_page_sync_context(GswordReaderPage *page);
+void gsword_reader_page_update_favorite(GswordReaderPage *page);
 void gsword_reader_page_set_initial_key(GswordReaderPage *page);
 void gsword_reader_page_begin_reference_edit(GswordReaderPage *page);
 void gsword_reader_page_activate_reference(GswordReaderPage *page);

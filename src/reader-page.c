@@ -245,6 +245,13 @@ record_current_history(GswordReaderPage *page)
 }
 
 void
+gsword_reader_page_update_favorite(GswordReaderPage *page)
+{
+    if (page != NULL && page->toolbar != NULL)
+        gsword_reader_toolbar_update_favorite(page->toolbar);
+}
+
+void
 gsword_reader_page_sync_context(GswordReaderPage *page)
 {
     GswModule *module = gsword_window_get_module(page->window);
@@ -354,6 +361,8 @@ gsword_reader_page_refresh(GswordReaderPage *page)
     gsword_study_panel_refresh(page->study_panel);
     gsword_window_refresh_search_index(self);
     sync_reference_chooser(page);
+    if (page->toolbar != NULL)
+        gsword_reader_toolbar_update_favorite(page->toolbar);
     gsword_window_sync_workspace_from_reader(self);
     save_last_position(page);
     record_current_history(page);
@@ -613,6 +622,8 @@ update_reference_status(GswordReaderPage *page)
     if (module == NULL)
         return;
     sync_reference_chooser(page);
+    if (page->toolbar != NULL)
+        gsword_reader_toolbar_update_favorite(page->toolbar);
     gsword_window_set_status(page->window, gsw_module_get_name(module));
 }
 

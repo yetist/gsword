@@ -671,7 +671,8 @@ on_list_menu_open_notes(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->list_menu);
-    gsword_window_show_page(page->window, "notes");
+    gsword_window_show_personal(page->window,
+                                GSWORD_PERSONAL_SECTION_COLLECTIONS);
 }
 
 static void
@@ -682,6 +683,7 @@ rebuild_list_menu(GswordSearchPage *page)
     GtkWidget *box;
     GtkWidget *title;
     GPtrArray *lists;
+    gboolean has_normal = FALSE;
 
     ensure_result_popovers(page);
     if (page->list_menu == NULL)
@@ -704,9 +706,25 @@ rebuild_list_menu(GswordSearchPage *page)
                        gtk_label_new(_("Verse lists are unavailable.")));
     } else {
         lists = gsword_notes_store_list_lists(store);
-        if (lists->len == 0) {
+        for (guint i = 0; i < lists->len; i++) {
+            GswordVerseList *list = g_ptr_array_index(lists, i);
+            GtkWidget *button;
+
+            if (g_strcmp0(list->kind, "favorites") == 0)
+                continue;
+            has_normal = TRUE;
+            button = gtk_button_new_with_label(list->name);
+            gtk_widget_set_halign(button, GTK_ALIGN_FILL);
+            g_object_set_data(G_OBJECT(button), "list-id",
+                              GSIZE_TO_POINTER((gsize)list->id));
+            g_signal_connect(button, "clicked",
+                             G_CALLBACK(on_list_menu_choice), page);
+            gtk_box_append(GTK_BOX(box), button);
+        }
+        if (!has_normal) {
             GtkWidget *label = gtk_label_new(_("No verse lists yet"));
-            GtkWidget *open = gtk_button_new_with_label(_("Open notes"));
+            GtkWidget *open = gtk_button_new_with_label(
+                _("Open collections"));
 
             gtk_widget_add_css_class(label, "dim-label");
             gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
@@ -714,17 +732,6 @@ rebuild_list_menu(GswordSearchPage *page)
                              G_CALLBACK(on_list_menu_open_notes), page);
             gtk_box_append(GTK_BOX(box), label);
             gtk_box_append(GTK_BOX(box), open);
-        }
-        for (guint i = 0; i < lists->len; i++) {
-            GswordVerseList *list = g_ptr_array_index(lists, i);
-            GtkWidget *button = gtk_button_new_with_label(list->name);
-
-            gtk_widget_set_halign(button, GTK_ALIGN_FILL);
-            g_object_set_data(G_OBJECT(button), "list-id",
-                              GSIZE_TO_POINTER((gsize)list->id));
-            g_signal_connect(button, "clicked",
-                             G_CALLBACK(on_list_menu_choice), page);
-            gtk_box_append(GTK_BOX(box), button);
         }
         g_ptr_array_unref(lists);
     }
