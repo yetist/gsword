@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 15:35+0800\n"
+"POT-Creation-Date: 2026-11-05 16:53+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -210,7 +210,7 @@ msgstr ""
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:546 src/reader-page.c:1093
+#: src/search-page.c:546 src/reader-page.c:1113
 msgid "Copied to clipboard"
 msgstr ""
 
@@ -271,7 +271,7 @@ msgstr ""
 msgid "Module information"
 msgstr ""
 
-#: src/search-page.c:897 src/reader-page.c:1490
+#: src/search-page.c:897 src/reader-page.c:1510
 msgid "Copy verse"
 msgstr ""
 
@@ -360,7 +360,7 @@ msgstr ""
 #: src/search-page.c:1404 src/notes-page.c:685 src/notes-page.c:1396
 #: src/notes-page.c:1465 src/notes-page.c:1519 src/notes-page.c:1598
 #: src/library-page.c:1603 src/library-page.c:2213 src/library-page.c:2321
-#: src/plan-page.c:566 src/plan-page.c:908 src/prayer-page.c:574
+#: src/plan-page.c:566 src/plan-page.c:908 src/prayer-page.c:704
 msgid "Cancel"
 msgstr ""
 
@@ -538,7 +538,7 @@ msgstr ""
 
 #: src/notes-page.c:686 src/notes-page.c:1520 src/notes-page.c:1599
 #: src/notes-page.c:1705 src/memory-page.c:370 src/plan-page.c:909
-#: src/prayer-page.c:575 src/prayer-page.c:604
+#: src/prayer-page.c:705 src/prayer-page.c:739
 msgid "Delete"
 msgstr ""
 
@@ -656,7 +656,7 @@ msgstr ""
 msgid "List verses"
 msgstr ""
 
-#: src/notes-page.c:1704 src/library-page.c:2214 src/prayer-page.c:601
+#: src/notes-page.c:1704 src/library-page.c:2214 src/prayer-page.c:736
 msgid "Save"
 msgstr ""
 
@@ -800,7 +800,7 @@ msgstr ""
 msgid "Memory verse removed"
 msgstr ""
 
-#: src/memory-page.c:369 src/prayer-page.c:598
+#: src/memory-page.c:369 src/prayer-page.c:728
 msgid "Add current verse"
 msgstr ""
 
@@ -1371,7 +1371,7 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
-#: src/library-page.c:2449 src/prayer-page.c:590
+#: src/library-page.c:2449 src/prayer-page.c:720
 msgid "Status"
 msgstr ""
 
@@ -1456,7 +1456,7 @@ msgid "No modules installed."
 msgstr ""
 
 #: src/module-sidebar.c:362 src/study-panel.c:585 src/workspace-page.c:978
-#: src/reader-page.c:1429
+#: src/reader-page.c:1449
 msgid "Manage modules"
 msgstr ""
 
@@ -1655,36 +1655,40 @@ msgstr ""
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:1047
+#: src/reader-page.c:1067
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:1052
+#: src/reader-page.c:1072
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:1055
+#: src/reader-page.c:1075
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:1428
+#: src/reader-page.c:1448
 msgid "No Bible text module is installed."
 msgstr ""
 
-#: src/reader-page.c:1491
+#: src/reader-page.c:1511
 msgid "Open note"
 msgstr ""
 
-#: src/reader-page.c:1493
+#: src/reader-page.c:1513
 msgid "Toggle highlight"
+msgstr ""
+
+#: src/reader-page.c:1515 src/reader-toolbar.c:485
+msgid "Add to prayer"
 msgstr ""
 
 #: src/reader-toolbar.c:197
 msgid "Open a verse first"
 msgstr ""
 
-#: src/reader-toolbar.c:255 src/reader-toolbar.c:261 src/prayer-page.c:263
-#: src/prayer-page.c:269
+#: src/reader-toolbar.c:255 src/reader-toolbar.c:261 src/prayer-page.c:267
+#: src/prayer-page.c:273
 msgid "No active verse"
 msgstr ""
 
@@ -1694,10 +1698,6 @@ msgstr ""
 
 #: src/reader-toolbar.c:483
 msgid "Highlight verse"
-msgstr ""
-
-#: src/reader-toolbar.c:485
-msgid "Add to prayer"
 msgstr ""
 
 #: src/reader-toolbar.c:486
@@ -2147,8 +2147,8 @@ msgstr ""
 msgid "%s (copy)"
 msgstr ""
 
-#: src/personal-page.c:101 src/today-page.c:156 src/prayer-page.c:591
-#: src/prayer-page.c:717
+#: src/personal-page.c:101 src/today-page.c:156 src/prayer-page.c:721
+#: src/prayer-page.c:875
 msgid "Prayer"
 msgstr ""
 
@@ -2236,120 +2236,160 @@ msgstr[1] ""
 msgid "No verses due"
 msgstr ""
 
-#: src/prayer-page.c:44 src/prayer-page.c:616 src/prayer-page.c:748
+#: src/prayer-page.c:48 src/prayer-page.c:751 src/prayer-page.c:906
 msgid "Answered"
 msgstr ""
 
-#: src/prayer-page.c:46 src/prayer-page.c:616 src/prayer-page.c:749
+#: src/prayer-page.c:50 src/prayer-page.c:751 src/prayer-page.c:907
 msgid "Archived"
 msgstr ""
 
-#: src/prayer-page.c:49 src/prayer-page.c:616 src/prayer-page.c:748
+#: src/prayer-page.c:53 src/prayer-page.c:751 src/prayer-page.c:906
 msgid "Active"
 msgstr ""
 
-#: src/prayer-page.c:190
+#: src/prayer-page.c:194
 msgid "Verse removed from prayer"
 msgstr ""
 
-#: src/prayer-page.c:229
+#: src/prayer-page.c:233
 msgid "Remove verse"
 msgstr ""
 
-#: src/prayer-page.c:272
+#: src/prayer-page.c:276
 msgid "Verse added to prayer"
 msgstr ""
 
-#: src/prayer-page.c:330 src/prayer-page.c:475
+#: src/prayer-page.c:332
+msgid "Cannot remove prayer update"
+msgstr ""
+
+#: src/prayer-page.c:337
+msgid "Prayer update removed"
+msgstr ""
+
+#: src/prayer-page.c:359
+msgid "No prayer updates yet."
+msgstr ""
+
+#: src/prayer-page.c:394
+msgid "Remove prayer update"
+msgstr ""
+
+#: src/prayer-page.c:425
+msgid "Prayer update text is required"
+msgstr ""
+
+#: src/prayer-page.c:433
+msgid "Cannot add prayer update"
+msgstr ""
+
+#: src/prayer-page.c:440
+msgid "Prayer update added"
+msgstr ""
+
+#: src/prayer-page.c:459 src/prayer-page.c:605
 msgid "Prayer storage unavailable"
 msgstr ""
 
-#: src/prayer-page.c:373
+#: src/prayer-page.c:502
 #, c-format
 msgid "%d prayer"
 msgid_plural "%d prayers"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/prayer-page.c:415 src/prayer-page.c:718 src/prayer-page.c:787
+#: src/prayer-page.c:544 src/prayer-page.c:876 src/prayer-page.c:945
 msgid "New prayer"
 msgstr ""
 
-#: src/prayer-page.c:430
+#: src/prayer-page.c:559
 #, c-format
 msgid "Answered %s · updated %s"
 msgstr ""
 
-#: src/prayer-page.c:437
+#: src/prayer-page.c:566
 #, c-format
 msgid "Updated %s"
 msgstr ""
 
-#: src/prayer-page.c:468
+#: src/prayer-page.c:598
 msgid "Prayer title is required"
 msgstr ""
 
-#: src/prayer-page.c:499
+#: src/prayer-page.c:629
 msgid "Cannot save prayer"
 msgstr ""
 
-#: src/prayer-page.c:507 src/prayer-page.c:508
+#: src/prayer-page.c:637 src/prayer-page.c:638
 msgid "Prayer saved"
 msgstr ""
 
-#: src/prayer-page.c:551
+#: src/prayer-page.c:681
 msgid "Cannot delete prayer"
 msgstr ""
 
-#: src/prayer-page.c:558
+#: src/prayer-page.c:688
 msgid "Prayer deleted"
 msgstr ""
 
-#: src/prayer-page.c:566
+#: src/prayer-page.c:696
 msgid "Delete prayer"
 msgstr ""
 
-#: src/prayer-page.c:572
+#: src/prayer-page.c:702
 msgid "Delete this prayer and its related verses?"
 msgstr ""
 
-#: src/prayer-page.c:593
+#: src/prayer-page.c:723
 msgid "Answered note"
 msgstr ""
 
-#: src/prayer-page.c:596
+#: src/prayer-page.c:726
 msgid "Related verses"
 msgstr ""
 
-#: src/prayer-page.c:602
+#: src/prayer-page.c:731
+msgid "Prayer log"
+msgstr ""
+
+#: src/prayer-page.c:734
+msgid "Add update"
+msgstr ""
+
+#: src/prayer-page.c:737
 msgid "Mark answered"
 msgstr ""
 
-#: src/prayer-page.c:603
+#: src/prayer-page.c:738
 msgid "Archive"
 msgstr ""
 
-#: src/prayer-page.c:612
+#: src/prayer-page.c:747
 msgid "Prayer title"
 msgstr ""
 
-#: src/prayer-page.c:743
+#: src/prayer-page.c:819
+msgid "Add a prayer update…"
+msgstr ""
+
+#: src/prayer-page.c:901
 msgid "Search prayers…"
 msgstr ""
 
-#: src/prayer-page.c:748
+#: src/prayer-page.c:906
 msgid "All"
 msgstr ""
 
-#: src/prayer-page.c:784
+#: src/prayer-page.c:942
 msgid "Select a prayer"
 msgstr ""
 
-#: src/prayer-page.c:786
+#: src/prayer-page.c:944
 msgid "Choose a prayer from the list or create a new one."
 msgstr ""
 
-#: src/prayer-page.c:847
+#: src/prayer-page.c:1005
 msgid "New prayer draft"
 msgstr ""
 

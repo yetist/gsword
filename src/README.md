@@ -62,7 +62,8 @@ Current implementation:
 - `today-page.c` / `today-page.h`: daily overview cards for continue reading,
   today's plan, active prayers, memory review and recent notes
 - `prayer-page.c` / `prayer-page.h`: prayer list, search/filter, editor,
-  status transitions, answered notes and related-verse management
+  status transitions, answered notes, related-verse management and prayer-log
+  timeline
 - `collections-page.c` / `collections-page.h`: placeholder for verse lists,
   bookmarks and favorites
 - `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
@@ -86,7 +87,8 @@ Current implementation:
 - `plan-store.c` / `plan-store.h`: SQLite-backed reading plans, plan progress,
   memory review queue, and teaching notes in the same application database
 - `prayer-store.c` / `prayer-store.h`: SQLite-backed prayer items, status,
-  answered notes and related verses in the same application database
+  answered notes, related verses and prayer-log entries in the same application
+  database
 - `app-paths.c` / `app-paths.h`: XDG-based application paths:
   `~/.local/share/gsword` for the database, `~/.local/share/gsword/library`
   for the writable SWORD module library, `~/.config/gsword` for installer
