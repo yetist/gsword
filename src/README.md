@@ -66,9 +66,9 @@ Current implementation:
 - `prayer-page.c` / `prayer-page.h`: prayer list, search/filter, editor,
   status transitions, answered notes, related-verse management and prayer-log
   timeline
-- `collections-page.c` / `collections-page.h`: Lists/Bookmarks container;
-  verse-list and favorites management, including the system favorites list,
-  list CRUD and item open/remove
+- `collections-page.c` / `collections-page.h`: three-tab Collections page
+  (verse lists, bookmarks, favorites), remembered tab selection, list CRUD and
+  item open/remove; favorites is a separate system-list view
 - `bookmark-page.c` / `bookmark-page.h`: bookmark list, add-current-verse,
   open, edit title/note and delete
 - `plan-page.c` / `plan-page.h`: Plan management / Devotion / Memorize tabs;
