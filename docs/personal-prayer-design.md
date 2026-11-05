@@ -697,6 +697,7 @@ void gsword_window_open_prayer_for(GswordWindow *self,
 - 书签使用独立 `bookmark-store` 和 `bookmarks` 表，与阅读历史、经文列表分离；阅读器“更多”菜单可添加书签，收藏与列表的“书签”标签可打开、编辑和删除。
 - 今日页新增今日灵修摘要，并在“最近笔记与收获”卡片中按更新时间选择最新笔记或收获；计划页首页签改为“计划管理”。
 - 计划页收敛为三个子页：计划管理、灵修、背经；计划库并入计划管理页。
+- 创建计划改为独立对话框，避免页面底部表单在矮窗口或展开时被裁切；计划管理页标题栏保留常驻“创建计划”入口。
 - 数据库 schema 增加 `PRAGMA user_version` 和集中式 `app-schema` 迁移；当前版本为 1。
 - 新增快捷键：`Ctrl+Shift+N` 打开当前笔记、`Ctrl+Shift+P` 打开祷告、`Ctrl+Shift+B` 打开书签、`Ctrl+PageUp/PageDown` 切换主导航。
 - 项目尚未发布，数据库 schema 允许直接重建，暂不提供完整自动迁移。

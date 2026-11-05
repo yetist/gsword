@@ -39,7 +39,7 @@ struct _GswordPlanPage {
     GtkButton *rename_plan_button;
     GtkButton *duplicate_plan_button;
     GtkButton *delete_plan_button;
-    GtkExpander *create_expander;
+    AdwDialog *create_dialog;
     GtkLabel *preview;
     GtkEntry *name_entry;
     GtkEntry *start_entry;
@@ -446,8 +446,6 @@ gsword_plan_page_refresh(GswordPlanPage *page)
         gtk_drop_down_set_selected(page->selector, selected);
     } else {
         page->selected_id = 0;
-        if (page->create_expander != NULL)
-            gtk_expander_set_expanded(page->create_expander, TRUE);
     }
     refresh_views(page);
     g_free(active);
@@ -607,15 +605,19 @@ static gboolean
 update_plan_preview(gpointer data)
 {
     GswordPlanPage *page = data;
-    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
-    gint days = gtk_spin_button_get_value_as_int(page->days_spin);
-    gint chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
+    const gchar *start;
+    gint days;
+    gint chapters;
     GPtrArray *references;
     gchar *text;
 
     page->preview_source = 0;
-    if (page->preview == NULL)
+    if (page->preview == NULL || page->start_entry == NULL ||
+        page->days_spin == NULL || page->chapters_spin == NULL)
         return G_SOURCE_REMOVE;
+    start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
+    days = gtk_spin_button_get_value_as_int(page->days_spin);
+    chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
     if (start == NULL || *start == '\0') {
         gtk_label_set_text(page->preview, "");
         return G_SOURCE_REMOVE;
@@ -648,8 +650,28 @@ update_plan_preview(gpointer data)
 static void
 schedule_preview(GswordPlanPage *page)
 {
+    if (page->preview == NULL)
+        return;
     if (page->preview_source == 0)
         page->preview_source = g_idle_add(update_plan_preview, page);
+}
+
+static void
+update_create_response(GswordPlanPage *page)
+{
+    const gchar *name;
+    const gchar *start;
+    gboolean enabled;
+
+    if (page->create_dialog == NULL || page->name_entry == NULL ||
+        page->start_entry == NULL)
+        return;
+    name = gtk_editable_get_text(GTK_EDITABLE(page->name_entry));
+    start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
+    enabled = name != NULL && *name != '\0' &&
+              start != NULL && *start != '\0';
+    adw_alert_dialog_set_response_enabled(
+        ADW_ALERT_DIALOG(page->create_dialog), "create", enabled);
 }
 
 static void
@@ -657,6 +679,7 @@ on_preview_changed(GtkWidget *widget, gpointer user_data)
 {
     (void)widget;
     schedule_preview(user_data);
+    update_create_response(user_data);
 }
 
 static void
@@ -834,36 +857,145 @@ on_template_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+clear_create_form(GswordPlanPage *page)
+{
+    if (page->preview_source != 0) {
+        g_source_remove(page->preview_source);
+        page->preview_source = 0;
+    }
+    page->create_dialog = NULL;
+    page->name_entry = NULL;
+    page->start_entry = NULL;
+    page->days_spin = NULL;
+    page->chapters_spin = NULL;
+    page->preview = NULL;
+}
+
+static void
+on_create_dialog_response(AdwAlertDialog *dialog, const gchar *response,
+                          gpointer user_data)
+{
+    GswordPlanPage *page = user_data;
+
+    (void)dialog;
+    if (g_strcmp0(response, "create") == 0 && page->name_entry != NULL &&
+        page->start_entry != NULL && page->days_spin != NULL &&
+        page->chapters_spin != NULL) {
+        const gchar *name = gtk_editable_get_text(
+            GTK_EDITABLE(page->name_entry));
+        const gchar *start = gtk_editable_get_text(
+            GTK_EDITABLE(page->start_entry));
+        gint days = gtk_spin_button_get_value_as_int(page->days_spin);
+        gint chapters = gtk_spin_button_get_value_as_int(
+            page->chapters_spin);
+
+        create_plan_from_values(page, name, start, days, chapters);
+    }
+    clear_create_form(page);
+}
+
+static void
+open_create_plan_dialog(GswordPlanPage *page)
+{
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+    GtkWidget *grid = gtk_grid_new();
+    GtkWidget *name_label = gtk_label_new(_("Plan name"));
+    GtkWidget *start_label = gtk_label_new(_("Start"));
+    GtkWidget *days_label = gtk_label_new(_("Days"));
+    GtkWidget *chapters_label = gtk_label_new(_("Chapters/day"));
+    GtkWidget *hint;
+
+    if (page->create_dialog != NULL) {
+        adw_dialog_present(page->create_dialog, GTK_WIDGET(page->window));
+        return;
+    }
+    page->create_dialog = adw_alert_dialog_new(_("Create a plan"), NULL);
+    page->name_entry = GTK_ENTRY(gtk_entry_new());
+    page->start_entry = GTK_ENTRY(gtk_entry_new());
+    page->days_spin = GTK_SPIN_BUTTON(
+        gtk_spin_button_new_with_range(1, 3650, 1));
+    page->chapters_spin = GTK_SPIN_BUTTON(
+        gtk_spin_button_new_with_range(1, 20, 1));
+    page->preview = GTK_LABEL(gtk_label_new(""));
+
+    gtk_entry_set_placeholder_text(page->name_entry, _("Plan name"));
+    gtk_entry_set_placeholder_text(page->start_entry,
+                                   _("Start, e.g. Genesis 1"));
+    gtk_spin_button_set_value(page->days_spin, 365);
+    gtk_spin_button_set_value(page->chapters_spin, 4);
+    gtk_widget_set_hexpand(GTK_WIDGET(page->name_entry), TRUE);
+    gtk_widget_set_hexpand(GTK_WIDGET(page->start_entry), TRUE);
+    gtk_label_set_xalign(GTK_LABEL(name_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(start_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(days_label), 0.0f);
+    gtk_label_set_xalign(GTK_LABEL(chapters_label), 0.0f);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
+    gtk_grid_attach(GTK_GRID(grid), name_label, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(page->name_entry), 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), start_label, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(page->start_entry), 1, 1,
+                    1, 1);
+    gtk_grid_attach(GTK_GRID(grid), days_label, 0, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(page->days_spin), 1, 2, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), chapters_label, 0, 3, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(page->chapters_spin), 1, 3,
+                    1, 1);
+    gtk_label_set_wrap(page->preview, TRUE);
+    gtk_label_set_xalign(page->preview, 0.0f);
+    gtk_label_set_selectable(page->preview, TRUE);
+    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "caption");
+    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "dim-label");
+    gtk_grid_attach(GTK_GRID(grid), GTK_WIDGET(page->preview), 0, 4, 2, 1);
+    hint = gtk_label_new(
+        _("The plan advances through chapters from the start reference."));
+    gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
+    gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
+    gtk_widget_add_css_class(hint, "dim-label");
+    gtk_widget_set_margin_top(box, 4);
+    gtk_widget_set_margin_bottom(box, 4);
+    gtk_widget_set_size_request(box, 460, -1);
+    gtk_box_append(GTK_BOX(box), grid);
+    gtk_box_append(GTK_BOX(box), hint);
+    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(page->create_dialog),
+                                     box);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(page->create_dialog),
+                                   "cancel", _("Cancel"),
+                                   "create", _("Create plan"), NULL);
+    adw_alert_dialog_set_default_response(
+        ADW_ALERT_DIALOG(page->create_dialog), "create");
+    adw_alert_dialog_set_close_response(
+        ADW_ALERT_DIALOG(page->create_dialog), "cancel");
+    g_signal_connect(page->create_dialog, "response",
+                     G_CALLBACK(on_create_dialog_response), page);
+    g_signal_connect(page->name_entry, "changed",
+                     G_CALLBACK(on_preview_changed), page);
+    g_signal_connect(page->start_entry, "changed",
+                     G_CALLBACK(on_preview_changed), page);
+    g_signal_connect(page->days_spin, "value-changed",
+                     G_CALLBACK(on_preview_changed), page);
+    g_signal_connect(page->chapters_spin, "value-changed",
+                     G_CALLBACK(on_preview_changed), page);
+    update_create_response(page);
+    adw_dialog_present(page->create_dialog, GTK_WIDGET(page->window));
+    gtk_widget_grab_focus(GTK_WIDGET(page->name_entry));
+}
+
+static void
+on_create_plan_clicked(GtkButton *button, gpointer user_data)
+{
+    (void)button;
+    open_create_plan_dialog(user_data);
+}
+
+static void
 on_empty_create(GtkButton *button, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
 
     (void)button;
     gtk_notebook_set_current_page(page->notebook, 0);
-    if (page->create_expander != NULL)
-        gtk_expander_set_expanded(page->create_expander, TRUE);
-    if (page->name_entry != NULL)
-        gtk_widget_grab_focus(GTK_WIDGET(page->name_entry));
-}
-
-static void
-on_create(GtkButton *button, gpointer user_data)
-{
-    GswordPlanPage *page = user_data;
-    const gchar *name = gtk_editable_get_text(GTK_EDITABLE(page->name_entry));
-    const gchar *start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
-    gint days = gtk_spin_button_get_value_as_int(page->days_spin);
-    gint chapters = gtk_spin_button_get_value_as_int(page->chapters_spin);
-
-    (void)button;
-    if (name == NULL || *name == '\0' || start == NULL || *start == '\0') {
-        gsword_window_set_status(page->window,
-                                 _("Enter a plan name and start reference"));
-        return;
-    }
-    if (create_plan_from_values(page, name, start, days, chapters) &&
-        page->create_expander != NULL)
-        gtk_expander_set_expanded(page->create_expander, FALSE);
+    open_create_plan_dialog(page);
 }
 
 static void
@@ -990,10 +1122,7 @@ gsword_plan_page_new(GswordWindow *window)
         "document-edit-symbolic");
     GtkWidget *duplicate_plan = gtk_button_new_from_icon_name(
         "edit-copy-symbolic");
-    GtkWidget *form_expander;
-    GtkWidget *plan_form = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    GtkWidget *form_row1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    GtkWidget *form_row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *create = gtk_button_new_with_label(_("Create plan"));
     GtkWidget *days_scroll = gtk_scrolled_window_new();
     GtkWidget *open = gtk_button_new_with_label(_("Open today's reading"));
     GtkWidget *complete = gtk_button_new_with_label(_("Mark today complete"));
@@ -1002,9 +1131,7 @@ gsword_plan_page_new(GswordWindow *window)
     GtkWidget *schedule_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *schedule_label = gtk_label_new(_("Schedule"));
     GtkStringList *filters;
-    GtkWidget *create = gtk_button_new_with_label(_("Create plan"));
     GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
-    GtkWidget *hint;
 
     page->window = window;
     gtk_widget_set_margin_top(today_page, 10);
@@ -1146,63 +1273,19 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_widget_set_vexpand(GTK_WIDGET(page->today_stack), TRUE);
     gtk_box_append(GTK_BOX(today_page), GTK_WIDGET(page->today_stack));
 
-    page->name_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(page->name_entry, _("Plan name"));
-    page->start_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(page->start_entry,
-                                   _("Start, e.g. Genesis 1"));
-    gtk_editable_set_width_chars(GTK_EDITABLE(page->start_entry), 16);
-    page->days_spin = GTK_SPIN_BUTTON(
-        gtk_spin_button_new_with_range(1, 3650, 1));
-    gtk_spin_button_set_value(page->days_spin, 365);
-    page->chapters_spin = GTK_SPIN_BUTTON(
-        gtk_spin_button_new_with_range(1, 20, 1));
-    gtk_spin_button_set_value(page->chapters_spin, 4);
-    g_signal_connect(page->start_entry, "changed",
-                     G_CALLBACK(on_preview_changed), page);
-    g_signal_connect(page->days_spin, "value-changed",
-                     G_CALLBACK(on_preview_changed), page);
-    g_signal_connect(page->chapters_spin, "value-changed",
-                     G_CALLBACK(on_preview_changed), page);
     page->delete_plan_button = GTK_BUTTON(delete);
-    g_signal_connect(create, "clicked", G_CALLBACK(on_create), page);
+    g_signal_connect(create, "clicked", G_CALLBACK(on_create_plan_clicked),
+                     page);
     g_signal_connect(delete, "clicked", G_CALLBACK(on_delete), page);
+    gtk_widget_add_css_class(create, "suggested-action");
     gtk_widget_add_css_class(delete, "flat");
     gtk_widget_add_css_class(delete, "destructive-action");
     gtk_widget_set_tooltip_text(delete, _("Delete plan"));
     gtk_widget_set_sensitive(delete, FALSE);
+    gtk_box_append(GTK_BOX(plans_header), create);
     gtk_box_append(GTK_BOX(plans_header), delete);
-    gtk_widget_set_hexpand(GTK_WIDGET(page->name_entry), TRUE);
-    gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->name_entry));
-    gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->start_entry));
-    gtk_box_append(GTK_BOX(form_row1), gtk_label_new(_("Days")));
-    gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->days_spin));
-    gtk_box_append(GTK_BOX(form_row1), gtk_label_new(_("Chapters/day")));
-    gtk_box_append(GTK_BOX(form_row1), GTK_WIDGET(page->chapters_spin));
-    gtk_box_append(GTK_BOX(form_row2), create);
-    gtk_box_append(GTK_BOX(plan_form), form_row1);
-    gtk_box_append(GTK_BOX(plan_form), form_row2);
-    page->preview = GTK_LABEL(gtk_label_new(""));
-    gtk_label_set_wrap(page->preview, TRUE);
-    gtk_label_set_xalign(page->preview, 0.0f);
-    gtk_label_set_selectable(page->preview, TRUE);
-    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "caption");
-    gtk_widget_add_css_class(GTK_WIDGET(page->preview), "dim-label");
-    gtk_box_append(GTK_BOX(plan_form), GTK_WIDGET(page->preview));
-    hint = gtk_label_new(
-        _("The plan advances through chapters from the start reference. "
-          "Reading days can be opened by double-clicking a schedule row."));
-    gtk_label_set_wrap(GTK_LABEL(hint), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(hint), 0.0f);
-    gtk_widget_add_css_class(hint, "dim-label");
-    gtk_box_append(GTK_BOX(plan_form), hint);
-    form_expander = gtk_expander_new(_("Create a plan"));
-    gtk_expander_set_child(GTK_EXPANDER(form_expander), plan_form);
-    gtk_expander_set_expanded(GTK_EXPANDER(form_expander), FALSE);
-    page->create_expander = GTK_EXPANDER(form_expander);
     gtk_box_append(GTK_BOX(plans_page), plans_header);
     gtk_box_append(GTK_BOX(plans_page), plans_scroll);
-    gtk_box_append(GTK_BOX(plans_page), form_expander);
 
     page->devotion = gsword_devotion_page_new(window);
     page->memory = gsword_memory_page_new(window);
