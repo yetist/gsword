@@ -621,6 +621,12 @@ gsword_collections_page_new(GswordWindow *window)
     gtk_widget_add_css_class(delete, "flat");
     gtk_widget_set_tooltip_text(rename, _("Rename verse list"));
     gtk_widget_set_tooltip_text(delete, _("Delete verse list"));
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(rename), GTK_ACCESSIBLE_PROPERTY_LABEL,
+        _("Rename verse list"), -1);
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(delete), GTK_ACCESSIBLE_PROPERTY_LABEL,
+        _("Delete verse list"), -1);
     gtk_box_append(GTK_BOX(footer), GTK_WIDGET(rename));
     gtk_box_append(GTK_BOX(footer), GTK_WIDGET(delete));
     gtk_box_append(GTK_BOX(footer), open);
