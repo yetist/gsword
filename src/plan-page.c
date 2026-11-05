@@ -839,7 +839,7 @@ on_empty_create(GtkButton *button, gpointer user_data)
     GswordPlanPage *page = user_data;
 
     (void)button;
-    gtk_notebook_set_current_page(page->notebook, 1);
+    gtk_notebook_set_current_page(page->notebook, 0);
     if (page->create_expander != NULL)
         gtk_expander_set_expanded(page->create_expander, TRUE);
     if (page->name_entry != NULL)
@@ -936,7 +936,7 @@ gsword_plan_page_show_devotion(GswordPlanPage *page)
 {
     g_return_if_fail(page != NULL);
     if (page->notebook != NULL)
-        gtk_notebook_set_current_page(page->notebook, 2);
+        gtk_notebook_set_current_page(page->notebook, 1);
     gsword_plan_page_refresh_devotion(page);
     gsword_window_show_page(page->window, "plan");
 }
@@ -946,7 +946,7 @@ gsword_plan_page_show_memory(GswordPlanPage *page)
 {
     g_return_if_fail(page != NULL);
     if (page->notebook != NULL)
-        gtk_notebook_set_current_page(page->notebook, 3);
+        gtk_notebook_set_current_page(page->notebook, 2);
     gsword_plan_page_refresh_memory(page);
     gsword_window_show_page(page->window, "plan");
 }
@@ -1206,10 +1206,16 @@ gsword_plan_page_new(GswordWindow *window)
 
     page->devotion = gsword_devotion_page_new(window);
     page->memory = gsword_memory_page_new(window);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), today_page,
-                             gtk_label_new(_("Plan management")));
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), plans_page,
-                             gtk_label_new(_("Plans")));
+    {
+        GtkWidget *management_page = gtk_paned_new(
+            GTK_ORIENTATION_VERTICAL);
+
+        gtk_paned_set_start_child(GTK_PANED(management_page), today_page);
+        gtk_paned_set_end_child(GTK_PANED(management_page), plans_page);
+        gtk_paned_set_position(GTK_PANED(management_page), 380);
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook), management_page,
+                                 gtk_label_new(_("Plan management")));
+    }
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
                              gsword_devotion_page_widget(page->devotion),
                              gtk_label_new(_("Devotion")));

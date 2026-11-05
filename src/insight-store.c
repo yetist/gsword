@@ -61,25 +61,6 @@ GswordInsightStore *
 gsword_insight_store_new(GError **error)
 {
     GswordInsightStore *self = g_new0(GswordInsightStore, 1);
-    const gchar *schema =
-        "CREATE TABLE IF NOT EXISTS insights ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " title TEXT NOT NULL DEFAULT '',"
-        " body TEXT NOT NULL DEFAULT '',"
-        " created INTEGER NOT NULL,"
-        " updated INTEGER NOT NULL);"
-        "CREATE TABLE IF NOT EXISTS insight_verses ("
-        " insight_id INTEGER NOT NULL REFERENCES insights(id) ON DELETE CASCADE,"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " PRIMARY KEY (insight_id, module, key));"
-        "CREATE TABLE IF NOT EXISTS insight_tags ("
-        " insight_id INTEGER NOT NULL REFERENCES insights(id) ON DELETE CASCADE,"
-        " tag TEXT NOT NULL,"
-        " PRIMARY KEY (insight_id, tag));"
-        "CREATE INDEX IF NOT EXISTS insight_tags_tag"
-        " ON insight_tags(tag);";
 
     self->app_db = gsword_app_db_open(error);
     if (self->app_db == NULL) {
@@ -87,11 +68,6 @@ gsword_insight_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!gsword_app_db_exec(self->app_db, schema, error)) {
-        gsword_app_db_close(self->app_db);
-        g_free(self);
-        return NULL;
-    }
     return self;
 }
 

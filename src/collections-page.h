@@ -16,6 +16,7 @@ typedef struct _GswordCollectionsPage GswordCollectionsPage;
 GswordCollectionsPage *gsword_collections_page_new(GswordWindow *window);
 GtkWidget *gsword_collections_page_widget(GswordCollectionsPage *page);
 void gsword_collections_page_refresh(GswordCollectionsPage *page);
+void gsword_collections_page_show_bookmarks(GswordCollectionsPage *page);
 
 G_END_DECLS
 

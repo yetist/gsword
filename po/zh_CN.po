@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 18:03+0800\n"
+"POT-Creation-Date: 2026-11-05 18:16+0800\n"
 "PO-Revision-Date: 2026-10-31 00:00+0800\n"
 "Last-Translator: yetist\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,7 +33,7 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:332 src/window.c:1216
+#: src/window.c:332 src/window.c:1293
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
@@ -59,83 +59,103 @@ msgstr "注释已在研经面板中打开"
 msgid "Lexicon opened in study panel"
 msgstr "词典已在研经面板中打开"
 
-#: src/window.c:934 src/window.c:1011
+#: src/window.c:1006 src/window.c:1088
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:943 src/window.c:1225 src/search-page.c:1410
+#: src/window.c:1015 src/window.c:1302 src/search-page.c:1410
 msgid "Search"
 msgstr "搜索"
 
-#: src/window.c:944
+#: src/window.c:1016
 msgid "Focus reference"
 msgstr "首选项"
 
-#: src/window.c:945 src/window.c:1001 src/window.c:1232 src/library-page.c:2283
-#: src/preferences-dialog.c:337
+#: src/window.c:1017 src/window.c:1078 src/window.c:1309
+#: src/library-page.c:2283 src/preferences-dialog.c:337
 msgid "Module library"
 msgstr "模块库"
 
-#: src/window.c:946 src/window.c:1005 src/preferences-dialog.c:259
+#: src/window.c:1018 src/window.c:1082 src/preferences-dialog.c:259
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:947 src/search-page.c:1430 src/library-page.c:2519
+#: src/window.c:1019 src/search-page.c:1430 src/library-page.c:2519
 msgid "Back"
 msgstr "返回"
 
-#: src/window.c:948
+#: src/window.c:1020
 msgid "Forward"
 msgstr "前进"
 
-#: src/window.c:949
+#: src/window.c:1021
+msgid "Open current note"
+msgstr "打开当前笔记"
+
+#: src/window.c:1022 src/today-page.c:175
+msgid "Open prayer"
+msgstr "打开祷告"
+
+#: src/window.c:1023
+msgid "Open bookmarks"
+msgstr "打开书签"
+
+#: src/window.c:1024
+msgid "Previous page"
+msgstr "上一页"
+
+#: src/window.c:1025
+msgid "Next page"
+msgstr "下一页"
+
+#: src/window.c:1026
 msgid "Toggle sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:952 src/window-services.c:159 src/search-page.c:793
+#: src/window.c:1029 src/window-services.c:159 src/search-page.c:793
 #: src/library-page.c:1268
 msgid "Close"
 msgstr "关闭"
 
-#: src/window.c:973
+#: src/window.c:1050
 msgid ""
 "A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
 "module library."
 msgstr "基于 GTK4 的研经软件，底层使用 GObject 实现的 SWORD 模块库 libgsword。"
 
-#: src/window.c:996
+#: src/window.c:1073
 msgid "Show study panel"
 msgstr "显示研经面板"
 
-#: src/window.c:997
+#: src/window.c:1074
 msgid "Comparison"
 msgstr "经文对照"
 
-#: src/window.c:998
+#: src/window.c:1075
 msgid "Teaching"
 msgstr "教学"
 
-#: src/window.c:1012
+#: src/window.c:1089
 msgid "About GSword"
 msgstr "关于 GSword"
 
-#: src/window.c:1015
+#: src/window.c:1092
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:1238
+#: src/window.c:1315
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:1279 src/preferences-dialog.c:264
+#: src/window.c:1356 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:1285
+#: src/window.c:1362
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:1299
+#: src/window.c:1376
 msgid "Personal"
 msgstr "个人"
 
@@ -224,12 +244,12 @@ msgid "Verse added to memory review"
 msgstr "经文已加入背经复习"
 
 #: src/search-page.c:661 src/notes-page.c:1235 src/reader-toolbar.c:253
-#: src/collections-page.c:383
+#: src/collections-page.c:384
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
 #: src/search-page.c:664 src/notes-page.c:1251 src/reader-toolbar.c:270
-#: src/collections-page.c:389
+#: src/collections-page.c:390
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
@@ -361,8 +381,8 @@ msgstr "搜索索引已删除"
 #: src/library-page.c:1603 src/library-page.c:2213 src/library-page.c:2321
 #: src/reader-toolbar.c:465 src/plan-page.c:566 src/plan-page.c:908
 #: src/prayer-page.c:704 src/insight-page.c:586 src/bookmark-page.c:296
-#: src/bookmark-page.c:339 src/collections-page.c:475
-#: src/collections-page.c:520
+#: src/bookmark-page.c:339 src/collections-page.c:476
+#: src/collections-page.c:521
 msgid "Cancel"
 msgstr "取消"
 
@@ -543,7 +563,7 @@ msgstr "删除 %s 的笔记？此操作无法撤销。"
 #: src/notes-page.c:1722 src/memory-page.c:370 src/plan-page.c:909
 #: src/prayer-page.c:705 src/prayer-page.c:739 src/insight-page.c:587
 #: src/insight-page.c:611 src/bookmark-page.c:340 src/bookmark-page.c:362
-#: src/collections-page.c:521
+#: src/collections-page.c:522
 msgid "Delete"
 msgstr "删除"
 
@@ -556,12 +576,12 @@ msgid "No tags yet"
 msgstr "还没有标签"
 
 #: src/notes-page.c:1112 src/notes-page.c:1243 src/reader-toolbar.c:263
-#: src/collections-page.c:411
+#: src/collections-page.c:412
 msgid "Cannot remove verse from list"
 msgstr "无法从列表移除经文"
 
 #: src/notes-page.c:1116 src/notes-page.c:1252 src/reader-toolbar.c:271
-#: src/collections-page.c:414
+#: src/collections-page.c:415
 msgid "Verse removed from list"
 msgstr "经文已从列表移除"
 
@@ -590,20 +610,20 @@ msgid "Rename tag"
 msgstr "重命名标签"
 
 #: src/notes-page.c:1414 src/notes-page.c:1483 src/plan-page.c:567
-#: src/collections-page.c:476
+#: src/collections-page.c:477
 msgid "Rename"
 msgstr "重命名"
 
-#: src/notes-page.c:1450 src/collections-page.c:447
+#: src/notes-page.c:1450 src/collections-page.c:448
 msgid "Cannot rename verse list"
 msgstr "无法重命名经文列表"
 
-#: src/notes-page.c:1456 src/collections-page.c:451
+#: src/notes-page.c:1456 src/collections-page.c:452
 msgid "Verse list renamed"
 msgstr "经文列表已重命名"
 
-#: src/notes-page.c:1475 src/notes-page.c:1835 src/collections-page.c:466
-#: src/collections-page.c:621
+#: src/notes-page.c:1475 src/notes-page.c:1835 src/collections-page.c:467
+#: src/collections-page.c:622
 msgid "Rename verse list"
 msgstr "重命名经文列表"
 
@@ -628,29 +648,29 @@ msgstr "删除标签“%s”？笔记将保留。"
 msgid "Cannot create list"
 msgstr "无法创建经文列表"
 
-#: src/notes-page.c:1566 src/collections-page.c:339
+#: src/notes-page.c:1566 src/collections-page.c:340
 msgid "Verse list created"
 msgstr "经文列表已创建"
 
-#: src/notes-page.c:1584 src/collections-page.c:496
+#: src/notes-page.c:1584 src/collections-page.c:497
 msgid "Cannot delete verse list"
 msgstr "无法删除经文列表"
 
-#: src/notes-page.c:1594 src/collections-page.c:500
+#: src/notes-page.c:1594 src/collections-page.c:501
 msgid "Verse list deleted"
 msgstr "经文列表已删除"
 
-#: src/notes-page.c:1610 src/notes-page.c:1805 src/collections-page.c:514
-#: src/collections-page.c:622
+#: src/notes-page.c:1610 src/notes-page.c:1805 src/collections-page.c:515
+#: src/collections-page.c:623
 msgid "Delete verse list"
 msgstr "删除经文列表"
 
-#: src/notes-page.c:1612 src/collections-page.c:517
+#: src/notes-page.c:1612 src/collections-page.c:518
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr "删除“%s”及其所有经文？"
 
-#: src/notes-page.c:1699 src/collections-page.c:540
+#: src/notes-page.c:1699 src/collections-page.c:541
 msgid "Add list"
 msgstr "添加列表"
 
@@ -658,7 +678,7 @@ msgstr "添加列表"
 msgid "Tags"
 msgstr "标签"
 
-#: src/notes-page.c:1713 src/notes-page.c:1919 src/collections-page.c:537
+#: src/notes-page.c:1713 src/notes-page.c:1919 src/collections-page.c:538
 msgid "Verse lists"
 msgstr "经文列表"
 
@@ -695,11 +715,11 @@ msgstr "新列表"
 msgid "Show filtered notes"
 msgstr "查看筛选笔记"
 
-#: src/notes-page.c:1849 src/bookmark-page.c:360 src/collections-page.c:547
+#: src/notes-page.c:1849 src/bookmark-page.c:360 src/collections-page.c:548
 msgid "Open verse"
 msgstr "打开经文"
 
-#: src/notes-page.c:1850 src/collections-page.c:548
+#: src/notes-page.c:1850 src/collections-page.c:549
 msgid "Remove from list"
 msgstr "从列表移除"
 
@@ -818,7 +838,7 @@ msgid "Memory verse removed"
 msgstr "背经经文已删除"
 
 #: src/memory-page.c:369 src/prayer-page.c:728 src/insight-page.c:607
-#: src/bookmark-page.c:357 src/collections-page.c:544
+#: src/bookmark-page.c:357 src/collections-page.c:545
 msgid "Add current verse"
 msgstr "添加当前经文"
 
@@ -1724,8 +1744,8 @@ msgstr "星标收藏"
 #: src/reader-toolbar.c:176 src/reader-toolbar.c:357 src/reader-toolbar.c:363
 #: src/reader-toolbar.c:425 src/reader-toolbar.c:431 src/prayer-page.c:267
 #: src/prayer-page.c:273 src/insight-page.c:233 src/insight-page.c:239
-#: src/bookmark-page.c:193 src/bookmark-page.c:199 src/collections-page.c:359
-#: src/collections-page.c:365
+#: src/bookmark-page.c:193 src/bookmark-page.c:199 src/collections-page.c:360
+#: src/collections-page.c:366
 msgid "No active verse"
 msgstr "当前没有选中的经文"
 
@@ -1733,7 +1753,7 @@ msgstr "当前没有选中的经文"
 msgid "Cannot add verse to favorites"
 msgstr "无法添加经文到星标收藏"
 
-#: src/reader-toolbar.c:195 src/collections-page.c:388
+#: src/reader-toolbar.c:195 src/collections-page.c:389
 msgid "Verse added to favorites"
 msgstr "经文已添加到星标收藏"
 
@@ -2220,23 +2240,19 @@ msgstr "计划从起始经文开始按章节推进。双击进度行可打开对
 msgid "Create a plan"
 msgstr "创建计划"
 
-#: src/plan-page.c:1210
+#: src/plan-page.c:1217
 msgid "Plan management"
 msgstr "计划管理"
 
-#: src/plan-page.c:1212 src/personal-page.c:104
-msgid "Plans"
-msgstr "计划"
-
-#: src/plan-page.c:1215
+#: src/plan-page.c:1221
 msgid "Devotion"
 msgstr "灵修"
 
-#: src/plan-page.c:1218
+#: src/plan-page.c:1224
 msgid "Memorize"
 msgstr "背经"
 
-#: src/plan-store.c:447
+#: src/plan-store.c:406
 #, c-format
 msgid "%s (copy)"
 msgstr "%s（副本）"
@@ -2245,6 +2261,10 @@ msgstr "%s（副本）"
 #: src/prayer-page.c:875
 msgid "Prayer"
 msgstr "祷告"
+
+#: src/personal-page.c:104
+msgid "Plans"
+msgstr "计划"
 
 #: src/personal-page.c:107
 msgid "Collections"
@@ -2285,10 +2305,6 @@ msgstr "今日灵修"
 #: src/today-page.c:171
 msgid "Open devotion"
 msgstr "打开灵修"
-
-#: src/today-page.c:175
-msgid "Open prayer"
-msgstr "打开祷告"
 
 #: src/today-page.c:179
 msgid "Memory review"
@@ -2624,7 +2640,7 @@ msgstr "删除书签"
 msgid "Delete this bookmark?"
 msgstr "删除这个书签？"
 
-#: src/bookmark-page.c:355 src/collections-page.c:644
+#: src/bookmark-page.c:355 src/collections-page.c:645
 msgid "Bookmarks"
 msgstr "书签"
 
@@ -2636,30 +2652,30 @@ msgstr "编辑"
 msgid "No bookmarks yet."
 msgstr "还没有书签。"
 
-#: src/collections-page.c:139
+#: src/collections-page.c:140
 #, c-format
 msgid "%d verse"
 msgid_plural "%d verses"
 msgstr[0] "%d 节经文"
 
-#: src/collections-page.c:186 src/collections-page.c:196
-#: src/collections-page.c:584
+#: src/collections-page.c:187 src/collections-page.c:197
+#: src/collections-page.c:585
 msgid "Favorites"
 msgstr "星标收藏"
 
-#: src/collections-page.c:326
+#: src/collections-page.c:327
 msgid "Verse list name is required"
 msgstr "请填写经文列表名称"
 
-#: src/collections-page.c:332
+#: src/collections-page.c:333
 msgid "Cannot create verse list"
 msgstr "无法创建经文列表"
 
-#: src/collections-page.c:572
+#: src/collections-page.c:573
 msgid "List name"
 msgstr "列表名称"
 
-#: src/collections-page.c:640
+#: src/collections-page.c:641
 msgid "Lists"
 msgstr "列表"
 

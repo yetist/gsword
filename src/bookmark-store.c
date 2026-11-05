@@ -38,17 +38,6 @@ GswordBookmarkStore *
 gsword_bookmark_store_new(GError **error)
 {
     GswordBookmarkStore *self = g_new0(GswordBookmarkStore, 1);
-    const gchar *schema =
-        "CREATE TABLE IF NOT EXISTS bookmarks ("
-        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " title TEXT NOT NULL DEFAULT '',"
-        " module TEXT NOT NULL,"
-        " key TEXT NOT NULL,"
-        " display_key TEXT NOT NULL,"
-        " note TEXT NOT NULL DEFAULT '',"
-        " created INTEGER NOT NULL);"
-        "CREATE INDEX IF NOT EXISTS bookmarks_created"
-        " ON bookmarks(created DESC);";
 
     self->app_db = gsword_app_db_open(error);
     if (self->app_db == NULL) {
@@ -56,11 +45,6 @@ gsword_bookmark_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!gsword_app_db_exec(self->app_db, schema, error)) {
-        gsword_app_db_close(self->app_db);
-        g_free(self);
-        return NULL;
-    }
     return self;
 }
 
