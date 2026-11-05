@@ -54,6 +54,7 @@ typedef struct {
     GswordPlanStore *plans;
     GswordPlanPage *plan_page;
     GswordPrayerStore *prayers;
+    GswordInsightStore *insights;
     GswordPrayerPage *prayer_page;
     GswordTodayPage *today_page;
     GswordCollectionsPage *collections_page;
@@ -114,6 +115,14 @@ gsword_window_get_prayer_store(GswordWindow *self)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     return priv->prayers;
+}
+
+GswordInsightStore *
+gsword_window_get_insight_store(GswordWindow *self)
+{
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    return priv->insights;
 }
 
 static const gchar *
@@ -1484,6 +1493,7 @@ gsword_window_finalize(GObject *object)
     g_clear_pointer(&priv->notes, gsword_notes_store_free);
     g_clear_pointer(&priv->plans, gsword_plan_store_free);
     g_clear_pointer(&priv->prayers, gsword_prayer_store_free);
+    g_clear_pointer(&priv->insights, gsword_insight_store_free);
     g_free(priv->search_return_page);
     g_free(priv->library_return_page);
 
@@ -1549,6 +1559,12 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     priv->prayers = gsword_prayer_store_new(&error);
     if (priv->prayers == NULL) {
         g_printerr("gsword: cannot open prayer database: %s\n",
+                   error != NULL ? error->message : "unknown error");
+        g_clear_error(&error);
+    }
+    priv->insights = gsword_insight_store_new(&error);
+    if (priv->insights == NULL) {
+        g_printerr("gsword: cannot open insight database: %s\n",
                    error != NULL ? error->message : "unknown error");
         g_clear_error(&error);
     }

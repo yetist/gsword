@@ -1,36 +1,28 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com> */
 #include "plan-store.h"
-#include "app-paths.h"
+#include "app-db.h"
 
-#include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <sqlite3.h>
+#include <stdio.h>
 #include <string.h>
 
 struct _GswordPlanStore {
+    GswordAppDb *app_db;
     sqlite3 *db;
 };
 
 static void
 plan_store_error(GswordPlanStore *self, GError **error, const gchar *context)
 {
-    g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
-                "%s: %s", context, sqlite3_errmsg(self->db));
+    gsword_app_db_set_error(self->app_db, error, context);
 }
 
 static gboolean
 plan_store_exec(GswordPlanStore *self, const gchar *sql, GError **error)
 {
-    gchar *message = NULL;
-
-    if (sqlite3_exec(self->db, sql, NULL, NULL, &message) != SQLITE_OK) {
-        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
-                    "SQLite error: %s", message != NULL ? message : "unknown");
-        sqlite3_free(message);
-        return FALSE;
-    }
-    return TRUE;
+    return gsword_app_db_exec(self->app_db, sql, error);
 }
 
 static gchar *
@@ -176,11 +168,7 @@ GswordPlanStore *
 gsword_plan_store_new(GError **error)
 {
     GswordPlanStore *self = g_new0(GswordPlanStore, 1);
-    gchar *directory = gsword_app_data_dir();
-    gchar *path = g_build_filename(directory, "app.db", NULL);
     const gchar *schema =
-        "PRAGMA foreign_keys = ON;"
-        "PRAGMA busy_timeout = 2000;"
         "CREATE TABLE IF NOT EXISTS plans ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " name TEXT NOT NULL,"
@@ -211,28 +199,17 @@ gsword_plan_store_new(GError **error)
         " updated INTEGER NOT NULL DEFAULT (strftime('%s','now')),"
         " PRIMARY KEY(module, reference));";
 
-    g_mkdir_with_parents(directory, 0755);
-    if (sqlite3_open_v2(path, &self->db,
-                        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-                        NULL) != SQLITE_OK) {
-        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
-                    "Cannot open planner database %s: %s", path,
-                    self->db != NULL ? sqlite3_errmsg(self->db) : "unknown");
-        sqlite3_close(self->db);
-        g_free(path);
-        g_free(directory);
+    self->app_db = gsword_app_db_open(error);
+    if (self->app_db == NULL) {
         g_free(self);
         return NULL;
     }
+    self->db = gsword_app_db_get_sqlite(self->app_db);
     if (!plan_store_exec(self, schema, error)) {
-        sqlite3_close(self->db);
-        g_free(path);
-        g_free(directory);
+        gsword_app_db_close(self->app_db);
         g_free(self);
         return NULL;
     }
-    g_free(path);
-    g_free(directory);
     return self;
 }
 
@@ -241,7 +218,7 @@ gsword_plan_store_free(GswordPlanStore *self)
 {
     if (self == NULL)
         return;
-    sqlite3_close(self->db);
+    gsword_app_db_close(self->app_db);
     g_free(self);
 }
 

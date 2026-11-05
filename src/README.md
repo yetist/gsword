@@ -52,10 +52,12 @@ Current implementation:
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource
   tree, text/picture rendering and resource navigation
-- `notes-page.c` / `notes-page.h`: tabbed notes/tags/verse-lists navigation,
-  Markdown editing with autosave and dirty-state feedback, note search and tag
-  filtering, explicit tag menu, verse-list membership and item management,
-  Markdown export and a single-verse scripture preview
+- `notes-page.c` / `notes-page.h`: notes/tags/verse-lists navigation plus an
+  Insights tab, Markdown editing with autosave and dirty-state feedback, note
+  search and tag filtering, explicit tag menu, verse-list membership and item
+  management, Markdown export and a single-verse scripture preview
+- `insight-page.c` / `insight-page.h`: free-form insight list/editor, tag
+  filter, search, optional verse association and current-verse insertion
 - `personal-page.c` / `personal-page.h`: personal center shell with the
   Today/Notes/Prayer/Plans/Collections secondary navigation and adaptive
   switcher bar
@@ -89,6 +91,10 @@ Current implementation:
 - `prayer-store.c` / `prayer-store.h`: SQLite-backed prayer items, status,
   answered notes, related verses and prayer-log entries in the same application
   database
+- `insight-store.c` / `insight-store.h`: SQLite-backed free-form insights,
+  optional verse associations and tags in the same application database
+- `app-db.c` / `app-db.h`: shared SQLite open/exec/transaction helpers and
+  `busy_timeout` setup for all application stores
 - `app-paths.c` / `app-paths.h`: XDG-based application paths:
   `~/.local/share/gsword` for the database, `~/.local/share/gsword/library`
   for the writable SWORD module library, `~/.config/gsword` for installer

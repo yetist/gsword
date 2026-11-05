@@ -1,6 +1,6 @@
 # GSword 全局界面与个人中心设计
 
-- 状态：首版实施中（个人中心壳层、今日页、祷告 CRUD 和祷告日志已实现；收藏、书签、收获待实施）
+- 状态：首版实施中（个人中心壳层、今日页、祷告 CRUD 和日志、收获已实现；收藏、书签待实施）
 - 日期：2026-11-05
 - 范围：全局信息架构、个人中心、祷告事项、计划/灵修/背经、收获、书签与收藏的长期规划
 - 说明：本文档替代此前仅针对祷告事项的个人内容设计，并将现有“计划”页面纳入整体界面规划
@@ -330,6 +330,12 @@ CREATE TABLE IF NOT EXISTS insight_verses (
   key TEXT NOT NULL,
   display_key TEXT NOT NULL,
   PRIMARY KEY (insight_id, module, key)
+);
+
+CREATE TABLE IF NOT EXISTS insight_tags (
+  insight_id INTEGER NOT NULL REFERENCES insights(id) ON DELETE CASCADE,
+  tag TEXT NOT NULL,
+  PRIMARY KEY (insight_id, tag)
 );
 ```
 
@@ -667,13 +673,13 @@ void gsword_window_open_prayer_for(GswordWindow *self,
 - [x] 阶段 3（首版）：`prayer-store`、`prayer-page`、祷告 CRUD、状态、搜索、筛选和经文关联
 - [x] 阅读器“添加到祷告”入口，可从当前经文创建祷告草稿
 - [x] 祷告日志：`prayer_entries` 数据层、日志列表、添加和删除记录
+- [x] 阶段 6（首版）：`insight-store`、`insight-page`、自由文本、可选经文关联、搜索、更新时间排序和标签
 
 尚未实现：
 
 - [ ] 计划页完全移除旧“今日”职责（当前首页签已改为“计划概览”，后续继续收敛）
 - [ ] 收藏与列表：星标收藏、`verse_lists.kind` 和列表迁移
 - [ ] 书签
-- [ ] 收获
 - [ ] 祷告提醒和后台通知
 
 实现说明：
@@ -682,6 +688,9 @@ void gsword_window_open_prayer_for(GswordWindow *self,
 - 祷告、笔记、计划共用 `app.db`，三个 store 均设置 `busy_timeout = 2000`。
 - 祷告经文关联保存 `module`、`key` 和 `display_key`，删除祷告时级联清理。
 - 祷告日志使用 `prayer_entries` 表，按创建时间倒序展示；添加日志会更新祷告的 `updated` 时间。
+- 收获使用独立 `insight-store`，表为 `insights`、`insight_verses` 和 `insight_tags`；首版支持标签。
+- 收获页面通过笔记页外层“笔记 / 收获”标签进入，保留现有笔记页内部的笔记/标签/列表结构。
+- 新增共享 `app-db` 辅助模块，统一定位 `app.db`、开启外键、设置 `busy_timeout` 和执行 SQL。
 - 项目尚未发布，数据库 schema 允许直接重建，暂不提供自动迁移。
 - 窄窗口策略：只支持宽屏桌面，窗口最小宽度保持 1140px；不再把窄窗口二级导航作为验收项。
 - 收藏与列表当前为占位页，经文列表暂时仍由笔记页管理，避免首版同时迁移列表数据。
