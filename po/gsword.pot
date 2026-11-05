@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 17:22+0800\n"
+"POT-Creation-Date: 2026-11-05 17:47+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,109 +36,109 @@ msgstr ""
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:298 src/window.c:1180
+#: src/window.c:300 src/window.c:1184
 msgid "Hide module sidebar"
 msgstr ""
 
-#: src/window.c:298
+#: src/window.c:300
 msgid "Show module sidebar"
 msgstr ""
 
-#: src/window.c:443 src/workspace-page.c:525 src/workspace-page.c:755
+#: src/window.c:445 src/workspace-page.c:525 src/workspace-page.c:755
 #: src/workspace-page.c:845 src/workspace-pane.c:618
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:658 src/search-page.c:1151 src/resource-page.c:208
+#: src/window.c:660 src/search-page.c:1158 src/resource-page.c:208
 #: src/resource-page.c:214
 msgid "Cannot open module"
 msgstr ""
 
-#: src/window.c:723
+#: src/window.c:725
 msgid "Commentary opened in study panel"
 msgstr ""
 
-#: src/window.c:743
+#: src/window.c:745
 msgid "Lexicon opened in study panel"
 msgstr ""
 
-#: src/window.c:900 src/window.c:977
+#: src/window.c:902 src/window.c:979
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:909 src/window.c:1189 src/search-page.c:1403
+#: src/window.c:911 src/window.c:1193 src/search-page.c:1410
 msgid "Search"
 msgstr ""
 
-#: src/window.c:910
+#: src/window.c:912
 msgid "Focus reference"
 msgstr ""
 
-#: src/window.c:911 src/window.c:967 src/window.c:1196 src/library-page.c:2283
+#: src/window.c:913 src/window.c:969 src/window.c:1200 src/library-page.c:2283
 #: src/preferences-dialog.c:337
 msgid "Module library"
 msgstr ""
 
-#: src/window.c:912 src/window.c:971 src/preferences-dialog.c:259
+#: src/window.c:914 src/window.c:973 src/preferences-dialog.c:259
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:913 src/search-page.c:1423 src/library-page.c:2519
+#: src/window.c:915 src/search-page.c:1430 src/library-page.c:2519
 msgid "Back"
 msgstr ""
 
-#: src/window.c:914
+#: src/window.c:916
 msgid "Forward"
 msgstr ""
 
-#: src/window.c:915
+#: src/window.c:917
 msgid "Toggle sidebar"
 msgstr ""
 
-#: src/window.c:918 src/window-services.c:159 src/search-page.c:786
+#: src/window.c:920 src/window-services.c:159 src/search-page.c:793
 #: src/library-page.c:1268
 msgid "Close"
 msgstr ""
 
-#: src/window.c:939
+#: src/window.c:941
 msgid ""
 "A GTK4 Bible study application powered by libgsword, a GObject-based SWORD "
 "module library."
 msgstr ""
 
-#: src/window.c:962
+#: src/window.c:964
 msgid "Show study panel"
 msgstr ""
 
-#: src/window.c:963
+#: src/window.c:965
 msgid "Comparison"
 msgstr ""
 
-#: src/window.c:964
+#: src/window.c:966
 msgid "Teaching"
 msgstr ""
 
-#: src/window.c:978
+#: src/window.c:980
 msgid "About GSword"
 msgstr ""
 
-#: src/window.c:981
+#: src/window.c:983
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:1202
+#: src/window.c:1206
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:1243 src/preferences-dialog.c:264
+#: src/window.c:1247 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:1249
+#: src/window.c:1253
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:1263
+#: src/window.c:1267
 msgid "Personal"
 msgstr ""
 
@@ -194,7 +194,7 @@ msgstr ""
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:247 src/search-page.c:1483
+#: src/search-page.c:247 src/search-page.c:1490
 msgid "Index: no module"
 msgstr ""
 
@@ -210,7 +210,7 @@ msgstr ""
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:546 src/reader-page.c:1113
+#: src/search-page.c:546 src/reader-page.c:1124
 msgid "Copied to clipboard"
 msgstr ""
 
@@ -226,246 +226,248 @@ msgstr ""
 msgid "Verse added to memory review"
 msgstr ""
 
-#: src/search-page.c:661 src/notes-page.c:1227 src/reader-toolbar.c:157
+#: src/search-page.c:661 src/notes-page.c:1227 src/reader-toolbar.c:253
+#: src/collections-page.c:381
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/search-page.c:664 src/notes-page.c:1243 src/reader-toolbar.c:174
+#: src/search-page.c:664 src/notes-page.c:1243 src/reader-toolbar.c:270
+#: src/collections-page.c:387
 msgid "Verse added to list"
 msgstr ""
 
-#: src/search-page.c:692 src/search-page.c:920 src/reader-toolbar.c:522
+#: src/search-page.c:694 src/search-page.c:927 src/reader-toolbar.c:626
 msgid "Add to verse list"
 msgstr ""
 
-#: src/search-page.c:704
+#: src/search-page.c:706
 msgid "Verse lists are unavailable."
 msgstr ""
 
-#: src/search-page.c:708 src/notes-page.c:1274 src/notes-page.c:1774
-#: src/reader-toolbar.c:210
+#: src/search-page.c:725 src/notes-page.c:1274 src/notes-page.c:1774
+#: src/reader-toolbar.c:327
 msgid "No verse lists yet"
 msgstr ""
 
-#: src/search-page.c:709 src/today-page.c:164 src/collections-page.c:41
-msgid "Open notes"
+#: src/search-page.c:727
+msgid "Open collections"
 msgstr ""
 
-#: src/search-page.c:765
+#: src/search-page.c:772
 msgid "Module information unavailable"
 msgstr ""
 
-#: src/search-page.c:774 src/library-page.c:2448
+#: src/search-page.c:781 src/library-page.c:2448
 msgid "Language"
 msgstr ""
 
-#: src/search-page.c:777
+#: src/search-page.c:784
 msgid "Version"
 msgstr ""
 
-#: src/search-page.c:780
+#: src/search-page.c:787
 msgid "Path"
 msgstr ""
 
-#: src/search-page.c:783 src/search-page.c:924
+#: src/search-page.c:790 src/search-page.c:931
 msgid "Module information"
 msgstr ""
 
-#: src/search-page.c:897 src/reader-page.c:1510
+#: src/search-page.c:904 src/reader-page.c:1521
 msgid "Copy verse"
 msgstr ""
 
-#: src/search-page.c:899
+#: src/search-page.c:906
 msgid "Copy reference"
 msgstr ""
 
-#: src/search-page.c:902
+#: src/search-page.c:909
 msgid "Copy verse and reference"
 msgstr ""
 
-#: src/search-page.c:907 src/notes-page.c:1724 src/notes-page.c:1965
+#: src/search-page.c:914 src/notes-page.c:1724 src/notes-page.c:1972
 msgid "Open in reader"
 msgstr ""
 
-#: src/search-page.c:911
+#: src/search-page.c:918
 msgid "Open in compare"
 msgstr ""
 
-#: src/search-page.c:915
+#: src/search-page.c:922
 msgid "Add note"
 msgstr ""
 
-#: src/search-page.c:917
+#: src/search-page.c:924
 msgid "Add to memory review"
 msgstr ""
 
-#: src/search-page.c:1006
+#: src/search-page.c:1013
 msgid "Result actions"
 msgstr ""
 
-#: src/search-page.c:1026
+#: src/search-page.c:1033
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:1034
+#: src/search-page.c:1041
 msgid "No results."
 msgstr ""
 
-#: src/search-page.c:1045 src/search-page.c:1046 src/search-page.c:1179
+#: src/search-page.c:1052 src/search-page.c:1053 src/search-page.c:1186
 msgid "Searching..."
 msgstr ""
 
-#: src/search-page.c:1082
+#: src/search-page.c:1089
 msgid "Search cancelled"
 msgstr ""
 
-#: src/search-page.c:1084
+#: src/search-page.c:1091
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:1119
+#: src/search-page.c:1126
 msgid "Enter both attribute levels or leave both empty"
 msgstr ""
 
-#: src/search-page.c:1125
+#: src/search-page.c:1132
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:1130
+#: src/search-page.c:1137
 msgid "No active verse reference"
 msgstr ""
 
-#: src/search-page.c:1256
+#: src/search-page.c:1263
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:1320
+#: src/search-page.c:1327
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:1324
+#: src/search-page.c:1331
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:1340
+#: src/search-page.c:1347
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:1344
+#: src/search-page.c:1351
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:1404 src/notes-page.c:694 src/notes-page.c:1405
+#: src/search-page.c:1411 src/notes-page.c:694 src/notes-page.c:1405
 #: src/notes-page.c:1474 src/notes-page.c:1528 src/notes-page.c:1607
 #: src/library-page.c:1603 src/library-page.c:2213 src/library-page.c:2321
 #: src/plan-page.c:566 src/plan-page.c:908 src/prayer-page.c:704
-#: src/insight-page.c:586
+#: src/insight-page.c:586 src/collections-page.c:469 src/collections-page.c:511
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:1407
+#: src/search-page.c:1414
 msgid "Build index"
 msgstr ""
 
-#: src/search-page.c:1408
+#: src/search-page.c:1415
 msgid "Delete index"
 msgstr ""
 
-#: src/search-page.c:1422
+#: src/search-page.c:1429
 msgid "Recent searches"
 msgstr ""
 
-#: src/search-page.c:1425
+#: src/search-page.c:1432
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:1426
+#: src/search-page.c:1433
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:1429
+#: src/search-page.c:1436
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:1436
+#: src/search-page.c:1443
 msgid "Whole module"
 msgstr ""
 
-#: src/search-page.c:1436 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1443 src/gsword-reference-chooser.c:1612
 msgid "Old Testament"
 msgstr ""
 
-#: src/search-page.c:1437 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1444 src/gsword-reference-chooser.c:1612
 msgid "New Testament"
 msgstr ""
 
-#: src/search-page.c:1437
+#: src/search-page.c:1444
 msgid "Current book"
 msgstr ""
 
-#: src/search-page.c:1438
+#: src/search-page.c:1445
 msgid "Current chapter"
 msgstr ""
 
-#: src/search-page.c:1443
+#: src/search-page.c:1450
 msgid "Module:"
 msgstr ""
 
-#: src/search-page.c:1444
+#: src/search-page.c:1451
 msgid "Range:"
 msgstr ""
 
-#: src/search-page.c:1447
+#: src/search-page.c:1454
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:1447
+#: src/search-page.c:1454
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:1447
+#: src/search-page.c:1454
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:1451
+#: src/search-page.c:1458
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:1454
+#: src/search-page.c:1461
 msgid "Word"
 msgstr ""
 
-#: src/search-page.c:1455
+#: src/search-page.c:1462
 msgid "Lemma"
 msgstr ""
 
-#: src/search-page.c:1458
+#: src/search-page.c:1465
 msgid "Attribute 1:"
 msgstr ""
 
-#: src/search-page.c:1459
+#: src/search-page.c:1466
 msgid "Attribute 2:"
 msgstr ""
 
-#: src/search-page.c:1460
+#: src/search-page.c:1467
 msgid "Advanced"
 msgstr ""
 
-#: src/search-page.c:1462
+#: src/search-page.c:1469
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr ""
 
-#: src/search-page.c:1488
+#: src/search-page.c:1495
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr ""
 
-#: src/search-page.c:1547
+#: src/search-page.c:1554
 msgid "Enter a search term."
 msgstr ""
 
@@ -487,7 +489,7 @@ msgstr ""
 msgid "Notes · %s"
 msgstr ""
 
-#: src/notes-page.c:197 src/notes-page.c:1908 src/notes-page.c:2089
+#: src/notes-page.c:197 src/notes-page.c:1908 src/notes-page.c:2096
 #: src/personal-page.c:98
 msgid "Notes"
 msgstr ""
@@ -541,7 +543,7 @@ msgstr ""
 #: src/notes-page.c:695 src/notes-page.c:1529 src/notes-page.c:1608
 #: src/notes-page.c:1714 src/memory-page.c:370 src/plan-page.c:909
 #: src/prayer-page.c:705 src/prayer-page.c:739 src/insight-page.c:587
-#: src/insight-page.c:611
+#: src/insight-page.c:611 src/collections-page.c:512
 msgid "Delete"
 msgstr ""
 
@@ -553,11 +555,13 @@ msgstr ""
 msgid "No tags yet"
 msgstr ""
 
-#: src/notes-page.c:1104 src/notes-page.c:1235 src/reader-toolbar.c:167
+#: src/notes-page.c:1104 src/notes-page.c:1235 src/reader-toolbar.c:263
+#: src/collections-page.c:409
 msgid "Cannot remove verse from list"
 msgstr ""
 
-#: src/notes-page.c:1108 src/notes-page.c:1244 src/reader-toolbar.c:175
+#: src/notes-page.c:1108 src/notes-page.c:1244 src/reader-toolbar.c:271
+#: src/collections-page.c:412
 msgid "Verse removed from list"
 msgstr ""
 
@@ -586,18 +590,20 @@ msgid "Rename tag"
 msgstr ""
 
 #: src/notes-page.c:1406 src/notes-page.c:1475 src/plan-page.c:567
+#: src/collections-page.c:470
 msgid "Rename"
 msgstr ""
 
-#: src/notes-page.c:1442
+#: src/notes-page.c:1442 src/collections-page.c:445
 msgid "Cannot rename verse list"
 msgstr ""
 
-#: src/notes-page.c:1448
+#: src/notes-page.c:1448 src/collections-page.c:449
 msgid "Verse list renamed"
 msgstr ""
 
-#: src/notes-page.c:1467 src/notes-page.c:1827
+#: src/notes-page.c:1467 src/notes-page.c:1827 src/collections-page.c:458
+#: src/collections-page.c:612
 msgid "Rename verse list"
 msgstr ""
 
@@ -622,28 +628,29 @@ msgstr ""
 msgid "Cannot create list"
 msgstr ""
 
-#: src/notes-page.c:1558
+#: src/notes-page.c:1558 src/collections-page.c:337
 msgid "Verse list created"
 msgstr ""
 
-#: src/notes-page.c:1576
+#: src/notes-page.c:1576 src/collections-page.c:490
 msgid "Cannot delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1586
+#: src/notes-page.c:1586 src/collections-page.c:494
 msgid "Verse list deleted"
 msgstr ""
 
-#: src/notes-page.c:1602 src/notes-page.c:1797
+#: src/notes-page.c:1602 src/notes-page.c:1797 src/collections-page.c:503
+#: src/collections-page.c:613
 msgid "Delete verse list"
 msgstr ""
 
-#: src/notes-page.c:1604
+#: src/notes-page.c:1604 src/collections-page.c:508
 #, c-format
 msgid "Delete “%s” and all its verses?"
 msgstr ""
 
-#: src/notes-page.c:1691
+#: src/notes-page.c:1691 src/collections-page.c:531
 msgid "Add list"
 msgstr ""
 
@@ -651,7 +658,7 @@ msgstr ""
 msgid "Tags"
 msgstr ""
 
-#: src/notes-page.c:1705 src/notes-page.c:1911
+#: src/notes-page.c:1705 src/notes-page.c:1911 src/collections-page.c:528
 msgid "Verse lists"
 msgstr ""
 
@@ -688,11 +695,11 @@ msgstr ""
 msgid "Show filtered notes"
 msgstr ""
 
-#: src/notes-page.c:1841
+#: src/notes-page.c:1841 src/collections-page.c:538
 msgid "Open verse"
 msgstr ""
 
-#: src/notes-page.c:1842
+#: src/notes-page.c:1842 src/collections-page.c:539
 msgid "Remove from list"
 msgstr ""
 
@@ -704,55 +711,55 @@ msgstr ""
 msgid "Clear tag filter"
 msgstr ""
 
-#: src/notes-page.c:1931
+#: src/notes-page.c:1938
 msgid "Tags, separated by commas"
 msgstr ""
 
-#: src/notes-page.c:1933
+#: src/notes-page.c:1940
 msgid "Tags:"
 msgstr ""
 
-#: src/notes-page.c:1959 src/teaching-page.c:224
+#: src/notes-page.c:1966 src/teaching-page.c:224
 msgid "Scripture"
 msgstr ""
 
-#: src/notes-page.c:1989
+#: src/notes-page.c:1996
 msgid "Markdown: **bold**, *italic*, # heading, - list, > quote"
 msgstr ""
 
-#: src/notes-page.c:1996
+#: src/notes-page.c:2003
 msgid "Bold"
 msgstr ""
 
-#: src/notes-page.c:1999
+#: src/notes-page.c:2006
 msgid "Italic"
 msgstr ""
 
-#: src/notes-page.c:2002
+#: src/notes-page.c:2009
 msgid "Heading"
 msgstr ""
 
-#: src/notes-page.c:2005
+#: src/notes-page.c:2012
 msgid "Bullet list"
 msgstr ""
 
-#: src/notes-page.c:2008
+#: src/notes-page.c:2015
 msgid "Numbered list"
 msgstr ""
 
-#: src/notes-page.c:2011
+#: src/notes-page.c:2018
 msgid "Quote"
 msgstr ""
 
-#: src/notes-page.c:2014
+#: src/notes-page.c:2021
 msgid "Link"
 msgstr ""
 
-#: src/notes-page.c:2017
+#: src/notes-page.c:2024
 msgid "Inline code"
 msgstr ""
 
-#: src/notes-page.c:2093 src/insight-page.c:699
+#: src/notes-page.c:2100 src/insight-page.c:699
 msgid "Insights"
 msgstr ""
 
@@ -809,6 +816,7 @@ msgid "Memory verse removed"
 msgstr ""
 
 #: src/memory-page.c:369 src/prayer-page.c:728 src/insight-page.c:607
+#: src/collections-page.c:535
 msgid "Add current verse"
 msgstr ""
 
@@ -1464,7 +1472,7 @@ msgid "No modules installed."
 msgstr ""
 
 #: src/module-sidebar.c:362 src/study-panel.c:585 src/workspace-page.c:978
-#: src/reader-page.c:1449
+#: src/reader-page.c:1460
 msgid "Manage modules"
 msgstr ""
 
@@ -1644,143 +1652,168 @@ msgstr ""
 msgid "Close comparison"
 msgstr ""
 
-#: src/reader-page.c:314
+#: src/reader-page.c:321
 msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
 
-#: src/reader-page.c:316
+#: src/reader-page.c:323
 msgid "No modules found"
 msgstr ""
 
-#: src/reader-page.c:340
+#: src/reader-page.c:347
 msgid "Cannot read entry"
 msgstr ""
 
-#: src/reader-page.c:378 src/reader-page.c:829 src/reader-page.c:867
+#: src/reader-page.c:387 src/reader-page.c:840 src/reader-page.c:878
 msgid "Cannot set key"
 msgstr ""
 
-#: src/reader-page.c:1067
+#: src/reader-page.c:1078
 msgid "Highlight removed"
 msgstr ""
 
-#: src/reader-page.c:1072
+#: src/reader-page.c:1083
 msgid "Verse highlighted"
 msgstr ""
 
-#: src/reader-page.c:1075
+#: src/reader-page.c:1086
 msgid "Cannot update highlight"
 msgstr ""
 
-#: src/reader-page.c:1448
+#: src/reader-page.c:1459
 msgid "No Bible text module is installed."
 msgstr ""
 
-#: src/reader-page.c:1511
+#: src/reader-page.c:1522
 msgid "Open note"
 msgstr ""
 
-#: src/reader-page.c:1513
+#: src/reader-page.c:1524
 msgid "Toggle highlight"
 msgstr ""
 
-#: src/reader-page.c:1515 src/reader-toolbar.c:485
+#: src/reader-page.c:1526 src/reader-toolbar.c:589
 msgid "Add to prayer"
 msgstr ""
 
-#: src/reader-toolbar.c:197
-msgid "Open a verse first"
+#: src/reader-toolbar.c:150
+msgid "Remove from favorites"
 msgstr ""
 
-#: src/reader-toolbar.c:255 src/reader-toolbar.c:261 src/prayer-page.c:267
-#: src/prayer-page.c:273 src/insight-page.c:233 src/insight-page.c:239
+#: src/reader-toolbar.c:150 src/reader-toolbar.c:666
+msgid "Add to favorites"
+msgstr ""
+
+#: src/reader-toolbar.c:176 src/reader-toolbar.c:357 src/reader-toolbar.c:363
+#: src/prayer-page.c:267 src/prayer-page.c:273 src/insight-page.c:233
+#: src/insight-page.c:239 src/collections-page.c:357 src/collections-page.c:363
 msgid "No active verse"
 msgstr ""
 
-#: src/reader-toolbar.c:295
+#: src/reader-toolbar.c:191
+msgid "Cannot add verse to favorites"
+msgstr ""
+
+#: src/reader-toolbar.c:195 src/collections-page.c:386
+msgid "Verse added to favorites"
+msgstr ""
+
+#: src/reader-toolbar.c:200
+msgid "Cannot remove verse from favorites"
+msgstr ""
+
+#: src/reader-toolbar.c:204
+msgid "Verse removed from favorites"
+msgstr ""
+
+#: src/reader-toolbar.c:294
+msgid "Open a verse first"
+msgstr ""
+
+#: src/reader-toolbar.c:397
 msgid "No reading history yet."
 msgstr ""
 
-#: src/reader-toolbar.c:483
+#: src/reader-toolbar.c:587
 msgid "Highlight verse"
 msgstr ""
 
-#: src/reader-toolbar.c:486
+#: src/reader-toolbar.c:590
 msgid "Teach"
 msgstr ""
 
-#: src/reader-toolbar.c:493
+#: src/reader-toolbar.c:597
 msgid "Copy chapter"
 msgstr ""
 
-#: src/reader-toolbar.c:524
+#: src/reader-toolbar.c:628
 msgid "Add verse to list"
 msgstr ""
 
-#: src/reader-toolbar.c:538
+#: src/reader-toolbar.c:642
 msgid "More reading actions"
 msgstr ""
 
-#: src/reader-toolbar.c:561 src/reader-toolbar.c:565
+#: src/reader-toolbar.c:671 src/reader-toolbar.c:675
 msgid "Recent reading"
 msgstr ""
 
-#: src/reader-toolbar.c:577
+#: src/reader-toolbar.c:687
 msgid "Clear history"
 msgstr ""
 
-#: src/reader-toolbar.c:591
+#: src/reader-toolbar.c:701
 msgid "Back (Alt+Left)"
 msgstr ""
 
-#: src/reader-toolbar.c:592
+#: src/reader-toolbar.c:702
 msgid "Forward (Alt+Right)"
 msgstr ""
 
-#: src/reader-toolbar.c:615
+#: src/reader-toolbar.c:725
 msgid "Open teaching layout for this passage"
 msgstr ""
 
-#: src/reader-toolbar.c:618
+#: src/reader-toolbar.c:728
 msgid "Study panel"
 msgstr ""
 
-#: src/reader-toolbar.c:625 src/reader-toolbar.c:627 src/reader-toolbar.c:631
+#: src/reader-toolbar.c:735 src/reader-toolbar.c:737 src/reader-toolbar.c:741
 msgid "Reading appearance"
 msgstr ""
 
-#: src/reader-toolbar.c:665 src/preferences-dialog.c:270
+#: src/reader-toolbar.c:775 src/preferences-dialog.c:270
 msgid "Font size"
 msgstr ""
 
-#: src/reader-toolbar.c:666
+#: src/reader-toolbar.c:776
 msgid "Paragraph spacing"
 msgstr ""
 
-#: src/reader-toolbar.c:668
+#: src/reader-toolbar.c:778
 msgid "Reading width"
 msgstr ""
 
-#: src/reader-toolbar.c:677
+#: src/reader-toolbar.c:787
 msgid "Focus reading mode"
 msgstr ""
 
-#: src/reader-toolbar.c:680
+#: src/reader-toolbar.c:790
 msgid "Focus reading mode (F11)"
 msgstr ""
 
-#: src/reader-toolbar.c:688
+#: src/reader-toolbar.c:798
 msgid "Copy selection or current verse"
 msgstr ""
 
-#: src/reader-toolbar.c:689
+#: src/reader-toolbar.c:799
 msgid "Open note for this verse"
 msgstr ""
 
-#: src/reader-toolbar.c:691
+#: src/reader-toolbar.c:801
 msgid "Toggle study panel"
 msgstr ""
 
@@ -2160,7 +2193,7 @@ msgstr ""
 msgid "Prayer"
 msgstr ""
 
-#: src/personal-page.c:107 src/collections-page.c:36
+#: src/personal-page.c:107
 msgid "Collections"
 msgstr ""
 
@@ -2206,6 +2239,10 @@ msgstr ""
 
 #: src/today-page.c:164
 msgid "Recent notes"
+msgstr ""
+
+#: src/today-page.c:164
+msgid "Open notes"
 msgstr ""
 
 #: src/today-page.c:248
@@ -2484,12 +2521,28 @@ msgstr ""
 msgid "Choose an insight from the list or create a new one."
 msgstr ""
 
-#: src/collections-page.c:38
-msgid "Verse lists, bookmarks and favorites will be organized here."
+#: src/collections-page.c:137
+#, c-format
+msgid "%d verse"
+msgid_plural "%d verses"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/collections-page.c:184 src/collections-page.c:194
+#: src/collections-page.c:575
+msgid "Favorites"
 msgstr ""
 
-#: src/collections-page.c:40
-msgid "For now, verse lists are managed from the Notes section."
+#: src/collections-page.c:324
+msgid "Verse list name is required"
+msgstr ""
+
+#: src/collections-page.c:330
+msgid "Cannot create verse list"
+msgstr ""
+
+#: src/collections-page.c:563
+msgid "List name"
 msgstr ""
 
 #: src/resource-page.c:99

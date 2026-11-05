@@ -98,6 +98,13 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
   test('insight-store', test_insight_store)
 
+  test_verse_lists = executable('test-verse-lists',
+    ['test-verse-lists.c', '../src/notes-store.c', '../src/app-db.c',
+     '../src/app-paths.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [gsword_dep, glib_dep, dependency('sqlite3')])
+  test('verse-lists', test_verse_lists)
+
   test_codec = executable('test-codec', 'test-codec.c',
     dependencies: [gsword_dep, glib_dep, zlib_dep],
     c_args: extra_c_args)

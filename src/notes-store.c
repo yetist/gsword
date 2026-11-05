@@ -23,19 +23,14 @@ notes_store_exec(GswordNotesStore *self, const gchar *sql, GError **error)
     return gsword_app_db_exec(self->app_db, sql, error);
 }
 
-static void
-gsword_verse_list_free_internal(GswordVerseList *list)
+void
+gsword_verse_list_free(GswordVerseList *list)
 {
     if (list == NULL)
         return;
     g_free(list->name);
+    g_free(list->kind);
     g_free(list);
-}
-
-void
-gsword_verse_list_free(GswordVerseList *list)
-{
-    gsword_verse_list_free_internal(list);
 }
 
 void
@@ -62,6 +57,29 @@ gsword_note_free(GswordNote *note)
     g_free(note);
 }
 
+static gboolean
+notes_store_has_column(GswordNotesStore *self, const gchar *table,
+                       const gchar *column)
+{
+    sqlite3_stmt *stmt = NULL;
+    gchar *sql = g_strdup_printf("PRAGMA table_info(%s)", table);
+    gboolean found = FALSE;
+
+    if (sqlite3_prepare_v2(self->db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const gchar *name = (const gchar *)sqlite3_column_text(stmt, 1);
+
+            if (g_strcmp0(name, column) == 0) {
+                found = TRUE;
+                break;
+            }
+        }
+    }
+    sqlite3_finalize(stmt);
+    g_free(sql);
+    return found;
+}
+
 GswordNotesStore *
 gsword_notes_store_new(GError **error)
 {
@@ -85,7 +103,8 @@ gsword_notes_store_new(GError **error)
         " PRIMARY KEY(note_id, tag_id));"
         "CREATE TABLE IF NOT EXISTS verse_lists ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        " name TEXT NOT NULL UNIQUE);"
+        " name TEXT NOT NULL UNIQUE,"
+        " kind TEXT NOT NULL DEFAULT 'normal');"
         "CREATE TABLE IF NOT EXISTS verse_list_items ("
         " id INTEGER PRIMARY KEY AUTOINCREMENT,"
         " list_id INTEGER NOT NULL REFERENCES verse_lists(id) ON DELETE CASCADE,"
@@ -105,12 +124,30 @@ gsword_notes_store_new(GError **error)
         return NULL;
     }
     self->db = gsword_app_db_get_sqlite(self->app_db);
-    if (!notes_store_exec(self, schema, error)) {
-        gsword_app_db_close(self->app_db);
-        g_free(self);
-        return NULL;
+    if (!notes_store_exec(self, schema, error))
+        goto fail;
+    if (!notes_store_has_column(self, "verse_lists", "kind")) {
+        if (!notes_store_exec(
+                self,
+                "ALTER TABLE verse_lists ADD COLUMN kind TEXT NOT NULL"
+                " DEFAULT 'normal';", error))
+            goto fail;
     }
+    if (!notes_store_exec(
+            self,
+            "INSERT OR IGNORE INTO verse_lists(name, kind)"
+            " VALUES('Favorites', 'favorites');"
+            "UPDATE verse_lists SET kind = 'favorites'"
+            " WHERE name = 'Favorites';"
+            "CREATE UNIQUE INDEX IF NOT EXISTS verse_lists_favorites"
+            " ON verse_lists(kind) WHERE kind = 'favorites';", error))
+        goto fail;
     return self;
+
+fail:
+    gsword_app_db_close(self->app_db);
+    g_free(self);
+    return NULL;
 }
 
 void
@@ -462,8 +499,8 @@ gsword_notes_store_create_list(GswordNotesStore *self, const gchar *name,
     gboolean ok = FALSE;
 
     if (sqlite3_prepare_v2(self->db,
-            "INSERT OR IGNORE INTO verse_lists(name) VALUES(?)", -1, &stmt,
-            NULL) != SQLITE_OK ||
+            "INSERT OR IGNORE INTO verse_lists(name, kind)"
+            " VALUES(?, 'normal')", -1, &stmt, NULL) != SQLITE_OK ||
         sqlite3_bind_text(stmt, 1, name, -1, SQLITE_TRANSIENT) != SQLITE_OK ||
         sqlite3_step(stmt) != SQLITE_DONE) {
         notes_store_error(self, error, "Cannot create verse list");
@@ -484,18 +521,102 @@ gsword_notes_store_list_lists(GswordNotesStore *self)
     sqlite3_stmt *stmt = NULL;
 
     if (sqlite3_prepare_v2(self->db,
-            "SELECT id, name FROM verse_lists ORDER BY name", -1, &stmt,
+            "SELECT id, name, kind FROM verse_lists ORDER BY name", -1, &stmt,
             NULL) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             GswordVerseList *list = g_new0(GswordVerseList, 1);
 
             list->id = sqlite3_column_int64(stmt, 0);
             list->name = g_strdup((const gchar *)sqlite3_column_text(stmt, 1));
+            list->kind = g_strdup((const gchar *)sqlite3_column_text(stmt, 2));
             g_ptr_array_add(result, list);
         }
     }
     sqlite3_finalize(stmt);
     return result;
+}
+
+gint64
+gsword_notes_store_get_favorites_list_id(GswordNotesStore *self)
+{
+    sqlite3_stmt *stmt = NULL;
+    gint64 id = 0;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT id FROM verse_lists WHERE kind = 'favorites' LIMIT 1",
+            -1, &stmt, NULL) == SQLITE_OK &&
+        sqlite3_step(stmt) == SQLITE_ROW)
+        id = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    return id;
+}
+
+gboolean
+gsword_notes_store_list_is_favorites(GswordNotesStore *self, gint64 list_id)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean favorites = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT 1 FROM verse_lists WHERE id = ? AND kind = 'favorites'",
+            -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, list_id);
+        favorites = sqlite3_step(stmt) == SQLITE_ROW;
+    }
+    sqlite3_finalize(stmt);
+    return favorites;
+}
+
+gboolean
+gsword_notes_store_is_favorite(GswordNotesStore *self, const gchar *module,
+                               const gchar *key)
+{
+    sqlite3_stmt *stmt = NULL;
+    gboolean found = FALSE;
+
+    if (sqlite3_prepare_v2(self->db,
+            "SELECT 1 FROM verse_list_items i"
+            " JOIN verse_lists l ON l.id = i.list_id"
+            " WHERE l.kind = 'favorites' AND i.module = ? AND i.key = ?",
+            -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, module, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, key, -1, SQLITE_TRANSIENT);
+        found = sqlite3_step(stmt) == SQLITE_ROW;
+    }
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+gboolean
+gsword_notes_store_add_favorite(GswordNotesStore *self, const gchar *module,
+                                const gchar *key, const gchar *display_key,
+                                GError **error)
+{
+    gint64 list_id = gsword_notes_store_get_favorites_list_id(self);
+
+    if (list_id == 0) {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                    "Favorites list is missing");
+        return FALSE;
+    }
+    return gsword_notes_store_add_to_list(self, list_id, module, key,
+                                          display_key, error);
+}
+
+gboolean
+gsword_notes_store_remove_favorite(GswordNotesStore *self,
+                                   const gchar *module, const gchar *key,
+                                   GError **error)
+{
+    gint64 list_id = gsword_notes_store_get_favorites_list_id(self);
+
+    if (list_id == 0) {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                    "Favorites list is missing");
+        return FALSE;
+    }
+    return gsword_notes_store_remove_from_list(self, list_id, module, key,
+                                               error);
 }
 
 gboolean
@@ -580,6 +701,11 @@ gsword_notes_store_rename_list(GswordNotesStore *self, gint64 list_id,
 
     if (new_name == NULL || *new_name == '\0')
         return FALSE;
+    if (gsword_notes_store_list_is_favorites(self, list_id)) {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                    "The favorites list cannot be renamed");
+        return FALSE;
+    }
     if (sqlite3_prepare_v2(self->db,
             "UPDATE verse_lists SET name = ? WHERE id = ?", -1, &stmt,
             NULL) != SQLITE_OK ||
@@ -604,6 +730,11 @@ gsword_notes_store_delete_list(GswordNotesStore *self, gint64 list_id,
     sqlite3_stmt *stmt = NULL;
     gboolean ok = FALSE;
 
+    if (gsword_notes_store_list_is_favorites(self, list_id)) {
+        g_set_error(error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                    "The favorites list cannot be deleted");
+        return FALSE;
+    }
     if (sqlite3_prepare_v2(self->db,
             "DELETE FROM verse_lists WHERE id = ?", -1, &stmt, NULL) !=
             SQLITE_OK ||

@@ -52,10 +52,10 @@ Current implementation:
   teaching notes and fullscreen mode
 - `resource-page.c` / `resource-page.h`: general book and map viewer, resource
   tree, text/picture rendering and resource navigation
-- `notes-page.c` / `notes-page.h`: notes/tags/verse-lists navigation plus an
-  Insights tab, Markdown editing with autosave and dirty-state feedback, note
-  search and tag filtering, explicit tag menu, verse-list membership and item
-  management, Markdown export and a single-verse scripture preview
+- `notes-page.c` / `notes-page.h`: notes/tags navigation plus an Insights tab,
+  Markdown editing with autosave and dirty-state feedback, note search and tag
+  filtering, explicit tag menu, Markdown export and a single-verse scripture
+  preview; verse-list management now lives in Collections
 - `insight-page.c` / `insight-page.h`: free-form insight list/editor, tag
   filter, search, optional verse association and current-verse insertion
 - `personal-page.c` / `personal-page.h`: personal center shell with the
@@ -66,8 +66,9 @@ Current implementation:
 - `prayer-page.c` / `prayer-page.h`: prayer list, search/filter, editor,
   status transitions, answered notes, related-verse management and prayer-log
   timeline
-- `collections-page.c` / `collections-page.h`: placeholder for verse lists,
-  bookmarks and favorites
+- `collections-page.c` / `collections-page.h`: verse-list and favorites
+  management, including the system favorites list, list CRUD and item
+  open/remove; bookmarks remain a later stage
 - `plan-page.c` / `plan-page.h`: reading plan dashboard, template-based
   creation, plan library with rename/duplicate, schedule filters and undo
 - `devotion-page.c` / `devotion-page.h`: daily devotion module/date selection

@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
     gint64 id;
     gchar *name;
+    gchar *kind;
 } GswordVerseList;
 
 typedef struct {
@@ -61,6 +62,21 @@ gboolean gsword_notes_store_rename_tag(GswordNotesStore *self,
 gboolean gsword_notes_store_create_list(GswordNotesStore *self,
                                         const gchar *name, GError **error);
 GPtrArray *gsword_notes_store_list_lists(GswordNotesStore *self);
+gint64 gsword_notes_store_get_favorites_list_id(GswordNotesStore *self);
+gboolean gsword_notes_store_list_is_favorites(GswordNotesStore *self,
+                                              gint64 list_id);
+gboolean gsword_notes_store_is_favorite(GswordNotesStore *self,
+                                        const gchar *module,
+                                        const gchar *key);
+gboolean gsword_notes_store_add_favorite(GswordNotesStore *self,
+                                         const gchar *module,
+                                         const gchar *key,
+                                         const gchar *display_key,
+                                         GError **error);
+gboolean gsword_notes_store_remove_favorite(GswordNotesStore *self,
+                                            const gchar *module,
+                                            const gchar *key,
+                                            GError **error);
 gboolean gsword_notes_store_delete_list(GswordNotesStore *self,
                                         gint64 list_id, GError **error);
 gboolean gsword_notes_store_rename_list(GswordNotesStore *self,
