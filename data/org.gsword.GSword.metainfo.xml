@@ -21,6 +21,33 @@
     </p>
   </description>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>Read Scripture with a focused reading view</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/reader.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Compare multiple Bible translations side by side</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/compare.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Keep notes, prayer, reading plans, and collections together</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/personal.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Follow a daily reading plan</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/plans.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Install and manage SWORD modules</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/library.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Search across installed modules</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/search.png</image>
+    </screenshot>
+  </screenshots>
+
   <launchable type="desktop-id">org.gsword.GSword.desktop</launchable>
   <provides>
     <binary>gsword</binary>
@@ -50,6 +77,17 @@
   <translation type="gettext">gsword</translation>
 
   <releases>
+    <release version="0.2.0" date="2026-11-06">
+      <description>
+        <p>Personal study center and narrow desktop support.</p>
+        <ul>
+          <li>Add notes, prayer journal, insights, reading plans, bookmarks, and verse collections.</li>
+          <li>Add versioned application data with schema migration support.</li>
+          <li>Support 800x600 windows with a collapsible sidebar and compact reader controls.</li>
+          <li>Improve module library filtering and plan management.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-11-04">
       <description>
         <p>Initial preview release.</p>

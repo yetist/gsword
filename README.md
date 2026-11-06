@@ -1,5 +1,7 @@
 # GSword
 
+[![CI](https://github.com/yetist/gsword/actions/workflows/ci.yml/badge.svg)](https://github.com/yetist/gsword/actions/workflows/ci.yml)
+
 <p align="center">
   <img src="data/icons/hicolor/scalable/apps/org.gsword.GSword.svg" width="128" height="128" alt="GSword logo">
 </p>
@@ -13,7 +15,21 @@ GSword 的底层是 **libgsword**：一个使用 C / GObject 从零重新实现�
 - 源码仓库：<https://github.com/yetist/gsword>
 - 问题反馈：<https://github.com/yetist/gsword/issues>
 
-> 当前项目仍在持续开发中，尚未正式发布。
+> 当前项目仍在持续开发中。
+
+## 截图
+
+| 阅读 | 对照 |
+| --- | --- |
+| ![阅读](data/screenshots/reader.png) | ![对照](data/screenshots/compare.png) |
+
+| 个人中心 | 阅读计划 |
+| --- | --- |
+| ![个人中心](data/screenshots/personal.png) | ![阅读计划](data/screenshots/plans.png) |
+
+| 模块库 | 搜索 |
+| --- | --- |
+| ![模块库](data/screenshots/library.png) | ![搜索](data/screenshots/search.png) |
 
 ## 功能
 
