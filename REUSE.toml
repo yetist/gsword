@@ -6,6 +6,7 @@ path = [
   ".lvimrc",
   "AGENTS.md",
   "README.md",
+  "README.zh_CN.md",
   "src/README.md",
   "data/locales.d/README.md",
   "data/locales.d/*.conf",
