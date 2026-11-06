@@ -1,0 +1,130 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com>
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            appstream \
+            build-essential \
+            desktop-file-utils \
+            gettext \
+            libadwaita-1-dev \
+            libbz2-dev \
+            libcurl4-openssl-dev \
+            libglib2.0-dev \
+            libgtk-4-dev \
+            libgtksourceview-5-dev \
+            liblzma-dev \
+            libsqlite3-dev \
+            libxml2-dev \
+            meson \
+            ninja-build \
+            pkg-config \
+            zlib1g-dev
+
+      - name: Configure
+        run: meson setup build --buildtype=debugoptimized -Dtests=true
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Test
+        run: meson test -C build --print-errorlogs
+
+      - name: Check install
+        run: meson install -C build --destdir "$PWD/install-root"
+
+      - name: Build source archive
+        run: meson dist -C build --no-tests
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsword-source-archive
+          path: build/meson-dist/*.tar.xz
+          if-no-files-found: error
+
+  asan:
+    name: AddressSanitizer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gettext \
+            libadwaita-1-dev \
+            libbz2-dev \
+            libcurl4-openssl-dev \
+            libglib2.0-dev \
+            libgtk-4-dev \
+            libgtksourceview-5-dev \
+            liblzma-dev \
+            libsqlite3-dev \
+            libxml2-dev \
+            meson \
+            ninja-build \
+            pkg-config \
+            zlib1g-dev
+
+      - name: Configure with AddressSanitizer
+        run: |
+          meson setup build-asan \
+            --buildtype=debug \
+            -Db_sanitize=address \
+            -Db_lundef=false \
+            -Dtests=true
+
+      - name: Build
+        run: meson compile -C build-asan
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: meson test -C build-asan --print-errorlogs --timeout-multiplier 2
+
+  reuse:
+    name: REUSE compliance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install reuse
+        run: pipx install reuse
+
+      - name: Check REUSE compliance
+        run: "$HOME/.local/bin/reuse" lint
