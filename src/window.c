@@ -1292,17 +1292,21 @@ gsword_window_build(GswordWindow *self)
 
             if (monitors != NULL && g_list_model_get_n_items(monitors) > 0) {
                 GdkMonitor *monitor = g_list_model_get_item(monitors, 0);
-                GdkRectangle geometry;
 
-                gdk_monitor_get_geometry(monitor, &geometry);
-                width = CLAMP(geometry.width - 120, GSWORD_WINDOW_MIN_WIDTH,
-                              GSWORD_WINDOW_PREFERRED_WIDTH);
-                height = CLAMP(geometry.height - 120,
-                               GSWORD_WINDOW_MIN_HEIGHT,
-                               GSWORD_WINDOW_PREFERRED_HEIGHT);
-                g_object_unref(monitor);
+                if (GDK_IS_MONITOR(monitor)) {
+                    GdkRectangle geometry;
+
+                    gdk_monitor_get_geometry(monitor, &geometry);
+                    width = CLAMP(geometry.width - 120,
+                                  GSWORD_WINDOW_MIN_WIDTH,
+                                  GSWORD_WINDOW_PREFERRED_WIDTH);
+                    height = CLAMP(geometry.height - 120,
+                                   GSWORD_WINDOW_MIN_HEIGHT,
+                                   GSWORD_WINDOW_PREFERRED_HEIGHT);
+                }
+                g_clear_object(&monitor);
             }
-            g_object_unref(monitors);
+            g_clear_object(&monitors);
         }
         gtk_window_set_default_size(GTK_WINDOW(self), width, height);
     }

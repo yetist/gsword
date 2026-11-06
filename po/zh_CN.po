@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.2.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 10:21+0800\n"
+"POT-Creation-Date: 2026-11-06 13:23+0800\n"
 "PO-Revision-Date: 2026-11-06 00:00+0800\n"
 "Last-Translator: yetist\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -33,7 +33,7 @@ msgstr "未知错误"
 msgid "SWORD module library path"
 msgstr "SWORD 模块库路径"
 
-#: src/window.c:335 src/window.c:1320
+#: src/window.c:335 src/window.c:1324
 msgid "Hide module sidebar"
 msgstr "隐藏模块侧栏"
 
@@ -46,8 +46,8 @@ msgstr "显示模块侧栏"
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:208
-#: src/resource-page.c:214
+#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:791
+#: src/resource-page.c:797
 msgid "Cannot open module"
 msgstr "无法打开模块"
 
@@ -63,7 +63,7 @@ msgstr "词典已在研经面板中打开"
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:1018 src/window.c:1329 src/search-page.c:1410
+#: src/window.c:1018 src/window.c:1333 src/search-page.c:1410
 msgid "Search"
 msgstr "搜索"
 
@@ -71,7 +71,7 @@ msgstr "搜索"
 msgid "Focus reference"
 msgstr "首选项"
 
-#: src/window.c:1020 src/window.c:1081 src/window.c:1336
+#: src/window.c:1020 src/window.c:1081 src/window.c:1340
 #: src/library-page.c:2283 src/preferences-dialog.c:337
 msgid "Module library"
 msgstr "模块库"
@@ -143,19 +143,19 @@ msgstr "关于 GSword"
 msgid "Quit"
 msgstr "退出"
 
-#: src/window.c:1342
+#: src/window.c:1346
 msgid "Main menu"
 msgstr "主菜单"
 
-#: src/window.c:1390 src/preferences-dialog.c:264
+#: src/window.c:1394 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr "阅读"
 
-#: src/window.c:1396
+#: src/window.c:1400
 msgid "Compare"
 msgstr "对照"
 
-#: src/window.c:1410
+#: src/window.c:1414
 msgid "Personal"
 msgstr "个人"
 
@@ -800,9 +800,7 @@ msgstr "到期 %s  ·  记忆盒 %d"
 msgid ""
 "%s\n"
 "Due %s  ·  box %d"
-msgstr ""
-"%s\n"
-"到期 %s  ·  记忆盒 %d"
+msgstr "%s\\n到期 %s  ·  卡盒 %d"
 
 #: src/memory-page.c:247
 msgid "Cannot save memory verse"
@@ -981,13 +979,7 @@ msgid ""
 "Size: %s\n"
 "Source: %s\n"
 "License: %s"
-msgstr ""
-"类型：%s\n"
-"语言：%s\n"
-"版本：%s\n"
-"大小：%s\n"
-"安装源：%s\n"
-"许可：%s"
+msgstr "类型：%s\\n语言：%s\\n版本：%s\\n大小：%s\\n来源：%s\\n许可证：%s"
 
 #: src/library-page.c:733 src/library-page.c:793 src/library-page.c:795
 #: src/library-page.c:874 src/library-page.c:929 src/library-page.c:930
@@ -1053,10 +1045,7 @@ msgid ""
 "License: %s\n"
 "\n"
 "Copyright: %s"
-msgstr ""
-"许可：%s\n"
-"\n"
-"版权：%s"
+msgstr "许可证：%s\\n\\n版权：%s"
 
 #: src/library-page.c:801 src/library-page.c:936
 msgid "No additional information is available."
@@ -1695,10 +1684,7 @@ msgid ""
 "No modules found.\n"
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
-msgstr ""
-"未找到模块。\n"
-"\n"
-"请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
+msgstr "未找到模块。\\n\\n请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
 #: src/reader-page.c:347
 msgid "No modules found"
@@ -2011,10 +1997,7 @@ msgid ""
 "\n"
 "Install a module such as Daily Light or Morning and Evening from the Library "
 "page."
-msgstr ""
-"未安装每日灵修模块。\n"
-"\n"
-"请从模块库安装 Daily Light 或 Morning and Evening 等灵修模块。"
+msgstr "未安装每日灵修模块。\\n\\n请从模块库安装 Daily Light 或 Morning and Evening 等灵修模块。"
 
 #: src/devotion-page.c:227 src/plan-page.c:1143 src/personal-page.c:98
 #: src/today-page.c:143
@@ -2098,9 +2081,7 @@ msgstr "第 1 天：%s"
 msgid ""
 "Day 1: %s\n"
 "Day %u: %s"
-msgstr ""
-"第 1 天：%s\n"
-"第 %u 天：%s"
+msgstr "第 1 天：%s\\n第 %u 天：%s"
 
 #: src/plan-page.c:700 src/plan-page.c:745 src/plan-page.c:769
 msgid "Cannot update plan"
@@ -2694,17 +2675,94 @@ msgstr "无法创建经文列表"
 msgid "List name"
 msgstr "列表名称"
 
-#: src/resource-page.c:99
+#: src/resource-page.c:393
+msgid "Image copied to clipboard"
+msgstr "图片已复制到剪贴板"
+
+#: src/resource-page.c:405
+msgid "Image path copied to clipboard"
+msgstr "图片路径已复制到剪贴板"
+
+#: src/resource-page.c:423
+msgid "No image is selected"
+msgstr "尚未选择图片"
+
+#: src/resource-page.c:429
+msgid "The selected destination is not a local file"
+msgstr "目标位置不是本地文件"
+
+#: src/resource-page.c:444
+msgid "Cannot convert image to PNG"
+msgstr "无法将图片转换为 PNG"
+
+#: src/resource-page.c:456
+msgid "Choose the original image extension or PNG"
+msgstr "请选择原始图片扩展名或 PNG"
+
+#: src/resource-page.c:462
+msgid "Cannot save image"
+msgstr "无法保存图片"
+
+#: src/resource-page.c:466
+#, c-format
+msgid "Image saved as %s"
+msgstr "图片已保存为 %s"
+
+#: src/resource-page.c:488
+msgid "Save map image"
+msgstr "保存地图图片"
+
+#: src/resource-page.c:617 src/resource-page.c:1107
+msgid "Fit width"
+msgstr "适应宽度"
+
+#: src/resource-page.c:620
+msgid "Fit window"
+msgstr "适应窗口"
+
+#: src/resource-page.c:623
+msgid "Actual size"
+msgstr "原始大小"
+
+#: src/resource-page.c:627
+msgid "Copy image"
+msgstr "复制图片"
+
+#: src/resource-page.c:630
+msgid "Copy image path"
+msgstr "复制图片路径"
+
+#: src/resource-page.c:634
+msgid "Save image as…"
+msgstr "图片另存为…"
+
+#: src/resource-page.c:693
 msgid "Cannot open resource entry"
 msgstr "无法打开资源条目"
 
-#: src/resource-page.c:137
+#: src/resource-page.c:710
+msgid "Cannot load map image"
+msgstr "无法加载地图图片"
+
+#: src/resource-page.c:719
 msgid "Cannot read resource entry"
 msgstr "无法读取资源条目"
 
-#: src/resource-page.c:281 src/teaching-page.c:228
+#: src/resource-page.c:1075 src/teaching-page.c:228
 msgid "Back to reading"
 msgstr "返回阅读"
+
+#: src/resource-page.c:1105
+msgid "Zoom out"
+msgstr "缩小"
+
+#: src/resource-page.c:1106
+msgid "Zoom in"
+msgstr "放大"
+
+#: src/resource-page.c:1121
+msgid "Image actions"
+msgstr "图片操作"
 
 #: src/teaching-page.c:94
 msgid "Cannot read teaching passage"

@@ -31,6 +31,10 @@ GSword 的底层是 **libgsword**：一个使用 C / GObject 从零重新实现�
 | --- | --- |
 | ![模块库](data/screenshots/library.png) | ![搜索](data/screenshots/search.png) |
 
+| 地图 | 笔记 |
+| --- | --- |
+| ![地图](data/screenshots/maps.png) | ![笔记](data/screenshots/notes.png) |
+
 ## 功能
 
 ### 阅读
@@ -48,6 +52,7 @@ GSword 的底层是 **libgsword**：一个使用 C / GObject 从零重新实现�
 - 选中经文后，研经面板自动刷新对应注释、词典和原文信息
 - 支持脚注、标题、红字、Strong's、形态标签等渲染选项
 - 经文选择、复制、分享和高亮
+- 地图图片支持适应宽度/窗口、缩放、拖动、复制和另存为
 
 ### 个人内容
 
