@@ -127,4 +127,5 @@ jobs:
         run: pipx install reuse
 
       - name: Check REUSE compliance
-        run: "$HOME/.local/bin/reuse" lint
+        run: |
+          "$HOME/.local/bin/reuse" lint
