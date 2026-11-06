@@ -906,6 +906,15 @@ on_column_toggled(GtkToggleButton *button, gpointer user_data)
 
     if (!gtk_toggle_button_get_active(button))
         return;
+    if (column > 2 &&
+        gtk_widget_get_width(GTK_WIDGET(page->window)) > 0 &&
+        gtk_widget_get_width(GTK_WIDGET(page->window)) < 1000) {
+        page->columns = 2;
+        update_column_buttons(page);
+        gsword_window_set_status(
+            page->window, _("Narrow windows support at most two comparison panes"));
+        return;
+    }
     page->columns = column;
     if (page->restoring)
         return;

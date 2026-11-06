@@ -2292,6 +2292,7 @@ gsword_library_page_new(GswordWindow *self)
     GtkWidget *manage_sources = gtk_button_new_with_label(_("Manage sources"));
     GtkWidget *source_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *filter_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    GtkWidget *filter_row2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *progress_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     AdwNavigationSplitView *split_view = ADW_NAVIGATION_SPLIT_VIEW(
         adw_navigation_split_view_new());
@@ -2493,10 +2494,11 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->install_search));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->type_filter));
     gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->language_filter));
-    gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->status_filter));
-    gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->sort_dropdown));
-    gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->clear_filters_button));
-    gtk_box_append(GTK_BOX(filter_row), GTK_WIDGET(priv->filter_count));
+    gtk_box_append(GTK_BOX(filter_row2), GTK_WIDGET(priv->status_filter));
+    gtk_box_append(GTK_BOX(filter_row2), GTK_WIDGET(priv->sort_dropdown));
+    gtk_box_append(GTK_BOX(filter_row2),
+                   GTK_WIDGET(priv->clear_filters_button));
+    gtk_box_append(GTK_BOX(filter_row2), GTK_WIDGET(priv->filter_count));
 
     priv->install_progress = GTK_PROGRESS_BAR(gtk_progress_bar_new());
     gtk_progress_bar_set_show_text(priv->install_progress, FALSE);
@@ -2528,6 +2530,7 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(controls), view_row);
     gtk_box_append(GTK_BOX(controls), source_row);
     gtk_box_append(GTK_BOX(controls), filter_row);
+    gtk_box_append(GTK_BOX(controls), filter_row2);
     gtk_box_append(GTK_BOX(controls), progress_row);
     {
         GtkWidget *queue_title = gtk_label_new(_("Update queue"));

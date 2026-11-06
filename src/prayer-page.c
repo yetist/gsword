@@ -966,7 +966,7 @@ gsword_prayer_page_new(GswordWindow *window)
 
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), search_scroll);
-    gtk_paned_set_position(GTK_PANED(paned), 320);
+    gtk_paned_set_position(GTK_PANED(paned), 260);
     page->root = paned;
     g_object_set_data_full(G_OBJECT(paned), "gsword-prayer-page", page,
                            prayer_page_free);
