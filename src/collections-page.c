@@ -784,7 +784,7 @@ build_lists_tab(GswordCollectionsPage *page)
 
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), page->list_view->root);
-    gtk_paned_set_position(GTK_PANED(paned), 280);
+    gtk_paned_set_position(GTK_PANED(paned), 240);
     return paned;
 }
 

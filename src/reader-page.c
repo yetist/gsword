@@ -24,6 +24,7 @@ struct _GswordReaderPage {
     GtkPaned *paned;
     GtkWidget *study_widget;
     GswordReferenceChooser *reference_chooser;
+    GswordReferenceChooser *compact_reference_chooser;
     GtkTextTag *highlight_tag;
     GtkTextTag *active_verse_tag;
     GtkTextTag *range_tag;
@@ -104,10 +105,16 @@ static void
 on_reader_size_changed(GObject *object, GParamSpec *pspec,
                        gpointer user_data)
 {
+    GswordReaderPage *page = user_data;
+    gint width = gtk_widget_get_width(page->scrolled);
+
     (void)object;
     (void)pspec;
-    update_reading_margins(user_data);
-    schedule_reading_margins(user_data);
+    if (page->toolbar != NULL)
+        gsword_reader_toolbar_set_compact(page->toolbar,
+                                          width > 0 && width < 900);
+    update_reading_margins(page);
+    schedule_reading_margins(page);
 }
 
 static void
@@ -270,6 +277,14 @@ gsword_reader_page_sync_context(GswordReaderPage *page)
         versification != NULL && *versification != '\0'
         ? versification : "KJV");
     gsword_reference_chooser_set_locale(page->reference_chooser, locale);
+    if (page->compact_reference_chooser != NULL) {
+        gsword_reference_chooser_set_versification(
+            page->compact_reference_chooser,
+            versification != NULL && *versification != '\0'
+            ? versification : "KJV");
+        gsword_reference_chooser_set_locale(
+            page->compact_reference_chooser, locale);
+    }
     g_free(locale);
 }
 
@@ -288,9 +303,15 @@ sync_reference_chooser(GswordReaderPage *page)
     if (module == NULL ||
         gsw_key_get_kind(gsw_module_get_key(module)) != GSW_KEY_KIND_VERSE) {
         gtk_widget_set_sensitive(GTK_WIDGET(page->reference_chooser), FALSE);
+        if (page->compact_reference_chooser != NULL)
+            gtk_widget_set_sensitive(
+                GTK_WIDGET(page->compact_reference_chooser), FALSE);
         return;
     }
     gtk_widget_set_sensitive(GTK_WIDGET(page->reference_chooser), TRUE);
+    if (page->compact_reference_chooser != NULL)
+        gtk_widget_set_sensitive(
+            GTK_WIDGET(page->compact_reference_chooser), TRUE);
     key = gsw_module_get_key(module);
     verse_key = (GswVerseKey *)key;
     book = gsw_verse_key_get_global_book_number(verse_key);
@@ -300,6 +321,9 @@ sync_reference_chooser(GswordReaderPage *page)
         return;
     gsword_reference_chooser_set_reference(page->reference_chooser,
                                            book, chapter, verse);
+    if (page->compact_reference_chooser != NULL)
+        gsword_reference_chooser_set_reference(
+            page->compact_reference_chooser, book, chapter, verse);
 }
 
 void
@@ -1481,6 +1505,8 @@ gsword_reader_page_new(GswordWindow *window)
     page->toolbar = gsword_reader_toolbar_new(window, page);
     page->reference_chooser = gsword_reader_toolbar_get_reference_chooser(
         page->toolbar);
+    page->compact_reference_chooser =
+        gsword_reader_toolbar_get_compact_reference_chooser(page->toolbar);
     page->study_panel = gsword_study_panel_new(window);
 
     page->view = GTK_TEXT_VIEW(gtk_text_view_new());

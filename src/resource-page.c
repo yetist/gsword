@@ -302,7 +302,7 @@ gsword_resource_page_new(GswordWindow *window)
                      G_CALLBACK(on_resource_selected), page);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(tree_scroll),
                                   GTK_WIDGET(page->tree));
-    gtk_widget_set_size_request(tree_scroll, 280, -1);
+    gtk_widget_set_size_request(tree_scroll, 220, -1);
 
     page->text = GTK_TEXT_VIEW(gtk_text_view_new());
     gtk_text_view_set_editable(page->text, FALSE);
@@ -332,7 +332,7 @@ gsword_resource_page_new(GswordWindow *window)
 
     gtk_paned_set_start_child(GTK_PANED(paned), tree_scroll);
     gtk_paned_set_end_child(GTK_PANED(paned), GTK_WIDGET(page->content));
-    gtk_paned_set_position(GTK_PANED(paned), 300);
+    gtk_paned_set_position(GTK_PANED(paned), 240);
     gtk_widget_set_vexpand(paned, TRUE);
     gtk_box_append(GTK_BOX(box), header);
     gtk_box_append(GTK_BOX(box), paned);

@@ -257,7 +257,7 @@ gsword_teaching_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->notes));
     gtk_widget_set_vexpand(scripture_scroll, TRUE);
     gtk_widget_set_vexpand(notes_scroll, TRUE);
-    gtk_widget_set_size_request(notes_scroll, 320, -1);
+    gtk_widget_set_size_request(notes_scroll, 240, -1);
     gtk_label_set_xalign(GTK_LABEL(scripture_label), 0.0f);
     gtk_label_set_xalign(GTK_LABEL(notes_label), 0.0f);
     gtk_widget_add_css_class(scripture_label, "heading");
@@ -280,7 +280,7 @@ gsword_teaching_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(toolbar), back);
     gtk_paned_set_start_child(GTK_PANED(paned), scripture_box);
     gtk_paned_set_end_child(GTK_PANED(paned), notes_box);
-    gtk_paned_set_position(GTK_PANED(paned), 660);
+    gtk_paned_set_position(GTK_PANED(paned), 520);
     gtk_box_append(GTK_BOX(box), toolbar);
     gtk_box_append(GTK_BOX(box), paned);
     page->root = box;

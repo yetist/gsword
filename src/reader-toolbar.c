@@ -17,6 +17,8 @@ struct _GswordReaderToolbar {
     GswordReaderPage *page;
     GtkWidget *root;
     GswordReferenceChooser *reference_chooser;
+    GswordReferenceChooser *compact_reference_chooser;
+    GtkStack *reference_stack;
     GtkToggleButton *study_toggle;
     GtkButton *back;
     GtkButton *forward;
@@ -643,6 +645,23 @@ gsword_reader_toolbar_get_reference_chooser(GswordReaderToolbar *toolbar)
     return toolbar != NULL ? toolbar->reference_chooser : NULL;
 }
 
+GswordReferenceChooser *
+gsword_reader_toolbar_get_compact_reference_chooser(
+    GswordReaderToolbar *toolbar)
+{
+    return toolbar != NULL ? toolbar->compact_reference_chooser : NULL;
+}
+
+void
+gsword_reader_toolbar_set_compact(GswordReaderToolbar *toolbar,
+                                  gboolean compact)
+{
+    if (toolbar == NULL || toolbar->reference_stack == NULL)
+        return;
+    gtk_stack_set_visible_child_name(
+        toolbar->reference_stack, compact ? "compact" : "full");
+}
+
 GtkToggleButton *
 gsword_reader_toolbar_get_study_toggle(GswordReaderToolbar *toolbar)
 {
@@ -691,6 +710,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     GtkWidget *copy = gtk_button_new_from_icon_name("edit-copy-symbolic");
     GtkWidget *note = gtk_button_new_from_icon_name("document-edit-symbolic");
     GtkWidget *favorite = gtk_toggle_button_new();
+    GtkWidget *reference_stack = gtk_stack_new();
     GtkWidget *highlight = gtk_button_new_with_label(_("Highlight verse"));
     GtkWidget *list_add = gtk_menu_button_new();
     GtkWidget *prayer = gtk_button_new_with_label(_("Add to prayer"));
@@ -823,10 +843,24 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     locale = gsword_app_locale_name();
     toolbar->reference_chooser = GSWORD_REFERENCE_CHOOSER(
         gsword_reference_chooser_new("KJV", locale));
+    toolbar->compact_reference_chooser = GSWORD_REFERENCE_CHOOSER(
+        gsword_reference_chooser_new_compact("KJV", locale));
     g_free(locale);
     gtk_widget_set_hexpand(GTK_WIDGET(toolbar->reference_chooser), TRUE);
     g_signal_connect(toolbar->reference_chooser, "activate",
                      G_CALLBACK(on_reference_activate), toolbar);
+    g_signal_connect(toolbar->compact_reference_chooser, "activate",
+                     G_CALLBACK(on_reference_activate), toolbar);
+    gtk_stack_add_named(GTK_STACK(reference_stack),
+                        GTK_WIDGET(toolbar->reference_chooser), "full");
+    gtk_stack_add_named(GTK_STACK(reference_stack),
+                        GTK_WIDGET(toolbar->compact_reference_chooser),
+                        "compact");
+    gtk_stack_set_hhomogeneous(GTK_STACK(reference_stack), FALSE);
+    gtk_stack_set_vhomogeneous(GTK_STACK(reference_stack), FALSE);
+    gtk_stack_set_visible_child_name(GTK_STACK(reference_stack), "compact");
+    gtk_widget_set_hexpand(reference_stack, TRUE);
+    toolbar->reference_stack = GTK_STACK(reference_stack);
     g_signal_connect(copy, "clicked", G_CALLBACK(on_copy_clicked), toolbar);
     g_signal_connect(note, "clicked", G_CALLBACK(on_note_clicked), toolbar);
     g_signal_connect(highlight, "clicked",
@@ -920,7 +954,7 @@ gsword_reader_toolbar_new(GswordWindow *window, GswordReaderPage *page)
     gtk_box_append(GTK_BOX(bar), back);
     gtk_box_append(GTK_BOX(bar), forward);
     gtk_box_append(GTK_BOX(bar), history_button);
-    gtk_box_append(GTK_BOX(bar), GTK_WIDGET(toolbar->reference_chooser));
+    gtk_box_append(GTK_BOX(bar), reference_stack);
     gtk_box_append(GTK_BOX(bar), copy);
     gtk_box_append(GTK_BOX(bar), note);
     gtk_box_append(GTK_BOX(bar), favorite);

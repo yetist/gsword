@@ -23,7 +23,10 @@
 
 #include <glib/gi18n.h>
 
-#define GSWORD_WINDOW_MIN_WIDTH 1140
+#define GSWORD_WINDOW_MIN_WIDTH 800
+#define GSWORD_WINDOW_MIN_HEIGHT 600
+#define GSWORD_WINDOW_PREFERRED_WIDTH 1280
+#define GSWORD_WINDOW_PREFERRED_HEIGHT 800
 
 struct _GswordWindow {
     AdwApplicationWindow parent_instance;
@@ -1279,8 +1282,32 @@ gsword_window_build(GswordWindow *self)
     priv->sidebar_visible = TRUE;
     gtk_window_set_title(GTK_WINDOW(self), "GSword");
     gtk_window_set_icon_name(GTK_WINDOW(self), "org.gsword.GSword");
-    gtk_window_set_default_size(GTK_WINDOW(self), GSWORD_WINDOW_MIN_WIDTH, 760);
-    gtk_widget_set_size_request(GTK_WIDGET(self), GSWORD_WINDOW_MIN_WIDTH, 660);
+    {
+        gint width = GSWORD_WINDOW_PREFERRED_WIDTH;
+        gint height = GSWORD_WINDOW_PREFERRED_HEIGHT;
+        GdkDisplay *display = gdk_display_get_default();
+
+        if (display != NULL) {
+            GListModel *monitors = gdk_display_get_monitors(display);
+
+            if (monitors != NULL && g_list_model_get_n_items(monitors) > 0) {
+                GdkMonitor *monitor = g_list_model_get_item(monitors, 0);
+                GdkRectangle geometry;
+
+                gdk_monitor_get_geometry(monitor, &geometry);
+                width = CLAMP(geometry.width - 120, GSWORD_WINDOW_MIN_WIDTH,
+                              GSWORD_WINDOW_PREFERRED_WIDTH);
+                height = CLAMP(geometry.height - 120,
+                               GSWORD_WINDOW_MIN_HEIGHT,
+                               GSWORD_WINDOW_PREFERRED_HEIGHT);
+                g_object_unref(monitor);
+            }
+            g_object_unref(monitors);
+        }
+        gtk_window_set_default_size(GTK_WINDOW(self), width, height);
+    }
+    gtk_widget_set_size_request(GTK_WIDGET(self), GSWORD_WINDOW_MIN_WIDTH,
+                                GSWORD_WINDOW_MIN_HEIGHT);
 
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     header = ADW_HEADER_BAR(adw_header_bar_new());
@@ -1322,10 +1349,15 @@ gsword_window_build(GswordWindow *self)
 
     split = ADW_OVERLAY_SPLIT_VIEW(adw_overlay_split_view_new());
     priv->split_view = split;
-    adw_overlay_split_view_set_sidebar_width_fraction(split, 0.24);
+    adw_overlay_split_view_set_sidebar_width_fraction(split, 0.28);
     priv->module_sidebar = gsword_module_sidebar_new(self);
-    adw_overlay_split_view_set_sidebar(
-        split, gsword_module_sidebar_widget(priv->module_sidebar));
+    {
+        GtkWidget *sidebar_widget = gsword_module_sidebar_widget(
+            priv->module_sidebar);
+
+        gtk_widget_set_size_request(sidebar_widget, 180, -1);
+        adw_overlay_split_view_set_sidebar(split, sidebar_widget);
+    }
     g_signal_connect(priv->split_view, "notify::collapsed",
                      G_CALLBACK(on_sidebar_collapsed_changed), self);
     g_signal_connect(priv->split_view, "notify::show-sidebar",
@@ -1349,6 +1381,8 @@ gsword_window_build(GswordWindow *self)
         priv->personal_page, on_personal_section_changed, self);
     priv->library_page = gsword_library_page_new(self);
     priv->content_stack = ADW_VIEW_STACK(adw_view_stack_new());
+    adw_view_stack_set_hhomogeneous(priv->content_stack, FALSE);
+    adw_view_stack_set_vhomogeneous(priv->content_stack, FALSE);
     priv->reader_page = gsword_reader_page_new(self);
     adw_view_stack_add_titled_with_icon(priv->content_stack,
                                         gsword_reader_page_widget(
@@ -1441,30 +1475,13 @@ gsword_window_build(GswordWindow *self)
     adw_application_window_set_content(ADW_APPLICATION_WINDOW(self),
                                        GTK_WIDGET(priv->toast_overlay));
 
-    condition = adw_breakpoint_condition_parse("max-width: 700sp");
+    condition = adw_breakpoint_condition_parse("max-width: 1000sp");
     if (condition != NULL) {
         breakpoint = adw_breakpoint_new(condition);
         g_value_init(&value, G_TYPE_BOOLEAN);
         g_value_set_boolean(&value, TRUE);
-        adw_breakpoint_add_setter(breakpoint, G_OBJECT(switcher_bar),
-                                  "reveal", &value);
         adw_breakpoint_add_setter(breakpoint, G_OBJECT(split),
                                   "collapsed", &value);
-        g_value_set_boolean(&value, FALSE);
-        adw_breakpoint_add_setter(
-            breakpoint,
-            G_OBJECT(gsword_personal_page_switcher(priv->personal_page)),
-            "visible", &value);
-        g_value_set_boolean(&value, TRUE);
-        adw_breakpoint_add_setter(
-            breakpoint,
-            G_OBJECT(gsword_personal_page_switcher_bar(priv->personal_page)),
-            "reveal", &value);
-        g_value_unset(&value);
-        g_value_init(&value, GTK_TYPE_WIDGET);
-        g_value_set_object(&value, NULL);
-        adw_breakpoint_add_setter(breakpoint, G_OBJECT(header),
-                                  "title-widget", &value);
         g_value_unset(&value);
         adw_application_window_add_breakpoint(ADW_APPLICATION_WINDOW(self),
                                               breakpoint);

@@ -20,6 +20,10 @@ GswordReaderToolbar *gsword_reader_toolbar_new(GswordWindow *window,
 GtkWidget *gsword_reader_toolbar_widget(GswordReaderToolbar *toolbar);
 GswordReferenceChooser *gsword_reader_toolbar_get_reference_chooser(
     GswordReaderToolbar *toolbar);
+GswordReferenceChooser *gsword_reader_toolbar_get_compact_reference_chooser(
+    GswordReaderToolbar *toolbar);
+void gsword_reader_toolbar_set_compact(GswordReaderToolbar *toolbar,
+                                       gboolean compact);
 GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
     GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);

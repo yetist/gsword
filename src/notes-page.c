@@ -1739,7 +1739,7 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_widget_set_margin_bottom(right, 8);
     gtk_widget_set_margin_start(right, 10);
     gtk_widget_set_margin_end(right, 10);
-    gtk_widget_set_size_request(left, 400, -1);
+    gtk_widget_set_size_request(left, 260, -1);
 
     page->search = GTK_ENTRY(gtk_entry_new());
     gtk_entry_set_placeholder_text(page->search, _("Search notes"));
@@ -2090,7 +2090,7 @@ gsword_notes_page_new(GswordWindow *window)
 
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), right);
-    gtk_paned_set_position(GTK_PANED(paned), 440);
+    gtk_paned_set_position(GTK_PANED(paned), 280);
     {
         GtkEventController *keys = gtk_event_controller_key_new();
 

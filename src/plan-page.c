@@ -1099,6 +1099,19 @@ plan_page_free(gpointer data)
     g_free(page);
 }
 
+static void
+on_management_height_changed(GObject *object, GParamSpec *pspec,
+                             gpointer user_data)
+{
+    gint height = gtk_widget_get_height(GTK_WIDGET(object));
+
+    (void)pspec;
+    (void)user_data;
+    if (height <= 0)
+        return;
+    gtk_paned_set_position(GTK_PANED(object), CLAMP(height - 150, 285, 380));
+}
+
 GswordPlanPage *
 gsword_plan_page_new(GswordWindow *window)
 {
@@ -1153,7 +1166,7 @@ gsword_plan_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(plans_scroll),
                                   GTK_WIDGET(page->plans_list));
     gtk_widget_set_vexpand(plans_scroll, TRUE);
-    gtk_widget_set_size_request(plans_scroll, -1, 140);
+    gtk_widget_set_size_request(plans_scroll, -1, 80);
     gtk_label_set_xalign(GTK_LABEL(plans_label), 0.0f);
     gtk_widget_set_hexpand(plans_label, TRUE);
     gtk_widget_add_css_class(plans_label, "heading");
@@ -1295,7 +1308,12 @@ gsword_plan_page_new(GswordWindow *window)
 
         gtk_paned_set_start_child(GTK_PANED(management_page), today_page);
         gtk_paned_set_end_child(GTK_PANED(management_page), plans_page);
-        gtk_paned_set_position(GTK_PANED(management_page), 380);
+        gtk_paned_set_position(GTK_PANED(management_page), 285);
+        gtk_paned_set_resize_start_child(GTK_PANED(management_page), FALSE);
+        gtk_paned_set_shrink_start_child(GTK_PANED(management_page), FALSE);
+        gtk_paned_set_shrink_end_child(GTK_PANED(management_page), FALSE);
+        g_signal_connect(management_page, "notify::height",
+                         G_CALLBACK(on_management_height_changed), NULL);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), management_page,
                                  gtk_label_new(_("Plan management")));
     }

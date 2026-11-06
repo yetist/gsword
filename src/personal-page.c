@@ -91,6 +91,8 @@ gsword_personal_page_new(GswordWindow *window, GtkWidget *today_widget,
     page->window = window;
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     page->stack = ADW_VIEW_STACK(adw_view_stack_new());
+    adw_view_stack_set_hhomogeneous(page->stack, FALSE);
+    adw_view_stack_set_vhomogeneous(page->stack, FALSE);
 
     adw_view_stack_add_titled_with_icon(page->stack, today_widget, "today",
                                         _("Today"), "x-office-calendar-symbolic");
