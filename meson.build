@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 Xiaotian Wu <yetist@gmail.com>
 
 project('gsword', 'c',
-  version: '0.2.0',
+  version: '0.3.0',
   license: 'GPL-2.0-or-later',
   meson_version: '>=0.63.0',
   default_options: [
