@@ -1,126 +1,128 @@
 # GSword
 
+**English** | [简体中文](README.zh_CN.md)
+
 [![CI](https://github.com/yetist/gsword/actions/workflows/ci.yml/badge.svg)](https://github.com/yetist/gsword/actions/workflows/ci.yml)
 
 <p align="center">
   <img src="data/icons/hicolor/scalable/apps/org.gsword.GSword.svg" width="128" height="128" alt="GSword logo">
 </p>
 
-**GSword 是一款使用 GTK4 / libadwaita 编写的现代研经软件。**
+**GSword is a modern Bible study application built with GTK4 / libadwaita.**
 
-它围绕经文阅读、跨译本对照、注释与原文研究、个人笔记和阅读计划组织界面，并直接读取 SWORD 模块。
+Its interface is organized around Scripture reading, parallel translation comparison, commentary and original-language study, personal notes, and reading plans. It reads SWORD modules directly.
 
-GSword 的底层是 **libgsword**：一个使用 C / GObject 从零重新实现的 SWORD 模块库。它不链接上游 C++ `libsword`，同时提供 GObject Introspection 和 Vala API，便于其他 GTK/GNOME 应用复用。
+At its core is **libgsword**: a from-scratch C / GObject reimplementation of the SWORD module library. It does not link against the upstream C++ `libsword`, and it provides GObject Introspection and a Vala API so other GTK/GNOME applications can reuse it.
 
-- 源码仓库：<https://github.com/yetist/gsword>
-- 问题反馈：<https://github.com/yetist/gsword/issues>
+- Source repository: <https://github.com/yetist/gsword>
+- Issue tracker: <https://github.com/yetist/gsword/issues>
 
-> 当前项目仍在持续开发中。
+> The project is still under active development.
 
-## 截图
+## Screenshots
 
-| 阅读 | 对照 |
+| Reading | Compare |
 | --- | --- |
-| ![阅读](data/screenshots/reader.png) | ![对照](data/screenshots/compare.png) |
+| ![Reading](data/screenshots/reader.png) | ![Compare](data/screenshots/compare.png) |
 
-| 个人中心 | 阅读计划 |
+| Personal center | Reading plans |
 | --- | --- |
-| ![个人中心](data/screenshots/personal.png) | ![阅读计划](data/screenshots/plans.png) |
+| ![Personal center](data/screenshots/personal.png) | ![Reading plans](data/screenshots/plans.png) |
 
-| 模块库 | 搜索 |
+| Module library | Search |
 | --- | --- |
-| ![模块库](data/screenshots/library.png) | ![搜索](data/screenshots/search.png) |
+| ![Module library](data/screenshots/library.png) | ![Search](data/screenshots/search.png) |
 
-| 地图 | 笔记 |
+| Maps | Notes |
 | --- | --- |
-| ![地图](data/screenshots/maps.png) | ![笔记](data/screenshots/notes.png) |
+| ![Maps](data/screenshots/maps.png) | ![Notes](data/screenshots/notes.png) |
 
-## 功能
+## Features
 
-### 阅读
+### Reading
 
-- 整章阅读、书卷/章/节选择器和引用输入
-- 1–4 栏多译本对照，支持同步滚动、固定、独立和拖拽重排
-- 阅读历史前进/后退、最近阅读列表和阅读位置恢复
-- 专注阅读模式、阅读宽度、字体大小、行距和正文衬线/无衬线选择
-- 切换译本时保持当前 passage；新译本缺少该经文时回退到同一书卷首章
-- 本地化书名和缩写，可选择“跟随模块语言”或“跟随界面语言”
+- Whole-chapter reading, book/chapter/verse selector, and reference input
+- 1–4 column parallel translation comparison with synchronized scrolling, pinned panes, independent panes, and drag reordering
+- Reading history back/forward, recent reading list, and reading position restoration
+- Focus reading mode, reading width, font size, line spacing, and serif/sans-serif body text
+- Preserve the current passage when switching translations; fall back to the first chapter of the same book if the new module lacks the verse
+- Localized book names and abbreviations with “follow module language” or “follow interface language” modes
 
-### 研经
+### Study
 
-- 注释书、词典、字典、Strong's、交叉引用和原文资源协同
-- 选中经文后，研经面板自动刷新对应注释、词典和原文信息
-- 支持脚注、标题、红字、Strong's、形态标签等渲染选项
-- 经文选择、复制、分享和高亮
-- 地图图片支持适应宽度/窗口、缩放、拖动、复制和另存为
+- Commentary, lexicon, dictionary, Strong's, cross-reference, and original-language resources working together
+- The study panel automatically refreshes commentary, lexicon, and original-language information for the selected verse
+- Render options for footnotes, headings, red letter, Strong's, morphology tags, and more
+- Verse selection, copy, share, and highlighting
+- Map image viewer with fit width/window, zoom, pan, copy, and save-as support
 
-### 个人内容
+### Personal content
 
-- 个人中心：今日、笔记、祷告、计划、收藏与列表
-- 今日聚合继续阅读、今日计划、祷告摘要、背经复习和最近笔记
-- 逐节笔记、标签和经文高亮
-- 经文列表与星标收藏：列表管理、阅读器一键星标、系统收藏不可删除
-- 书签：阅读位置、标题和备注，与阅读历史分离
-- 收获：自由文本、可选经文关联、标签、搜索和更新时间排序
-- 祷告事项管理：进行中/已应允/已归档、搜索、筛选、关联经文和祷告日志
-- Markdown 编辑、语法高亮和导出
-- 阅读计划、进度跟踪、日程筛选、背经复习和教学布局
-- 笔记、祷告、计划、背经队列和教学讲义保存在本地 SQLite 数据库
+- Personal center: Today, Notes, Prayer, Plans, Collections & Lists
+- Today aggregates continue reading, today's plan, prayer summary, memory review, and recent notes
+- Per-verse notes, tags, and verse highlights
+- Verse lists and starred favorites: list management, one-click starring in the reader, and non-deletable system favorites
+- Bookmarks with reading position, title, and notes, separate from reading history
+- Insights: free-form text, optional verse association, tags, search, and updated-time sorting
+- Prayer management: active/answered/archived items, search, filters, linked verses, and a prayer log
+- Markdown editing, syntax highlighting, and export
+- Reading plans, progress tracking, schedule filtering, memory review, and teaching layout
+- Notes, prayer, plans, memory queues, and teaching handouts are stored in a local SQLite database
 
-### 搜索
+### Search
 
-- phrase、multiword、regex 和属性搜索
-- 按模块、旧约/新约、当前书卷/章节限定范围
-- 异步搜索、进度、取消和结果计数
-- 搜索结果右键菜单：复制、打开、添加笔记、加入背经/经文列表、查看模块信息
-- 可选的持久化倒排索引，索引存放在 XDG cache 目录
+- Phrase, multiword, regex, and attribute search
+- Scope by module, Old/New Testament, current book, or current chapter
+- Asynchronous search with progress, cancellation, and result counts
+- Search result context menu: copy, open, add note, add to memory/verse list, and view module information
+- Optional persistent inverted index stored in the XDG cache directory
 
-### 模块管理
+### Module management
 
-- 读取 RawText、zText、RawCom、zCom、RawLD、zLD、RawGenBook、RawFiles、HREFCom 等常见 SWORD 模块
-- 已安装、可安装、可更新视图
-- 从 HTTP/HTTPS/FTP 源安装和更新模块，支持进度、取消、代理和失败重试
-- 本地目录安装、加密模块解锁、依赖/冲突提示
-- 用户模块库可写，系统模块库只读叠加，用户库优先
+- Read common SWORD modules including RawText, zText, RawCom, zCom, RawLD, zLD, RawGenBook, RawFiles, and HREFCom
+- Installed, available, and updates views
+- Install and update modules from HTTP/HTTPS/FTP sources with progress, cancellation, proxy support, and retry
+- Local directory installation, encrypted module unlocking, and dependency/conflict prompts
+- Writable user module library, read-only system library overlay, and user library priority
 
 ## libgsword
 
-`libgsword` 是 GSword 的底层模块库，也是本项目的重要组成部分，但产品重心是桌面研经体验。
+`libgsword` is the underlying module library and an important part of the project, while the product focus is the desktop Bible study experience.
 
-它提供：
+It provides:
 
-- `GswManager`、`GswModule`、`GswModuleInfo`
-- `GswVerseKey`、`GswStrKey`、`GswTreeKey`
-- `GswInstallManager`、`GswInstallSource`、`GswStatusReporter`
-- `GswLocaleMgr` 和本地化书卷名
-- GObject Introspection、GIR/typelib、Vala API 和 gi-docgen 文档
+- `GswManager`, `GswModule`, and `GswModuleInfo`
+- `GswVerseKey`, `GswStrKey`, and `GswTreeKey`
+- `GswInstallManager`, `GswInstallSource`, and `GswStatusReporter`
+- `GswLocaleMgr` and localized book names
+- GObject Introspection, GIR/typelib, Vala API, and gi-docgen documentation
 
-设计目标：
+Design goals:
 
-- 不链接上游 C++ `libsword`，按 SWORD 1.9 的公开行为、目录布局和存储格式重新实现
-- 读取常见 SWORD 模块，并支持安装、更新、删除和写入
-- 核心 API 使用 GObject 风格，便于 GTK、GNOME 和其他语言绑定使用
+- Do not link against upstream C++ `libsword`; reimplement the public behavior, directory layout, and storage formats of SWORD 1.9
+- Read common SWORD modules and support installing, updating, deleting, and writing them
+- Use GObject-style core APIs for GTK, GNOME, and other language bindings
 
-更详细的库设计见 [`docs/design.md`](docs/design.md)。
+See [`docs/design.md`](docs/design.md) for the detailed library design.
 
-## 项目结构
+## Project layout
 
 ```text
 libsword/
-├── src/                  GSword GTK4 应用和引用选择器
-├── lib/                  libgsword 库实现
-├── include/gsword/       libgsword 公共 API
-├── data/locales.d/       libgsword locale 数据
-├── tools/                locale 导入、校验和 versification 生成工具
-├── examples/             库示例和 GTK4 原型
-├── tests/                库测试、引用选择器测试和 demo
-├── docs/                 设计、格式、里程碑和应用文档
-└── sword-1.9.0/          上游 SWORD 源码，仅作参考，不参与构建
+├── src/                  GSword GTK4 application and reference chooser
+├── lib/                  libgsword implementation
+├── include/gsword/       libgsword public API
+├── data/locales.d/       libgsword locale data
+├── tools/                Locale import, validation, and versification tools
+├── examples/             Library examples and GTK4 prototype
+├── tests/                Library tests, reference chooser tests, and demos
+├── docs/                 Design, format, milestone, and application docs
+└── sword-1.9.0/          Upstream SWORD sources, reference only, not built
 ```
 
-GSword 应用只依赖 `include/gsword/` 的公共接口。
+The GSword application depends only on the public interfaces in `include/gsword/`.
 
-## 构建
+## Building
 
 ```sh
 git clone https://github.com/yetist/gsword.git
@@ -130,72 +132,72 @@ meson setup build
 meson compile -C build
 ```
 
-只构建库和测试、不构建桌面应用时，可以缺少 GTK4/libadwaita/SQLite3。桌面应用需要：
+When building only the library and tests without the desktop application, GTK4/libadwaita/SQLite3 may be absent. The desktop application requires:
 
 - GTK4
 - libadwaita
 - SQLite3
-- 可选 GtkSourceView 5
+- Optional GtkSourceView 5
 
-## 运行 GSword
+## Running GSword
 
 ```sh
 ./build/src/gsword
 ```
 
-默认使用 XDG 用户模块库。也可以显式指定：
+By default, GSword uses the XDG user module library. You can also specify it explicitly:
 
 ```sh
 ./build/src/gsword --library ~/.sword
-# 或
+# or
 GSWORD_LIBRARY=~/.sword ./build/src/gsword
 ```
 
-开发构建使用源码中的界面翻译：
+To use the interface translations from a development build:
 
 ```sh
 LANG=zh_CN.UTF-8 GSW_LOCALEDIR=$PWD/build/po \
   ./build/src/gsword --library ~/.local/share/gsword/library
 ```
 
-## 用户数据目录
+## User data directories
 
-GSword 使用 XDG 目录，并按职责分离模块库、配置和缓存：
+GSword uses XDG directories and separates the module library, configuration, and cache:
 
 ```text
-~/.local/share/gsword/library/   可写的 SWORD 模块库
-~/.local/share/gsword/app.db     SQLite：笔记、计划、背经、教学讲义
-~/.local/share/gsword/exports/   默认导出目录
+~/.local/share/gsword/library/   Writable SWORD module library
+~/.local/share/gsword/app.db     SQLite: notes, plans, memory, teaching handouts
+~/.local/share/gsword/exports/   Default export directory
 ~/.config/gsword/installmgr/     InstallMgr.conf
-~/.cache/gsword/installmgr/      下载缓存和远端模块列表
-~/.cache/gsword/search/          搜索索引
+~/.cache/gsword/installmgr/      Download cache and remote module lists
+~/.cache/gsword/search/          Search indexes
 ```
 
-系统模块库（例如 `/usr/share/sword`）以只读方式叠加，用户库优先。
-`~/.sword` 不再隐式使用；如需使用旧库，可在偏好设置中切换，或通过
-`--library PATH` / `GSWORD_LIBRARY=PATH` 指定。
+The system module library (for example `/usr/share/sword`) is overlaid read-only, with the user library taking priority.
+`~/.sword` is no longer used implicitly; to use an old library, switch it in Preferences or pass
+`--library PATH` / `GSWORD_LIBRARY=PATH`.
 
-## 测试与开发
+## Testing and development
 
 ```sh
 meson test -C build
 
-# ASan 构建
+# ASan build
 meson setup build-asan -Db_sanitize=address
 meson test -C build-asan
 ```
 
-库示例：
+Library examples:
 
 ```sh
-# 列出本地模块
+# List local modules
 ./build/examples/gsword-list-modules ~/.local/share/gsword/library
 
-# 读取经文
+# Read verses
 ./build/examples/gsword-lookup ~/.local/share/gsword/library KJV "John 3:16"
 ./build/examples/gsword-lookup ~/.local/share/gsword/library KJV "启示录 1:1" zh-Hans
 
-# 模块信息、章节、字典、通用书
+# Module info, chapters, dictionaries, and general books
 ./build/examples/gsword-module-info ~/.local/share/gsword/library KJV
 ./build/examples/gsword-chapter ~/.local/share/gsword/library KJV "John 3"
 ./build/examples/gsword-dict-lookup ~/.local/share/gsword/library StrongsGreek G26
@@ -212,7 +214,7 @@ meson test -C build-asan
 ./build/examples/gsword-parallel ~/.local/share/gsword/library KJV "John 3:16" "Rom 8:1"
 ```
 
-安装模块示例：
+Install modules:
 
 ```sh
 ./build/examples/gsword-install-sources ~/.config/gsword/installmgr
@@ -222,66 +224,66 @@ meson test -C build-asan
   ~/.local/share/gsword/library ~/.config/gsword/installmgr CrossWire KJV
 ```
 
-## GObject Introspection 与文档
+## GObject Introspection and documentation
 
-生成 GIR/typelib 和 Vala API：
+Generate GIR/typelib and the Vala API:
 
 ```sh
 meson setup build-gir -Dintrospection=true
 meson compile -C build-gir
 meson test -C build-gir introspection
-# GIR：build-gir/GSword-0.1.gir
-# typelib：build-gir/GSword-0.1.typelib
-# Vala：build-gir/gsword.vapi
+# GIR: build-gir/GSword-0.1.gir
+# typelib: build-gir/GSword-0.1.typelib
+# Vala: build-gir/gsword.vapi
 ```
 
-GIR 命名空间为 `GSword`；VAPI 命名空间为 `Gsw`。
+The GIR namespace is `GSword`; the VAPI namespace is `Gsw`.
 
-生成 API 文档：
+Generate API documentation:
 
 ```sh
 meson setup build-doc -Ddocs=true
 meson compile -C build-doc docs
-# 输出：build-doc/docs/reference/gsword/index.html
+# Output: build-doc/docs/reference/gsword/index.html
 ```
 
-## 构建选项
+## Build options
 
-- `-Dtests=true`：构建并注册测试（默认开启）
-- `-Ddocs=true`：启用 gi-docgen API 文档，同时启用 introspection
-- `-Dintrospection=true`：生成 GIR/typelib 和 Vala API
-- `-Dbzip2=auto` / `-Dlzma=auto`：自动检测可选压缩库
-- 检测到 GTK4、libadwaita 和 SQLite3 时构建桌面应用；检测到 GTK4 时构建引用选择器 demo
+- `-Dtests=true`: build and register tests (enabled by default)
+- `-Ddocs=true`: enable gi-docgen API documentation and introspection
+- `-Dintrospection=true`: generate GIR/typelib and the Vala API
+- `-Dbzip2=auto` / `-Dlzma=auto`: auto-detect optional compression libraries
+- The desktop application is built when GTK4, libadwaita, and SQLite3 are detected; the reference chooser demo is built when GTK4 is detected
 
-## 文档
+## Documentation
 
-- [`docs/design.md`](docs/design.md)：libgsword 架构、对象模型和 API 设计
-- [`docs/milestones.md`](docs/milestones.md)：M0–M13 实现记录和验收条件
-- [`docs/formats.md`](docs/formats.md)：配置文件、模块目录、Raw/z 存储格式和安装源
-- [`docs/upstream-analysis.md`](docs/upstream-analysis.md)：上游 SWORD 1.9 源码分析
-- [`docs/app-design.md`](docs/app-design.md)：GSword 桌面应用的功能与界面设计
-- [`docs/personal-prayer-design.md`](docs/personal-prayer-design.md)：全局信息架构与个人中心规划（笔记、祷告、计划、收藏、书签、收获）
-- [`docs/workspace-design.md`](docs/workspace-design.md)：阅读工作区、活动经文和多资源协同设计
-- [`docs/reference-chooser.md`](docs/reference-chooser.md)：书卷/章/节引用选择器设计
-- [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md)：GTK4 窗口页面对象拆分计划
-- [`docs/window-refactor-acceptance.md`](docs/window-refactor-acceptance.md)：窗口重构验收记录
+- [`docs/design.md`](docs/design.md): libgsword architecture, object model, and API design
+- [`docs/milestones.md`](docs/milestones.md): M0–M13 implementation record and acceptance criteria
+- [`docs/formats.md`](docs/formats.md): configuration files, module directories, Raw/z storage formats, and install sources
+- [`docs/upstream-analysis.md`](docs/upstream-analysis.md): upstream SWORD 1.9 source analysis
+- [`docs/app-design.md`](docs/app-design.md): GSword desktop application features and UI design
+- [`docs/personal-prayer-design.md`](docs/personal-prayer-design.md): global information architecture and personal center plan (notes, prayer, plans, collections, bookmarks, insights)
+- [`docs/workspace-design.md`](docs/workspace-design.md): reading workspace, active verse, and multi-resource study design
+- [`docs/reference-chooser.md`](docs/reference-chooser.md): book/chapter/verse reference chooser design
+- [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md): GTK4 window page object split plan
+- [`docs/window-refactor-acceptance.md`](docs/window-refactor-acceptance.md): window refactor acceptance record
 
-## 依赖
+## Dependencies
 
-- GLib / GObject / GIO（>= 2.66）
-- libcurl（>= 7.68）
+- GLib / GObject / GIO (>= 2.66)
+- libcurl (>= 7.68)
 - zlib
-- 可选：libbz2、liblzma、gobject-introspection、vala/vapigen、gi-docgen
-- GSword 桌面应用：GTK4、libadwaita、SQLite3、可选 GtkSourceView 5
-- Meson / Ninja、pkg-config
+- Optional: libbz2, liblzma, gobject-introspection, vala/vapigen, gi-docgen
+- GSword desktop application: GTK4, libadwaita, SQLite3, optional GtkSourceView 5
+- Meson / Ninja, pkg-config
 
-## 参与贡献
+## Contributing
 
-欢迎通过 GitHub Issues 报告问题、提出建议或提交改进：
+Issues, suggestions, and improvements are welcome through GitHub Issues:
 
 <https://github.com/yetist/gsword/issues>
 
-## 许可证
+## License
 
-GPL-2.0-or-later，与上游 SWORD 及旧 `gsword` 保持一致。完整许可证文本见
-[`COPYING`](COPYING)。
+GPL-2.0-or-later, consistent with upstream SWORD and the old `gsword`. See
+[`COPYING`](COPYING) for the complete license text.
