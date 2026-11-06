@@ -31,6 +31,10 @@
       <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/compare.png</image>
     </screenshot>
     <screenshot>
+      <caption>Study Bible maps with zoom and image export</caption>
+      <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/maps.png</image>
+    </screenshot>
+    <screenshot>
       <caption>Keep notes, prayer, reading plans, and collections together</caption>
       <image type="source">https://raw.githubusercontent.com/yetist/gsword/main/data/screenshots/personal.png</image>
     </screenshot>
@@ -84,6 +88,7 @@
           <li>Add notes, prayer journal, insights, reading plans, bookmarks, and verse collections.</li>
           <li>Add versioned application data with schema migration support.</li>
           <li>Support 800x600 windows with a collapsible sidebar and compact reader controls.</li>
+          <li>Add zoom, drag, copy, and save support for map images.</li>
           <li>Improve module library filtering and plan management.</li>
         </ul>
       </description>

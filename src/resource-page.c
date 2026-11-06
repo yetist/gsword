@@ -5,10 +5,12 @@
  */
 
 #include "resource-page.h"
+#include "app-paths.h"
+#include "image-utils.h"
+#include "image-view.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
-
 #include <string.h>
 
 typedef struct {
@@ -28,7 +30,12 @@ struct _GswordResourcePage {
     GtkListBox *tree;
     GtkStack *content;
     GtkTextView *text;
-    GtkPicture *picture;
+    GswordImageView *image_view;
+    GtkWidget *image_controls;
+    GtkButton *zoom_out;
+    GtkButton *zoom_in;
+    GtkLabel *zoom_label;
+    GtkPopover *image_context_menu;
 };
 
 static void
@@ -86,6 +93,385 @@ collect_entries(GswTreeKey *node, GPtrArray *entries, gint depth)
 }
 
 static void
+set_icon_button_label(GtkWidget *button, const gchar *label)
+{
+    gtk_widget_set_tooltip_text(button, label);
+    gtk_accessible_update_property(GTK_ACCESSIBLE(button),
+                                   GTK_ACCESSIBLE_PROPERTY_LABEL, label, -1);
+}
+
+static void
+update_image_controls(GswordResourcePage *page)
+{
+    gdouble zoom;
+    gchar *label;
+
+    if (!gsword_image_view_has_image(page->image_view)) {
+        gtk_label_set_text(page->zoom_label, "100%");
+        gtk_widget_set_sensitive(GTK_WIDGET(page->zoom_out), FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(page->zoom_in), FALSE);
+        return;
+    }
+    zoom = gsword_image_view_get_zoom(page->image_view);
+    label = g_strdup_printf("%d%%", (gint)(zoom * 100.0 + 0.5));
+    gtk_label_set_text(page->zoom_label, label);
+    g_free(label);
+    gtk_widget_set_sensitive(GTK_WIDGET(page->zoom_out),
+                             zoom > GSWORD_IMAGE_MIN_ZOOM + 1e-6);
+    gtk_widget_set_sensitive(GTK_WIDGET(page->zoom_in),
+                             zoom < GSWORD_IMAGE_MAX_ZOOM - 1e-6);
+}
+
+static void
+clear_image(GswordResourcePage *page)
+{
+    if (page->image_view != NULL)
+        gsword_image_view_clear(page->image_view);
+    if (page->zoom_label != NULL)
+        gtk_label_set_text(page->zoom_label, "100%");
+    if (page->image_controls != NULL)
+        gtk_widget_set_visible(page->image_controls, FALSE);
+}
+
+static void
+on_image_zoom_changed(GswordImageView *view, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)view;
+    update_image_controls(page);
+}
+
+static gboolean
+image_texture_same_extension(const gchar *source, const gchar *destination)
+{
+    const gchar *source_dot = strrchr(source, '.');
+    const gchar *destination_dot = strrchr(destination, '.');
+    const gchar *source_slash = strrchr(source, '/');
+    const gchar *destination_slash = strrchr(destination, '/');
+
+    if (source_dot == NULL || destination_dot == NULL)
+        return FALSE;
+    if (source_slash != NULL && source_dot < source_slash)
+        return FALSE;
+    if (destination_slash != NULL && destination_dot < destination_slash)
+        return FALSE;
+    return g_ascii_strcasecmp(source_dot, destination_dot) == 0;
+}
+
+static gboolean
+image_texture_has_png_extension(const gchar *path)
+{
+    const gchar *dot = strrchr(path, '.');
+    const gchar *slash = strrchr(path, '/');
+
+    if (dot == NULL || (slash != NULL && dot < slash))
+        return FALSE;
+    return g_ascii_strcasecmp(dot, ".png") == 0;
+}
+
+static void
+copy_image_to_clipboard(GswordResourcePage *page)
+{
+    GdkTexture *texture = gsword_image_view_get_texture(page->image_view);
+    GdkClipboard *clipboard;
+
+    if (texture == NULL)
+        return;
+    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+    gdk_clipboard_set_texture(clipboard, texture);
+    gsword_window_toast(page->window, _("Image copied to clipboard"));
+}
+
+static void
+copy_image_path_to_clipboard(GswordResourcePage *page)
+{
+    const gchar *path = gsword_image_view_get_path(page->image_view);
+    GdkClipboard *clipboard;
+
+    if (path == NULL)
+        return;
+    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+    gdk_clipboard_set_text(clipboard, path);
+    gsword_window_toast(page->window,
+                        _("Image path copied to clipboard"));
+}
+
+static void
+on_save_image_finish(GObject *source, GAsyncResult *result, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+    const gchar *source_path = g_object_get_data(source, "source-path");
+    GdkTexture *texture = gsword_image_view_get_texture(page->image_view);
+    GError *error = NULL;
+    GFile *file = gtk_file_dialog_save_finish(GTK_FILE_DIALOG(source), result,
+                                              &error);
+
+    if (file == NULL) {
+        g_clear_error(&error);
+        return;
+    }
+    if (source_path == NULL || texture == NULL) {
+        g_set_error_literal(&error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                            _("No image is selected"));
+    } else {
+        gchar *destination_path = g_file_get_path(file);
+
+        if (destination_path == NULL) {
+            g_set_error_literal(&error, G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                                _("The selected destination is not a local file"));
+        } else if (image_texture_same_extension(source_path,
+                                                destination_path)) {
+            GFile *source_file = g_file_new_for_path(source_path);
+
+            if (!g_file_copy(source_file, file, G_FILE_COPY_OVERWRITE,
+                             NULL, NULL, NULL, &error)) {
+                /* Keep the error from g_file_copy. */
+            }
+            g_object_unref(source_file);
+        } else if (image_texture_has_png_extension(destination_path)) {
+            GBytes *bytes = gdk_texture_save_to_png_bytes(texture);
+
+            if (bytes == NULL) {
+                g_set_error_literal(&error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                                    _("Cannot convert image to PNG"));
+            } else {
+                gconstpointer data = g_bytes_get_data(bytes, NULL);
+                gsize size = g_bytes_get_size(bytes);
+
+                g_file_replace_contents(file, data, size, NULL, FALSE,
+                                        G_FILE_CREATE_REPLACE_DESTINATION,
+                                        NULL, NULL, &error);
+                g_bytes_unref(bytes);
+            }
+        } else {
+            g_set_error_literal(&error, G_FILE_ERROR, G_FILE_ERROR_INVAL,
+                                _("Choose the original image extension or PNG"));
+        }
+        g_free(destination_path);
+    }
+
+    if (error != NULL) {
+        gsword_window_show_error(page->window, _("Cannot save image"), error);
+        g_clear_error(&error);
+    } else {
+        gchar *name = g_file_get_basename(file);
+        gchar *message = g_strdup_printf(_("Image saved as %s"), name);
+
+        g_free(name);
+        gsword_window_toast(page->window, message);
+        g_free(message);
+    }
+    g_object_unref(file);
+}
+
+static void
+save_image_dialog(GswordResourcePage *page)
+{
+    const gchar *source_path = gsword_image_view_get_path(page->image_view);
+    GtkFileDialog *dialog;
+    GFile *folder = NULL;
+    const gchar *pictures;
+    gchar *basename;
+    gchar *suggested_name;
+    const gchar *module_name;
+
+    if (source_path == NULL)
+        return;
+    dialog = gtk_file_dialog_new();
+    gtk_file_dialog_set_title(dialog, _("Save map image"));
+
+    pictures = g_get_user_special_dir(G_USER_DIRECTORY_PICTURES);
+    if (pictures != NULL && *pictures != '\0') {
+        folder = g_file_new_for_path(pictures);
+    } else {
+        gchar *exports_dir = gsword_app_exports_dir();
+
+        g_mkdir_with_parents(exports_dir, 0755);
+        folder = g_file_new_for_path(exports_dir);
+        g_free(exports_dir);
+    }
+    if (folder != NULL) {
+        gtk_file_dialog_set_initial_folder(dialog, folder);
+        g_object_unref(folder);
+    }
+
+    module_name = page->module != NULL ? gsw_module_get_name(page->module)
+                                       : "gsword-map";
+    basename = g_path_get_basename(source_path);
+    suggested_name = g_strdup_printf("%s-%s", module_name, basename);
+    gtk_file_dialog_set_initial_name(dialog, suggested_name);
+    g_free(suggested_name);
+    g_free(basename);
+    g_object_set_data_full(G_OBJECT(dialog), "source-path",
+                           g_strdup(source_path), g_free);
+    gtk_file_dialog_save(dialog, GTK_WINDOW(page->window), NULL,
+                         on_save_image_finish, page);
+    g_object_unref(dialog);
+}
+
+static void
+on_zoom_out_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)button;
+    gsword_image_view_zoom_out(page->image_view);
+}
+
+static void
+on_zoom_in_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)button;
+    gsword_image_view_zoom_in(page->image_view);
+}
+
+static void
+on_fit_width_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)button;
+    gsword_image_view_fit_width(page->image_view);
+}
+
+static void
+close_image_popover(GtkWidget *button)
+{
+    GtkWidget *popover = gtk_widget_get_ancestor(button, GTK_TYPE_POPOVER);
+
+    if (popover != NULL)
+        gtk_popover_popdown(GTK_POPOVER(popover));
+}
+
+static void
+on_menu_fit_width(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    close_image_popover(GTK_WIDGET(button));
+    gsword_image_view_fit_width(page->image_view);
+}
+
+static void
+on_menu_fit_window(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    close_image_popover(GTK_WIDGET(button));
+    gsword_image_view_fit_window(page->image_view);
+}
+
+static void
+on_menu_actual_size(GtkButton *button, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    close_image_popover(GTK_WIDGET(button));
+    gsword_image_view_actual_size(page->image_view);
+}
+
+static void
+on_menu_copy_image(GtkButton *button, gpointer user_data)
+{
+    close_image_popover(GTK_WIDGET(button));
+    copy_image_to_clipboard(user_data);
+}
+
+static void
+on_menu_copy_image_path(GtkButton *button, gpointer user_data)
+{
+    close_image_popover(GTK_WIDGET(button));
+    copy_image_path_to_clipboard(user_data);
+}
+
+static void
+on_menu_save_image(GtkButton *button, gpointer user_data)
+{
+    close_image_popover(GTK_WIDGET(button));
+    save_image_dialog(user_data);
+}
+
+static GtkWidget *
+image_menu_item(const gchar *label, GCallback callback,
+                GswordResourcePage *page)
+{
+    GtkWidget *button = gtk_button_new_with_label(label);
+
+    gtk_widget_add_css_class(button, "flat");
+    gtk_widget_set_halign(button, GTK_ALIGN_FILL);
+    g_signal_connect(button, "clicked", callback, page);
+    return button;
+}
+
+static GtkWidget *
+build_image_popover(GswordResourcePage *page)
+{
+    GtkWidget *popover = gtk_popover_new();
+    GtkWidget *menu = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+
+    gtk_popover_set_autohide(GTK_POPOVER(popover), TRUE);
+    gtk_popover_set_has_arrow(GTK_POPOVER(popover), TRUE);
+    gtk_widget_set_margin_top(menu, 6);
+    gtk_widget_set_margin_bottom(menu, 6);
+    gtk_widget_set_margin_start(menu, 6);
+    gtk_widget_set_margin_end(menu, 6);
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Fit width"),
+                                   G_CALLBACK(on_menu_fit_width), page));
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Fit window"),
+                                   G_CALLBACK(on_menu_fit_window), page));
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Actual size"),
+                                   G_CALLBACK(on_menu_actual_size), page));
+    gtk_box_append(GTK_BOX(menu), separator);
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Copy image"),
+                                   G_CALLBACK(on_menu_copy_image), page));
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Copy image path"),
+                                   G_CALLBACK(on_menu_copy_image_path),
+                                   page));
+    gtk_box_append(GTK_BOX(menu),
+                   image_menu_item(_("Save image as…"),
+                                   G_CALLBACK(on_menu_save_image), page));
+    gtk_popover_set_child(GTK_POPOVER(popover), menu);
+    return popover;
+}
+
+static gboolean
+show_image(GswordResourcePage *page, const gchar *raw, GError **error)
+{
+    gchar *source = gsword_image_extract_src(raw);
+    gchar *path;
+    gchar *description;
+
+    if (source == NULL)
+        return FALSE;
+    path = gsword_image_resolve_path(page->data_dir, source, error);
+    g_free(source);
+    if (path == NULL)
+        return FALSE;
+    if (!gsword_image_view_load(page->image_view, path, error)) {
+        g_free(path);
+        return FALSE;
+    }
+    description = g_path_get_basename(path);
+    gtk_accessible_update_property(
+        GTK_ACCESSIBLE(page->image_view),
+        GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, description, -1);
+    g_free(description);
+    g_free(path);
+    gtk_widget_set_visible(page->image_controls, TRUE);
+    update_image_controls(page);
+    return TRUE;
+}
+
+static void
 show_path(GswordResourcePage *page, const gchar *path)
 {
     GError *error = NULL;
@@ -97,44 +483,32 @@ show_path(GswordResourcePage *page, const gchar *path)
     if (!gsw_module_set_key_text(page->module, path, &error)) {
         gsword_window_show_error(page->window,
                                  _("Cannot open resource entry"), error);
+        g_clear_error(&error);
         return;
     }
     gtk_label_set_text(page->path, path);
+    gtk_widget_set_tooltip_text(GTK_WIDGET(page->path), path);
     raw = gsw_module_peek_raw(page->module, NULL);
     if (page->map_mode && raw != NULL) {
-        const gchar *image = strstr(raw, "<img");
-        const gchar *src = image != NULL ? strstr(image, "src=\"") : NULL;
+        GError *image_error = NULL;
 
-        if (src != NULL) {
-            const gchar *end = strchr(src + 5, '"');
-
-            if (end != NULL) {
-                gchar *relative = g_strndup(src + 5,
-                                            (gsize)(end - (src + 5)));
-                gchar *file_path;
-                GFile *file;
-
-                while (g_str_has_prefix(relative, "/"))
-                    memmove(relative, relative + 1, strlen(relative));
-                file_path = g_build_filename(page->data_dir, relative, NULL);
-                g_free(relative);
-                if (g_file_test(file_path, G_FILE_TEST_IS_REGULAR)) {
-                    file = g_file_new_for_path(file_path);
-                    gtk_picture_set_file(page->picture, file);
-                    g_object_unref(file);
-                    gtk_stack_set_visible_child_name(page->content, "picture");
-                    g_free(file_path);
-                    return;
-                }
-                g_free(file_path);
-            }
+        if (show_image(page, raw, &image_error)) {
+            gtk_stack_set_visible_child_name(page->content, "picture");
+            return;
+        }
+        if (image_error != NULL) {
+            gsword_window_show_error(page->window,
+                                     _("Cannot load map image"), image_error);
+            g_clear_error(&image_error);
         }
     }
 
+    clear_image(page);
     text = gsw_module_get_text(page->module, &error);
     if (text == NULL) {
         gsword_window_show_error(page->window,
                                  _("Cannot read resource entry"), error);
+        g_clear_error(&error);
         return;
     }
     gsword_window_set_view_text(page->text, text);
@@ -219,6 +593,8 @@ gsword_resource_page_open(GswordResourcePage *page, const gchar *name,
     page->map_mode = map;
     gtk_label_set_text(page->title, name);
     gtk_label_set_text(page->path, "");
+    gtk_widget_set_tooltip_text(GTK_WIDGET(page->path), NULL);
+    clear_image(page);
 
     gsw_module_set_position(page->module, GSW_POSITION_TOP, NULL);
     entries = g_ptr_array_new_with_free_func(resource_entry_free);
@@ -247,12 +623,54 @@ on_resource_back(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_image_context_clicked(GtkGestureClick *gesture, gint n_press,
+                         gdouble x, gdouble y, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+    GdkRectangle rect;
+
+    (void)gesture;
+    (void)n_press;
+    if (!gsword_image_view_has_image(page->image_view) ||
+        page->image_context_menu == NULL)
+        return;
+    rect.x = (gint)(x + 0.5);
+    rect.y = (gint)(y + 0.5);
+    rect.width = 1;
+    rect.height = 1;
+    gtk_popover_set_pointing_to(page->image_context_menu, &rect);
+    gtk_popover_popup(page->image_context_menu);
+}
+
+static gboolean
+on_image_key_pressed(GtkEventControllerKey *controller, guint keyval,
+                     guint keycode, GdkModifierType state, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)controller;
+    (void)keycode;
+    if ((state & GDK_CONTROL_MASK) != 0 && keyval == GDK_KEY_c) {
+        copy_image_to_clipboard(page);
+        return TRUE;
+    }
+    if ((state & GDK_CONTROL_MASK) != 0 &&
+        (state & GDK_SHIFT_MASK) != 0 &&
+        (keyval == GDK_KEY_s || keyval == GDK_KEY_S)) {
+        save_image_dialog(page);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void
 resource_page_free(gpointer data)
 {
     GswordResourcePage *page = data;
 
     if (page == NULL)
         return;
+    g_clear_object(&page->image_view);
     g_clear_object(&page->module);
     g_free(page->data_dir);
     g_free(page);
@@ -267,9 +685,17 @@ gsword_resource_page_new(GswordWindow *window)
     GtkWidget *paned;
     GtkWidget *tree_scroll;
     GtkWidget *content_scroll;
-    GtkWidget *picture_scroll;
     GtkWidget *back;
     GtkWidget *text_box;
+    GtkWidget *view_widget;
+    GtkWidget *zoom_out;
+    GtkWidget *zoom_in;
+    GtkWidget *fit_width;
+    GtkWidget *menu_button;
+    GtkWidget *menu_popover;
+    GtkWidget *context_menu;
+    GtkGesture *context_gesture;
+    GtkEventController *key_controller;
 
     page->window = window;
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -277,7 +703,6 @@ gsword_resource_page_new(GswordWindow *window)
     paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     tree_scroll = gtk_scrolled_window_new();
     content_scroll = gtk_scrolled_window_new();
-    picture_scroll = gtk_scrolled_window_new();
     back = gtk_button_new_with_label(_("Back to reading"));
     text_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
@@ -287,13 +712,49 @@ gsword_resource_page_new(GswordWindow *window)
     gtk_widget_set_margin_end(header, 12);
     page->title = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(page->title, 0.0f);
+    gtk_label_set_ellipsize(page->title, PANGO_ELLIPSIZE_END);
     gtk_widget_add_css_class(GTK_WIDGET(page->title), "heading");
     gtk_widget_set_hexpand(GTK_WIDGET(page->title), TRUE);
     page->path = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(page->path, 0.0f);
+    gtk_label_set_ellipsize(page->path, PANGO_ELLIPSIZE_MIDDLE);
+    gtk_label_set_max_width_chars(page->path, 32);
     gtk_widget_add_css_class(GTK_WIDGET(page->path), "dim-label");
     gtk_box_append(GTK_BOX(header), GTK_WIDGET(page->title));
     gtk_box_append(GTK_BOX(header), GTK_WIDGET(page->path));
+
+    page->image_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    gtk_widget_set_visible(page->image_controls, FALSE);
+    zoom_out = gtk_button_new_from_icon_name("zoom-out-symbolic");
+    zoom_in = gtk_button_new_from_icon_name("zoom-in-symbolic");
+    fit_width = gtk_button_new_from_icon_name("zoom-fit-best-symbolic");
+    page->zoom_out = GTK_BUTTON(zoom_out);
+    page->zoom_in = GTK_BUTTON(zoom_in);
+    gtk_widget_add_css_class(zoom_out, "flat");
+    gtk_widget_add_css_class(zoom_in, "flat");
+    gtk_widget_add_css_class(fit_width, "flat");
+    set_icon_button_label(zoom_out, _("Zoom out"));
+    set_icon_button_label(zoom_in, _("Zoom in"));
+    set_icon_button_label(fit_width, _("Fit width"));
+    g_signal_connect(zoom_out, "clicked", G_CALLBACK(on_zoom_out_clicked),
+                     page);
+    g_signal_connect(zoom_in, "clicked", G_CALLBACK(on_zoom_in_clicked),
+                     page);
+    g_signal_connect(fit_width, "clicked", G_CALLBACK(on_fit_width_clicked),
+                     page);
+    page->zoom_label = GTK_LABEL(gtk_label_new("100%"));
+    gtk_label_set_xalign(page->zoom_label, 0.5f);
+    gtk_widget_set_size_request(GTK_WIDGET(page->zoom_label), 52, -1);
+    menu_button = gtk_menu_button_new();
+    gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(menu_button),
+                                  "view-more-symbolic");
+    set_icon_button_label(menu_button, _("Image actions"));
+    gtk_box_append(GTK_BOX(page->image_controls), zoom_out);
+    gtk_box_append(GTK_BOX(page->image_controls), GTK_WIDGET(page->zoom_label));
+    gtk_box_append(GTK_BOX(page->image_controls), zoom_in);
+    gtk_box_append(GTK_BOX(page->image_controls), fit_width);
+    gtk_box_append(GTK_BOX(page->image_controls), menu_button);
+    gtk_box_append(GTK_BOX(header), page->image_controls);
     gtk_box_append(GTK_BOX(header), back);
     g_signal_connect(back, "clicked", G_CALLBACK(on_resource_back), page);
 
@@ -302,6 +763,8 @@ gsword_resource_page_new(GswordWindow *window)
                      G_CALLBACK(on_resource_selected), page);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(tree_scroll),
                                   GTK_WIDGET(page->tree));
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tree_scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_widget_set_size_request(tree_scroll, 220, -1);
 
     page->text = GTK_TEXT_VIEW(gtk_text_view_new());
@@ -317,22 +780,43 @@ gsword_resource_page_new(GswordWindow *window)
     gtk_widget_set_vexpand(content_scroll, TRUE);
     gtk_box_append(GTK_BOX(text_box), content_scroll);
 
-    page->picture = GTK_PICTURE(gtk_picture_new());
-    gtk_picture_set_can_shrink(page->picture, TRUE);
-    gtk_picture_set_content_fit(page->picture, GTK_CONTENT_FIT_CONTAIN);
-    gtk_widget_set_vexpand(GTK_WIDGET(page->picture), TRUE);
-    gtk_widget_set_hexpand(GTK_WIDGET(page->picture), TRUE);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(picture_scroll),
-                                  GTK_WIDGET(page->picture));
+    page->image_view = GSWORD_IMAGE_VIEW(gsword_image_view_new());
+    view_widget = GTK_WIDGET(page->image_view);
+    g_signal_connect(page->image_view, "zoom-changed",
+                     G_CALLBACK(on_image_zoom_changed), page);
+    gtk_widget_set_hexpand(view_widget, TRUE);
+    gtk_widget_set_vexpand(view_widget, TRUE);
+
+    context_menu = build_image_popover(page);
+    page->image_context_menu = GTK_POPOVER(context_menu);
+    gtk_popover_set_has_arrow(page->image_context_menu, TRUE);
+    gtk_widget_set_parent(context_menu, view_widget);
+    context_gesture = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context_gesture),
+                                  GDK_BUTTON_SECONDARY);
+    g_signal_connect(context_gesture, "pressed",
+                     G_CALLBACK(on_image_context_clicked), page);
+    gtk_widget_add_controller(view_widget,
+                              GTK_EVENT_CONTROLLER(context_gesture));
+    key_controller = gtk_event_controller_key_new();
+    g_signal_connect(key_controller, "key-pressed",
+                     G_CALLBACK(on_image_key_pressed), page);
+    gtk_widget_add_controller(view_widget, key_controller);
+
+    menu_popover = build_image_popover(page);
+    gtk_menu_button_set_popover(GTK_MENU_BUTTON(menu_button), menu_popover);
 
     page->content = GTK_STACK(gtk_stack_new());
     gtk_stack_add_named(page->content, text_box, "text");
-    gtk_stack_add_named(page->content, picture_scroll, "picture");
+    gtk_stack_add_named(page->content, view_widget, "picture");
     gtk_widget_set_vexpand(GTK_WIDGET(page->content), TRUE);
 
     gtk_paned_set_start_child(GTK_PANED(paned), tree_scroll);
     gtk_paned_set_end_child(GTK_PANED(paned), GTK_WIDGET(page->content));
     gtk_paned_set_position(GTK_PANED(paned), 240);
+    gtk_paned_set_resize_start_child(GTK_PANED(paned), FALSE);
+    gtk_paned_set_shrink_start_child(GTK_PANED(paned), FALSE);
+    gtk_paned_set_shrink_end_child(GTK_PANED(paned), TRUE);
     gtk_widget_set_vexpand(paned, TRUE);
     gtk_box_append(GTK_BOX(box), header);
     gtk_box_append(GTK_BOX(box), paned);

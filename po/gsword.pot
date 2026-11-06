@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-06 10:21+0800\n"
+"POT-Creation-Date: 2026-11-06 13:23+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgstr ""
 msgid "SWORD module library path"
 msgstr ""
 
-#: src/window.c:335 src/window.c:1320
+#: src/window.c:335 src/window.c:1324
 msgid "Hide module sidebar"
 msgstr ""
 
@@ -49,8 +49,8 @@ msgstr ""
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:208
-#: src/resource-page.c:214
+#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:791
+#: src/resource-page.c:797
 msgid "Cannot open module"
 msgstr ""
 
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:1018 src/window.c:1329 src/search-page.c:1410
+#: src/window.c:1018 src/window.c:1333 src/search-page.c:1410
 msgid "Search"
 msgstr ""
 
@@ -74,7 +74,7 @@ msgstr ""
 msgid "Focus reference"
 msgstr ""
 
-#: src/window.c:1020 src/window.c:1081 src/window.c:1336
+#: src/window.c:1020 src/window.c:1081 src/window.c:1340
 #: src/library-page.c:2283 src/preferences-dialog.c:337
 msgid "Module library"
 msgstr ""
@@ -146,19 +146,19 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
-#: src/window.c:1342
+#: src/window.c:1346
 msgid "Main menu"
 msgstr ""
 
-#: src/window.c:1390 src/preferences-dialog.c:264
+#: src/window.c:1394 src/preferences-dialog.c:264
 msgid "Reading"
 msgstr ""
 
-#: src/window.c:1396
+#: src/window.c:1400
 msgid "Compare"
 msgstr ""
 
-#: src/window.c:1410
+#: src/window.c:1414
 msgid "Personal"
 msgstr ""
 
@@ -2684,16 +2684,93 @@ msgstr ""
 msgid "List name"
 msgstr ""
 
-#: src/resource-page.c:99
+#: src/resource-page.c:393
+msgid "Image copied to clipboard"
+msgstr ""
+
+#: src/resource-page.c:405
+msgid "Image path copied to clipboard"
+msgstr ""
+
+#: src/resource-page.c:423
+msgid "No image is selected"
+msgstr ""
+
+#: src/resource-page.c:429
+msgid "The selected destination is not a local file"
+msgstr ""
+
+#: src/resource-page.c:444
+msgid "Cannot convert image to PNG"
+msgstr ""
+
+#: src/resource-page.c:456
+msgid "Choose the original image extension or PNG"
+msgstr ""
+
+#: src/resource-page.c:462
+msgid "Cannot save image"
+msgstr ""
+
+#: src/resource-page.c:466
+#, c-format
+msgid "Image saved as %s"
+msgstr ""
+
+#: src/resource-page.c:488
+msgid "Save map image"
+msgstr ""
+
+#: src/resource-page.c:617 src/resource-page.c:1107
+msgid "Fit width"
+msgstr ""
+
+#: src/resource-page.c:620
+msgid "Fit window"
+msgstr ""
+
+#: src/resource-page.c:623
+msgid "Actual size"
+msgstr ""
+
+#: src/resource-page.c:627
+msgid "Copy image"
+msgstr ""
+
+#: src/resource-page.c:630
+msgid "Copy image path"
+msgstr ""
+
+#: src/resource-page.c:634
+msgid "Save image as…"
+msgstr ""
+
+#: src/resource-page.c:693
 msgid "Cannot open resource entry"
 msgstr ""
 
-#: src/resource-page.c:137
+#: src/resource-page.c:710
+msgid "Cannot load map image"
+msgstr ""
+
+#: src/resource-page.c:719
 msgid "Cannot read resource entry"
 msgstr ""
 
-#: src/resource-page.c:281 src/teaching-page.c:228
+#: src/resource-page.c:1075 src/teaching-page.c:228
 msgid "Back to reading"
+msgstr ""
+
+#: src/resource-page.c:1105
+msgid "Zoom out"
+msgstr ""
+
+#: src/resource-page.c:1106
+msgid "Zoom in"
+msgstr ""
+
+#: src/resource-page.c:1121
+msgid "Image actions"
 msgstr ""
 
 #: src/teaching-page.c:94

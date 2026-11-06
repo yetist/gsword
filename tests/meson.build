@@ -140,6 +140,12 @@ if get_option('tests')
     dependencies: [gsword_dep, glib_dep])
   test('render', test_render)
 
+  test_image_utils = executable('test-image-utils',
+    ['test-image-utils.c', '../src/image-utils.c'],
+    include_directories: include_directories('../src'),
+    dependencies: [glib_dep])
+  test('image-utils', test_image_utils)
+
   test_locale = executable('test-locale', 'test-locale.c',
     dependencies: [gsword_dep, glib_dep],
     c_args: ['-DGSW_TEST_LOCALE_DIR="' + meson.project_source_root() + '/data/locales.d"'])
