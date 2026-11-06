@@ -46,6 +46,7 @@ struct _GswordReaderPage {
     gint reading_width;
     guint margin_idle;
     guint scroll_idle;
+    guint compact_timeout_id;
 };
 
 static void apply_active_verse(GswordReaderPage *page);
@@ -102,17 +103,57 @@ schedule_reading_margins(GswordReaderPage *page)
 }
 
 static void
+update_reference_compact(GswordReaderPage *page)
+{
+    gint window_width;
+    gint available_width;
+    gboolean compact;
+
+    if (page->toolbar == NULL)
+        return;
+    window_width = gtk_widget_get_width(GTK_WIDGET(page->window));
+    if (window_width <= 0)
+        return;
+
+    /*
+     * Do not use the scrolled window width here: the full reference chooser
+     * has a large minimum width and can keep the scrolled window wide even
+     * after the window shrinks.  That prevents the compact switch from ever
+     * firing.  Use the window width instead.
+     *
+     * Below 1000px the module sidebar is an overlay and does not consume
+     * content width.  Above 1000px it is inline and takes roughly 260px.
+     */
+    available_width = window_width;
+    if (window_width > 1000 && gsword_window_get_sidebar_visible(page->window))
+        available_width -= 260;
+    compact = available_width < 900;
+    gsword_reader_toolbar_set_compact(page->toolbar, compact);
+}
+
+static gboolean
+update_reference_compact_idle(gpointer user_data)
+{
+    update_reference_compact(user_data);
+    return G_SOURCE_REMOVE;
+}
+
+static gboolean
+update_reference_compact_timeout(gpointer user_data)
+{
+    update_reference_compact(user_data);
+    return G_SOURCE_CONTINUE;
+}
+
+static void
 on_reader_size_changed(GObject *object, GParamSpec *pspec,
                        gpointer user_data)
 {
     GswordReaderPage *page = user_data;
-    gint width = gtk_widget_get_width(page->scrolled);
 
     (void)object;
     (void)pspec;
-    if (page->toolbar != NULL)
-        gsword_reader_toolbar_set_compact(page->toolbar,
-                                          width > 0 && width < 900);
+    update_reference_compact(page);
     update_reading_margins(page);
     schedule_reading_margins(page);
 }
@@ -121,6 +162,7 @@ static void
 on_reader_mapped(GtkWidget *widget, gpointer user_data)
 {
     (void)widget;
+    g_idle_add(update_reference_compact_idle, user_data);
     update_reading_margins(user_data);
     schedule_reading_margins(user_data);
     schedule_scroll_to_active(user_data);
@@ -1469,6 +1511,8 @@ reader_page_free(gpointer data)
         g_source_remove(page->margin_idle);
     if (page->scroll_idle != 0)
         g_source_remove(page->scroll_idle);
+    if (page->compact_timeout_id != 0)
+        g_source_remove(page->compact_timeout_id);
     gsword_reader_history_free(page->history);
     g_free(page);
 }
@@ -1492,7 +1536,14 @@ gsword_reader_page_new(GswordWindow *window)
     page->window = window;
     page->root = reader_box;
     page->scrolled = scrolled;
+    g_signal_connect(reader_box, "notify::width",
+                     G_CALLBACK(on_reader_size_changed), page);
+    g_signal_connect(gsword_reader_toolbar_widget(page->toolbar),
+                     "notify::width", G_CALLBACK(on_reader_size_changed),
+                     page);
     page->reading_width = 760;
+    page->compact_timeout_id = g_timeout_add(
+        200, update_reference_compact_timeout, page);
     settings = gsword_window_get_settings(window);
     if (settings != NULL) {
         page->paragraph_spacing = CLAMP(
@@ -1590,6 +1641,8 @@ gsword_reader_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->view));
     g_signal_connect(scrolled, "notify::width",
+                     G_CALLBACK(on_reader_size_changed), page);
+    g_signal_connect(window, "notify::width",
                      G_CALLBACK(on_reader_size_changed), page);
     g_signal_connect(scrolled, "map", G_CALLBACK(on_reader_mapped), page);
     study_widget = gsword_study_panel_widget(page->study_panel);

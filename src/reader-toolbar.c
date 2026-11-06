@@ -45,7 +45,23 @@ on_reference_activate(GswordReferenceChooser *chooser, gpointer user_data)
 {
     GswordReaderToolbar *toolbar = user_data;
 
-    (void)chooser;
+    /*
+     * The toolbar has two chooser instances: a full one and a compact one.
+     * Only one is visible at a time, but reader-page activation reads the full
+     * chooser.  If the compact chooser emitted the signal, copy its selection
+     * across before activating the reader.
+     */
+    if (chooser == toolbar->compact_reference_chooser) {
+        gint book;
+        gint chapter;
+        gint verse;
+
+        if (gsword_reference_chooser_get_reference(
+                chooser, &book, &chapter, &verse)) {
+            gsword_reference_chooser_set_reference(
+                toolbar->reference_chooser, book, chapter, verse);
+        }
+    }
     gsword_reader_page_activate_reference(toolbar->page);
 }
 
