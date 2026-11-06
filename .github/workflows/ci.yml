@@ -123,9 +123,5 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Install reuse
-        run: pipx install reuse
-
       - name: Check REUSE compliance
-        run: |
-          "$HOME/.local/bin/reuse" lint
+        run: pipx run reuse lint
