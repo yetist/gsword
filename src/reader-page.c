@@ -1614,9 +1614,6 @@ gsword_reader_page_new(GswordWindow *window)
     page->scrolled = scrolled;
     g_signal_connect(reader_box, "notify::width",
                      G_CALLBACK(on_reader_size_changed), page);
-    g_signal_connect(gsword_reader_toolbar_widget(page->toolbar),
-                     "notify::width", G_CALLBACK(on_reader_size_changed),
-                     page);
     page->reading_width = 760;
     page->compact_timeout_id = g_timeout_add(
         200, update_reference_compact_timeout, page);
