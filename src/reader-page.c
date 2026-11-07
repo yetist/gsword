@@ -59,6 +59,7 @@ static void select_verse(GswordReaderPage *page, gint verse);
 static void update_reference_status(GswordReaderPage *page);
 static void record_current_history(GswordReaderPage *page);
 static void schedule_scroll_to_active(GswordReaderPage *page);
+static gboolean verse_is_visible(GswordReaderPage *page, gint verse);
 
 static void
 set_text(GswordReaderPage *page, const gchar *text)
@@ -490,6 +491,9 @@ gsword_reader_page_begin_reference_edit(GswordReaderPage *page)
 void
 gsword_reader_page_activate_reference(GswordReaderPage *page)
 {
+    GswModule *module;
+    GswKey *key;
+    gboolean same_chapter = FALSE;
     gint book;
     gint chapter;
     gint verse;
@@ -501,6 +505,25 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
     if (!gsword_reference_chooser_get_reference(page->reference_chooser,
                                                 &book, &chapter, &verse))
         return;
+    module = gsword_window_get_module(page->window);
+    if (module != NULL) {
+        key = gsw_module_get_key(module);
+        if (gsw_key_get_kind(key) == GSW_KEY_KIND_VERSE) {
+            GswVerseKey *verse_key = (GswVerseKey *)key;
+
+            same_chapter =
+                gsw_verse_key_get_global_book_number(verse_key) == book &&
+                gsw_verse_key_get_chapter(verse_key) == chapter;
+        }
+    }
+    if (same_chapter) {
+        gboolean visible = verse_is_visible(page, verse);
+
+        select_verse(page, verse);
+        if (!visible)
+            schedule_scroll_to_active(page);
+        return;
+    }
     osis = gsword_reference_chooser_dup_osis(page->reference_chooser);
     if (osis == NULL || *osis == '\0') {
         g_free(osis);
@@ -783,10 +806,19 @@ scroll_to_active_verse(GswordReaderPage *page)
 
             gtk_text_view_get_line_yrange(page->view, &start, &y, &height);
             if (adjustment != NULL) {
+                gdouble value = gtk_adjustment_get_value(adjustment);
                 gdouble page_size = gtk_adjustment_get_page_size(adjustment);
-                gdouble target = y - page_size * 0.15;
 
-                gtk_adjustment_set_value(adjustment, MAX(target, 0.0));
+                /*
+                 * Selecting a reference should not move the reader when the
+                 * selected verse is already fully visible.  Only scroll when
+                 * the verse is outside the current viewport.
+                 */
+                if (y >= value && y + height <= value + page_size)
+                    return;
+
+                gtk_adjustment_set_value(
+                    adjustment, MAX(y - page_size * 0.15, 0.0));
             } else {
                 gtk_text_view_scroll_to_iter(page->view, &start, 0.1, TRUE,
                                              0.0, 0.15);
@@ -794,6 +826,50 @@ scroll_to_active_verse(GswordReaderPage *page)
             return;
         }
     }
+}
+
+static gboolean
+verse_is_visible(GswordReaderPage *page, gint verse)
+{
+    GtkTextBuffer *buffer;
+    gint line_count;
+    gint line;
+
+    if (page == NULL || page->view == NULL || verse < 1)
+        return FALSE;
+    buffer = gtk_text_view_get_buffer(page->view);
+    line_count = gtk_text_buffer_get_line_count(buffer);
+    for (line = 1; line < line_count; line++) {
+        GtkTextIter start;
+        GtkTextIter end;
+        gchar *text;
+        gint found;
+
+        gtk_text_buffer_get_iter_at_line(buffer, &start, line);
+        end = start;
+        if (!gtk_text_iter_forward_line(&end))
+            gtk_text_buffer_get_end_iter(buffer, &end);
+        text = gtk_text_buffer_get_text(buffer, &start, &end, TRUE);
+        found = gsword_window_verse_number_from_line(text);
+        g_free(text);
+        if (found == verse) {
+            GtkWidget *scrolled = gtk_widget_get_ancestor(
+                GTK_WIDGET(page->view), GTK_TYPE_SCROLLED_WINDOW);
+            GtkAdjustment *adjustment = scrolled != NULL
+                ? gtk_scrolled_window_get_vadjustment(
+                      GTK_SCROLLED_WINDOW(scrolled)) : NULL;
+            gint y = 0;
+            gint height = 0;
+
+            if (adjustment == NULL)
+                return FALSE;
+            gtk_text_view_get_line_yrange(page->view, &start, &y, &height);
+            return y >= gtk_adjustment_get_value(adjustment) &&
+                   y + height <= gtk_adjustment_get_value(adjustment) +
+                                 gtk_adjustment_get_page_size(adjustment);
+        }
+    }
+    return FALSE;
 }
 
 static gboolean
