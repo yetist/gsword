@@ -6,6 +6,7 @@
 
 #include "bookmark-page.h"
 #include "bookmark-store.h"
+#include "verse-preview.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -15,6 +16,8 @@ struct _GswordBookmarkPage {
     GtkWidget *root;
     GtkListBox *list;
     GtkLabel *count_label;
+    GswordVersePreview *preview;
+    GtkWidget *hover_row;
     GtkButton *open_button;
     GtkButton *edit_button;
     GtkButton *delete_button;
@@ -35,6 +38,7 @@ bookmark_page_free(gpointer data)
         return;
     g_free(page->selected_module);
     g_free(page->selected_key);
+    gsword_verse_preview_free(page->preview);
     g_free(page);
 }
 
@@ -60,6 +64,49 @@ clear_selected(GswordBookmarkPage *page)
     gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(page->edit_button), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button), FALSE);
+}
+
+static void
+bookmark_page_show_row_preview(GswordBookmarkPage *page,
+                               GtkListBoxRow *row)
+{
+    const gchar *module;
+    const gchar *key;
+    const gchar *display;
+
+    if (row == NULL)
+        return;
+    module = g_object_get_data(G_OBJECT(row), "bookmark-module");
+    key = g_object_get_data(G_OBJECT(row), "bookmark-key");
+    display = g_object_get_data(G_OBJECT(row), "bookmark-display");
+    gsword_verse_preview_show(page->preview, module, key, display);
+}
+
+static void
+on_bookmark_pointer_motion(GtkEventControllerMotion *controller, gdouble x,
+                           gdouble y, gpointer user_data)
+{
+    GswordBookmarkPage *page = user_data;
+    GtkListBoxRow *row;
+
+    (void)controller;
+    (void)x;
+    row = gtk_list_box_get_row_at_y(page->list, (gint)y);
+    if ((GtkWidget *)row == page->hover_row)
+        return;
+    page->hover_row = GTK_WIDGET(row);
+    if (row != NULL)
+        bookmark_page_show_row_preview(page, row);
+}
+
+static void
+on_bookmark_pointer_leave(GtkEventControllerMotion *controller,
+                          gpointer user_data)
+{
+    GswordBookmarkPage *page = user_data;
+
+    (void)controller;
+    page->hover_row = NULL;
 }
 
 static void
@@ -103,6 +150,7 @@ on_row_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     gtk_widget_set_sensitive(GTK_WIDGET(page->open_button), TRUE);
     gtk_widget_set_sensitive(GTK_WIDGET(page->edit_button), TRUE);
     gtk_widget_set_sensitive(GTK_WIDGET(page->delete_button), TRUE);
+    bookmark_page_show_row_preview(page, row);
 }
 
 static void
@@ -201,6 +249,8 @@ refresh_list(GswordBookmarkPage *page)
             page->list, gtk_widget_get_first_child(GTK_WIDGET(page->list)));
     }
     clear_selected(page);
+    page->hover_row = NULL;
+    gsword_verse_preview_reset(page->preview);
     if (store == NULL) {
         gtk_label_set_text(page->count_label, _("Bookmark storage unavailable"));
         return;
@@ -253,6 +303,8 @@ refresh_list(GswordBookmarkPage *page)
                                g_strdup(bookmark->module), g_free);
         g_object_set_data_full(G_OBJECT(row), "bookmark-key",
                                g_strdup(bookmark->key), g_free);
+        g_object_set_data_full(G_OBJECT(row), "bookmark-display",
+                               g_strdup(bookmark->display_key), g_free);
         gtk_list_box_append(page->list, row);
         g_free(meta_text);
         g_free(date);
@@ -447,10 +499,12 @@ gsword_bookmark_page_new(GswordWindow *window)
     GtkWidget *add_current = gtk_button_new_with_label(
         _("Add current verse"));
     GtkWidget *scroll = gtk_scrolled_window_new();
+    GtkWidget *preview;
     GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *open = gtk_button_new_with_label(_("Open verse"));
     GtkWidget *edit = gtk_button_new_with_label(_("Edit"));
     GtkWidget *delete = gtk_button_new_with_label(_("Delete"));
+    GtkEventController *motion;
 
     g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
     page->window = window;
@@ -479,6 +533,14 @@ gsword_bookmark_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),
                                   GTK_WIDGET(page->list));
     gtk_widget_set_vexpand(scroll, TRUE);
+    motion = gtk_event_controller_motion_new();
+    g_signal_connect(motion, "motion",
+                     G_CALLBACK(on_bookmark_pointer_motion), page);
+    g_signal_connect(motion, "leave",
+                     G_CALLBACK(on_bookmark_pointer_leave), page);
+    gtk_widget_add_controller(GTK_WIDGET(page->list), motion);
+    page->preview = gsword_verse_preview_new(window);
+    preview = gsword_verse_preview_widget(page->preview);
 
     page->count_label = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(page->count_label, 0.0f);
@@ -504,6 +566,7 @@ gsword_bookmark_page_new(GswordWindow *window)
         gtk_widget_add_css_class(hint, "dim-label");
         gtk_box_append(GTK_BOX(box), header);
         gtk_box_append(GTK_BOX(box), scroll);
+        gtk_box_append(GTK_BOX(box), preview);
         gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->count_label));
         gtk_box_append(GTK_BOX(box), hint);
     }

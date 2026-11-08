@@ -7,6 +7,7 @@
 #include "collections-page.h"
 #include "bookmark-page.h"
 #include "notes-store.h"
+#include "verse-preview.h"
 #include "window-private.h"
 
 #include <glib/gi18n.h>
@@ -32,6 +33,7 @@ struct _GswordCollectionItemView {
     GtkWidget *root;
     GtkLabel *title_label;
     GtkLabel *count_label;
+    GswordVersePreview *preview;
     GtkListBox *items;
     GtkButton *open_button;
     GtkButton *remove_button;
@@ -39,6 +41,7 @@ struct _GswordCollectionItemView {
     gboolean favorites;
     gchar *selected_module;
     gchar *selected_key;
+    GtkWidget *hover_row;
 };
 
 static void refresh_lists(GswordCollectionsPage *page);
@@ -59,6 +62,7 @@ collection_view_free(GswordCollectionItemView *view)
         return;
     g_free(view->selected_module);
     g_free(view->selected_key);
+    gsword_verse_preview_free(view->preview);
     g_free(view);
 }
 
@@ -90,6 +94,64 @@ collection_view_clear_selection(GswordCollectionItemView *view)
     g_clear_pointer(&view->selected_module, g_free);
     g_clear_pointer(&view->selected_key, g_free);
     collection_view_update_actions(view);
+}
+
+static void
+collection_view_reset_preview(GswordCollectionItemView *view)
+{
+    view->hover_row = NULL;
+    gsword_verse_preview_reset(view->preview);
+}
+
+static void
+collection_view_show_preview(GswordCollectionItemView *view,
+                             const gchar *module_name, const gchar *key,
+                             const gchar *display_key)
+{
+    gsword_verse_preview_show(view->preview, module_name, key, display_key);
+}
+
+static void
+collection_view_show_row_preview(GswordCollectionItemView *view,
+                                 GtkListBoxRow *row)
+{
+    const gchar *module;
+    const gchar *key;
+    const gchar *display;
+
+    if (row == NULL)
+        return;
+    module = g_object_get_data(G_OBJECT(row), "item-module");
+    key = g_object_get_data(G_OBJECT(row), "item-key");
+    display = g_object_get_data(G_OBJECT(row), "item-display");
+    collection_view_show_preview(view, module, key, display);
+}
+
+static void
+on_view_pointer_motion(GtkEventControllerMotion *controller, gdouble x,
+                       gdouble y, gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
+    GtkListBoxRow *row;
+
+    (void)controller;
+    (void)x;
+    row = gtk_list_box_get_row_at_y(view->items, (gint)y);
+    if ((GtkWidget *)row == view->hover_row)
+        return;
+    view->hover_row = GTK_WIDGET(row);
+    if (row != NULL)
+        collection_view_show_row_preview(view, row);
+}
+
+static void
+on_view_pointer_leave(GtkEventControllerMotion *controller,
+                      gpointer user_data)
+{
+    GswordCollectionItemView *view = user_data;
+
+    (void)controller;
+    view->hover_row = NULL;
 }
 
 static void
@@ -139,6 +201,7 @@ on_view_item_selected(GtkListBox *list, GtkListBoxRow *row,
     view->selected_module = g_strdup(module);
     view->selected_key = g_strdup(key);
     collection_view_update_actions(view);
+    collection_view_show_row_preview(view, row);
 }
 
 static void
@@ -177,6 +240,7 @@ collection_view_load(GswordCollectionItemView *view)
 
     clear_list(view->items);
     collection_view_clear_selection(view);
+    collection_view_reset_preview(view);
     gtk_label_set_text(view->count_label, "");
     if (store == NULL)
         return;
@@ -230,6 +294,8 @@ collection_view_load(GswordCollectionItemView *view)
                                g_strdup(item->module), g_free);
         g_object_set_data_full(G_OBJECT(row), "item-key",
                                g_strdup(item->key), g_free);
+        g_object_set_data_full(G_OBJECT(row), "item-display",
+                               g_strdup(item->display_key), g_free);
         gtk_list_box_append(view->items, row);
     }
     g_ptr_array_unref(items);
@@ -345,12 +411,14 @@ collection_view_new(GswordCollectionsPage *page, gboolean favorites)
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *scroll = gtk_scrolled_window_new();
+    GtkWidget *preview;
     GtkWidget *footer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *open = gtk_button_new_with_label(_("Open verse"));
     GtkWidget *remove = gtk_button_new_with_label(
         favorites ? _("Remove from favorites") : _("Remove from list"));
     GtkWidget *add_current = gtk_button_new_with_label(
         _("Add current verse"));
+    GtkEventController *motion;
 
     view->page = page;
     view->favorites = favorites;
@@ -382,6 +450,15 @@ collection_view_new(GswordCollectionsPage *page, gboolean favorites)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),
                                   GTK_WIDGET(view->items));
     gtk_widget_set_vexpand(scroll, TRUE);
+    motion = gtk_event_controller_motion_new();
+    g_signal_connect(motion, "motion", G_CALLBACK(on_view_pointer_motion),
+                     view);
+    g_signal_connect(motion, "leave", G_CALLBACK(on_view_pointer_leave),
+                     view);
+    gtk_widget_add_controller(GTK_WIDGET(view->items), motion);
+
+    view->preview = gsword_verse_preview_new(page->window);
+    preview = gsword_verse_preview_widget(view->preview);
 
     view->count_label = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(view->count_label, 0.0f);
@@ -406,6 +483,7 @@ collection_view_new(GswordCollectionsPage *page, gboolean favorites)
         gtk_widget_add_css_class(hint, "dim-label");
         gtk_box_append(GTK_BOX(box), header);
         gtk_box_append(GTK_BOX(box), scroll);
+        gtk_box_append(GTK_BOX(box), preview);
         gtk_box_append(GTK_BOX(box), GTK_WIDGET(view->count_label));
         gtk_box_append(GTK_BOX(box), hint);
     }
