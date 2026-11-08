@@ -495,6 +495,14 @@ on_add_bookmark_clicked(GtkButton *button, gpointer user_data)
     g_free(display_key);
 }
 
+void
+gsword_reader_toolbar_add_bookmark(GswordReaderToolbar *toolbar)
+{
+    if (toolbar == NULL)
+        return;
+    on_add_bookmark_clicked(NULL, toolbar);
+}
+
 static void
 on_teaching_clicked(GtkButton *button, gpointer user_data)
 {

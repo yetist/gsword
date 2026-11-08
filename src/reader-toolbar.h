@@ -30,6 +30,7 @@ GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
     GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_update_favorite(GswordReaderToolbar *toolbar);
+void gsword_reader_toolbar_add_bookmark(GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_set_focus_mode(GswordReaderToolbar *toolbar,
                                           gboolean focus);
 void gsword_reader_toolbar_set_available(GswordReaderToolbar *toolbar,
