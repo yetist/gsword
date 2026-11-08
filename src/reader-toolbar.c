@@ -678,6 +678,21 @@ gsword_reader_toolbar_set_compact(GswordReaderToolbar *toolbar,
         toolbar->reference_stack, compact ? "compact" : "full");
 }
 
+void
+gsword_reader_toolbar_begin_reference_edit(GswordReaderToolbar *toolbar)
+{
+    GtkWidget *visible;
+
+    if (toolbar == NULL || toolbar->reference_stack == NULL)
+        return;
+    visible = gtk_stack_get_visible_child(toolbar->reference_stack);
+    if (visible == GTK_WIDGET(toolbar->compact_reference_chooser))
+        gsword_reference_chooser_begin_edit(
+            toolbar->compact_reference_chooser);
+    else
+        gsword_reference_chooser_begin_edit(toolbar->reference_chooser);
+}
+
 GtkToggleButton *
 gsword_reader_toolbar_get_study_toggle(GswordReaderToolbar *toolbar)
 {

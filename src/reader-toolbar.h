@@ -24,6 +24,8 @@ GswordReferenceChooser *gsword_reader_toolbar_get_compact_reference_chooser(
     GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_set_compact(GswordReaderToolbar *toolbar,
                                        gboolean compact);
+void gsword_reader_toolbar_begin_reference_edit(
+    GswordReaderToolbar *toolbar);
 GtkToggleButton *gsword_reader_toolbar_get_study_toggle(
     GswordReaderToolbar *toolbar);
 void gsword_reader_toolbar_update_history(GswordReaderToolbar *toolbar);

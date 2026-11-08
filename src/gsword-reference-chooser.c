@@ -1759,7 +1759,8 @@ set_compact_internal(GswordReferenceChooser *self, gboolean compact)
             gboolean keep = child == GTK_WIDGET(priv->book_button) ||
                             child == GTK_WIDGET(priv->chapter_button) ||
                             child == GTK_WIDGET(priv->colon_label) ||
-                            child == GTK_WIDGET(priv->verse_button);
+                            child == GTK_WIDGET(priv->verse_button) ||
+                            child == GTK_WIDGET(priv->edit_button);
 
             gtk_widget_set_visible(child, compact ? keep : TRUE);
             child = gtk_widget_get_next_sibling(child);

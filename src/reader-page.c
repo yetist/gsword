@@ -484,8 +484,8 @@ gsword_reader_page_set_initial_key(GswordReaderPage *page)
 void
 gsword_reader_page_begin_reference_edit(GswordReaderPage *page)
 {
-    if (page != NULL && page->reference_chooser != NULL)
-        gsword_reference_chooser_begin_edit(page->reference_chooser);
+    if (page != NULL && page->toolbar != NULL)
+        gsword_reader_toolbar_begin_reference_edit(page->toolbar);
 }
 
 void
