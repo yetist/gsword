@@ -1804,13 +1804,10 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
 }
 
 static void
-on_remove_clicked(GtkButton *button, gpointer user_data)
+remove_module(GswordWindow *self, const gchar *name)
 {
-    GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordLibraryPage *priv = library_page_get(self);
-    const gchar *name = priv->selected_installed_name;
 
-    (void)button;
     if (priv->installer == NULL || name == NULL)
         return;
     g_clear_object(&priv->install_cancellable);
@@ -1822,6 +1819,46 @@ on_remove_clicked(GtkButton *button, gpointer user_data)
     gsw_install_manager_remove_module_async(
         priv->installer, priv->manager, name, priv->install_cancellable,
         on_remove_finished, self);
+}
+
+static void
+on_remove_response(AdwAlertDialog *dialog, const gchar *response,
+                   gpointer user_data)
+{
+    GswordWindow *self = user_data;
+    const gchar *name = g_object_get_data(G_OBJECT(dialog), "module-name");
+
+    if (g_strcmp0(response, "remove") == 0)
+        remove_module(self, name);
+}
+
+static void
+on_remove_clicked(GtkButton *button, gpointer user_data)
+{
+    GswordWindow *self = GSWORD_WINDOW(user_data);
+    GswordLibraryPage *priv = library_page_get(self);
+    const gchar *name = priv->selected_installed_name;
+    AdwDialog *dialog;
+
+    (void)button;
+    if (priv->installer == NULL || name == NULL)
+        return;
+    dialog = ADW_DIALOG(adw_alert_dialog_new(_("Remove module?"), NULL));
+    adw_alert_dialog_format_body(
+        ADW_ALERT_DIALOG(dialog),
+        _("Remove “%s” from your module library? This cannot be undone."),
+        name);
+    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
+                                   "cancel", _("Cancel"),
+                                   "remove", _("Remove"), NULL);
+    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
+    adw_alert_dialog_set_response_appearance(
+        ADW_ALERT_DIALOG(dialog), "remove", ADW_RESPONSE_DESTRUCTIVE);
+    g_object_set_data_full(G_OBJECT(dialog), "module-name", g_strdup(name),
+                           g_free);
+    g_signal_connect(dialog, "response", G_CALLBACK(on_remove_response), self);
+    adw_dialog_present(dialog, GTK_WIDGET(self));
 }
 
 static void

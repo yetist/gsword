@@ -15,6 +15,8 @@ struct _GswordWorkspacePage {
     GtkWidget *root;
     GtkStack *stack;
     GtkGrid *grid;
+    GtkWidget *add_button;
+    GtkWidget *empty_add_button;
     gint columns;
     GtkToggleButton *column_buttons[4];
     GtkCheckButton *sync_scroll_toggle;
@@ -31,6 +33,21 @@ struct _GswordWorkspacePage {
 };
 
 static void update_column_buttons(GswordWorkspacePage *page);
+static void update_add_buttons(GswordWorkspacePage *page);
+
+static void
+update_add_buttons(GswordWorkspacePage *page)
+{
+    gboolean can_add;
+
+    if (page == NULL)
+        return;
+    can_add = page->panes == NULL || page->panes->len < 4;
+    if (page->add_button != NULL)
+        gtk_widget_set_sensitive(page->add_button, can_add);
+    if (page->empty_add_button != NULL)
+        gtk_widget_set_sensitive(page->empty_add_button, can_add);
+}
 
 static void
 update_column_buttons(GswordWorkspacePage *page)
@@ -219,6 +236,13 @@ gsword_workspace_page_add_pane(GswordWorkspacePage *page,
 
     if (page == NULL)
         return NULL;
+    if (page->panes->len >= 4) {
+        if (save)
+            gsword_window_set_status(
+                page->window,
+                _("At most four comparison panes are supported"));
+        return NULL;
+    }
     pane = gsword_workspace_pane_new(page->window, page, module_name, key,
                                      follow, FALSE);
     g_ptr_array_add(page->panes, pane);
@@ -228,6 +252,7 @@ gsword_workspace_page_add_pane(GswordWorkspacePage *page,
     gsword_workspace_page_refresh_diff(page);
     if (save)
         gsword_workspace_page_save(page);
+    update_add_buttons(page);
     return pane;
 }
 
@@ -259,6 +284,7 @@ gsword_workspace_page_remove_pane(GswordWorkspacePage *page,
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_refresh_diff(page);
     gsword_workspace_page_save(page);
+    update_add_buttons(page);
 }
 
 void
@@ -780,6 +806,14 @@ on_add_clicked(GtkButton *button, gpointer user_data)
     gchar *reference = gsword_window_current_start_reference(page->window);
 
     (void)button;
+    if (page->panes->len >= 4) {
+        gsword_window_set_status(
+            page->window,
+            _("At most four comparison panes are supported"));
+        g_free(name);
+        g_free(reference);
+        return;
+    }
     if (name == NULL) {
         gsword_window_set_status(page->window,
                                  _("No Bible text module is installed"));
@@ -797,6 +831,7 @@ clear_all_panes(GswordWorkspacePage *page)
     clear_panes(page);
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
+    update_add_buttons(page);
     gsword_window_set_status(page->window, _("Comparisons cleared"));
 }
 
@@ -1036,6 +1071,8 @@ gsword_workspace_page_new(GswordWindow *window)
 
     page->window = window;
     page->root = box;
+    page->add_button = add;
+    page->empty_add_button = add_pane;
     g_signal_connect(box, "map", G_CALLBACK(on_workspace_map), page);
     g_signal_connect(window, "notify::width",
                      G_CALLBACK(on_workspace_window_width_changed), page);
@@ -1139,5 +1176,6 @@ gsword_workspace_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->stack));
     g_object_set_data_full(G_OBJECT(box), "gsword-workspace-page", page,
                            workspace_page_free);
+    update_add_buttons(page);
     return page;
 }
