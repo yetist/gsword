@@ -34,6 +34,7 @@ struct _GswordSearchPage {
     GtkButton *build_button;
     GtkButton *delete_button;
     GtkLabel *index_label;
+    guint results_count;
     GCancellable *search_cancellable;
     GTask *search_task;
     GtkPopover *context_menu;
@@ -617,6 +618,24 @@ on_context_open_note(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_context_add_prayer(GtkButton *button, gpointer user_data)
+{
+    GswordSearchPage *page = user_data;
+
+    (void)button;
+    gtk_popover_popdown(page->context_menu);
+    if (!page->context_is_bible || page->context_module == NULL ||
+        page->context_storage == NULL || page->context_display == NULL) {
+        gsword_window_set_status(
+            page->window, _("This result cannot be added to prayer"));
+        return;
+    }
+    gsword_window_open_prayer_for(page->window, page->context_module,
+                                  page->context_storage,
+                                  page->context_display);
+}
+
+static void
 on_context_add_memory(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
@@ -921,6 +940,11 @@ show_context_menu(GswordSearchPage *page, GtkListBoxRow *row,
     gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
     add_context_button(box, _("Add note"), G_CALLBACK(on_context_open_note),
                        page, page->context_is_bible);
+    add_context_button(box, _("Add to prayer"),
+                       G_CALLBACK(on_context_add_prayer), page,
+                       page->context_is_bible &&
+                       page->context_storage != NULL &&
+                       page->context_display != NULL);
     add_context_button(box, _("Add to memory review"),
                        G_CALLBACK(on_context_add_memory), page,
                        page->context_is_bible && page->context_text != NULL);
@@ -1037,10 +1061,26 @@ populate_results(GswordSearchPage *page, GPtrArray *results)
         gsword_window_set_status(page->window, message);
         g_free(message);
     }
+    page->results_count = results->len;
     if (results->len == 0)
         gtk_label_set_text(page->empty_label, _("No results."));
     gtk_stack_set_visible_child_name(page->results_stack,
                                      results->len > 0 ? "results" : "empty");
+}
+
+static void
+restore_results_label(GswordSearchPage *page)
+{
+    if (page->results_count > 0) {
+        gchar *message = g_strdup_printf(_("Search: %u result(s)"),
+                                         page->results_count);
+
+        gtk_label_set_text(page->results_label, message);
+        g_free(message);
+    } else {
+        gtk_label_set_text(page->empty_label, _("No results."));
+        gtk_stack_set_visible_child_name(page->results_stack, "empty");
+    }
 }
 
 static void
@@ -1050,8 +1090,10 @@ set_searching(GswordSearchPage *page, gboolean searching)
     gtk_widget_set_visible(GTK_WIDGET(page->cancel_button), searching);
     if (searching) {
         gtk_label_set_text(page->results_label, _("Searching..."));
-        gtk_label_set_text(page->empty_label, _("Searching..."));
-        gtk_stack_set_visible_child_name(page->results_stack, "empty");
+        if (page->results_count == 0) {
+            gtk_label_set_text(page->empty_label, _("Searching..."));
+            gtk_stack_set_visible_child_name(page->results_stack, "empty");
+        }
     } else {
         gtk_widget_set_sensitive(
             GTK_WIDGET(page->search_button),
@@ -1084,6 +1126,7 @@ on_search_done(GObject *source_object, GAsyncResult *result,
     set_searching(page, FALSE);
 
     if (results == NULL) {
+        restore_results_label(page);
         if (g_error_matches(error, GSW_ERROR, GSW_ERROR_CANCELLED) ||
             g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
             gsword_window_set_status(page->window, _("Search cancelled"));

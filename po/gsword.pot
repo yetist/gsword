@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 16:56+0800\n"
+"POT-Creation-Date: 2026-11-08 17:08+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,7 +49,7 @@ msgstr ""
 msgid "No Bible text module is installed"
 msgstr ""
 
-#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:582
+#: src/window.c:695 src/search-page.c:1201 src/resource-page.c:582
 #: src/resource-page.c:588
 msgid "Cannot open module"
 msgstr ""
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: src/window.c:1018 src/window.c:1333 src/search-page.c:1410
+#: src/window.c:1018 src/window.c:1333 src/search-page.c:1453
 msgid "Search"
 msgstr ""
 
@@ -83,7 +83,7 @@ msgstr ""
 msgid "Preferences"
 msgstr ""
 
-#: src/window.c:1022 src/search-page.c:1430 src/library-page.c:2558
+#: src/window.c:1022 src/search-page.c:1473 src/library-page.c:2558
 msgid "Back"
 msgstr ""
 
@@ -115,7 +115,7 @@ msgstr ""
 msgid "Toggle sidebar"
 msgstr ""
 
-#: src/window.c:1032 src/window-services.c:159 src/search-page.c:793
+#: src/window.c:1032 src/window-services.c:159 src/search-page.c:812
 #: src/library-page.c:1268
 msgid "Close"
 msgstr ""
@@ -204,182 +204,190 @@ msgstr ""
 msgid "Verse not present in this module."
 msgstr ""
 
-#: src/search-page.c:101
+#: src/search-page.c:102
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:104
+#: src/search-page.c:105
 #, c-format
 msgid "Searching %s: %u"
 msgstr ""
 
-#: src/search-page.c:247 src/search-page.c:1490
+#: src/search-page.c:248 src/search-page.c:1533
 msgid "Index: no module"
 msgstr ""
 
-#: src/search-page.c:250
+#: src/search-page.c:251
 msgid "Index: not built (scan used)"
 msgstr ""
 
-#: src/search-page.c:253
+#: src/search-page.c:254
 msgid "Index: built (used for this search)"
 msgstr ""
 
-#: src/search-page.c:256
+#: src/search-page.c:257
 msgid "Index: built (scan used for this search)"
 msgstr ""
 
-#: src/search-page.c:546 src/reader-page.c:1266
+#: src/search-page.c:547 src/reader-page.c:1266
 msgid "Copied to clipboard"
 msgstr ""
 
-#: src/search-page.c:631
+#: src/search-page.c:630
+msgid "This result cannot be added to prayer"
+msgstr ""
+
+#: src/search-page.c:650
 msgid "This result cannot be added to memory review"
 msgstr ""
 
-#: src/search-page.c:638 src/memory-page.c:237
+#: src/search-page.c:657 src/memory-page.c:237
 msgid "Cannot add memory verse"
 msgstr ""
 
-#: src/search-page.c:642 src/memory-page.c:269
+#: src/search-page.c:661 src/memory-page.c:269
 msgid "Verse added to memory review"
 msgstr ""
 
-#: src/search-page.c:661 src/notes-page.c:1235 src/reader-toolbar.c:275
+#: src/search-page.c:680 src/notes-page.c:1235 src/reader-toolbar.c:275
 #: src/collections-page.c:329
 msgid "Cannot add verse to list"
 msgstr ""
 
-#: src/search-page.c:664 src/notes-page.c:1251 src/reader-toolbar.c:292
+#: src/search-page.c:683 src/notes-page.c:1251 src/reader-toolbar.c:292
 #: src/collections-page.c:334
 msgid "Verse added to list"
 msgstr ""
 
-#: src/search-page.c:694 src/search-page.c:927 src/reader-toolbar.c:785
+#: src/search-page.c:713 src/search-page.c:951 src/reader-toolbar.c:785
 msgid "Add to verse list"
 msgstr ""
 
-#: src/search-page.c:706
+#: src/search-page.c:725
 msgid "Verse lists are unavailable."
 msgstr ""
 
-#: src/search-page.c:725 src/notes-page.c:1282 src/notes-page.c:1782
+#: src/search-page.c:744 src/notes-page.c:1282 src/notes-page.c:1782
 #: src/reader-toolbar.c:349
 msgid "No verse lists yet"
 msgstr ""
 
-#: src/search-page.c:727
+#: src/search-page.c:746
 msgid "Open collections"
 msgstr ""
 
-#: src/search-page.c:772
+#: src/search-page.c:791
 msgid "Module information unavailable"
 msgstr ""
 
-#: src/search-page.c:781 src/library-page.c:2486
+#: src/search-page.c:800 src/library-page.c:2486
 msgid "Language"
 msgstr ""
 
-#: src/search-page.c:784
+#: src/search-page.c:803
 msgid "Version"
 msgstr ""
 
-#: src/search-page.c:787
+#: src/search-page.c:806
 msgid "Path"
 msgstr ""
 
-#: src/search-page.c:790 src/search-page.c:931
+#: src/search-page.c:809 src/search-page.c:955
 msgid "Module information"
 msgstr ""
 
-#: src/search-page.c:904 src/reader-page.c:1671
+#: src/search-page.c:923 src/reader-page.c:1671
 msgid "Copy verse"
 msgstr ""
 
-#: src/search-page.c:906
+#: src/search-page.c:925
 msgid "Copy reference"
 msgstr ""
 
-#: src/search-page.c:909
+#: src/search-page.c:928
 msgid "Copy verse and reference"
 msgstr ""
 
-#: src/search-page.c:914 src/notes-page.c:1732 src/notes-page.c:1980
+#: src/search-page.c:933 src/notes-page.c:1732 src/notes-page.c:1980
 msgid "Open in reader"
 msgstr ""
 
-#: src/search-page.c:918
+#: src/search-page.c:937
 msgid "Open in compare"
 msgstr ""
 
-#: src/search-page.c:922
+#: src/search-page.c:941
 msgid "Add note"
 msgstr ""
 
-#: src/search-page.c:924
+#: src/search-page.c:943 src/reader-page.c:1676 src/reader-toolbar.c:747
+msgid "Add to prayer"
+msgstr ""
+
+#: src/search-page.c:948
 msgid "Add to memory review"
 msgstr ""
 
-#: src/search-page.c:1013
+#: src/search-page.c:1037
 msgid "Result actions"
 msgstr ""
 
-#: src/search-page.c:1033
+#: src/search-page.c:1057 src/search-page.c:1075
 #, c-format
 msgid "Search: %u result(s)"
 msgstr ""
 
-#: src/search-page.c:1041
+#: src/search-page.c:1066 src/search-page.c:1081
 msgid "No results."
 msgstr ""
 
-#: src/search-page.c:1052 src/search-page.c:1053 src/search-page.c:1186
+#: src/search-page.c:1092 src/search-page.c:1094 src/search-page.c:1229
 msgid "Searching..."
 msgstr ""
 
-#: src/search-page.c:1089
+#: src/search-page.c:1132
 msgid "Search cancelled"
 msgstr ""
 
-#: src/search-page.c:1091
+#: src/search-page.c:1134
 msgid "Search failed"
 msgstr ""
 
-#: src/search-page.c:1126
+#: src/search-page.c:1169
 msgid "Enter both attribute levels or leave both empty"
 msgstr ""
 
-#: src/search-page.c:1132
+#: src/search-page.c:1175
 msgid "Open a module before searching"
 msgstr ""
 
-#: src/search-page.c:1137
+#: src/search-page.c:1180
 msgid "No active verse reference"
 msgstr ""
 
-#: src/search-page.c:1263
+#: src/search-page.c:1306
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr ""
 
-#: src/search-page.c:1327
+#: src/search-page.c:1370
 msgid "Cannot build index"
 msgstr ""
 
-#: src/search-page.c:1331
+#: src/search-page.c:1374
 msgid "Search index built"
 msgstr ""
 
-#: src/search-page.c:1347
+#: src/search-page.c:1390
 msgid "Cannot delete index"
 msgstr ""
 
-#: src/search-page.c:1351
+#: src/search-page.c:1394
 msgid "Search index deleted"
 msgstr ""
 
-#: src/search-page.c:1411 src/notes-page.c:702 src/notes-page.c:1413
+#: src/search-page.c:1454 src/notes-page.c:702 src/notes-page.c:1413
 #: src/notes-page.c:1482 src/notes-page.c:1536 src/notes-page.c:1615
 #: src/library-page.c:1603 src/library-page.c:1852 src/library-page.c:2250
 #: src/library-page.c:2359 src/reader-toolbar.c:487 src/plan-page.c:564
@@ -389,107 +397,107 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: src/search-page.c:1414
+#: src/search-page.c:1457
 msgid "Build index"
 msgstr ""
 
-#: src/search-page.c:1415
+#: src/search-page.c:1458
 msgid "Delete index"
 msgstr ""
 
-#: src/search-page.c:1429
+#: src/search-page.c:1472
 msgid "Recent searches"
 msgstr ""
 
-#: src/search-page.c:1432
+#: src/search-page.c:1475
 msgid "Build search index"
 msgstr ""
 
-#: src/search-page.c:1433
+#: src/search-page.c:1476
 msgid "Delete search index"
 msgstr ""
 
-#: src/search-page.c:1436
+#: src/search-page.c:1479
 msgid "Search text"
 msgstr ""
 
-#: src/search-page.c:1443
+#: src/search-page.c:1486
 msgid "Whole module"
 msgstr ""
 
-#: src/search-page.c:1443 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1486 src/gsword-reference-chooser.c:1612
 msgid "Old Testament"
 msgstr ""
 
-#: src/search-page.c:1444 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1487 src/gsword-reference-chooser.c:1612
 msgid "New Testament"
 msgstr ""
 
-#: src/search-page.c:1444
+#: src/search-page.c:1487
 msgid "Current book"
 msgstr ""
 
-#: src/search-page.c:1445
+#: src/search-page.c:1488
 msgid "Current chapter"
 msgstr ""
 
-#: src/search-page.c:1450
+#: src/search-page.c:1493
 msgid "Module:"
 msgstr ""
 
-#: src/search-page.c:1451
+#: src/search-page.c:1494
 msgid "Range:"
 msgstr ""
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Phrase"
 msgstr ""
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Multiword"
 msgstr ""
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Regex"
 msgstr ""
 
-#: src/search-page.c:1458
+#: src/search-page.c:1501
 msgid "Case sensitive"
 msgstr ""
 
-#: src/search-page.c:1461
+#: src/search-page.c:1504
 msgid "Word"
 msgstr ""
 
-#: src/search-page.c:1462
+#: src/search-page.c:1505
 msgid "Lemma"
 msgstr ""
 
-#: src/search-page.c:1465
+#: src/search-page.c:1508
 msgid "Attribute 1:"
 msgstr ""
 
-#: src/search-page.c:1466
+#: src/search-page.c:1509
 msgid "Attribute 2:"
 msgstr ""
 
-#: src/search-page.c:1467
+#: src/search-page.c:1510
 msgid "Advanced"
 msgstr ""
 
-#: src/search-page.c:1469
+#: src/search-page.c:1512
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr ""
 
-#: src/search-page.c:1495
+#: src/search-page.c:1538
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr ""
 
-#: src/search-page.c:1554
+#: src/search-page.c:1597
 msgid "Enter a search term."
 msgstr ""
 
@@ -1736,10 +1744,6 @@ msgstr ""
 
 #: src/reader-page.c:1674
 msgid "Toggle highlight"
-msgstr ""
-
-#: src/reader-page.c:1676 src/reader-toolbar.c:747
-msgid "Add to prayer"
 msgstr ""
 
 #: src/reader-toolbar.c:168 src/reader-toolbar.c:172 src/collections-page.c:214

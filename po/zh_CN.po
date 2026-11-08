@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gsword 0.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 16:56+0800\n"
+"POT-Creation-Date: 2026-11-08 17:08+0800\n"
 "PO-Revision-Date: 2026-11-06 00:00+0800\n"
 "Last-Translator: yetist\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -46,7 +46,7 @@ msgstr "显示模块侧栏"
 msgid "No Bible text module is installed"
 msgstr "未安装圣经文本模块"
 
-#: src/window.c:695 src/search-page.c:1158 src/resource-page.c:582
+#: src/window.c:695 src/search-page.c:1201 src/resource-page.c:582
 #: src/resource-page.c:588
 msgid "Cannot open module"
 msgstr "无法打开模块"
@@ -63,7 +63,7 @@ msgstr "词典已在研经面板中打开"
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: src/window.c:1018 src/window.c:1333 src/search-page.c:1410
+#: src/window.c:1018 src/window.c:1333 src/search-page.c:1453
 msgid "Search"
 msgstr "搜索"
 
@@ -80,7 +80,7 @@ msgstr "模块库"
 msgid "Preferences"
 msgstr "首选项"
 
-#: src/window.c:1022 src/search-page.c:1430 src/library-page.c:2558
+#: src/window.c:1022 src/search-page.c:1473 src/library-page.c:2558
 msgid "Back"
 msgstr "返回"
 
@@ -112,7 +112,7 @@ msgstr "下一页"
 msgid "Toggle sidebar"
 msgstr "隐藏模块侧栏"
 
-#: src/window.c:1032 src/window-services.c:159 src/search-page.c:793
+#: src/window.c:1032 src/window-services.c:159 src/search-page.c:812
 #: src/library-page.c:1268
 msgid "Close"
 msgstr "关闭"
@@ -201,182 +201,190 @@ msgstr "未知"
 msgid "Verse not present in this module."
 msgstr "该模块没有此节。"
 
-#: src/search-page.c:101
+#: src/search-page.c:102
 #, c-format
 msgid "Searching %s: %u/%u"
 msgstr "正在搜索 %s：%u/%u"
 
-#: src/search-page.c:104
+#: src/search-page.c:105
 #, c-format
 msgid "Searching %s: %u"
 msgstr "正在搜索 %s：%u"
 
-#: src/search-page.c:247 src/search-page.c:1490
+#: src/search-page.c:248 src/search-page.c:1533
 msgid "Index: no module"
 msgstr "索引：无模块"
 
-#: src/search-page.c:250
+#: src/search-page.c:251
 msgid "Index: not built (scan used)"
 msgstr "索引：未建立（使用扫描）"
 
-#: src/search-page.c:253
+#: src/search-page.c:254
 msgid "Index: built (used for this search)"
 msgstr "索引：已建立（本次搜索使用）"
 
-#: src/search-page.c:256
+#: src/search-page.c:257
 msgid "Index: built (scan used for this search)"
 msgstr "索引：已建立（本次搜索使用扫描）"
 
-#: src/search-page.c:546 src/reader-page.c:1266
+#: src/search-page.c:547 src/reader-page.c:1266
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
 
-#: src/search-page.c:631
+#: src/search-page.c:630
+msgid "This result cannot be added to prayer"
+msgstr "此搜索结果无法添加到祷告"
+
+#: src/search-page.c:650
 msgid "This result cannot be added to memory review"
 msgstr "此搜索结果无法加入背经复习"
 
-#: src/search-page.c:638 src/memory-page.c:237
+#: src/search-page.c:657 src/memory-page.c:237
 msgid "Cannot add memory verse"
 msgstr "无法添加背经经文"
 
-#: src/search-page.c:642 src/memory-page.c:269
+#: src/search-page.c:661 src/memory-page.c:269
 msgid "Verse added to memory review"
 msgstr "经文已加入背经复习"
 
-#: src/search-page.c:661 src/notes-page.c:1235 src/reader-toolbar.c:275
+#: src/search-page.c:680 src/notes-page.c:1235 src/reader-toolbar.c:275
 #: src/collections-page.c:329
 msgid "Cannot add verse to list"
 msgstr "无法将经文加入列表"
 
-#: src/search-page.c:664 src/notes-page.c:1251 src/reader-toolbar.c:292
+#: src/search-page.c:683 src/notes-page.c:1251 src/reader-toolbar.c:292
 #: src/collections-page.c:334
 msgid "Verse added to list"
 msgstr "经文已加入列表"
 
-#: src/search-page.c:694 src/search-page.c:927 src/reader-toolbar.c:785
+#: src/search-page.c:713 src/search-page.c:951 src/reader-toolbar.c:785
 msgid "Add to verse list"
 msgstr "加入经文列表"
 
-#: src/search-page.c:706
+#: src/search-page.c:725
 msgid "Verse lists are unavailable."
 msgstr "经文列表不可用。"
 
-#: src/search-page.c:725 src/notes-page.c:1282 src/notes-page.c:1782
+#: src/search-page.c:744 src/notes-page.c:1282 src/notes-page.c:1782
 #: src/reader-toolbar.c:349
 msgid "No verse lists yet"
 msgstr "还没有经文列表"
 
-#: src/search-page.c:727
+#: src/search-page.c:746
 msgid "Open collections"
 msgstr "打开收藏与列表"
 
-#: src/search-page.c:772
+#: src/search-page.c:791
 msgid "Module information unavailable"
 msgstr "无法获取模块信息"
 
-#: src/search-page.c:781 src/library-page.c:2486
+#: src/search-page.c:800 src/library-page.c:2486
 msgid "Language"
 msgstr "语言"
 
-#: src/search-page.c:784
+#: src/search-page.c:803
 msgid "Version"
 msgstr "版本"
 
-#: src/search-page.c:787
+#: src/search-page.c:806
 msgid "Path"
 msgstr "路径"
 
-#: src/search-page.c:790 src/search-page.c:931
+#: src/search-page.c:809 src/search-page.c:955
 msgid "Module information"
 msgstr "模块信息"
 
-#: src/search-page.c:904 src/reader-page.c:1671
+#: src/search-page.c:923 src/reader-page.c:1671
 msgid "Copy verse"
 msgstr "复制本节"
 
-#: src/search-page.c:906
+#: src/search-page.c:925
 msgid "Copy reference"
 msgstr "复制引用"
 
-#: src/search-page.c:909
+#: src/search-page.c:928
 msgid "Copy verse and reference"
 msgstr "复制经文和引用"
 
-#: src/search-page.c:914 src/notes-page.c:1732 src/notes-page.c:1980
+#: src/search-page.c:933 src/notes-page.c:1732 src/notes-page.c:1980
 msgid "Open in reader"
 msgstr "在阅读器中打开"
 
-#: src/search-page.c:918
+#: src/search-page.c:937
 msgid "Open in compare"
 msgstr "在对照页打开"
 
-#: src/search-page.c:922
+#: src/search-page.c:941
 msgid "Add note"
 msgstr "添加笔记"
 
-#: src/search-page.c:924
+#: src/search-page.c:943 src/reader-page.c:1676 src/reader-toolbar.c:747
+msgid "Add to prayer"
+msgstr "添加到祷告"
+
+#: src/search-page.c:948
 msgid "Add to memory review"
 msgstr "加入背经复习"
 
-#: src/search-page.c:1013
+#: src/search-page.c:1037
 msgid "Result actions"
 msgstr "结果操作"
 
-#: src/search-page.c:1033
+#: src/search-page.c:1057 src/search-page.c:1075
 #, c-format
 msgid "Search: %u result(s)"
 msgstr "搜索：%u 个结果"
 
-#: src/search-page.c:1041
+#: src/search-page.c:1066 src/search-page.c:1081
 msgid "No results."
 msgstr "没有找到结果。"
 
-#: src/search-page.c:1052 src/search-page.c:1053 src/search-page.c:1186
+#: src/search-page.c:1092 src/search-page.c:1094 src/search-page.c:1229
 msgid "Searching..."
 msgstr "正在搜索…"
 
-#: src/search-page.c:1089
+#: src/search-page.c:1132
 msgid "Search cancelled"
 msgstr "搜索已取消"
 
-#: src/search-page.c:1091
+#: src/search-page.c:1134
 msgid "Search failed"
 msgstr "搜索失败"
 
-#: src/search-page.c:1126
+#: src/search-page.c:1169
 msgid "Enter both attribute levels or leave both empty"
 msgstr "请同时填写两个属性级别，或都留空"
 
-#: src/search-page.c:1132
+#: src/search-page.c:1175
 msgid "Open a module before searching"
 msgstr "搜索前请先打开模块"
 
-#: src/search-page.c:1137
+#: src/search-page.c:1180
 msgid "No active verse reference"
 msgstr "当前没有可用的经文范围"
 
-#: src/search-page.c:1263
+#: src/search-page.c:1306
 #, c-format
 msgid "Indexing %s: %u/%u"
 msgstr "正在建立 %s 索引：%u/%u"
 
-#: src/search-page.c:1327
+#: src/search-page.c:1370
 msgid "Cannot build index"
 msgstr "无法建立索引"
 
-#: src/search-page.c:1331
+#: src/search-page.c:1374
 msgid "Search index built"
 msgstr "搜索索引已建立"
 
-#: src/search-page.c:1347
+#: src/search-page.c:1390
 msgid "Cannot delete index"
 msgstr "无法删除索引"
 
-#: src/search-page.c:1351
+#: src/search-page.c:1394
 msgid "Search index deleted"
 msgstr "搜索索引已删除"
 
-#: src/search-page.c:1411 src/notes-page.c:702 src/notes-page.c:1413
+#: src/search-page.c:1454 src/notes-page.c:702 src/notes-page.c:1413
 #: src/notes-page.c:1482 src/notes-page.c:1536 src/notes-page.c:1615
 #: src/library-page.c:1603 src/library-page.c:1852 src/library-page.c:2250
 #: src/library-page.c:2359 src/reader-toolbar.c:487 src/plan-page.c:564
@@ -386,107 +394,107 @@ msgstr "搜索索引已删除"
 msgid "Cancel"
 msgstr "取消"
 
-#: src/search-page.c:1414
+#: src/search-page.c:1457
 msgid "Build index"
 msgstr "建立搜索索引"
 
-#: src/search-page.c:1415
+#: src/search-page.c:1458
 msgid "Delete index"
 msgstr "删除搜索索引"
 
-#: src/search-page.c:1429
+#: src/search-page.c:1472
 msgid "Recent searches"
 msgstr "最近搜索"
 
-#: src/search-page.c:1432
+#: src/search-page.c:1475
 msgid "Build search index"
 msgstr "建立搜索索引"
 
-#: src/search-page.c:1433
+#: src/search-page.c:1476
 msgid "Delete search index"
 msgstr "删除搜索索引"
 
-#: src/search-page.c:1436
+#: src/search-page.c:1479
 msgid "Search text"
 msgstr "搜索文本"
 
-#: src/search-page.c:1443
+#: src/search-page.c:1486
 msgid "Whole module"
 msgstr "整个模块"
 
-#: src/search-page.c:1443 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1486 src/gsword-reference-chooser.c:1612
 msgid "Old Testament"
 msgstr "旧约"
 
-#: src/search-page.c:1444 src/gsword-reference-chooser.c:1612
+#: src/search-page.c:1487 src/gsword-reference-chooser.c:1612
 msgid "New Testament"
 msgstr "新约"
 
-#: src/search-page.c:1444
+#: src/search-page.c:1487
 msgid "Current book"
 msgstr "当前卷"
 
-#: src/search-page.c:1445
+#: src/search-page.c:1488
 msgid "Current chapter"
 msgstr "当前章"
 
-#: src/search-page.c:1450
+#: src/search-page.c:1493
 msgid "Module:"
 msgstr "模块："
 
-#: src/search-page.c:1451
+#: src/search-page.c:1494
 msgid "Range:"
 msgstr "范围："
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Phrase"
 msgstr "短语"
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Multiword"
 msgstr "多词"
 
-#: src/search-page.c:1454
+#: src/search-page.c:1497
 msgid "Regex"
 msgstr "正则"
 
-#: src/search-page.c:1458
+#: src/search-page.c:1501
 msgid "Case sensitive"
 msgstr "区分大小写"
 
-#: src/search-page.c:1461
+#: src/search-page.c:1504
 msgid "Word"
 msgstr "Word"
 
-#: src/search-page.c:1462
+#: src/search-page.c:1505
 msgid "Lemma"
 msgstr "Lemma"
 
-#: src/search-page.c:1465
+#: src/search-page.c:1508
 msgid "Attribute 1:"
 msgstr "属性 1："
 
-#: src/search-page.c:1466
+#: src/search-page.c:1509
 msgid "Attribute 2:"
 msgstr "属性 2："
 
-#: src/search-page.c:1467
+#: src/search-page.c:1510
 msgid "Advanced"
 msgstr "高级"
 
-#: src/search-page.c:1469
+#: src/search-page.c:1512
 msgid ""
 "Search tags such as Word / Lemma. Leave both fields empty for normal text "
 "search."
 msgstr "搜索 Word / Lemma 等标签。普通文本搜索请将两个字段都留空。"
 
-#: src/search-page.c:1495
+#: src/search-page.c:1538
 msgid ""
 "The index accelerates case-insensitive phrase and multiword searches without "
 "a range."
 msgstr "索引可加速不限定范围、不区分大小写的短语或多词搜索。"
 
-#: src/search-page.c:1554
+#: src/search-page.c:1597
 msgid "Enter a search term."
 msgstr "输入搜索内容。"
 
@@ -1735,10 +1743,6 @@ msgstr "打开笔记"
 #: src/reader-page.c:1674
 msgid "Toggle highlight"
 msgstr "切换高亮"
-
-#: src/reader-page.c:1676 src/reader-toolbar.c:747
-msgid "Add to prayer"
-msgstr "添加到祷告"
 
 #: src/reader-toolbar.c:168 src/reader-toolbar.c:172 src/collections-page.c:214
 #: src/collections-page.c:218 src/collections-page.c:351
