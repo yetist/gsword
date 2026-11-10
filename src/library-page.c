@@ -8,6 +8,7 @@
 #include "window-private.h"
 #include "app-paths.h"
 #include "library-module-row.h"
+#include "library-module-details.h"
 
 #include <glib/gi18n.h>
 
@@ -134,14 +135,6 @@ library_page_get(GswordWindow *self)
 static void gsword_window_refresh_remote_modules(GswordWindow *self);
 static void gsword_window_refresh_installed_list(GswordWindow *self);
 static void show_module_details(GswordWindow *self);
-static void append_module_warning(gchar **warning, const gchar *format, ...);
-static gchar *format_module_meta(GswModuleInfo *info,
-                                 const gchar *version_text,
-                                 const gchar *source_text);
-static gchar *format_module_warning(GswModuleInfo *info);
-static gchar *format_module_technical(GswModuleInfo *info, const gchar *name,
-                                      gboolean include_minimum);
-static gchar *format_module_license(GswModuleInfo *info);
 static void update_common_module_details(GswordLibraryPage *priv,
                                          GswModuleInfo *info,
                                          const gchar *name,
@@ -497,20 +490,6 @@ gsword_window_refresh_install_sources(GswordWindow *self)
     gsword_window_refresh_remote_modules(self);
 }
 
-static gchar *
-format_size(guint64 bytes)
-{
-    if (bytes >= G_GUINT64_CONSTANT(1024) * 1024 * 1024)
-        return g_strdup_printf("%.1f GB", (gdouble)bytes /
-                               (1024.0 * 1024.0 * 1024.0));
-    if (bytes >= G_GUINT64_CONSTANT(1024) * 1024)
-        return g_strdup_printf("%.1f MB", (gdouble)bytes /
-                               (1024.0 * 1024.0));
-    if (bytes >= G_GUINT64_CONSTANT(1024))
-        return g_strdup_printf("%.1f KB", (gdouble)bytes / 1024.0);
-    return g_strdup_printf("%" G_GUINT64_FORMAT " B", bytes);
-}
-
 static void
 clear_remote_details(GswordWindow *self)
 {
@@ -582,121 +561,16 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
 }
 
 static void
-append_module_warning(gchar **warning, const gchar *format, ...)
-{
-    va_list args;
-    gchar *line;
-    gchar *combined;
-
-    va_start(args, format);
-    line = g_strdup_vprintf(format, args);
-    va_end(args);
-    if (*warning == NULL) {
-        *warning = line;
-    } else {
-        combined = g_strconcat(*warning, "\n", line, NULL);
-        g_free(*warning);
-        g_free(line);
-        *warning = combined;
-    }
-}
-
-static gchar *
-format_module_meta(GswModuleInfo *info, const gchar *version_text,
-                   const gchar *source_text)
-{
-    gchar *language = gsword_library_language_display_name(gsw_module_info_get_language(info));
-    gchar *size = format_size(gsw_module_info_get_install_size(info));
-    const gchar *license = gsw_module_info_get_distribution_license(info);
-    const gchar *type = gsword_window_module_type_display(info);
-    gchar *meta = g_strdup_printf(
-        _("Type: %s\nLanguage: %s\nVersion: %s\nSize: %s\nSource: %s\nLicense: %s"),
-        type != NULL ? type : _("Unknown"), language,
-        version_text != NULL ? version_text : "?", size,
-        source_text != NULL ? source_text : _("Unknown"),
-        license != NULL && *license != '\0' ? license : _("Not specified"));
-
-    g_free(language);
-    g_free(size);
-    return meta;
-}
-
-static gchar *
-format_module_warning(GswModuleInfo *info)
-{
-    gchar *warning = NULL;
-
-    if (!gsw_module_info_is_supported(info))
-        warning = g_strdup(
-            _("⚠ This module may not be readable by this version of gsword."));
-    if (gsw_module_info_get_value(info, "Requires") != NULL)
-        append_module_warning(&warning, _("Requires: %s"),
-                              gsw_module_info_get_value(info, "Requires"));
-    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
-        append_module_warning(&warning, _("Conflicts: %s"),
-                              gsw_module_info_get_value(info, "Conflicts"));
-    if (gsw_module_info_is_ciphered(info))
-        append_module_warning(
-            &warning, "%s",
-            _("⚠ This module is encrypted and may require unlocking."));
-    return warning;
-}
-
-static gchar *
-format_module_technical(GswModuleInfo *info, const gchar *name,
-                        gboolean include_minimum)
-{
-    GString *technical = g_string_new(NULL);
-    const gchar *value;
-
-    value = gsw_module_info_get_driver_name(info);
-    g_string_append_printf(technical, _("Driver: %s\n"),
-                           value != NULL ? value : _("Unknown"));
-    value = gsw_module_info_get_encoding(info);
-    g_string_append_printf(technical, _("Encoding: %s\n"),
-                           value != NULL ? value : _("Unknown"));
-    value = gsw_module_info_get_versification(info);
-    g_string_append_printf(technical, _("Versification: %s\n"),
-                           value != NULL ? value : _("Unknown"));
-    if (include_minimum) {
-        value = gsw_module_info_get_minimum_version(info);
-        g_string_append_printf(technical, _("Minimum SWORD version: %s\n"),
-                               value != NULL ? value : _("Unknown"));
-    }
-    g_string_append_printf(technical, _("Module ID: %s\n"), name);
-    value = gsw_module_info_get_config_file(info);
-    g_string_append_printf(technical, _("Config file: %s\n"),
-                           value != NULL ? value : _("Unknown"));
-    value = gsw_module_info_get_absolute_data_path(info);
-    g_string_append_printf(technical, _("Data path: %s"),
-                           value != NULL ? value : _("Unknown"));
-    return g_string_free(technical, FALSE);
-}
-
-static gchar *
-format_module_license(GswModuleInfo *info)
-{
-    const gchar *license = gsw_module_info_get_distribution_license(info);
-    const gchar *copyright = gsw_module_info_get_copyright(info);
-
-    return g_strdup_printf(
-        _("License: %s\n\nCopyright: %s"),
-        license != NULL && *license != '\0' ? license : _("Not specified"),
-        copyright != NULL && *copyright != '\0'
-        ? copyright : _("Not specified"));
-}
-
-static void
 update_common_module_details(GswordLibraryPage *priv, GswModuleInfo *info,
                              const gchar *name, const gchar *status_text,
                              const gchar *version_text,
                              const gchar *source_text,
                              gboolean include_minimum)
 {
-    gchar *meta = format_module_meta(info, version_text, source_text);
-    gchar *warning = format_module_warning(info);
-    gchar *technical = format_module_technical(info, name, include_minimum);
-    gchar *license_text = format_module_license(info);
+    gchar *meta = gsword_library_format_module_meta(info, version_text, source_text);
+    gchar *warning = gsword_library_format_module_warning(info);
+    gchar *technical = gsword_library_format_module_technical(info, name, include_minimum);
+    gchar *license_text = gsword_library_format_module_license(info);
     const gchar *description = gsw_module_info_get_description(info);
     const gchar *about = gsw_module_info_get_about(info);
 
@@ -1455,8 +1329,8 @@ check_install_space(GswordWindow *self, GswModuleInfo *info)
         available = g_file_info_get_attribute_uint64(
             fs_info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
     if (available > 0 && needed > available) {
-        gchar *need_text = format_size(needed);
-        gchar *free_text = format_size(available);
+        gchar *need_text = gsword_library_format_size(needed);
+        gchar *free_text = gsword_library_format_size(available);
 
         gsword_window_set_status(self, _("Not enough disk space"));
         {

@@ -28,7 +28,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'prayer-page.c', 'insight-page.c', 'bookmark-page.c',
      'collections-page.c', 'app-paths.c', 'app-locale.c',
      'reference-utils.c', 'reference-selection.c', 'verse-preview.c',
-     'gsword-page.c', 'window-help.c', 'window-pages.c', 'window-actions.c', 'window-session.c', 'reader-context-menu.c', 'reader-copy.c', 'library-module-row.c',
+     'gsword-page.c', 'window-help.c', 'window-pages.c', 'window-actions.c', 'window-session.c', 'reader-context-menu.c', 'reader-copy.c', 'library-module-row.c', 'library-module-details.c',
      'gsword-reference-chooser.c', 'gsword-reference-parser.c'],
     dependencies: app_deps,
     c_args: app_c_args,
