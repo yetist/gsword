@@ -87,6 +87,7 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
     gint verse_max;
     gsize len;
     gsize pos;
+    g_autofree gchar *result_osis = NULL;
 
     if (out == NULL)
         return FALSE;
@@ -188,8 +189,7 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
         const gchar *osis = g_ptr_array_index(candidates, 0);
 
         book_index = gsw_versification_get_book_number_by_osis(v11n, osis);
-        g_free(out->osis);
-        out->osis = g_strdup(osis);
+        result_osis = g_strdup(osis);
     }
     g_ptr_array_unref(candidates);
     if (book_index < 0) {
@@ -287,6 +287,7 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
     if (verse_end <= verse)
         verse_end = 0;
     g_free(right);
+    out->osis = g_steal_pointer(&result_osis);
     out->book = book_index;
     out->chapter = chapter;
     out->verse = verse;

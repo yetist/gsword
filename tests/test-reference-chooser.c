@@ -120,6 +120,30 @@ main(void)
     test_invalid("1", "en", GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK);
     test_invalid("", "en", GSWORD_REFERENCE_ERROR_EMPTY);
 
+    {
+        GswordReference reference;
+        GError *error = NULL;
+
+        memset(&reference, 0, sizeof(reference));
+        if (gsword_reference_parse("Gen 99", "en", "KJV", &reference,
+                                   &error)) {
+            g_printerr("FAIL expected invalid chapter to fail\n");
+            failures++;
+        } else if (error == NULL) {
+            g_printerr("FAIL invalid chapter returned no error\n");
+            failures++;
+        } else if (reference.osis != NULL || reference.book != 0 ||
+                   reference.chapter != 0 || reference.verse != 0 ||
+                   reference.verse_end != 0) {
+            g_printerr("FAIL failure left a partially populated reference\n");
+            failures++;
+        } else {
+            g_print("ok   failure clears parsed reference\n");
+        }
+        g_clear_error(&error);
+        gsword_reference_clear(&reference);
+    }
+
     if (failures != 0) {
         g_printerr("%d reference parser test(s) failed\n", failures);
         return 1;
