@@ -71,6 +71,7 @@ typedef struct {
     GtkGrid *chapter_grid;
     GtkGrid *verse_grid;
     GtkLabel *hint;
+    GtkLabel *edit_error;
     GswVersification *v11n;
     gchar *versification_name;
     gchar *locale;
@@ -997,12 +998,20 @@ set_edit_mode(GswordReferenceChooser *self, gboolean editing)
         update_reference_text(priv, FALSE);
         gtk_widget_set_visible(priv->path_row, TRUE);
         gtk_widget_set_visible(priv->edit_row, FALSE);
+        if (priv->edit_error != NULL) {
+            gtk_label_set_text(priv->edit_error, "");
+            gtk_widget_set_visible(GTK_WIDGET(priv->edit_error), FALSE);
+        }
         update_navigation_labels(self);
         return;
     }
     update_reference_text(priv, FALSE);
     gtk_widget_set_visible(priv->path_row, FALSE);
     gtk_widget_set_visible(priv->edit_row, TRUE);
+    if (priv->edit_error != NULL) {
+        gtk_label_set_text(priv->edit_error, "");
+        gtk_widget_set_visible(GTK_WIDGET(priv->edit_error), FALSE);
+    }
     gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
     gtk_editable_select_region(GTK_EDITABLE(priv->entry), 0, -1);
 }
@@ -1121,9 +1130,16 @@ activate_text(GswordReferenceChooser *self, const gchar *text)
             gtk_popover_popup(priv->popover);
             schedule_filter_focus(self);
         } else {
-            gtk_label_set_text(priv->hint,
-                               error != NULL ? error->message
-                                             : _("Cannot parse reference"));
+            const gchar *message = error != NULL
+                                 ? error->message
+                                 : _("Cannot parse reference");
+
+            gtk_label_set_text(priv->hint, message);
+            if (priv->edit_error != NULL) {
+                gtk_label_set_text(priv->edit_error, message);
+                gtk_widget_set_visible(GTK_WIDGET(priv->edit_error), TRUE);
+            }
+            gtk_widget_grab_focus(GTK_WIDGET(priv->entry));
         }
         g_clear_error(&error);
         g_clear_pointer(&candidates, g_ptr_array_unref);
@@ -1155,6 +1171,11 @@ on_entry_changed(GtkEditable *editable, gpointer user_data)
     GswordReferenceChooser *self = GSWORD_REFERENCE_CHOOSER(user_data);
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
 
+    if (!priv->updating && priv->edit_error != NULL &&
+        gtk_widget_get_visible(GTK_WIDGET(priv->edit_error))) {
+        gtk_label_set_text(priv->edit_error, "");
+        gtk_widget_set_visible(GTK_WIDGET(priv->edit_error), FALSE);
+    }
     if (priv->updating || !gtk_widget_get_visible(GTK_WIDGET(priv->popover)))
         return;
     update_from_text(self, gtk_editable_get_text(editable));
@@ -1555,12 +1576,22 @@ gsword_reference_chooser_init(GswordReferenceChooser *self)
         gtk_box_append(GTK_BOX(edit_box), GTK_WIDGET(priv->apply_button));
         gtk_box_append(GTK_BOX(edit_box), GTK_WIDGET(priv->cancel_button));
 
+        priv->edit_error = GTK_LABEL(gtk_label_new(""));
+        gtk_label_set_xalign(priv->edit_error, 0.0f);
+        gtk_label_set_wrap(priv->edit_error, TRUE);
+        gtk_widget_add_css_class(GTK_WIDGET(priv->edit_error), "error");
+        gtk_widget_add_css_class(GTK_WIDGET(priv->edit_error), "caption");
+        gtk_widget_set_margin_start(GTK_WIDGET(priv->edit_error), 4);
+        gtk_widget_set_margin_end(GTK_WIDGET(priv->edit_error), 4);
+        gtk_widget_set_visible(GTK_WIDGET(priv->edit_error), FALSE);
+
         priv->path_row = nav_row;
         priv->edit_row = edit_box;
         gtk_widget_set_visible(edit_box, FALSE);
         gtk_widget_set_can_target(nav_row, TRUE);
         gtk_box_append(GTK_BOX(self), nav_row);
         gtk_box_append(GTK_BOX(self), edit_box);
+        gtk_box_append(GTK_BOX(self), GTK_WIDGET(priv->edit_error));
     }
 
     {
