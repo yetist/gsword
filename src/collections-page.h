@@ -7,11 +7,12 @@
 #ifndef GSWORD_COLLECTIONS_PAGE_H
 #define GSWORD_COLLECTIONS_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordCollectionsPage GswordCollectionsPage;
+G_DECLARE_FINAL_TYPE(GswordCollectionsPage, gsword_collections_page, GSWORD,
+                     COLLECTIONS_PAGE, GswordPage)
 
 GswordCollectionsPage *gsword_collections_page_new(GswordWindow *window);
 GtkWidget *gsword_collections_page_widget(GswordCollectionsPage *page);

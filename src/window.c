@@ -1579,6 +1579,7 @@ gsword_window_dispose(GObject *object)
     g_clear_object(&priv->resource_page);
     g_clear_object(&priv->plan_page);
     g_clear_object(&priv->notes_page);
+    g_clear_object(&priv->collections_page);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->dispose(object);
 }
