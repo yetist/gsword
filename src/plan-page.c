@@ -5,6 +5,7 @@
  */
 
 #include "app-locale.h"
+#include "gsword-reference-parser.h"
 #include "plan-page.h"
 #include "devotion-page.h"
 #include "memory-page.h"
@@ -53,6 +54,26 @@ struct _GswordPlanPage {
     guint preview_source;
 };
 
+static gboolean
+plan_start_reference_valid(const gchar *start_ref)
+{
+    GswordReference reference;
+    GError *error = NULL;
+    gchar *locale;
+    gboolean valid;
+
+    if (start_ref == NULL || *start_ref == '\0')
+        return FALSE;
+    memset(&reference, 0, sizeof(reference));
+    locale = gsword_app_locale_name();
+    valid = gsword_reference_parse(start_ref, locale, "KJV", &reference,
+                                   &error);
+    g_free(locale);
+    g_clear_error(&error);
+    gsword_reference_clear(&reference);
+    return valid;
+}
+
 static GPtrArray *
 generate_plan_references(const gchar *start_ref, gint days,
                          gint chapters_per_day)
@@ -69,6 +90,8 @@ generate_plan_references(const gchar *start_ref, gint days,
     gint extra;
     gint day;
 
+    if (!plan_start_reference_valid(start_ref))
+        return references;
     key = gsw_verse_key_new(start_ref, NULL);
     if (key == NULL)
         return references;
@@ -669,7 +692,8 @@ update_create_response(GswordPlanPage *page)
     name = gtk_editable_get_text(GTK_EDITABLE(page->name_entry));
     start = gtk_editable_get_text(GTK_EDITABLE(page->start_entry));
     enabled = name != NULL && *name != '\0' &&
-              start != NULL && *start != '\0';
+              start != NULL && *start != '\0' &&
+              plan_start_reference_valid(start);
     adw_alert_dialog_set_response_enabled(
         ADW_ALERT_DIALOG(page->create_dialog), "create", enabled);
 }

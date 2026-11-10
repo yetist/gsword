@@ -1428,6 +1428,7 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *range_row;
     GtkWidget *options_row;
     GtkWidget *index_row;
+    GtkWidget *controls_scroll;
     GtkWidget *advanced;
     GtkWidget *advanced_box;
     GtkWidget *module_label;
@@ -1636,7 +1637,16 @@ gsword_search_page_new(GswordWindow *window)
     gtk_stack_add_named(page->results_stack, scrolled, "results");
     gtk_stack_set_visible_child_name(page->results_stack, "empty");
 
-    gtk_box_append(GTK_BOX(box), controls);
+    controls_scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(controls_scroll),
+                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
+    gtk_scrolled_window_set_propagate_natural_height(
+        GTK_SCROLLED_WINDOW(controls_scroll), TRUE);
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(controls_scroll),
+                                  controls);
+    gtk_widget_set_hexpand(controls, TRUE);
+    gtk_widget_set_vexpand(controls_scroll, FALSE);
+    gtk_box_append(GTK_BOX(box), controls_scroll);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_label));
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_stack));
     page->root = box;
