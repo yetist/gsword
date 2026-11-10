@@ -7,7 +7,7 @@
 #ifndef GSWORD_PERSONAL_PAGE_H
 #define GSWORD_PERSONAL_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
@@ -19,7 +19,8 @@ typedef enum {
     GSWORD_PERSONAL_SECTION_COLLECTIONS
 } GswordPersonalSection;
 
-typedef struct _GswordPersonalPage GswordPersonalPage;
+G_DECLARE_FINAL_TYPE(GswordPersonalPage, gsword_personal_page, GSWORD,
+                     PERSONAL_PAGE, GswordPage)
 typedef void (*GswordPersonalSectionChangedFunc)(GswordPersonalPage *page,
                                                  GswordPersonalSection section,
                                                  gpointer user_data);

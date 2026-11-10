@@ -1574,6 +1574,7 @@ gsword_window_dispose(GObject *object)
     g_clear_object(&priv->today_page);
     g_clear_object(&priv->search_page);
     g_clear_object(&priv->teaching_page);
+    g_clear_object(&priv->personal_page);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->dispose(object);
 }

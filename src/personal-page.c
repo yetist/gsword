@@ -9,8 +9,8 @@
 #include <glib/gi18n.h>
 
 struct _GswordPersonalPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     AdwViewStack *stack;
     GtkWidget *switcher;
     GtkWidget *switcher_bar;
@@ -18,6 +18,8 @@ struct _GswordPersonalPage {
     gpointer section_changed_data;
     gboolean switching;
 };
+
+G_DEFINE_TYPE(GswordPersonalPage, gsword_personal_page, GSWORD_TYPE_PAGE)
 
 static const gchar *
 section_name(GswordPersonalSection section)
@@ -68,9 +70,15 @@ on_visible_child_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 }
 
 static void
-personal_page_free(gpointer data)
+gsword_personal_page_class_init(GswordPersonalPageClass *klass)
 {
-    g_free(data);
+    (void)klass;
+}
+
+static void
+gsword_personal_page_init(GswordPersonalPage *page)
+{
+    (void)page;
 }
 
 GswordPersonalPage *
@@ -79,7 +87,7 @@ gsword_personal_page_new(GswordWindow *window, GtkWidget *today_widget,
                          GtkWidget *plans_widget,
                          GtkWidget *collections_widget)
 {
-    GswordPersonalPage *page = g_new0(GswordPersonalPage, 1);
+    GswordPersonalPage *page = g_object_new(gsword_personal_page_get_type(), NULL);
     AdwToolbarView *toolbar_view;
     GtkWidget *switcher_box;
 
@@ -88,7 +96,7 @@ gsword_personal_page_new(GswordWindow *window, GtkWidget *today_widget,
                          prayer_widget != NULL && plans_widget != NULL &&
                          collections_widget != NULL, NULL);
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     toolbar_view = ADW_TOOLBAR_VIEW(adw_toolbar_view_new());
     page->stack = ADW_VIEW_STACK(adw_view_stack_new());
     adw_view_stack_set_hhomogeneous(page->stack, FALSE);
@@ -130,33 +138,31 @@ gsword_personal_page_new(GswordWindow *window, GtkWidget *today_widget,
 
     gtk_widget_set_vexpand(GTK_WIDGET(page->stack), TRUE);
     adw_toolbar_view_set_content(toolbar_view, GTK_WIDGET(page->stack));
-    page->root = GTK_WIDGET(toolbar_view);
+    gsword_page_set_widget(GSWORD_PAGE(page), GTK_WIDGET(toolbar_view));
 
-    g_signal_connect(page->stack, "notify::visible-child",
-                     G_CALLBACK(on_visible_child_changed), page);
-    g_object_set_data_full(G_OBJECT(page->root), "gsword-personal-page", page,
-                           personal_page_free);
+    g_signal_connect_object(page->stack, "notify::visible-child",
+                            G_CALLBACK(on_visible_child_changed), page, 0);
     return page;
 }
 
 GtkWidget *
 gsword_personal_page_widget(GswordPersonalPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_PERSONAL_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 GtkWidget *
 gsword_personal_page_switcher(GswordPersonalPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
+    g_return_val_if_fail(GSWORD_IS_PERSONAL_PAGE(page), NULL);
     return page->switcher;
 }
 
 GtkWidget *
 gsword_personal_page_switcher_bar(GswordPersonalPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
+    g_return_val_if_fail(GSWORD_IS_PERSONAL_PAGE(page), NULL);
     return page->switcher_bar;
 }
 
@@ -164,7 +170,7 @@ void
 gsword_personal_page_show_section(GswordPersonalPage *page,
                                   GswordPersonalSection section)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PERSONAL_PAGE(page));
 
     page->switching = TRUE;
     adw_view_stack_set_visible_child_name(page->stack, section_name(section));
@@ -174,7 +180,10 @@ gsword_personal_page_show_section(GswordPersonalPage *page,
 GswordPersonalSection
 gsword_personal_page_get_section(GswordPersonalPage *page)
 {
-    g_return_val_if_fail(page != NULL, GSWORD_PERSONAL_SECTION_TODAY);
+    g_return_val_if_fail(GSWORD_IS_PERSONAL_PAGE(page),
+                         GSWORD_PERSONAL_SECTION_TODAY);
+    if (page->stack == NULL)
+        return GSWORD_PERSONAL_SECTION_TODAY;
     return section_from_name(
         adw_view_stack_get_visible_child_name(page->stack));
 }
@@ -184,7 +193,7 @@ gsword_personal_page_set_section_changed_func(
     GswordPersonalPage *page, GswordPersonalSectionChangedFunc func,
     gpointer user_data)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PERSONAL_PAGE(page));
     page->section_changed = func;
     page->section_changed_data = user_data;
 }
