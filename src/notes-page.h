@@ -7,11 +7,12 @@
 #ifndef GSWORD_NOTES_PAGE_H
 #define GSWORD_NOTES_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordNotesPage GswordNotesPage;
+G_DECLARE_FINAL_TYPE(GswordNotesPage, gsword_notes_page, GSWORD,
+                     NOTES_PAGE, GswordPage)
 
 GswordNotesPage *gsword_notes_page_new(GswordWindow *window);
 GtkWidget *gsword_notes_page_widget(GswordNotesPage *page);
