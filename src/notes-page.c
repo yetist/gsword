@@ -75,6 +75,8 @@ static void update_tag_actions(GswordNotesPage *page);
 static void update_list_item_actions(GswordNotesPage *page);
 static void clear_selected_item(GswordNotesPage *page);
 static void load_list_items(GswordNotesPage *page);
+static void on_note_selected(GtkListBox *list, GtkListBoxRow *row,
+                             gpointer user_data);
 
 static void
 clear_list(GtkListBox *list)
@@ -404,7 +406,7 @@ autosave_note(gpointer data)
     GswordNotesPage *page = data;
 
     page->autosave_source = 0;
-    save_note_page(page, FALSE);
+    save_note_page(page, TRUE);
     return G_SOURCE_REMOVE;
 }
 
@@ -484,7 +486,13 @@ save_note_page(GswordNotesPage *page, gboolean refresh)
     set_save_state(page, _("Saved"));
     if (refresh) {
         gsword_notes_page_refresh(page);
-        select_note_row(page);
+        if (page->notes_list != NULL) {
+            g_signal_handlers_block_by_func(
+                page->notes_list, G_CALLBACK(on_note_selected), page);
+            select_note_row(page);
+            g_signal_handlers_unblock_by_func(
+                page->notes_list, G_CALLBACK(on_note_selected), page);
+        }
     }
     return TRUE;
 }
