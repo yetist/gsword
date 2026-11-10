@@ -10,8 +10,8 @@
 #include <glib/gi18n.h>
 
 struct _GswordMemoryPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkListBox *list;
     GPtrArray *items;
     GtkTextView *card;
@@ -26,6 +26,11 @@ struct _GswordMemoryPage {
     gchar *text;
     gint64 id;
 };
+
+G_DEFINE_TYPE(GswordMemoryPage, gsword_memory_page, GSWORD_TYPE_PAGE)
+
+#define MEMORY_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static gchar *
 masked_text(const gchar *text, gboolean first_letters)
@@ -161,7 +166,7 @@ gsword_memory_page_refresh(GswordMemoryPage *page)
     GtkListBoxRow *first = NULL;
 
     g_return_if_fail(page != NULL);
-    plans = gsword_window_get_plan_store(page->window);
+    plans = gsword_window_get_plan_store(MEMORY_WINDOW(page));
     if (page->list == NULL || plans == NULL)
         return;
     while (gtk_widget_get_first_child(GTK_WIDGET(page->list)) != NULL)
@@ -214,7 +219,7 @@ static void
 on_add_current(GtkButton *button, gpointer user_data)
 {
     GswordMemoryPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(MEMORY_WINDOW(page));
     GswModule *module;
     gchar *storage_key;
     gchar *display_key;
@@ -226,14 +231,14 @@ on_add_current(GtkButton *button, gpointer user_data)
     (void)button;
     if (plans == NULL)
         return;
-    module = gsword_window_ensure_verse_module(page->window);
+    module = gsword_window_ensure_verse_module(MEMORY_WINDOW(page));
     if (module == NULL)
         return;
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
+    storage_key = gsword_window_current_storage_key(MEMORY_WINDOW(page));
+    display_key = gsword_window_current_display_key(MEMORY_WINDOW(page));
     text = gsw_module_get_text(module, &error);
     if (storage_key == NULL || display_key == NULL || text == NULL) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(MEMORY_WINDOW(page),
                                  _("Cannot add memory verse"), error);
         g_free(storage_key);
         g_free(display_key);
@@ -243,7 +248,7 @@ on_add_current(GtkButton *button, gpointer user_data)
     if (!gsword_plan_store_add_memory_verse(
             plans, gsw_module_get_name(module), storage_key, display_key,
             text, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(MEMORY_WINDOW(page),
                                  _("Cannot save memory verse"), error);
         g_free(storage_key);
         g_free(display_key);
@@ -265,7 +270,7 @@ on_add_current(GtkButton *button, gpointer user_data)
     g_free(display_key);
     g_free(text);
     gsword_memory_page_refresh(page);
-    gsword_window_set_status(page->window,
+    gsword_window_set_status(MEMORY_WINDOW(page),
                              _("Verse added to memory review"));
 }
 
@@ -273,7 +278,7 @@ static void
 on_review(GtkButton *button, gpointer user_data)
 {
     GswordMemoryPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(MEMORY_WINDOW(page));
     gboolean remembered = GPOINTER_TO_INT(
         g_object_get_data(G_OBJECT(button), "remembered"));
     GError *error = NULL;
@@ -282,12 +287,12 @@ on_review(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_review_memory_verse(plans, page->id, remembered,
                                                &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(MEMORY_WINDOW(page),
                                  _("Cannot schedule review"), error);
         return;
     }
     gsword_memory_page_refresh(page);
-    gsword_window_set_status(page->window, remembered
+    gsword_window_set_status(MEMORY_WINDOW(page), remembered
                              ? _("Review scheduled: nice work")
                              : _("Card will be shown again today"));
 }
@@ -309,7 +314,7 @@ on_check(GtkButton *button, gpointer user_data)
     if (*normalized_answer != '\0' &&
         g_strcmp0(normalized_answer, normalized) == 0) {
         gtk_label_set_text(page->result, _("Correct"));
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(MEMORY_WINDOW(page),
                                  _("Memory verse recited correctly"));
     } else {
         gtk_label_set_text(page->result, _("Keep practicing"));
@@ -322,41 +327,62 @@ static void
 on_delete(GtkButton *button, gpointer user_data)
 {
     GswordMemoryPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(MEMORY_WINDOW(page));
     GError *error = NULL;
 
     (void)button;
     if (plans == NULL || page->id == 0)
         return;
     if (!gsword_plan_store_delete_memory_verse(plans, page->id, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(MEMORY_WINDOW(page),
                                  _("Cannot delete memory verse"), error);
         return;
     }
     page->id = 0;
     gsword_memory_page_refresh(page);
-    gsword_window_set_status(page->window, _("Memory verse removed"));
+    gsword_window_set_status(MEMORY_WINDOW(page), _("Memory verse removed"));
 }
 
 static void
-memory_page_free(gpointer data)
+gsword_memory_page_dispose(GObject *object)
 {
-    GswordMemoryPage *page = data;
+    GswordMemoryPage *page = GSWORD_MEMORY_PAGE(object);
 
-    if (page == NULL)
-        return;
     g_clear_pointer(&page->items, g_ptr_array_unref);
-    g_free(page->module);
-    g_free(page->key);
-    g_free(page->display);
-    g_free(page->text);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_memory_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_memory_page_finalize(GObject *object)
+{
+    GswordMemoryPage *page = GSWORD_MEMORY_PAGE(object);
+
+    g_clear_pointer(&page->module, g_free);
+    g_clear_pointer(&page->key, g_free);
+    g_clear_pointer(&page->display, g_free);
+    g_clear_pointer(&page->text, g_free);
+
+    G_OBJECT_CLASS(gsword_memory_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_memory_page_class_init(GswordMemoryPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_memory_page_dispose;
+    G_OBJECT_CLASS(klass)->finalize = gsword_memory_page_finalize;
+}
+
+static void
+gsword_memory_page_init(GswordMemoryPage *page)
+{
+    (void)page;
 }
 
 GswordMemoryPage *
 gsword_memory_page_new(GswordWindow *window)
 {
-    GswordMemoryPage *page = g_new0(GswordMemoryPage, 1);
+    GswordMemoryPage *page = g_object_new(gsword_memory_page_get_type(), NULL);
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
@@ -375,7 +401,7 @@ gsword_memory_page_new(GswordWindow *window)
         (const gchar * const[]) { _("Full text"), _("First letters"),
                                   _("Hide words"), NULL });
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     gtk_widget_set_margin_top(left, 10);
     gtk_widget_set_margin_bottom(left, 10);
     gtk_widget_set_margin_start(left, 12);
@@ -386,8 +412,8 @@ gsword_memory_page_new(GswordWindow *window)
     gtk_widget_set_margin_end(right, 12);
 
     page->list = GTK_LIST_BOX(gtk_list_box_new());
-    g_signal_connect(page->list, "row-selected",
-                     G_CALLBACK(on_selected), page);
+    g_signal_connect_object(page->list, "row-selected",
+                            G_CALLBACK(on_selected), page, 0);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll),
                                   GTK_WIDGET(page->list));
     gtk_widget_set_vexpand(scroll, TRUE);
@@ -418,8 +444,8 @@ gsword_memory_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->card));
     gtk_widget_set_vexpand(card_scroll, TRUE);
     page->mode = GTK_DROP_DOWN(gtk_drop_down_new(G_LIST_MODEL(modes), NULL));
-    g_signal_connect(page->mode, "notify::selected",
-                     G_CALLBACK(on_mode_changed), page);
+    g_signal_connect_object(page->mode, "notify::selected",
+                            G_CALLBACK(on_mode_changed), page, 0);
     gtk_box_append(GTK_BOX(mode_row), gtk_label_new(_("Card mode")));
     gtk_box_append(GTK_BOX(mode_row), GTK_WIDGET(page->mode));
     page->input = GTK_ENTRY(gtk_entry_new());
@@ -447,9 +473,7 @@ gsword_memory_page_new(GswordWindow *window)
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), right);
     gtk_paned_set_position(GTK_PANED(paned), 280);
-    page->root = paned;
-    g_object_set_data_full(G_OBJECT(paned), "gsword-memory-page", page,
-                           memory_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), paned);
     gsword_memory_page_refresh(page);
     return page;
 }
@@ -457,6 +481,6 @@ gsword_memory_page_new(GswordWindow *window)
 GtkWidget *
 gsword_memory_page_widget(GswordMemoryPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_MEMORY_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }

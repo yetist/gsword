@@ -7,11 +7,12 @@
 #ifndef GSWORD_MEMORY_PAGE_H
 #define GSWORD_MEMORY_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordMemoryPage GswordMemoryPage;
+G_DECLARE_FINAL_TYPE(GswordMemoryPage, gsword_memory_page, GSWORD,
+                     MEMORY_PAGE, GswordPage)
 
 GswordMemoryPage *gsword_memory_page_new(GswordWindow *window);
 GtkWidget *gsword_memory_page_widget(GswordMemoryPage *page);

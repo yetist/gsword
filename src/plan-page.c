@@ -1078,6 +1078,7 @@ plan_page_free(gpointer data)
     g_clear_pointer(&page->items, g_ptr_array_unref);
     g_clear_object(&page->names);
     g_clear_object(&page->devotion);
+    g_clear_object(&page->memory);
     g_free(page);
 }
 
