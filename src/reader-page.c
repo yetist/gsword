@@ -15,8 +15,8 @@
 #include <string.h>
 
 struct _GswordReaderPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GswordReaderToolbar *toolbar;
     GswordStudyPanel *study_panel;
     GtkTextView *view;
@@ -52,7 +52,13 @@ struct _GswordReaderPage {
     guint margin_idle;
     guint scroll_idle;
     guint compact_timeout_id;
+    guint compact_idle_id;
 };
+
+G_DEFINE_TYPE(GswordReaderPage, gsword_reader_page, GSWORD_TYPE_PAGE)
+
+#define READER_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void apply_active_verse(GswordReaderPage *page);
 static void clear_range(GswordReaderPage *page);
@@ -117,7 +123,7 @@ update_reference_compact(GswordReaderPage *page)
 
     if (page->toolbar == NULL)
         return;
-    window_width = gtk_widget_get_width(GTK_WIDGET(page->window));
+    window_width = gtk_widget_get_width(GTK_WIDGET(READER_WINDOW(page)));
     if (window_width <= 0)
         return;
 
@@ -131,7 +137,7 @@ update_reference_compact(GswordReaderPage *page)
      * content width.  Above 1000px it is inline and takes roughly 260px.
      */
     available_width = window_width;
-    if (window_width > 1000 && gsword_window_get_sidebar_visible(page->window))
+    if (window_width > 1000 && gsword_window_get_sidebar_visible(READER_WINDOW(page)))
         available_width -= 260;
     compact = available_width < 900;
     gsword_reader_toolbar_set_compact(page->toolbar, compact);
@@ -140,7 +146,10 @@ update_reference_compact(GswordReaderPage *page)
 static gboolean
 update_reference_compact_idle(gpointer user_data)
 {
-    update_reference_compact(user_data);
+    GswordReaderPage *page = user_data;
+
+    page->compact_idle_id = 0;
+    update_reference_compact(page);
     return G_SOURCE_REMOVE;
 }
 
@@ -167,9 +176,13 @@ on_reader_size_changed(GObject *object, GParamSpec *pspec,
 static void
 on_reader_mapped(GtkWidget *widget, gpointer user_data)
 {
+    GswordReaderPage *page = user_data;
+
     (void)widget;
-    g_idle_add(update_reference_compact_idle, user_data);
-    update_reading_margins(user_data);
+    if (page->compact_idle_id != 0)
+        g_source_remove(page->compact_idle_id);
+    page->compact_idle_id = g_idle_add(update_reference_compact_idle, page);
+    update_reading_margins(page);
     schedule_reading_margins(user_data);
     schedule_scroll_to_active(user_data);
 }
@@ -204,7 +217,7 @@ gsword_reader_page_set_paragraph_spacing(GswordReaderPage *page, gint spacing)
     if (page == NULL)
         return;
     page->paragraph_spacing = CLAMP(spacing, 0, 24);
-    settings = gsword_window_get_settings(page->window);
+    settings = gsword_window_get_settings(READER_WINDOW(page));
     if (settings != NULL)
         g_settings_set_int(settings, "reader-paragraph-spacing",
                            page->paragraph_spacing);
@@ -230,7 +243,7 @@ gsword_reader_page_set_reading_width(GswordReaderPage *page, gint width)
     if (page == NULL)
         return;
     page->reading_width = CLAMP(width, 480, 1200);
-    settings = gsword_window_get_settings(page->window);
+    settings = gsword_window_get_settings(READER_WINDOW(page));
     if (settings != NULL)
         g_settings_set_int(settings, "reader-width", page->reading_width);
     update_reading_margins(page);
@@ -242,14 +255,14 @@ on_empty_manage_modules(GtkButton *button, gpointer user_data)
     GswordReaderPage *page = user_data;
 
     (void)button;
-    gsword_window_open_library(page->window);
+    gsword_window_open_library(READER_WINDOW(page));
 }
 
 static void
 save_last_position(GswordReaderPage *page)
 {
-    GSettings *settings = gsword_window_get_settings(page->window);
-    GswModule *module = gsword_window_get_module(page->window);
+    GSettings *settings = gsword_window_get_settings(READER_WINDOW(page));
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     const gchar *name;
     gchar *key;
 
@@ -276,7 +289,7 @@ record_current_history(GswordReaderPage *page)
 
     if (page == NULL || page->history == NULL || page->history_navigating)
         return;
-    self = page->window;
+    self = READER_WINDOW(page);
     module = gsword_window_get_module(self);
     if (module == NULL)
         return;
@@ -313,16 +326,16 @@ gsword_reader_page_sync_context(GswordReaderPage *page)
 
     if (page == NULL || page->reference_chooser == NULL)
         return;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return;
     gsword_reference_context_sync(&page->reference_context,
-                                  page->reference_chooser, page->window,
+                                  page->reference_chooser, READER_WINDOW(page),
                                   module);
     if (page->compact_reference_chooser != NULL)
         gsword_reference_context_sync(&page->compact_reference_context,
                                       page->compact_reference_chooser,
-                                      page->window, module);
+                                      READER_WINDOW(page), module);
 }
 
 static void
@@ -334,19 +347,19 @@ sync_reference_chooser(GswordReaderPage *page)
 
     if (page == NULL || page->reference_chooser == NULL)
         return;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (page->range_active && page->range_start > 0 &&
         page->range_end > 0) {
         range_start = page->range_start;
         range_end = page->range_end;
     }
     gsword_reference_chooser_sync_from_module(
-        page->reference_chooser, &page->reference_context, page->window,
+        page->reference_chooser, &page->reference_context, READER_WINDOW(page),
         module, range_start, range_end);
     if (page->compact_reference_chooser != NULL)
         gsword_reference_chooser_sync_from_module(
             page->compact_reference_chooser, &page->compact_reference_context,
-            page->window, module, range_start, range_end);
+            READER_WINDOW(page), module, range_start, range_end);
 }
 
 void
@@ -360,7 +373,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
 
     if (page == NULL)
         return;
-    self = page->window;
+    self = READER_WINDOW(page);
     module = gsword_window_get_module(self);
     clear_range(page);
     if (module == NULL) {
@@ -425,7 +438,7 @@ gsword_reader_page_set_key_text(GswordReaderPage *page, const gchar *text)
 
     if (page == NULL)
         return FALSE;
-    self = page->window;
+    self = READER_WINDOW(page);
     module = gsword_window_get_module(self);
     if (module == NULL)
         return FALSE;
@@ -447,7 +460,7 @@ gsword_reader_page_set_initial_key(GswordReaderPage *page)
 
     if (page == NULL)
         return;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return;
 
@@ -488,7 +501,7 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
         return;
     verse_end = gsword_reference_chooser_get_verse_end(
         page->reference_chooser);
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module != NULL) {
         key = gsw_module_get_key(module);
         if (gsw_key_get_kind(key) == GSW_KEY_KIND_VERSE) {
@@ -533,7 +546,7 @@ gsword_reader_page_current_storage_key(GswordReaderPage *page)
 
     if (page == NULL)
         return NULL;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return NULL;
     key = gsw_module_get_key(module);
@@ -549,7 +562,7 @@ gsword_reader_page_current_display_key(GswordReaderPage *page)
 
     if (page == NULL)
         return NULL;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return NULL;
     return g_strdup(gsw_module_get_key_text(module));
@@ -558,8 +571,8 @@ gsword_reader_page_current_display_key(GswordReaderPage *page)
 static void
 apply_highlights(GswordReaderPage *page)
 {
-    GswordNotesStore *notes = gsword_window_get_notes_store(page->window);
-    GswModule *module = gsword_window_get_module(page->window);
+    GswordNotesStore *notes = gsword_window_get_notes_store(READER_WINDOW(page));
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     GswKey *key;
     gchar *reference;
     gchar *dot;
@@ -636,7 +649,7 @@ gsword_reader_page_current_reference(GswordReaderPage *page)
 
     if (page == NULL)
         return NULL;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return NULL;
     key = gsw_module_get_key(module);
@@ -672,7 +685,7 @@ gsword_reader_page_current_start_reference(GswordReaderPage *page)
 
     if (page == NULL)
         return NULL;
-    module = gsword_window_get_module(page->window);
+    module = gsword_window_get_module(READER_WINDOW(page));
     if (module == NULL)
         return NULL;
     key = gsw_module_get_key(module);
@@ -695,20 +708,20 @@ gsword_reader_page_current_start_reference(GswordReaderPage *page)
 static void
 update_reference_status(GswordReaderPage *page)
 {
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
 
     if (module == NULL)
         return;
     sync_reference_chooser(page);
     if (page->toolbar != NULL)
         gsword_reader_toolbar_update_favorite(page->toolbar);
-    gsword_window_set_status(page->window, gsw_module_get_name(module));
+    gsword_window_set_status(READER_WINDOW(page), gsw_module_get_name(module));
 }
 
 static void
 apply_active_verse(GswordReaderPage *page)
 {
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     GtkTextBuffer *buffer;
     GtkTextIter iter;
     GtkTextIter finish;
@@ -947,7 +960,7 @@ apply_range(GswordReaderPage *page)
 static void
 select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
 {
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     GswVerseKey *key;
     GError *error = NULL;
     gint maximum;
@@ -968,7 +981,7 @@ select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
     gsw_verse_key_set_verse(key, anchor);
     text = g_strdup(gsw_module_get_key_text(module));
     if (!gsw_module_set_key_text(module, text, &error)) {
-        gsword_window_show_error(page->window, _("Cannot set key"), error);
+        gsword_window_show_error(READER_WINDOW(page), _("Cannot set key"), error);
         g_free(text);
         return;
     }
@@ -981,7 +994,7 @@ select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
     update_reference_status(page);
     gsword_study_panel_refresh(page->study_panel);
     apply_active_verse(page);
-    gsword_window_sync_workspace_from_reader(page->window);
+    gsword_window_sync_workspace_from_reader(READER_WINDOW(page));
     save_last_position(page);
     record_current_history(page);
 }
@@ -989,7 +1002,7 @@ select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
 static void
 select_verse(GswordReaderPage *page, gint verse)
 {
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     GswKey *key;
     GError *error = NULL;
     gchar *text;
@@ -1006,7 +1019,7 @@ select_verse(GswordReaderPage *page, gint verse)
     gsw_verse_key_set_verse((GswVerseKey *)key, verse);
     text = g_strdup(gsw_module_get_key_text(module));
     if (!gsw_module_set_key_text(module, text, &error)) {
-        gsword_window_show_error(page->window, _("Cannot set key"), error);
+        gsword_window_show_error(READER_WINDOW(page), _("Cannot set key"), error);
         g_free(text);
         return;
     }
@@ -1015,7 +1028,7 @@ select_verse(GswordReaderPage *page, gint verse)
     update_reference_status(page);
     gsword_study_panel_refresh(page->study_panel);
     apply_active_verse(page);
-    gsword_window_sync_workspace_from_reader(page->window);
+    gsword_window_sync_workspace_from_reader(READER_WINDOW(page));
     save_last_position(page);
     record_current_history(page);
 }
@@ -1077,7 +1090,7 @@ on_context_note(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->context_menu);
-    gsword_window_open_current_note(page->window);
+    gsword_window_open_current_note(READER_WINDOW(page));
 }
 
 static void
@@ -1094,7 +1107,7 @@ static void
 on_context_prayer(GtkButton *button, gpointer user_data)
 {
     GswordReaderPage *page = user_data;
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     gchar *storage_key;
     gchar *display_key;
 
@@ -1102,9 +1115,9 @@ on_context_prayer(GtkButton *button, gpointer user_data)
     gtk_popover_popdown(page->context_menu);
     if (module == NULL)
         return;
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
-    gsword_window_open_prayer_for(page->window, gsw_module_get_name(module),
+    storage_key = gsword_window_current_storage_key(READER_WINDOW(page));
+    display_key = gsword_window_current_display_key(READER_WINDOW(page));
+    gsword_window_open_prayer_for(READER_WINDOW(page), gsw_module_get_name(module),
                                   storage_key, display_key);
     g_free(storage_key);
     g_free(display_key);
@@ -1114,11 +1127,11 @@ static void
 on_context_list_check_toggled(GtkCheckButton *button, gpointer user_data)
 {
     GswordReaderPage *page = user_data;
-    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
-    GswModule *module = gsword_window_get_module(page->window);
+    GswordNotesStore *store = gsword_window_get_notes_store(READER_WINDOW(page));
+    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
     const gchar *id_text = g_object_get_data(G_OBJECT(button), "list-id");
-    gchar *storage_key = gsword_window_current_storage_key(page->window);
-    gchar *display_key = gsword_window_current_display_key(page->window);
+    gchar *storage_key = gsword_window_current_storage_key(READER_WINDOW(page));
+    gchar *display_key = gsword_window_current_display_key(READER_WINDOW(page));
     GError *error = NULL;
     gint64 list_id;
     gboolean active = gtk_check_button_get_active(button);
@@ -1134,7 +1147,7 @@ on_context_list_check_toggled(GtkCheckButton *button, gpointer user_data)
         if (!gsword_notes_store_add_to_list(
                 store, list_id, gsw_module_get_name(module), storage_key,
                 display_key, &error)) {
-            gsword_window_show_error(page->window,
+            gsword_window_show_error(READER_WINDOW(page),
                                      _("Cannot add verse to list"), error);
             g_free(storage_key);
             g_free(display_key);
@@ -1144,14 +1157,14 @@ on_context_list_check_toggled(GtkCheckButton *button, gpointer user_data)
         if (!gsword_notes_store_remove_from_list(
                 store, list_id, gsw_module_get_name(module), storage_key,
                 &error)) {
-            gsword_window_show_error(page->window,
+            gsword_window_show_error(READER_WINDOW(page),
                                      _("Cannot remove verse from list"), error);
             g_free(storage_key);
             g_free(display_key);
             return;
         }
     }
-    gsword_window_set_status(page->window, active
+    gsword_window_set_status(READER_WINDOW(page), active
                              ? _("Verse added to list")
                              : _("Verse removed from list"));
     g_free(storage_key);
@@ -1168,7 +1181,7 @@ on_context_manage_lists(GtkButton *button, gpointer user_data)
     if (popover != NULL)
         gtk_popover_popdown(GTK_POPOVER(popover));
     gtk_popover_popdown(page->context_menu);
-    gsword_window_show_personal(page->window,
+    gsword_window_show_personal(READER_WINDOW(page),
                                 GSWORD_PERSONAL_SECTION_COLLECTIONS);
 }
 
@@ -1190,9 +1203,9 @@ rebuild_context_list_menu(GswordReaderPage *page)
     while ((child = gtk_widget_get_first_child(
                 GTK_WIDGET(page->context_list_box))) != NULL)
         gtk_box_remove(page->context_list_box, child);
-    store = gsword_window_get_notes_store(page->window);
-    module = gsword_window_get_module(page->window);
-    storage_key = gsword_window_current_storage_key(page->window);
+    store = gsword_window_get_notes_store(READER_WINDOW(page));
+    module = gsword_window_get_module(READER_WINDOW(page));
+    storage_key = gsword_window_current_storage_key(READER_WINDOW(page));
     if (store == NULL || module == NULL || storage_key == NULL) {
         GtkWidget *label = gtk_label_new(_("Open a verse first"));
 
@@ -1360,7 +1373,7 @@ gsword_reader_page_toggle_highlight(GswordReaderPage *page)
 
     if (page == NULL)
         return;
-    self = page->window;
+    self = READER_WINDOW(page);
     notes = gsword_window_get_notes_store(self);
     module = gsword_window_get_module(self);
     if (notes == NULL || module == NULL)
@@ -1415,10 +1428,10 @@ static void
 copy_text_to_clipboard(GswordReaderPage *page, const gchar *text)
 {
     GdkClipboard *clipboard =
-        gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+        gtk_widget_get_clipboard(GTK_WIDGET(READER_WINDOW(page)));
 
     gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
-    gsword_window_toast(page->window, _("Copied to clipboard"));
+    gsword_window_toast(READER_WINDOW(page), _("Copied to clipboard"));
 }
 
 void
@@ -1496,16 +1509,16 @@ gsword_reader_page_set_focus_mode(GswordReaderPage *page, gboolean focus)
     page->focus_mode = focus;
     if (focus) {
         page->focus_sidebar_visible =
-            gsword_window_get_sidebar_visible(page->window);
+            gsword_window_get_sidebar_visible(READER_WINDOW(page));
         page->focus_study_visible =
             gtk_widget_get_visible(page->study_widget);
-        gsword_window_set_sidebar_visible(page->window, FALSE);
+        gsword_window_set_sidebar_visible(READER_WINDOW(page), FALSE);
         gtk_widget_set_visible(page->study_widget, FALSE);
         update_reading_margins(page);
         schedule_reading_margins(page);
     } else {
         gsword_window_set_sidebar_visible(
-            page->window, page->focus_sidebar_visible);
+            READER_WINDOW(page), page->focus_sidebar_visible);
         gtk_widget_set_visible(page->study_widget, page->focus_study_visible);
         update_reading_margins(page);
         schedule_reading_margins(page);
@@ -1522,8 +1535,8 @@ gsword_reader_page_get_study_panel(GswordReaderPage *page)
 GtkWidget *
 gsword_reader_page_widget(GswordReaderPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_READER_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 static gboolean
@@ -1535,7 +1548,7 @@ navigate_history_entry(GswordReaderPage *page,
 
     if (page == NULL || entry == NULL)
         return FALSE;
-    self = page->window;
+    self = READER_WINDOW(page);
     page->history_navigating = TRUE;
     module = gsword_window_get_module(self);
     if (module == NULL ||
@@ -1656,7 +1669,7 @@ on_study_position_changed(GObject *object, GParamSpec *pspec,
                           gpointer user_data)
 {
     GswordReaderPage *page = user_data;
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GSettings *settings = gsword_window_get_settings(READER_WINDOW(page));
     gint width = gtk_widget_get_width(GTK_WIDGET(object));
     gint position = gtk_paned_get_position(GTK_PANED(object));
     gint study_width = width - position;
@@ -1732,28 +1745,51 @@ on_reader_key_pressed(GtkEventControllerKey *controller, guint keyval,
 }
 
 static void
-reader_page_free(gpointer data)
+gsword_reader_page_dispose(GObject *object)
 {
-    GswordReaderPage *page = data;
+    GswordReaderPage *page = GSWORD_READER_PAGE(object);
 
-    if (page == NULL)
-        return;
-    if (page->margin_idle != 0)
+    if (page->margin_idle != 0) {
         g_source_remove(page->margin_idle);
-    if (page->scroll_idle != 0)
+        page->margin_idle = 0;
+    }
+    if (page->scroll_idle != 0) {
         g_source_remove(page->scroll_idle);
-    if (page->compact_timeout_id != 0)
+        page->scroll_idle = 0;
+    }
+    if (page->compact_timeout_id != 0) {
         g_source_remove(page->compact_timeout_id);
+        page->compact_timeout_id = 0;
+    }
+    if (page->compact_idle_id != 0) {
+        g_source_remove(page->compact_idle_id);
+        page->compact_idle_id = 0;
+    }
+    gsword_page_dispose_popover(&page->context_menu);
     gsword_reader_history_free(page->history);
+    page->history = NULL;
     gsword_reference_context_clear(&page->reference_context);
     gsword_reference_context_clear(&page->compact_reference_context);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_reader_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_reader_page_class_init(GswordReaderPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_reader_page_dispose;
+}
+
+static void
+gsword_reader_page_init(GswordReaderPage *page)
+{
+    (void)page;
 }
 
 GswordReaderPage *
 gsword_reader_page_new(GswordWindow *window)
 {
-    GswordReaderPage *page = g_new0(GswordReaderPage, 1);
+    GswordReaderPage *page = g_object_new(gsword_reader_page_get_type(), NULL);
     GtkWidget *reader_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *empty_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     GtkWidget *empty_label = gtk_label_new(
@@ -1766,11 +1802,11 @@ gsword_reader_page_new(GswordWindow *window)
     gint study_width = 320;
     GtkGesture *reader_click;
 
-    page->window = window;
-    page->root = reader_box;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
+    gsword_page_set_widget(GSWORD_PAGE(page), reader_box);
     page->scrolled = scrolled;
-    g_signal_connect(reader_box, "notify::width",
-                     G_CALLBACK(on_reader_size_changed), page);
+    g_signal_connect_object(reader_box, "notify::width",
+                            G_CALLBACK(on_reader_size_changed), page, 0);
     page->reading_width = 760;
     page->compact_timeout_id = g_timeout_add(
         200, update_reference_compact_timeout, page);
@@ -1893,16 +1929,17 @@ gsword_reader_page_new(GswordWindow *window)
         gtk_box_append(GTK_BOX(menu), prayer_item);
         gtk_popover_set_child(page->context_menu, menu);
         gtk_widget_set_parent(popover, GTK_WIDGET(page->view));
-        g_signal_connect(page->view, "destroy",
-                         G_CALLBACK(on_reader_view_destroy), page);
+        g_signal_connect_object(page->view, "destroy",
+                                G_CALLBACK(on_reader_view_destroy), page, 0);
     }
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->view));
-    g_signal_connect(scrolled, "notify::width",
-                     G_CALLBACK(on_reader_size_changed), page);
-    g_signal_connect(window, "notify::width",
-                     G_CALLBACK(on_reader_size_changed), page);
-    g_signal_connect(scrolled, "map", G_CALLBACK(on_reader_mapped), page);
+    g_signal_connect_object(scrolled, "notify::width",
+                            G_CALLBACK(on_reader_size_changed), page, 0);
+    g_signal_connect_object(window, "notify::width",
+                            G_CALLBACK(on_reader_size_changed), page, 0);
+    g_signal_connect_object(scrolled, "map",
+                            G_CALLBACK(on_reader_mapped), page, 0);
     study_widget = gsword_study_panel_widget(page->study_panel);
     page->study_widget = study_widget;
     page->paned = GTK_PANED(paned);
@@ -1926,12 +1963,12 @@ gsword_reader_page_new(GswordWindow *window)
     }
     page->study_width = study_width;
     page->study_width_ready = FALSE;
-    g_signal_connect(paned, "notify::position",
-                     G_CALLBACK(on_study_position_changed), page);
-    g_signal_connect(paned, "notify::width",
-                     G_CALLBACK(on_paned_width_changed), page);
-    g_signal_connect(study_widget, "notify::visible",
-                     G_CALLBACK(on_study_visible_changed), page);
+    g_signal_connect_object(paned, "notify::position",
+                            G_CALLBACK(on_study_position_changed), page, 0);
+    g_signal_connect_object(paned, "notify::width",
+                            G_CALLBACK(on_paned_width_changed), page, 0);
+    g_signal_connect_object(study_widget, "notify::visible",
+                            G_CALLBACK(on_study_visible_changed), page, 0);
 
     page->empty_bar = empty_bar;
     gtk_widget_set_margin_top(empty_bar, 8);
@@ -1965,7 +2002,5 @@ gsword_reader_page_new(GswordWindow *window)
         gtk_widget_add_controller(reader_box, keys);
     }
     update_reading_margins(page);
-    g_object_set_data_full(G_OBJECT(reader_box), "gsword-reader-page", page,
-                           reader_page_free);
     return page;
 }

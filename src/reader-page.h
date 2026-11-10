@@ -7,12 +7,13 @@
 #ifndef GSWORD_READER_PAGE_H
 #define GSWORD_READER_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 #include "reader-history.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordReaderPage GswordReaderPage;
+G_DECLARE_FINAL_TYPE(GswordReaderPage, gsword_reader_page, GSWORD,
+                     READER_PAGE, GswordPage)
 typedef struct _GswordStudyPanel GswordStudyPanel;
 
 GswordReaderPage *gsword_reader_page_new(GswordWindow *window);
