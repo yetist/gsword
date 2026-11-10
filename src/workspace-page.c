@@ -11,8 +11,8 @@
 #include <glib/gi18n.h>
 
 struct _GswordWorkspacePage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkStack *stack;
     GtkGrid *grid;
     GtkWidget *add_button;
@@ -30,7 +30,13 @@ struct _GswordWorkspacePage {
     gboolean highlight_diffs;
     gboolean syncing_scroll;
     guint align_idle;
+    guint clear_idle;
 };
+
+G_DEFINE_TYPE(GswordWorkspacePage, gsword_workspace_page, GSWORD_TYPE_PAGE)
+
+#define WORKSPACE_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void update_column_buttons(GswordWorkspacePage *page);
 static void update_add_buttons(GswordWorkspacePage *page);
@@ -72,11 +78,11 @@ max_columns_for_window(GswordWorkspacePage *page)
 {
     gint width = 0;
 
-    if (page == NULL || page->window == NULL)
+    if (page == NULL || WORKSPACE_WINDOW(page) == NULL)
         return 4;
-    width = gtk_widget_get_width(GTK_WIDGET(page->window));
+    width = gtk_widget_get_width(GTK_WIDGET(WORKSPACE_WINDOW(page)));
     if (width <= 0)
-        gtk_window_get_default_size(GTK_WINDOW(page->window), &width, NULL);
+        gtk_window_get_default_size(GTK_WINDOW(WORKSPACE_WINDOW(page)), &width, NULL);
     return width > 0 && width < 1000 ? 2 : 4;
 }
 
@@ -99,7 +105,7 @@ clamp_columns_to_window(GswordWorkspacePage *page)
 static gchar *
 default_module(GswordWorkspacePage *page)
 {
-    GswordWindow *self = page->window;
+    GswordWindow *self = WORKSPACE_WINDOW(page);
     GswManager *manager = gsword_window_get_manager(self);
     GswModule *module = gsword_window_get_module(self);
     GPtrArray *infos;
@@ -200,7 +206,7 @@ gsword_workspace_page_save(GswordWorkspacePage *page)
 
     if (page == NULL)
         return;
-    settings = gsword_window_get_settings(page->window);
+    settings = gsword_window_get_settings(WORKSPACE_WINDOW(page));
     if (settings == NULL || page->panes == NULL || page->restoring)
         return;
     g_variant_builder_init(&builder, G_VARIANT_TYPE("a(ssi)"));
@@ -239,11 +245,11 @@ gsword_workspace_page_add_pane(GswordWorkspacePage *page,
     if (page->panes->len >= 4) {
         if (save)
             gsword_window_set_status(
-                page->window,
+                WORKSPACE_WINDOW(page),
                 _("At most four comparison panes are supported"));
         return NULL;
     }
-    pane = gsword_workspace_pane_new(page->window, page, module_name, key,
+    pane = gsword_workspace_pane_new(WORKSPACE_WINDOW(page), page, module_name, key,
                                      follow, FALSE);
     g_ptr_array_add(page->panes, pane);
     if (page->active_pane == NULL)
@@ -458,9 +464,9 @@ gsword_workspace_page_sync_from_reader(GswordWorkspacePage *page)
     gchar *reference;
 
     if (page == NULL || page->panes == NULL || page->panes->len == 0 ||
-        gsword_window_get_module(page->window) == NULL)
+        gsword_window_get_module(WORKSPACE_WINDOW(page)) == NULL)
         return;
-    reference = gsword_window_current_start_reference(page->window);
+    reference = gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
     if (reference != NULL) {
         gsword_workspace_page_sync_reference(page, reference, NULL);
         g_free(reference);
@@ -470,7 +476,7 @@ gsword_workspace_page_sync_from_reader(GswordWorkspacePage *page)
 static gboolean
 is_bible_module(GswordWorkspacePage *page, const gchar *name)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
+    GswManager *manager = gsword_window_get_manager(WORKSPACE_WINDOW(page));
     GPtrArray *infos;
     gboolean result = FALSE;
     guint i;
@@ -495,7 +501,7 @@ is_bible_module(GswordWorkspacePage *page, const gchar *name)
 static gchar *
 parallel_module(GswordWorkspacePage *page, const gchar *saved, guint index)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
+    GswManager *manager = gsword_window_get_manager(WORKSPACE_WINDOW(page));
     GPtrArray *infos;
     gchar *result = NULL;
     guint position = 0;
@@ -567,8 +573,8 @@ gsword_workspace_page_apply_parallel_template(GswordWorkspacePage *page)
 
     if (page == NULL)
         return;
-    settings = gsword_window_get_settings(page->window);
-    reference = gsword_window_current_start_reference(page->window);
+    settings = gsword_window_get_settings(WORKSPACE_WINDOW(page));
+    reference = gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
     if (settings != NULL) {
         saved_a = g_settings_get_string(settings, "parallel-a");
         saved_b = g_settings_get_string(settings, "parallel-b");
@@ -576,7 +582,7 @@ gsword_workspace_page_apply_parallel_template(GswordWorkspacePage *page)
     module_a = parallel_module(page, saved_a, 0);
     module_b = parallel_module(page, saved_b, 1);
     if (module_a == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(WORKSPACE_WINDOW(page),
                                  _("No Bible text module is installed"));
         g_free(saved_a);
         g_free(saved_b);
@@ -602,9 +608,9 @@ gsword_workspace_page_apply_parallel_template(GswordWorkspacePage *page)
     }
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
-    gsword_window_show_page(page->window, "panes");
+    gsword_window_show_page(WORKSPACE_WINDOW(page), "panes");
     gsword_workspace_page_sync_from_reader(page);
-    gsword_window_set_status(page->window, _("Parallel comparison ready"));
+    gsword_window_set_status(WORKSPACE_WINDOW(page), _("Parallel comparison ready"));
 
     g_free(saved_a);
     g_free(saved_b);
@@ -623,7 +629,7 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
 
     if (page == NULL || page->grid == NULL)
         return;
-    settings = gsword_window_get_settings(page->window);
+    settings = gsword_window_get_settings(WORKSPACE_WINDOW(page));
     if (settings != NULL) {
         layout_text = g_settings_get_string(settings, "workspace-layout");
         columns = g_settings_get_int(settings, "workspace-columns");
@@ -648,7 +654,7 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
     if (layout_text == NULL || *layout_text == '\0') {
         gchar *module = default_module(page);
         gchar *reference =
-            gsword_window_current_start_reference(page->window);
+            gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
 
         if (module != NULL) {
             gsword_workspace_page_add_pane(page, module, reference, TRUE,
@@ -676,7 +682,7 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
         if (layout == NULL) {
             gchar *module = default_module(page);
             gchar *reference =
-                gsword_window_current_start_reference(page->window);
+                gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
 
             if (module != NULL) {
                 gsword_workspace_page_add_pane(page, module, reference, TRUE,
@@ -795,7 +801,7 @@ gsword_workspace_page_reorder_from_drag(GswordWorkspacePage *page,
     }
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
-    gsword_window_set_status(page->window, _("Comparison order changed"));
+    gsword_window_set_status(WORKSPACE_WINDOW(page), _("Comparison order changed"));
 }
 
 static void
@@ -803,19 +809,19 @@ on_add_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWorkspacePage *page = user_data;
     gchar *name = default_module(page);
-    gchar *reference = gsword_window_current_start_reference(page->window);
+    gchar *reference = gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
 
     (void)button;
     if (page->panes->len >= 4) {
         gsword_window_set_status(
-            page->window,
+            WORKSPACE_WINDOW(page),
             _("At most four comparison panes are supported"));
         g_free(name);
         g_free(reference);
         return;
     }
     if (name == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(WORKSPACE_WINDOW(page),
                                  _("No Bible text module is installed"));
         g_free(reference);
         return;
@@ -832,13 +838,16 @@ clear_all_panes(GswordWorkspacePage *page)
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
     update_add_buttons(page);
-    gsword_window_set_status(page->window, _("Comparisons cleared"));
+    gsword_window_set_status(WORKSPACE_WINDOW(page), _("Comparisons cleared"));
 }
 
 static gboolean
 clear_all_panes_idle(gpointer user_data)
 {
-    clear_all_panes(user_data);
+    GswordWorkspacePage *page = user_data;
+
+    page->clear_idle = 0;
+    clear_all_panes(page);
     return G_SOURCE_REMOVE;
 }
 
@@ -849,8 +858,11 @@ on_clear_response(AdwAlertDialog *dialog, const gchar *response,
     GswordWorkspacePage *page = user_data;
 
     (void)dialog;
-    if (g_strcmp0(response, "clear") == 0)
-        g_idle_add(clear_all_panes_idle, page);
+    if (g_strcmp0(response, "clear") == 0) {
+        if (page->clear_idle != 0)
+            g_source_remove(page->clear_idle);
+        page->clear_idle = g_idle_add(clear_all_panes_idle, page);
+    }
 }
 
 static void
@@ -874,7 +886,8 @@ on_clear_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_response_appearance(
         ADW_ALERT_DIALOG(dialog), "clear", ADW_RESPONSE_DESTRUCTIVE);
     g_signal_connect(dialog, "response", G_CALLBACK(on_clear_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->root));
+    adw_dialog_present(dialog,
+                       GTK_WIDGET(gsword_page_get_widget(GSWORD_PAGE(page))));
 }
 
 static void
@@ -890,7 +903,7 @@ static void
 on_empty_four_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWorkspacePage *page = user_data;
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GSettings *settings = gsword_window_get_settings(WORKSPACE_WINDOW(page));
     gchar *saved_a = NULL;
     gchar *saved_b = NULL;
     gchar *modules[4] = { NULL, NULL, NULL, NULL };
@@ -898,7 +911,7 @@ on_empty_four_clicked(GtkButton *button, gpointer user_data)
     guint i;
 
     (void)button;
-    reference = gsword_window_current_start_reference(page->window);
+    reference = gsword_window_current_start_reference(WORKSPACE_WINDOW(page));
     if (settings != NULL) {
         saved_a = g_settings_get_string(settings, "parallel-a");
         saved_b = g_settings_get_string(settings, "parallel-b");
@@ -906,7 +919,7 @@ on_empty_four_clicked(GtkButton *button, gpointer user_data)
     modules[0] = parallel_module(page, saved_a, 0);
     modules[1] = parallel_module(page, saved_b, 1);
     if (modules[0] == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(WORKSPACE_WINDOW(page),
                                  _("No Bible text module is installed"));
         g_free(saved_a);
         g_free(saved_b);
@@ -935,9 +948,9 @@ on_empty_four_clicked(GtkButton *button, gpointer user_data)
     }
     gsword_workspace_page_reflow(page);
     gsword_workspace_page_save(page);
-    gsword_window_show_page(page->window, "panes");
+    gsword_window_show_page(WORKSPACE_WINDOW(page), "panes");
     gsword_workspace_page_sync_from_reader(page);
-    gsword_window_set_status(page->window, _("Four-way comparison ready"));
+    gsword_window_set_status(WORKSPACE_WINDOW(page), _("Four-way comparison ready"));
 
     g_free(saved_a);
     g_free(saved_b);
@@ -952,7 +965,7 @@ on_empty_manage_clicked(GtkButton *button, gpointer user_data)
     GswordWorkspacePage *page = user_data;
 
     (void)button;
-    gsword_window_open_library(page->window);
+    gsword_window_open_library(WORKSPACE_WINDOW(page));
 }
 
 static void
@@ -988,13 +1001,13 @@ on_column_toggled(GtkToggleButton *button, gpointer user_data)
     if (!gtk_toggle_button_get_active(button))
         return;
     if (column > 2 &&
-        gtk_widget_get_width(GTK_WIDGET(page->window)) > 0 &&
-        gtk_widget_get_width(GTK_WIDGET(page->window)) < 1000) {
+        gtk_widget_get_width(GTK_WIDGET(WORKSPACE_WINDOW(page))) > 0 &&
+        gtk_widget_get_width(GTK_WIDGET(WORKSPACE_WINDOW(page))) < 1000) {
         page->columns = 2;
         update_column_buttons(page);
         gsword_workspace_page_reflow(page);
         gsword_window_set_status(
-            page->window, _("Narrow windows support at most two comparison panes"));
+            WORKSPACE_WINDOW(page), _("Narrow windows support at most two comparison panes"));
         return;
     }
     page->columns = column;
@@ -1027,28 +1040,47 @@ on_diff_toggled(GtkCheckButton *button, gpointer user_data)
 }
 
 static void
-workspace_page_free(gpointer data)
+gsword_workspace_page_dispose(GObject *object)
 {
-    GswordWorkspacePage *page = data;
+    GswordWorkspacePage *page = GSWORD_WORKSPACE_PAGE(object);
 
-    if (page->align_idle != 0)
+    if (page->align_idle != 0) {
         g_source_remove(page->align_idle);
+        page->align_idle = 0;
+    }
+    if (page->clear_idle != 0) {
+        g_source_remove(page->clear_idle);
+        page->clear_idle = 0;
+    }
     g_clear_pointer(&page->panes, g_ptr_array_unref);
-    g_free(page->reference);
-    g_free(page);
+    g_clear_pointer(&page->reference, g_free);
+
+    G_OBJECT_CLASS(gsword_workspace_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_workspace_page_class_init(GswordWorkspacePageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_workspace_page_dispose;
+}
+
+static void
+gsword_workspace_page_init(GswordWorkspacePage *page)
+{
+    (void)page;
 }
 
 GtkWidget *
 gsword_workspace_page_widget(GswordWorkspacePage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_WORKSPACE_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 GswordWorkspacePage *
 gsword_workspace_page_new(GswordWindow *window)
 {
-    GswordWorkspacePage *page = g_new0(GswordWorkspacePage, 1);
+    GswordWorkspacePage *page = g_object_new(gsword_workspace_page_get_type(), NULL);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *add = gtk_button_new_with_label(_("Add comparison"));
@@ -1069,13 +1101,13 @@ gsword_workspace_page_new(GswordWindow *window)
     GtkWidget *manage = gtk_button_new_with_label(_("Manage modules"));
     GtkWidget *scrolled = gtk_scrolled_window_new();
 
-    page->window = window;
-    page->root = box;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     page->add_button = add;
     page->empty_add_button = add_pane;
-    g_signal_connect(box, "map", G_CALLBACK(on_workspace_map), page);
-    g_signal_connect(window, "notify::width",
-                     G_CALLBACK(on_workspace_window_width_changed), page);
+    g_signal_connect_object(box, "map", G_CALLBACK(on_workspace_map), page, 0);
+    g_signal_connect_object(window, "notify::width",
+                            G_CALLBACK(on_workspace_window_width_changed),
+                            page, 0);
     page->panes = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsword_workspace_pane_free);
 
@@ -1174,8 +1206,7 @@ gsword_workspace_page_new(GswordWindow *window)
 
     gtk_box_append(GTK_BOX(box), toolbar);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->stack));
-    g_object_set_data_full(G_OBJECT(box), "gsword-workspace-page", page,
-                           workspace_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     update_add_buttons(page);
     return page;
 }

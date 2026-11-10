@@ -7,11 +7,12 @@
 #ifndef GSWORD_WORKSPACE_PAGE_H
 #define GSWORD_WORKSPACE_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordWorkspacePage GswordWorkspacePage;
+G_DECLARE_FINAL_TYPE(GswordWorkspacePage, gsword_workspace_page, GSWORD,
+                     WORKSPACE_PAGE, GswordPage)
 typedef struct _GswordWorkspacePane GswordWorkspacePane;
 
 GswordWorkspacePage *gsword_workspace_page_new(GswordWindow *window);
