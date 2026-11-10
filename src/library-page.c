@@ -201,6 +201,20 @@ static void gsword_window_refresh_remote_modules(GswordWindow *self);
 static void gsword_window_refresh_installed_list(GswordWindow *self);
 static void show_module_details(GswordWindow *self);
 static void append_module_warning(gchar **warning, const gchar *format, ...);
+static gchar *format_module_meta(GswModuleInfo *info,
+                                 const gchar *version_text,
+                                 const gchar *source_text);
+static gchar *format_module_warning(GswModuleInfo *info);
+static gchar *format_module_technical(GswModuleInfo *info, const gchar *name,
+                                      gboolean include_minimum);
+static gchar *format_module_license(GswModuleInfo *info);
+static void update_common_module_details(GswordLibraryPage *priv,
+                                         GswModuleInfo *info,
+                                         const gchar *name,
+                                         const gchar *status_text,
+                                         const gchar *version_text,
+                                         const gchar *source_text,
+                                         gboolean include_minimum);
 static void on_refresh_sources_finished(GObject *source, GAsyncResult *result,
                                         gpointer user_data);
 static void on_refresh_remote_finished(GObject *source, GAsyncResult *result,
@@ -682,21 +696,10 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
     GswInstallSource *source = gsword_window_current_install_source(self);
     GswModuleInfo *info = NULL;
     GswModuleInfo *local = NULL;
-    const gchar *description;
-    const gchar *type;
     const gchar *remote_version;
     const gchar *local_version = NULL;
     const gchar *source_caption;
-    const gchar *license;
-    const gchar *copyright;
-    const gchar *about;
-    gchar *language;
-    gchar *size;
     gchar *version_text;
-    gchar *meta;
-    gchar *warning = NULL;
-    GString *technical;
-    GString *license_text;
     guint status;
 
     if (source == NULL || name == NULL)
@@ -707,17 +710,10 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
         return;
     status = gsw_install_manager_get_module_status(priv->manager, info);
     local = gsw_manager_lookup_module_info(priv->manager, name);
-    description = gsw_module_info_get_description(info);
-    type = gsword_window_module_type_display(info);
     remote_version = gsw_module_info_get_version(info);
     if (local != NULL)
         local_version = gsw_module_info_get_version(local);
     source_caption = gsw_install_source_get_caption(source);
-    license = gsw_module_info_get_distribution_license(info);
-    copyright = gsw_module_info_get_copyright(info);
-    about = gsw_module_info_get_about(info);
-    language = language_display_name(gsw_module_info_get_language(info));
-    size = format_size(gsw_module_info_get_install_size(info));
 
     if (local_version != NULL && remote_version != NULL &&
         g_strcmp0(local_version, remote_version) != 0)
@@ -726,80 +722,9 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
     else
         version_text = g_strdup(remote_version != NULL ? remote_version : "?");
 
-    meta = g_strdup_printf(
-        _("Type: %s\nLanguage: %s\nVersion: %s\nSize: %s\nSource: %s\nLicense: %s"),
-        type != NULL ? type : _("Unknown"), language, version_text, size,
-        source_caption != NULL ? source_caption : _("Unknown"),
-        license != NULL && *license != '\0' ? license : _("Not specified"));
-
-    gtk_label_set_text(priv->remote_title, name);
-    gtk_label_set_text(priv->remote_status, module_status_text(status));
-    gtk_label_set_text(priv->remote_description,
-                       description != NULL ? description : "");
-    gtk_label_set_text(priv->remote_meta, meta);
-
-    if (!gsw_module_info_is_supported(info))
-        warning = g_strdup(_("⚠ This module may not be readable by this version of gsword."));
-    if (gsw_module_info_get_value(info, "Requires") != NULL)
-        append_module_warning(&warning, _("Requires: %s"),
-            gsw_module_info_get_value(info, "Requires"));
-    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
-        append_module_warning(&warning, _("Conflicts: %s"),
-            gsw_module_info_get_value(info, "Conflicts"));
-    if (gsw_module_info_is_ciphered(info)) {
-        gchar *cipher_warning = g_strdup(
-            _("⚠ This module is encrypted and may require unlocking."));
-
-        if (warning != NULL) {
-            gchar *combined = g_strconcat(warning, "\n", cipher_warning, NULL);
-
-            g_free(warning);
-            g_free(cipher_warning);
-            warning = combined;
-        } else {
-            warning = cipher_warning;
-        }
-    }
-    gtk_label_set_text(priv->remote_warning,
-                       warning != NULL ? warning : "");
-    gtk_widget_set_visible(GTK_WIDGET(priv->remote_warning), warning != NULL);
-
-    technical = g_string_new(NULL);
-    g_string_append_printf(technical, _("Driver: %s\n"),
-                           gsw_module_info_get_driver_name(info) != NULL
-                           ? gsw_module_info_get_driver_name(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Encoding: %s\n"),
-                           gsw_module_info_get_encoding(info) != NULL
-                           ? gsw_module_info_get_encoding(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Versification: %s\n"),
-                           gsw_module_info_get_versification(info) != NULL
-                           ? gsw_module_info_get_versification(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Minimum SWORD version: %s\n"),
-                           gsw_module_info_get_minimum_version(info) != NULL
-                           ? gsw_module_info_get_minimum_version(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Module ID: %s\n"), name);
-    g_string_append_printf(technical, _("Config file: %s\n"),
-                           gsw_module_info_get_config_file(info) != NULL
-                           ? gsw_module_info_get_config_file(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Data path: %s"),
-                           gsw_module_info_get_absolute_data_path(info) != NULL
-                           ? gsw_module_info_get_absolute_data_path(info) : _("Unknown"));
-    gtk_label_set_text(priv->technical_label, technical->str);
-    gtk_widget_set_visible(GTK_WIDGET(priv->technical_expander), TRUE);
-
-    license_text = g_string_new(NULL);
-    g_string_append_printf(license_text, _("License: %s\n\nCopyright: %s"),
-                           license != NULL && *license != '\0'
-                           ? license : _("Not specified"),
-                           copyright != NULL && *copyright != '\0'
-                           ? copyright : _("Not specified"));
-    gtk_label_set_text(priv->license_label, license_text->str);
-    gtk_widget_set_visible(GTK_WIDGET(priv->license_expander), TRUE);
-
-    gtk_label_set_text(priv->about_label,
-                       about != NULL && *about != '\0'
-                       ? about : _("No additional information is available."));
-    gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), TRUE);
+    update_common_module_details(
+        priv, info, name, module_status_text(status), version_text,
+        source_caption != NULL ? source_caption : _("Unknown"), TRUE);
 
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button),
                              (status & GSW_MODULE_STATUS_NEW) ||
@@ -807,13 +732,7 @@ gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
     if (priv->remove_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
 
-    g_free(language);
-    g_free(size);
     g_free(version_text);
-    g_free(meta);
-    g_free(warning);
-    g_string_free(technical, TRUE);
-    g_string_free(license_text, TRUE);
 }
 
 static void
@@ -836,22 +755,138 @@ append_module_warning(gchar **warning, const gchar *format, ...)
     }
 }
 
+static gchar *
+format_module_meta(GswModuleInfo *info, const gchar *version_text,
+                   const gchar *source_text)
+{
+    gchar *language = language_display_name(gsw_module_info_get_language(info));
+    gchar *size = format_size(gsw_module_info_get_install_size(info));
+    const gchar *license = gsw_module_info_get_distribution_license(info);
+    const gchar *type = gsword_window_module_type_display(info);
+    gchar *meta = g_strdup_printf(
+        _("Type: %s\nLanguage: %s\nVersion: %s\nSize: %s\nSource: %s\nLicense: %s"),
+        type != NULL ? type : _("Unknown"), language,
+        version_text != NULL ? version_text : "?", size,
+        source_text != NULL ? source_text : _("Unknown"),
+        license != NULL && *license != '\0' ? license : _("Not specified"));
+
+    g_free(language);
+    g_free(size);
+    return meta;
+}
+
+static gchar *
+format_module_warning(GswModuleInfo *info)
+{
+    gchar *warning = NULL;
+
+    if (!gsw_module_info_is_supported(info))
+        warning = g_strdup(
+            _("⚠ This module may not be readable by this version of gsword."));
+    if (gsw_module_info_get_value(info, "Requires") != NULL)
+        append_module_warning(&warning, _("Requires: %s"),
+                              gsw_module_info_get_value(info, "Requires"));
+    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
+        append_module_warning(&warning, _("Conflicts: %s"),
+                              gsw_module_info_get_value(info, "Conflicts"));
+    if (gsw_module_info_is_ciphered(info))
+        append_module_warning(
+            &warning, "%s",
+            _("⚠ This module is encrypted and may require unlocking."));
+    return warning;
+}
+
+static gchar *
+format_module_technical(GswModuleInfo *info, const gchar *name,
+                        gboolean include_minimum)
+{
+    GString *technical = g_string_new(NULL);
+    const gchar *value;
+
+    value = gsw_module_info_get_driver_name(info);
+    g_string_append_printf(technical, _("Driver: %s\n"),
+                           value != NULL ? value : _("Unknown"));
+    value = gsw_module_info_get_encoding(info);
+    g_string_append_printf(technical, _("Encoding: %s\n"),
+                           value != NULL ? value : _("Unknown"));
+    value = gsw_module_info_get_versification(info);
+    g_string_append_printf(technical, _("Versification: %s\n"),
+                           value != NULL ? value : _("Unknown"));
+    if (include_minimum) {
+        value = gsw_module_info_get_minimum_version(info);
+        g_string_append_printf(technical, _("Minimum SWORD version: %s\n"),
+                               value != NULL ? value : _("Unknown"));
+    }
+    g_string_append_printf(technical, _("Module ID: %s\n"), name);
+    value = gsw_module_info_get_config_file(info);
+    g_string_append_printf(technical, _("Config file: %s\n"),
+                           value != NULL ? value : _("Unknown"));
+    value = gsw_module_info_get_absolute_data_path(info);
+    g_string_append_printf(technical, _("Data path: %s"),
+                           value != NULL ? value : _("Unknown"));
+    return g_string_free(technical, FALSE);
+}
+
+static gchar *
+format_module_license(GswModuleInfo *info)
+{
+    const gchar *license = gsw_module_info_get_distribution_license(info);
+    const gchar *copyright = gsw_module_info_get_copyright(info);
+
+    return g_strdup_printf(
+        _("License: %s\n\nCopyright: %s"),
+        license != NULL && *license != '\0' ? license : _("Not specified"),
+        copyright != NULL && *copyright != '\0'
+        ? copyright : _("Not specified"));
+}
+
+static void
+update_common_module_details(GswordLibraryPage *priv, GswModuleInfo *info,
+                             const gchar *name, const gchar *status_text,
+                             const gchar *version_text,
+                             const gchar *source_text,
+                             gboolean include_minimum)
+{
+    gchar *meta = format_module_meta(info, version_text, source_text);
+    gchar *warning = format_module_warning(info);
+    gchar *technical = format_module_technical(info, name, include_minimum);
+    gchar *license_text = format_module_license(info);
+    const gchar *description = gsw_module_info_get_description(info);
+    const gchar *about = gsw_module_info_get_about(info);
+
+    gtk_label_set_text(priv->remote_title, name);
+    gtk_label_set_text(priv->remote_status,
+                       status_text != NULL ? status_text : "");
+    gtk_label_set_text(priv->remote_description,
+                       description != NULL ? description : "");
+    gtk_label_set_text(priv->remote_meta, meta);
+    gtk_label_set_text(priv->remote_warning,
+                       warning != NULL ? warning : "");
+    gtk_widget_set_visible(GTK_WIDGET(priv->remote_warning),
+                           warning != NULL);
+    gtk_label_set_text(priv->technical_label, technical);
+    gtk_widget_set_visible(GTK_WIDGET(priv->technical_expander), TRUE);
+    gtk_label_set_text(priv->license_label, license_text);
+    gtk_widget_set_visible(GTK_WIDGET(priv->license_expander), TRUE);
+    gtk_label_set_text(priv->about_label,
+                       about != NULL && *about != '\0'
+                       ? about : _("No additional information is available."));
+    gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), TRUE);
+
+    g_free(meta);
+    g_free(warning);
+    g_free(technical);
+    g_free(license_text);
+}
+
 static void
 gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
 {
     GswordLibraryPage *priv = library_page_get(self);
     GswModuleInfo *info;
-    const gchar *description;
-    const gchar *license;
-    const gchar *copyright;
-    const gchar *about;
-    gchar *language;
-    gchar *size;
-    gchar *meta;
-    gchar *warning = NULL;
+    const gchar *version;
+    gchar *version_text;
     gboolean writable;
-    GString *technical;
-    GString *license_text;
 
     if (name == NULL)
         return;
@@ -859,82 +894,12 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     if (info == NULL)
         return;
     writable = gsword_window_module_is_writable(priv->window, info);
-    description = gsw_module_info_get_description(info);
-    license = gsw_module_info_get_distribution_license(info);
-    copyright = gsw_module_info_get_copyright(info);
-    about = gsw_module_info_get_about(info);
-    language = language_display_name(gsw_module_info_get_language(info));
-    size = format_size(gsw_module_info_get_install_size(info));
-    meta = g_strdup_printf(
-        _("Type: %s\nLanguage: %s\nVersion: %s\nSize: %s\nSource: %s\nLicense: %s"),
-        gsword_window_module_type_display(info), language,
-        gsw_module_info_get_version(info) != NULL
-        ? gsw_module_info_get_version(info) : "?",
-        size, writable ? _("User library") : _("System library"),
-        license != NULL && *license != '\0' ? license : _("Not specified"));
-
-    gtk_label_set_text(priv->remote_title, name);
-    gtk_label_set_text(priv->remote_status, _("Installed"));
-    gtk_label_set_text(priv->remote_description,
-                       description != NULL ? description : "");
-    gtk_label_set_text(priv->remote_meta, meta);
-
-    if (!gsw_module_info_is_supported(info))
-        warning = g_strdup(_("⚠ This module may not be readable by this version of gsword."));
-    if (gsw_module_info_get_value(info, "Requires") != NULL)
-        append_module_warning(&warning, _("Requires: %s"),
-            gsw_module_info_get_value(info, "Requires"));
-    if (gsw_module_info_get_value(info, "Conflicts") != NULL)
-        append_module_warning(&warning, _("Conflicts: %s"),
-            gsw_module_info_get_value(info, "Conflicts"));
-    if (gsw_module_info_is_ciphered(info)) {
-        gchar *cipher_warning = g_strdup(
-            _("⚠ This module is encrypted and may require unlocking."));
-
-        if (warning != NULL) {
-            gchar *combined = g_strconcat(warning, "\n", cipher_warning, NULL);
-
-            g_free(warning);
-            g_free(cipher_warning);
-            warning = combined;
-        } else {
-            warning = cipher_warning;
-        }
-    }
-    gtk_label_set_text(priv->remote_warning, warning != NULL ? warning : "");
-    gtk_widget_set_visible(GTK_WIDGET(priv->remote_warning), warning != NULL);
-
-    technical = g_string_new(NULL);
-    g_string_append_printf(technical, _("Driver: %s\n"),
-        gsw_module_info_get_driver_name(info) != NULL
-        ? gsw_module_info_get_driver_name(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Encoding: %s\n"),
-        gsw_module_info_get_encoding(info) != NULL
-        ? gsw_module_info_get_encoding(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Versification: %s\n"),
-        gsw_module_info_get_versification(info) != NULL
-        ? gsw_module_info_get_versification(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Module ID: %s\n"), name);
-    g_string_append_printf(technical, _("Config file: %s\n"),
-        gsw_module_info_get_config_file(info) != NULL
-        ? gsw_module_info_get_config_file(info) : _("Unknown"));
-    g_string_append_printf(technical, _("Data path: %s"),
-        gsw_module_info_get_absolute_data_path(info) != NULL
-        ? gsw_module_info_get_absolute_data_path(info) : _("Unknown"));
-    gtk_label_set_text(priv->technical_label, technical->str);
-    gtk_widget_set_visible(GTK_WIDGET(priv->technical_expander), TRUE);
-
-    license_text = g_string_new(NULL);
-    g_string_append_printf(license_text, _("License: %s\n\nCopyright: %s"),
-        license != NULL && *license != '\0' ? license : _("Not specified"),
-        copyright != NULL && *copyright != '\0' ? copyright : _("Not specified"));
-    gtk_label_set_text(priv->license_label, license_text->str);
-    gtk_widget_set_visible(GTK_WIDGET(priv->license_expander), TRUE);
-
-    gtk_label_set_text(priv->about_label,
-        about != NULL && *about != '\0'
-        ? about : _("No additional information is available."));
-    gtk_widget_set_visible(GTK_WIDGET(priv->about_expander), TRUE);
+    version = gsw_module_info_get_version(info);
+    version_text = g_strdup(version != NULL ? version : "?");
+    update_common_module_details(
+        priv, info, name, _("Installed"), version_text,
+        writable ? _("User library") : _("System library"), FALSE);
+    g_free(version_text);
 
     gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), writable);
@@ -946,13 +911,6 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
 
         gtk_widget_set_visible(GTK_WIDGET(priv->unlock_button), locked);
     }
-
-    g_free(language);
-    g_free(size);
-    g_free(meta);
-    g_free(warning);
-    g_string_free(technical, TRUE);
-    g_string_free(license_text, TRUE);
 }
 
 static void
