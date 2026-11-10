@@ -1627,6 +1627,8 @@ gsword_search_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->results));
     g_signal_connect(scrolled, "unrealize",
                      G_CALLBACK(on_results_unrealize), page);
+    g_signal_connect(scrolled, "destroy",
+                     G_CALLBACK(on_results_unrealize), page);
     gtk_widget_set_vexpand(scrolled, TRUE);
     page->results_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_named(page->results_stack, GTK_WIDGET(page->empty_label),

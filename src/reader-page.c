@@ -1294,6 +1294,18 @@ on_context_bookmark(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_reader_view_destroy(GtkWidget *widget, gpointer user_data)
+{
+    GswordReaderPage *page = user_data;
+
+    (void)widget;
+    if (page->context_menu != NULL &&
+        gtk_widget_get_parent(GTK_WIDGET(page->context_menu)) != NULL)
+        gtk_widget_unparent(GTK_WIDGET(page->context_menu));
+    page->context_menu = NULL;
+}
+
+static void
 on_reader_context_clicked(GtkGestureClick *gesture, gint n_press,
                           gdouble x, gdouble y, gpointer user_data)
 {
@@ -1908,6 +1920,8 @@ gsword_reader_page_new(GswordWindow *window)
         gtk_box_append(GTK_BOX(menu), prayer_item);
         gtk_popover_set_child(page->context_menu, menu);
         gtk_widget_set_parent(popover, GTK_WIDGET(page->view));
+        g_signal_connect(page->view, "destroy",
+                         G_CALLBACK(on_reader_view_destroy), page);
     }
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->view));

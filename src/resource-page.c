@@ -664,13 +664,24 @@ on_image_key_pressed(GtkEventControllerKey *controller, guint keyval,
 }
 
 static void
+on_image_view_destroy(GtkWidget *widget, gpointer user_data)
+{
+    GswordResourcePage *page = user_data;
+
+    (void)widget;
+    if (page->image_context_menu != NULL &&
+        gtk_widget_get_parent(GTK_WIDGET(page->image_context_menu)) != NULL)
+        gtk_widget_unparent(GTK_WIDGET(page->image_context_menu));
+    page->image_context_menu = NULL;
+}
+
+static void
 resource_page_free(gpointer data)
 {
     GswordResourcePage *page = data;
 
     if (page == NULL)
         return;
-    g_clear_object(&page->image_view);
     g_clear_object(&page->module);
     g_free(page->data_dir);
     g_free(page);
@@ -791,6 +802,8 @@ gsword_resource_page_new(GswordWindow *window)
     page->image_context_menu = GTK_POPOVER(context_menu);
     gtk_popover_set_has_arrow(page->image_context_menu, TRUE);
     gtk_widget_set_parent(context_menu, view_widget);
+    g_signal_connect(view_widget, "destroy",
+                     G_CALLBACK(on_image_view_destroy), page);
     context_gesture = gtk_gesture_click_new();
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context_gesture),
                                   GDK_BUTTON_SECONDARY);
