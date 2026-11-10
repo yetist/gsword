@@ -1606,14 +1606,6 @@ gsword_search_page_new(GswordWindow *window)
     page->results = GTK_LIST_BOX(gtk_list_box_new());
     g_signal_connect(page->results, "row-selected",
                      G_CALLBACK(on_result_selected), page);
-    page->context_menu = GTK_POPOVER(gtk_popover_new());
-    gtk_popover_set_autohide(page->context_menu, TRUE);
-    gtk_popover_set_has_arrow(page->context_menu, TRUE);
-    gtk_widget_set_parent(GTK_WIDGET(page->context_menu), scrolled);
-    page->list_menu = GTK_POPOVER(gtk_popover_new());
-    gtk_popover_set_autohide(page->list_menu, TRUE);
-    gtk_popover_set_has_arrow(page->list_menu, TRUE);
-    gtk_widget_set_parent(GTK_WIDGET(page->list_menu), scrolled);
     {
         GtkGesture *context = gtk_gesture_click_new();
 
@@ -1626,6 +1618,7 @@ gsword_search_page_new(GswordWindow *window)
     }
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->results));
+    ensure_result_popovers(page);
     g_signal_connect(scrolled, "unrealize",
                      G_CALLBACK(on_results_unrealize), page);
     g_signal_connect(scrolled, "destroy",
