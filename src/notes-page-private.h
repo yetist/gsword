@@ -53,6 +53,10 @@ struct _GswordNotesPage {
 
 void gsword_notes_editor_add_format_buttons(GswordNotesPage *page,
                                             GtkWidget *bar);
+void gsword_notes_clear_list(GtkListBox *list);
+GtkWidget *gsword_notes_make_placeholder(const gchar *text);
+gchar *gsword_notes_format_time(gint64 timestamp);
+void gsword_notes_select_row(GswordNotesPage *page);
 
 G_END_DECLS
 

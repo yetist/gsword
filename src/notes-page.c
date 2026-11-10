@@ -33,46 +33,6 @@ static void on_note_selected(GtkListBox *list, GtkListBoxRow *row,
                              gpointer user_data);
 
 static void
-clear_list(GtkListBox *list)
-{
-    while (gtk_widget_get_first_child(GTK_WIDGET(list)) != NULL)
-        gtk_list_box_remove(list,
-                            gtk_widget_get_first_child(GTK_WIDGET(list)));
-}
-
-static GtkWidget *
-make_placeholder(const gchar *text)
-{
-    GtkWidget *label = gtk_label_new(text);
-
-    gtk_label_set_wrap(GTK_LABEL(label), TRUE);
-    gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-    gtk_widget_set_margin_top(label, 12);
-    gtk_widget_set_margin_bottom(label, 12);
-    gtk_widget_set_margin_start(label, 8);
-    gtk_widget_set_margin_end(label, 8);
-    gtk_widget_add_css_class(label, "dim-label");
-    gtk_widget_add_css_class(label, "caption");
-    return label;
-}
-
-static gchar *
-format_note_time(gint64 timestamp)
-{
-    GDateTime *time;
-    gchar *result;
-
-    if (timestamp <= 0)
-        return g_strdup("");
-    time = g_date_time_new_from_unix_local(timestamp);
-    if (time == NULL)
-        return g_strdup("");
-    result = g_date_time_format(time, "%Y-%m-%d %H:%M");
-    g_date_time_unref(time);
-    return result;
-}
-
-static void
 on_clear_tag_filter(GtkButton *button, gpointer user_data)
 {
     GswordNotesPage *page = user_data;
@@ -120,7 +80,7 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     tags = gsword_notes_store_list_tags(notes_store);
 
     gtk_list_box_set_placeholder(page->notes_list,
-        make_placeholder(*query != '\0' || page->tag_filter != NULL
+        gsword_notes_make_placeholder(*query != '\0' || page->tag_filter != NULL
                          ? _("No matching notes") : _("No notes yet")));
     if (page->tag_filter_bar != NULL) {
         gboolean filtered = page->tag_filter != NULL &&
@@ -162,8 +122,8 @@ gsword_notes_page_refresh(GswordNotesPage *page)
         g_free(text);
     }
 
-    clear_list(page->notes_list);
-    clear_list(page->tags_list);
+    gsword_notes_clear_list(page->notes_list);
+    gsword_notes_clear_list(page->tags_list);
     if (page->rename_tag_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), FALSE);
     if (page->delete_tag_button != NULL)
@@ -212,7 +172,7 @@ gsword_notes_page_refresh(GswordNotesPage *page)
             gtk_widget_add_css_class(tags, "caption");
             gtk_box_append(GTK_BOX(meta), tags);
         }
-        time_text = format_note_time(note->updated);
+        time_text = gsword_notes_format_time(note->updated);
         if (*time_text != '\0') {
             GtkWidget *updated = gtk_label_new(time_text);
 
@@ -359,27 +319,6 @@ update_note_actions(GswordNotesPage *page)
         gtk_widget_set_sensitive(GTK_WIDGET(page->tag_add_button), has_key);
 }
 
-static void
-select_note_row(GswordNotesPage *page)
-{
-    GtkWidget *child;
-
-    if (page->storage_key == NULL)
-        return;
-    for (child = gtk_widget_get_first_child(GTK_WIDGET(page->notes_list));
-         child != NULL; child = gtk_widget_get_next_sibling(child)) {
-        const gchar *module = g_object_get_data(G_OBJECT(child), "note-module");
-        const gchar *key = g_object_get_data(G_OBJECT(child), "note-key");
-
-        if (g_strcmp0(module, page->module) == 0 &&
-            g_strcmp0(key, page->storage_key) == 0) {
-            gtk_list_box_select_row(page->notes_list,
-                                    GTK_LIST_BOX_ROW(child));
-            return;
-        }
-    }
-}
-
 static gboolean
 save_note_page(GswordNotesPage *page, gboolean refresh)
 {
@@ -421,7 +360,7 @@ save_note_page(GswordNotesPage *page, gboolean refresh)
         if (page->notes_list != NULL) {
             g_signal_handlers_block_by_func(
                 page->notes_list, G_CALLBACK(on_note_selected), page);
-            select_note_row(page);
+            gsword_notes_select_row(page);
             g_signal_handlers_unblock_by_func(
                 page->notes_list, G_CALLBACK(on_note_selected), page);
         }
@@ -764,7 +703,7 @@ rebuild_tag_menu(GswordNotesPage *page)
         return;
     tags = gsword_notes_store_list_tags(notes_store);
     if (tags->len == 0) {
-        GtkWidget *label = make_placeholder(_("No tags yet"));
+        GtkWidget *label = gsword_notes_make_placeholder(_("No tags yet"));
 
         gtk_widget_set_margin_top(label, 6);
         gtk_widget_set_margin_bottom(label, 6);
@@ -900,7 +839,7 @@ rebuild_list_menu(GswordNotesPage *page)
                 GTK_WIDGET(page->list_menu_box))) != NULL)
         gtk_box_remove(page->list_menu_box, child);
     if (page->storage_key == NULL) {
-        GtkWidget *label = make_placeholder(_("Select a note first"));
+        GtkWidget *label = gsword_notes_make_placeholder(_("Select a note first"));
 
         gtk_box_append(page->list_menu_box, label);
         page->updating_list_menu = FALSE;
@@ -912,7 +851,7 @@ rebuild_list_menu(GswordNotesPage *page)
     }
     lists = gsword_notes_store_list_lists(notes_store);
     if (lists->len == 0) {
-        GtkWidget *label = make_placeholder(_("No verse lists yet"));
+        GtkWidget *label = gsword_notes_make_placeholder(_("No verse lists yet"));
 
         gtk_box_append(page->list_menu_box, label);
     }
@@ -1232,7 +1171,7 @@ gsword_notes_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->notes_list));
     gtk_widget_set_vexpand(notes_scroll, TRUE);
     gtk_list_box_set_placeholder(page->notes_list,
-                                 make_placeholder(_("No notes yet")));
+                                 gsword_notes_make_placeholder(_("No notes yet")));
 
     page->tags_list = GTK_LIST_BOX(gtk_list_box_new());
     gtk_list_box_set_selection_mode(page->tags_list, GTK_SELECTION_NONE);
@@ -1245,7 +1184,7 @@ gsword_notes_page_new(GswordWindow *window)
                                   GTK_WIDGET(page->tags_list));
     gtk_widget_set_vexpand(tags_scroll, TRUE);
     gtk_list_box_set_placeholder(page->tags_list,
-                                 make_placeholder(_("No tags yet")));
+                                 gsword_notes_make_placeholder(_("No tags yet")));
 
     gtk_label_set_xalign(GTK_LABEL(tags_label), 0.0f);
     gtk_widget_set_hexpand(tags_label, TRUE);
