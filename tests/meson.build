@@ -3,6 +3,7 @@
 
 tests = []
 python3 = find_program('python3')
+xvfb_run = find_program('xvfb-run', required: false)
 
 reference_chooser_sources = files(
   '../src/gsword-reference-chooser.c',
@@ -208,5 +209,22 @@ if get_option('tests')
       ],
     )
     test('reference-chooser', test_reference_chooser, timeout: 30)
+
+    if xvfb_run.found()
+      test_ui_smoke = executable('test-ui-smoke',
+        ['test-ui-smoke.c'] + reference_chooser_sources,
+        include_directories: include_directories('../src'),
+        dependencies: [gsword_dep, gtk4_dep],
+        c_args: [
+          '-DGSW_TEST_LOCALE_DIR="' +
+          meson.project_source_root() + '/data/locales.d"',
+        ],
+      )
+      test('ui-smoke', xvfb_run,
+        args: ['-a', test_ui_smoke],
+        env: ['GSETTINGS_BACKEND=memory', 'ASAN_OPTIONS=detect_leaks=0'],
+        is_parallel: false,
+        timeout: 30)
+    endif
   endif
 endif

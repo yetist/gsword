@@ -35,6 +35,21 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
     install: true,
   )
 
+  if get_option('tests')
+    xvfb_run = find_program('xvfb-run', required: false)
+    if xvfb_run.found() and get_option('b_sanitize') == 'none'
+      sh = find_program('sh')
+      test('app-ui-smoke', xvfb_run,
+        args: [
+          '-a', sh,
+          meson.project_source_root() / 'tests/app-ui-smoke.sh',
+          gsword_app.full_path(),
+        ],
+        is_parallel: false,
+        timeout: 30)
+    endif
+  endif
+
   install_data(
     'org.gsword.GSword.gschema.xml',
     install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
