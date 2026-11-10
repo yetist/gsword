@@ -7,11 +7,12 @@
 #ifndef GSWORD_INSIGHT_PAGE_H
 #define GSWORD_INSIGHT_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordInsightPage GswordInsightPage;
+G_DECLARE_FINAL_TYPE(GswordInsightPage, gsword_insight_page, GSWORD,
+                     INSIGHT_PAGE, GswordPage)
 
 GswordInsightPage *gsword_insight_page_new(GswordWindow *window);
 GtkWidget *gsword_insight_page_widget(GswordInsightPage *page);

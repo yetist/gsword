@@ -1290,6 +1290,7 @@ notes_page_free(gpointer data)
     if (page == NULL)
         return;
     cancel_autosave(page);
+    g_clear_object(&page->insight_page);
     g_free(page->module);
     g_free(page->storage_key);
     g_free(page->display_key);

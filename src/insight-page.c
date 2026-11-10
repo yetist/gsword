@@ -13,8 +13,8 @@
 #include <string.h>
 
 struct _GswordInsightPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkEntry *search;
     GtkDropDown *tag_filter;
     GtkStringList *tag_model;
@@ -31,6 +31,11 @@ struct _GswordInsightPage {
     GPtrArray *verses;
     gboolean updating_tags;
 };
+
+G_DEFINE_TYPE(GswordInsightPage, gsword_insight_page, GSWORD_TYPE_PAGE)
+
+#define INSIGHT_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void refresh_list(GswordInsightPage *page);
 static void refresh_tags(GswordInsightPage *page);
@@ -143,7 +148,7 @@ on_verse_open(GtkButton *button, gpointer user_data)
                                                 "gsword-insight-page");
 
     if (verse != NULL && page != NULL)
-        gsword_window_open_module_reference(page->window, verse->module,
+        gsword_window_open_module_reference(INSIGHT_WINDOW(page), verse->module,
                                             verse->key);
 }
 
@@ -157,7 +162,7 @@ on_verse_remove(GtkButton *button, gpointer user_data)
     if (index > 0 && index <= page->verses->len)
         g_ptr_array_remove_index(page->verses, index - 1);
     rebuild_verse_list(page);
-    gsword_window_set_status(page->window, _("Verse removed from insight"));
+    gsword_window_set_status(INSIGHT_WINDOW(page), _("Verse removed from insight"));
 }
 
 static void
@@ -224,23 +229,23 @@ static void
 on_add_current_clicked(GtkButton *button, gpointer user_data)
 {
     GswordInsightPage *page = user_data;
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(INSIGHT_WINDOW(page));
     gchar *storage_key;
     gchar *display_key;
 
     (void)button;
     if (module == NULL) {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(INSIGHT_WINDOW(page), _("No active verse"));
         return;
     }
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
+    storage_key = gsword_window_current_storage_key(INSIGHT_WINDOW(page));
+    display_key = gsword_window_current_display_key(INSIGHT_WINDOW(page));
     if (storage_key == NULL || *storage_key == '\0') {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(INSIGHT_WINDOW(page), _("No active verse"));
     } else {
         add_verse(page, gsw_module_get_name(module), storage_key,
                   display_key);
-        gsword_window_set_status(page->window, _("Verse added to insight"));
+        gsword_window_set_status(INSIGHT_WINDOW(page), _("Verse added to insight"));
     }
     g_free(storage_key);
     g_free(display_key);
@@ -274,7 +279,7 @@ static void
 refresh_list(GswordInsightPage *page)
 {
     GswordInsightStore *store = gsword_window_get_insight_store(
-        page->window);
+        INSIGHT_WINDOW(page));
     const gchar *query = gtk_editable_get_text(GTK_EDITABLE(page->search));
     const gchar *tag = selected_tag(page);
     GPtrArray *items;
@@ -360,7 +365,7 @@ static void
 refresh_tags(GswordInsightPage *page)
 {
     GswordInsightStore *store = gsword_window_get_insight_store(
-        page->window);
+        INSIGHT_WINDOW(page));
     GtkStringList *model;
     GPtrArray *tags;
     const gchar *previous;
@@ -412,7 +417,7 @@ static void
 load_insight(GswordInsightPage *page, gint64 id)
 {
     GswordInsightStore *store = gsword_window_get_insight_store(
-        page->window);
+        INSIGHT_WINDOW(page));
     GswordInsight *insight = NULL;
     gchar *tags_text = NULL;
     gchar *date;
@@ -481,7 +486,7 @@ static gboolean
 save_insight(GswordInsightPage *page)
 {
     GswordInsightStore *store = gsword_window_get_insight_store(
-        page->window);
+        INSIGHT_WINDOW(page));
     gchar *title = g_strdup(
         gtk_editable_get_text(GTK_EDITABLE(page->title)));
     gchar *body;
@@ -494,14 +499,14 @@ save_insight(GswordInsightPage *page)
     body = view_text(page->body);
     if ((title == NULL || *title == '\0') &&
         (body == NULL || *body == '\0')) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(INSIGHT_WINDOW(page),
                                  _("Insight text is required"));
         g_free(title);
         g_free(body);
         return FALSE;
     }
     if (store == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(INSIGHT_WINDOW(page),
                                  _("Insight storage unavailable"));
         g_free(title);
         g_free(body);
@@ -520,7 +525,7 @@ save_insight(GswordInsightPage *page)
     }
     g_ptr_array_unref(tags);
     if (!ok) {
-        gsword_window_show_error(page->window, _("Cannot save insight"),
+        gsword_window_show_error(INSIGHT_WINDOW(page), _("Cannot save insight"),
                                  error);
         g_free(title);
         g_free(body);
@@ -528,8 +533,8 @@ save_insight(GswordInsightPage *page)
     }
 
     page->selected_id = id;
-    gsword_window_set_status(page->window, _("Insight saved"));
-    gsword_window_toast(page->window, _("Insight saved"));
+    gsword_window_set_status(INSIGHT_WINDOW(page), _("Insight saved"));
+    gsword_window_toast(INSIGHT_WINDOW(page), _("Insight saved"));
     g_free(title);
     g_free(body);
     refresh_tags(page);
@@ -550,7 +555,7 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
 {
     GswordInsightPage *page = user_data;
     GswordInsightStore *store = gsword_window_get_insight_store(
-        page->window);
+        INSIGHT_WINDOW(page));
     GError *error = NULL;
 
     (void)dialog;
@@ -559,14 +564,14 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
     if (store == NULL || page->selected_id == 0)
         return;
     if (!gsword_insight_store_delete(store, page->selected_id, &error)) {
-        gsword_window_show_error(page->window, _("Cannot delete insight"),
+        gsword_window_show_error(INSIGHT_WINDOW(page), _("Cannot delete insight"),
                                  error);
         return;
     }
     page->selected_id = 0;
     load_insight(page, 0);
     gtk_stack_set_visible_child_name(page->editor_stack, "empty");
-    gsword_window_set_status(page->window, _("Insight deleted"));
+    gsword_window_set_status(INSIGHT_WINDOW(page), _("Insight deleted"));
     refresh_tags(page);
     refresh_list(page);
 }
@@ -590,7 +595,7 @@ on_delete_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
     g_signal_connect(dialog, "response", G_CALLBACK(on_delete_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(INSIGHT_WINDOW(page)));
 }
 
 static GtkWidget *
@@ -678,21 +683,32 @@ build_editor(GswordInsightPage *page)
 }
 
 static void
-insight_page_free(gpointer data)
+gsword_insight_page_dispose(GObject *object)
 {
-    GswordInsightPage *page = data;
+    GswordInsightPage *page = GSWORD_INSIGHT_PAGE(object);
 
-    if (page == NULL)
-        return;
     free_verse_array(page);
     g_clear_object(&page->tag_model);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_insight_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_insight_page_class_init(GswordInsightPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_insight_page_dispose;
+}
+
+static void
+gsword_insight_page_init(GswordInsightPage *page)
+{
+    (void)page;
 }
 
 GswordInsightPage *
 gsword_insight_page_new(GswordWindow *window)
 {
-    GswordInsightPage *page = g_new0(GswordInsightPage, 1);
+    GswordInsightPage *page = g_object_new(gsword_insight_page_get_type(), NULL);
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *left_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -707,7 +723,7 @@ gsword_insight_page_new(GswordWindow *window)
     GtkWidget *editor_scroll;
 
     g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     page->verses = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsword_insight_verse_free);
 
@@ -732,8 +748,8 @@ gsword_insight_page_new(GswordWindow *window)
         (const gchar *[]) { _("All tags"), NULL });
     gtk_drop_down_set_model(page->tag_filter,
                             G_LIST_MODEL(page->tag_model));
-    g_signal_connect(page->tag_filter, "notify::selected",
-                     G_CALLBACK(on_tag_changed), page);
+    g_signal_connect_object(page->tag_filter, "notify::selected",
+                            G_CALLBACK(on_tag_changed), page, 0);
     gtk_widget_set_hexpand(GTK_WIDGET(page->tag_filter), TRUE);
 
     page->list = GTK_LIST_BOX(gtk_list_box_new());
@@ -789,9 +805,7 @@ gsword_insight_page_new(GswordWindow *window)
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), editor_scroll);
     gtk_paned_set_position(GTK_PANED(paned), 260);
-    page->root = paned;
-    g_object_set_data_full(G_OBJECT(paned), "gsword-insight-page", page,
-                           insight_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), paned);
     refresh_tags(page);
     refresh_list(page);
     return page;
@@ -800,14 +814,14 @@ gsword_insight_page_new(GswordWindow *window)
 GtkWidget *
 gsword_insight_page_widget(GswordInsightPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_INSIGHT_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 void
 gsword_insight_page_refresh(GswordInsightPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_INSIGHT_PAGE(page));
 
     refresh_tags(page);
     if (page->selected_id > 0)
