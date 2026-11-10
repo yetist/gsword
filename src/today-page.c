@@ -213,8 +213,10 @@ short_text(const gchar *text, glong maximum)
         return NULL;
     if (g_utf8_strlen(text, -1) > maximum) {
         const gchar *end = g_utf8_offset_to_pointer(text, maximum);
+        gchar *truncated = g_strndup(text, (gsize)(end - text));
 
-        result = g_strndup(text, (gsize)(end - text));
+        result = g_strconcat(truncated, "…", NULL);
+        g_free(truncated);
     } else {
         result = g_strdup(text);
     }
