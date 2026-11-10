@@ -12,8 +12,8 @@
 #include <string.h>
 
 struct _GswordTeachingPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkTextView *view;
     GtkTextView *notes;
     GtkEntry *ref_entry;
@@ -22,6 +22,11 @@ struct _GswordTeachingPage {
     gchar *reference;
     gboolean fullscreen;
 };
+
+G_DEFINE_TYPE(GswordTeachingPage, gsword_teaching_page, GSWORD_TYPE_PAGE)
+
+#define TEACHING_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static gchar *
 current_chapter_reference(GswordWindow *window)
@@ -73,14 +78,14 @@ gsword_teaching_page_load(GswordTeachingPage *page)
     gchar *notes;
     GError *error = NULL;
 
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_TEACHING_PAGE(page));
     if (page->view == NULL)
         return;
-    module = gsword_window_ensure_verse_module(page->window);
+    module = gsword_window_ensure_verse_module(TEACHING_WINDOW(page));
     if (module == NULL)
         return;
-    reference = current_chapter_reference(page->window);
-    display = current_chapter_display(page->window);
+    reference = current_chapter_reference(TEACHING_WINDOW(page));
+    display = current_chapter_display(TEACHING_WINDOW(page));
     if (reference == NULL) {
         g_free(display);
         return;
@@ -90,7 +95,7 @@ gsword_teaching_page_load(GswordTeachingPage *page)
     if (text == NULL)
         text = gsw_module_get_text(module, &error);
     if (text == NULL) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(TEACHING_WINDOW(page),
                                  _("Cannot read teaching passage"), error);
         g_free(reference);
         g_free(display);
@@ -104,7 +109,7 @@ gsword_teaching_page_load(GswordTeachingPage *page)
     g_clear_pointer(&page->reference, g_free);
     page->module_name = g_strdup(gsw_module_get_name(module));
     page->reference = g_strdup(reference);
-    plans = gsword_window_get_plan_store(page->window);
+    plans = gsword_window_get_plan_store(TEACHING_WINDOW(page));
     notes = plans != NULL
           ? gsword_plan_store_get_teaching_note(
                 plans, page->module_name, reference)
@@ -115,7 +120,7 @@ gsword_teaching_page_load(GswordTeachingPage *page)
     g_free(notes);
     g_free(reference);
     g_free(display);
-    gsword_window_show_page(page->window, "teaching");
+    gsword_window_show_page(TEACHING_WINDOW(page), "teaching");
 }
 
 static void
@@ -129,7 +134,7 @@ static void
 on_save(GtkButton *button, gpointer user_data)
 {
     GswordTeachingPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(TEACHING_WINDOW(page));
     GtkTextBuffer *buffer;
     GtkTextIter start;
     GtkTextIter end;
@@ -144,13 +149,13 @@ on_save(GtkButton *button, gpointer user_data)
     notes = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
     if (!gsword_plan_store_save_teaching_note(
             plans, page->module_name, page->reference, notes, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(TEACHING_WINDOW(page),
                                  _("Cannot save teaching notes"), error);
         g_free(notes);
         return;
     }
     g_free(notes);
-    gsword_window_set_status(page->window, _("Teaching notes saved"));
+    gsword_window_set_status(TEACHING_WINDOW(page), _("Teaching notes saved"));
 }
 
 static void
@@ -161,9 +166,9 @@ on_fullscreen(GtkButton *button, gpointer user_data)
     (void)button;
     page->fullscreen = !page->fullscreen;
     if (page->fullscreen)
-        gtk_window_fullscreen(GTK_WINDOW(page->window));
+        gtk_window_fullscreen(GTK_WINDOW(TEACHING_WINDOW(page)));
     else
-        gtk_window_unfullscreen(GTK_WINDOW(page->window));
+        gtk_window_unfullscreen(GTK_WINDOW(TEACHING_WINDOW(page)));
     gtk_button_set_label(page->fullscreen_button,
                          page->fullscreen
                          ? _("Exit fullscreen") : _("Fullscreen"));
@@ -177,28 +182,39 @@ on_close(GtkButton *button, gpointer user_data)
     (void)button;
     if (page->fullscreen) {
         page->fullscreen = FALSE;
-        gtk_window_unfullscreen(GTK_WINDOW(page->window));
+        gtk_window_unfullscreen(GTK_WINDOW(TEACHING_WINDOW(page)));
         gtk_button_set_label(page->fullscreen_button, _("Fullscreen"));
     }
-    gsword_window_show_page(page->window, "reader");
+    gsword_window_show_page(TEACHING_WINDOW(page), "reader");
 }
 
 static void
-teaching_page_free(gpointer data)
+gsword_teaching_page_finalize(GObject *object)
 {
-    GswordTeachingPage *page = data;
+    GswordTeachingPage *page = GSWORD_TEACHING_PAGE(object);
 
-    if (page == NULL)
-        return;
-    g_free(page->module_name);
-    g_free(page->reference);
-    g_free(page);
+    g_clear_pointer(&page->module_name, g_free);
+    g_clear_pointer(&page->reference, g_free);
+
+    G_OBJECT_CLASS(gsword_teaching_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_teaching_page_class_init(GswordTeachingPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->finalize = gsword_teaching_page_finalize;
+}
+
+static void
+gsword_teaching_page_init(GswordTeachingPage *page)
+{
+    (void)page;
 }
 
 GswordTeachingPage *
 gsword_teaching_page_new(GswordWindow *window)
 {
-    GswordTeachingPage *page = g_new0(GswordTeachingPage, 1);
+    GswordTeachingPage *page = g_object_new(gsword_teaching_page_get_type(), NULL);
     GtkWidget *box;
     GtkWidget *toolbar;
     GtkWidget *paned;
@@ -213,7 +229,7 @@ gsword_teaching_page_new(GswordWindow *window)
     GtkWidget *back;
     GtkWidget *fullscreen;
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     toolbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
@@ -283,15 +299,13 @@ gsword_teaching_page_new(GswordWindow *window)
     gtk_paned_set_position(GTK_PANED(paned), 520);
     gtk_box_append(GTK_BOX(box), toolbar);
     gtk_box_append(GTK_BOX(box), paned);
-    page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-teaching-page", page,
-                           teaching_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     return page;
 }
 
 GtkWidget *
 gsword_teaching_page_widget(GswordTeachingPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_TEACHING_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }

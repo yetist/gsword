@@ -7,11 +7,12 @@
 #ifndef GSWORD_TEACHING_PAGE_H
 #define GSWORD_TEACHING_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordTeachingPage GswordTeachingPage;
+G_DECLARE_FINAL_TYPE(GswordTeachingPage, gsword_teaching_page, GSWORD,
+                     TEACHING_PAGE, GswordPage)
 
 GswordTeachingPage *gsword_teaching_page_new(GswordWindow *window);
 GtkWidget *gsword_teaching_page_widget(GswordTeachingPage *page);
