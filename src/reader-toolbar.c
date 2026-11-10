@@ -55,11 +55,14 @@ on_reference_activate(GswordReferenceChooser *chooser, gpointer user_data)
         gint book;
         gint chapter;
         gint verse;
+        gint verse_end;
 
         if (gsword_reference_chooser_get_reference(
                 chooser, &book, &chapter, &verse)) {
-            gsword_reference_chooser_set_reference(
-                toolbar->reference_chooser, book, chapter, verse);
+            verse_end = gsword_reference_chooser_get_verse_end(chooser);
+            gsword_reference_chooser_set_reference_range(
+                toolbar->reference_chooser, book, chapter, verse,
+                verse_end);
         }
     }
     gsword_reader_page_activate_reference(toolbar->page);

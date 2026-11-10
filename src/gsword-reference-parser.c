@@ -26,6 +26,7 @@ gsword_reference_clear(GswordReference *reference)
     reference->book = 0;
     reference->chapter = 0;
     reference->verse = 0;
+    reference->verse_end = 0;
 }
 
 static GPtrArray *
@@ -80,6 +81,7 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
     GPtrArray *candidates = NULL;
     gint chapter = 0;
     gint verse = 1;
+    gint verse_end = 0;
     gint book_index;
     gint chapter_max;
     gint verse_max;
@@ -212,15 +214,53 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
         return FALSE;
     }
     if (right != NULL) {
+        gchar *dash = strchr(right, '-');
         gchar *end = NULL;
 
-        verse = (gint)g_ascii_strtoll(right, &end, 10);
-        if (end == right || (end != NULL && *end != '\0') || verse < 1) {
-            g_free(right);
-            g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
-                                GSWORD_REFERENCE_ERROR_INVALID_VERSE,
-                                _("Verse is invalid"));
-            return FALSE;
+        if (dash != NULL) {
+            gchar *end_text;
+
+            *dash = '\0';
+            end_text = g_strdup(dash + 1);
+            g_strstrip(right);
+            g_strstrip(end_text);
+            verse = (gint)g_ascii_strtoll(right, &end, 10);
+            if (end == right || (end != NULL && *end != '\0') || verse < 1) {
+                g_free(end_text);
+                g_free(right);
+                g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
+                                    GSWORD_REFERENCE_ERROR_INVALID_VERSE,
+                                    _("Verse is invalid"));
+                return FALSE;
+            }
+            end = NULL;
+            verse_end = (gint)g_ascii_strtoll(end_text, &end, 10);
+            if (end == end_text || (end != NULL && *end != '\0') ||
+                verse_end < 1) {
+                g_free(end_text);
+                g_free(right);
+                g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
+                                    GSWORD_REFERENCE_ERROR_INVALID_VERSE,
+                                    _("Verse is invalid"));
+                return FALSE;
+            }
+            g_free(end_text);
+            if (verse_end < verse) {
+                gint swap = verse;
+
+                verse = verse_end;
+                verse_end = swap;
+            }
+        } else {
+            verse = (gint)g_ascii_strtoll(right, &end, 10);
+            if (end == right || (end != NULL && *end != '\0') ||
+                verse < 1) {
+                g_free(right);
+                g_set_error_literal(error, GSWORD_REFERENCE_ERROR,
+                                    GSWORD_REFERENCE_ERROR_INVALID_VERSE,
+                                    _("Verse is invalid"));
+                return FALSE;
+            }
         }
     }
     {
@@ -237,10 +277,20 @@ gsword_reference_parse_with_candidates(const gchar *text, const gchar *locale,
                     _("Verse %d is out of range"), verse);
         return FALSE;
     }
+    if (verse_end > verse_max) {
+        g_free(right);
+        g_set_error(error, GSWORD_REFERENCE_ERROR,
+                    GSWORD_REFERENCE_ERROR_INVALID_VERSE,
+                    _("Verse %d is out of range"), verse_end);
+        return FALSE;
+    }
+    if (verse_end <= verse)
+        verse_end = 0;
     g_free(right);
     out->book = book_index;
     out->chapter = chapter;
     out->verse = verse;
+    out->verse_end = verse_end;
     return TRUE;
 }
 

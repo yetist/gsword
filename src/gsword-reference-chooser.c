@@ -79,6 +79,7 @@ typedef struct {
     gint book;
     gint chapter;
     gint verse;
+    gint verse_end;
     gboolean updating;
     gboolean editing;
     gboolean compact;
@@ -97,6 +98,9 @@ static void update_grid_highlight(GtkGrid *grid, const gchar *key, gint value);
 static void update_book_highlight(GswordReferenceChooserPrivate *priv);
 static void set_reference_internal(GswordReferenceChooser *self, gint book,
                                    gint chapter, gint verse, gboolean emit);
+static void set_reference_range_internal(GswordReferenceChooser *self,
+                                         gint book, gint chapter, gint verse,
+                                         gint verse_end, gboolean emit);
 
 G_DEFINE_TYPE_WITH_PRIVATE(GswordReferenceChooser,
                            gsword_reference_chooser, GTK_TYPE_BOX)
@@ -156,10 +160,16 @@ static void
 update_reference_text(GswordReferenceChooserPrivate *priv,
                       gboolean update_filter)
 {
-    gchar *text = g_strdup_printf("%s %d:%d",
-                                  book_display_name(priv, priv->book),
-                                  priv->chapter, priv->verse);
+    gchar *text;
 
+    if (priv->verse_end > priv->verse)
+        text = g_strdup_printf("%s %d:%d-%d",
+                               book_display_name(priv, priv->book),
+                               priv->chapter, priv->verse, priv->verse_end);
+    else
+        text = g_strdup_printf("%s %d:%d",
+                               book_display_name(priv, priv->book),
+                               priv->chapter, priv->verse);
     priv->updating = TRUE;
     gtk_editable_set_text(GTK_EDITABLE(priv->entry), text);
     if (update_filter && priv->filter_entry != NULL)
@@ -274,6 +284,7 @@ on_chapter_clicked(GtkButton *button, gpointer user_data)
         return;
     priv->chapter = chapter;
     priv->verse = 1;
+    priv->verse_end = 0;
     update_reference_text(priv, TRUE);
     populate_book_list(priv, NULL);
     update_grid_highlight(priv->chapter_grid, "chapter", chapter);
@@ -345,7 +356,8 @@ update_navigation_labels(GswordReferenceChooser *self)
         return;
     gtk_label_set_width_chars(priv->book_label, priv->compact ? 6 : 12);
     gtk_label_set_width_chars(priv->chapter_label, 3);
-    gtk_label_set_width_chars(priv->verse_label, 2);
+    gtk_label_set_width_chars(priv->verse_label,
+                              priv->verse_end > priv->verse ? 4 : 2);
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->book_button),
         priv->compact ? GSWORD_COMPACT_BOOK_WIDTH : GSWORD_PATH_BOOK_WIDTH,
@@ -357,13 +369,19 @@ update_navigation_labels(GswordReferenceChooser *self)
         GSWORD_PATH_HEIGHT);
     gtk_widget_set_size_request(
         GTK_WIDGET(priv->verse_button),
-        priv->compact ? GSWORD_COMPACT_VERSE_WIDTH
-                      : GSWORD_PATH_VERSE_WIDTH,
+        priv->verse_end > priv->verse
+            ? (priv->compact ? GSWORD_COMPACT_VERSE_WIDTH + 18
+                             : GSWORD_PATH_VERSE_WIDTH + 18)
+            : (priv->compact ? GSWORD_COMPACT_VERSE_WIDTH
+                             : GSWORD_PATH_VERSE_WIDTH),
         GSWORD_PATH_HEIGHT);
     gtk_label_set_text(priv->book_label,
                        book_display_name(priv, priv->book));
     chapter_text = g_strdup_printf("%d", priv->chapter);
-    verse_text = g_strdup_printf("%d", priv->verse);
+    if (priv->verse_end > priv->verse)
+        verse_text = g_strdup_printf("%d-%d", priv->verse, priv->verse_end);
+    else
+        verse_text = g_strdup_printf("%d", priv->verse);
     gtk_label_set_text(priv->chapter_label, chapter_text);
     gtk_label_set_text(priv->verse_label, verse_text);
     gtk_widget_set_tooltip_text(GTK_WIDGET(priv->book_button),
@@ -435,6 +453,7 @@ on_verse_clicked(GtkButton *button, gpointer user_data)
     if (priv->updating || verse < 1)
         return;
     priv->verse = verse;
+    priv->verse_end = 0;
     update_reference_text(priv, TRUE);
     update_navigation_labels(self);
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
@@ -697,6 +716,7 @@ on_chapter_key_pressed(GtkEventControllerKey *controller, guint keyval,
         return TRUE;
     priv->chapter = target;
     priv->verse = 1;
+    priv->verse_end = 0;
     update_reference_text(priv, TRUE);
     update_grid_highlight(priv->chapter_grid, "chapter", target);
     populate_verse_buttons(priv);
@@ -746,6 +766,7 @@ on_verse_key_pressed(GtkEventControllerKey *controller, guint keyval,
     if (target < 1 || target > verse_max)
         return TRUE;
     priv->verse = target;
+    priv->verse_end = 0;
     update_reference_text(priv, TRUE);
     update_grid_highlight(priv->verse_grid, "verse", target);
     update_navigation_labels(self);
@@ -779,6 +800,7 @@ on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     if (priv->chapter >
         ((GswordBookInfo *)g_ptr_array_index(priv->books, book))->chapter_max)
         priv->chapter = 1;
+    priv->verse_end = 0;
     populate_chapter_buttons(priv);
     populate_verse_buttons(priv);
     update_navigation_labels(self);
@@ -787,11 +809,13 @@ on_book_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 }
 
 static void
-set_reference_internal(GswordReferenceChooser *self, gint book,
-                       gint chapter, gint verse, gboolean emit)
+set_reference_range_internal(GswordReferenceChooser *self, gint book,
+                             gint chapter, gint verse, gint verse_end,
+                             gboolean emit)
 {
     GswordReferenceChooserPrivate *priv = chooser_priv(self);
     GswordBookInfo *info;
+    gint verse_max = 0;
 
     if (priv->books == NULL || priv->books->len == 0)
         return;
@@ -802,21 +826,39 @@ set_reference_internal(GswordReferenceChooser *self, gint book,
         chapter = 1;
     {
         GswBook *vbook = gsw_versification_get_book(priv->v11n, book);
-        gint verse_max = vbook != NULL
-                       ? gsw_book_get_verse_max(vbook, chapter) : 0;
 
-        if (verse < 1 || (verse_max > 0 && verse > verse_max))
-            verse = 1;
+        verse_max = vbook != NULL
+                  ? gsw_book_get_verse_max(vbook, chapter) : 0;
     }
+    if (verse < 1 || (verse_max > 0 && verse > verse_max))
+        verse = 1;
+    if (verse_end > 0 && verse_end < verse) {
+        gint swap = verse;
+
+        verse = verse_end;
+        verse_end = swap;
+    }
+    if (verse_end > verse_max)
+        verse_end = verse_max;
+    if (verse_end <= verse)
+        verse_end = 0;
 
     priv->book = book;
     priv->chapter = chapter;
     priv->verse = verse;
+    priv->verse_end = verse_end;
     update_reference_text(priv, FALSE);
     refresh_visible_picker(priv, FALSE);
     update_navigation_labels(self);
     if (emit)
         g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
+}
+
+static void
+set_reference_internal(GswordReferenceChooser *self, gint book,
+                       gint chapter, gint verse, gboolean emit)
+{
+    set_reference_range_internal(self, book, chapter, verse, 0, emit);
 }
 
 static void
@@ -1081,6 +1123,7 @@ update_from_text(GswordReferenceChooser *self, const gchar *text)
         priv->book = reference.book;
         priv->chapter = reference.chapter;
         priv->verse = reference.verse;
+        priv->verse_end = reference.verse_end;
         populate_book_list(priv, candidates);
         populate_chapter_buttons(priv);
         populate_verse_buttons(priv);
@@ -1148,8 +1191,9 @@ activate_text(GswordReferenceChooser *self, const gchar *text)
     }
     g_clear_error(&error);
     g_clear_pointer(&candidates, g_ptr_array_unref);
-    set_reference_internal(self, reference.book, reference.chapter,
-                           reference.verse, FALSE);
+    set_reference_range_internal(self, reference.book, reference.chapter,
+                                 reference.verse, reference.verse_end,
+                                 FALSE);
     gsword_reference_clear(&reference);
     gtk_label_set_text(priv->hint, "");
     g_signal_emit(self, signals[SIGNAL_CHANGED], 0);
@@ -1311,6 +1355,16 @@ gsword_reference_chooser_set_reference(GswordReferenceChooser *self,
     set_reference_internal(self, book, chapter, verse, FALSE);
 }
 
+void
+gsword_reference_chooser_set_reference_range(GswordReferenceChooser *self,
+                                             gint book, gint chapter,
+                                             gint verse, gint verse_end)
+{
+    g_return_if_fail(GSWORD_IS_REFERENCE_CHOOSER(self));
+    set_reference_range_internal(self, book, chapter, verse, verse_end,
+                                 FALSE);
+}
+
 gboolean
 gsword_reference_chooser_get_reference(GswordReferenceChooser *self,
                                        gint *book, gint *chapter, gint *verse)
@@ -1326,6 +1380,13 @@ gsword_reference_chooser_get_reference(GswordReferenceChooser *self,
     if (verse != NULL)
         *verse = priv->verse;
     return priv->books != NULL && priv->books->len > 0;
+}
+
+gint
+gsword_reference_chooser_get_verse_end(GswordReferenceChooser *self)
+{
+    g_return_val_if_fail(GSWORD_IS_REFERENCE_CHOOSER(self), 0);
+    return chooser_priv(self)->verse_end;
 }
 
 gchar *

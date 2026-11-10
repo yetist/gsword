@@ -16,6 +16,7 @@ typedef struct {
     gint book;
     gint chapter;
     gint verse;
+    gint verse_end;
     gchar *osis;
 } GswordReference;
 

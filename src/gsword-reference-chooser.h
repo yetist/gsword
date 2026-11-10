@@ -62,8 +62,12 @@ void gsword_reference_chooser_set_locale(
     GswordReferenceChooser *self, const gchar *locale);
 void gsword_reference_chooser_set_reference(
     GswordReferenceChooser *self, gint book, gint chapter, gint verse);
+void gsword_reference_chooser_set_reference_range(
+    GswordReferenceChooser *self, gint book, gint chapter, gint verse,
+    gint verse_end);
 gboolean gsword_reference_chooser_get_reference(
     GswordReferenceChooser *self, gint *book, gint *chapter, gint *verse);
+gint gsword_reference_chooser_get_verse_end(GswordReferenceChooser *self);
 gchar *gsword_reference_chooser_dup_osis(GswordReferenceChooser *self);
 
 /**

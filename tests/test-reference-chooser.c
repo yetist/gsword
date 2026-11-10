@@ -14,6 +14,7 @@ typedef struct {
     const gchar *osis;
     gint chapter;
     gint verse;
+    gint verse_end;
 } ParseCase;
 
 static int failures = 0;
@@ -38,13 +39,19 @@ test_parse_case(const ParseCase *test)
     }
     if (g_strcmp0(reference.osis, test->osis) != 0 ||
         reference.chapter != test->chapter ||
-        reference.verse != test->verse) {
-        g_printerr("FAIL parse %s [%s]: got %s %d:%d, expected %s %d:%d\n",
+        reference.verse != test->verse ||
+        reference.verse_end != test->verse_end) {
+        g_printerr("FAIL parse %s [%s]: got %s %d:%d-%d, expected %s %d:%d-%d\n",
                    test->text, test->locale,
                    reference.osis != NULL ? reference.osis : "?",
                    reference.chapter, reference.verse,
-                   test->osis, test->chapter, test->verse);
+                   reference.verse_end, test->osis, test->chapter,
+                   test->verse, test->verse_end);
         failures++;
+    } else if (reference.verse_end > 0) {
+        g_print("ok   %-18s -> %-5s %d:%d-%d\n", test->text,
+                reference.osis, reference.chapter, reference.verse,
+                reference.verse_end);
     } else {
         g_print("ok   %-18s -> %-5s %d:%d\n", test->text, reference.osis,
                 reference.chapter, reference.verse);
@@ -79,16 +86,20 @@ int
 main(void)
 {
     static const ParseCase cases[] = {
-        { "Gen 1", "en", "Gen", 1, 1 },
-        { "Ge1", "en", "Gen", 1, 1 },
-        { "Genesis 1:1", "en", "Gen", 1, 1 },
-        { "John 3:16", "en", "John", 3, 16 },
-        { "Ps 23", "en", "Ps", 23, 1 },
-        { "1 Cor 13", "en", "1Cor", 13, 1 },
-        { "1co13:4", "en", "1Cor", 13, 4 },
-        { "创1", "zh-Hans", "Gen", 1, 1 },
-        { "诗23", "zh-Hans", "Ps", 23, 1 },
-        { "林前13:4", "zh-Hans", "1Cor", 13, 4 },
+        { "Gen 1", "en", "Gen", 1, 1, 0 },
+        { "Ge1", "en", "Gen", 1, 1, 0 },
+        { "Genesis 1:1", "en", "Gen", 1, 1, 0 },
+        { "John 3:16", "en", "John", 3, 16, 0 },
+        { "Ps 23", "en", "Ps", 23, 1, 0 },
+        { "1 Cor 13", "en", "1Cor", 13, 1, 0 },
+        { "1co13:4", "en", "1Cor", 13, 4, 0 },
+        { "创1", "zh-Hans", "Gen", 1, 1, 0 },
+        { "诗23", "zh-Hans", "Ps", 23, 1, 0 },
+        { "林前13:4", "zh-Hans", "1Cor", 13, 4, 0 },
+        { "Gen 1:1-6", "en", "Gen", 1, 1, 6 },
+        { "Gen 1:6-1", "en", "Gen", 1, 1, 6 },
+        { "创1:1-6", "zh-Hans", "Gen", 1, 1, 6 },
+        { "Gen 1:1-1", "en", "Gen", 1, 1, 0 },
     };
     guint i;
 
@@ -101,6 +112,10 @@ main(void)
 
     test_invalid("Gen 51", "en", GSWORD_REFERENCE_ERROR_INVALID_CHAPTER);
     test_invalid("Gen 1:999", "en", GSWORD_REFERENCE_ERROR_INVALID_VERSE);
+    test_invalid("Gen 1:1-999", "en", GSWORD_REFERENCE_ERROR_INVALID_VERSE);
+    test_invalid("Gen 1:1-", "en", GSWORD_REFERENCE_ERROR_INVALID_VERSE);
+    test_invalid("Gen 1:1-2-3", "en", GSWORD_REFERENCE_ERROR_INVALID_VERSE);
+    test_invalid("Gen 1:31-2:2", "en", GSWORD_REFERENCE_ERROR_INVALID_VERSE);
     test_invalid("Zzz 1", "en", GSWORD_REFERENCE_ERROR_UNKNOWN_BOOK);
     test_invalid("1", "en", GSWORD_REFERENCE_ERROR_AMBIGUOUS_BOOK);
     test_invalid("", "en", GSWORD_REFERENCE_ERROR_EMPTY);

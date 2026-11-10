@@ -342,6 +342,7 @@ sync_reference_chooser(GswordReaderPage *page)
     gint book;
     gint chapter;
     gint verse;
+    gint verse_end = 0;
 
     if (page->reference_chooser == NULL)
         return;
@@ -362,13 +363,19 @@ sync_reference_chooser(GswordReaderPage *page)
     book = gsw_verse_key_get_global_book_number(verse_key);
     chapter = gsw_verse_key_get_chapter(verse_key);
     verse = MAX(gsw_verse_key_get_verse(verse_key), 1);
+    if (page->range_active && page->range_start > 0 &&
+        page->range_end > 0) {
+        verse = MIN(page->range_start, page->range_end);
+        verse_end = MAX(page->range_start, page->range_end);
+    }
     if (book < 0 || chapter < 1)
         return;
-    gsword_reference_chooser_set_reference(page->reference_chooser,
-                                           book, chapter, verse);
+    gsword_reference_chooser_set_reference_range(
+        page->reference_chooser, book, chapter, verse, verse_end);
     if (page->compact_reference_chooser != NULL)
-        gsword_reference_chooser_set_reference(
-            page->compact_reference_chooser, book, chapter, verse);
+        gsword_reference_chooser_set_reference_range(
+            page->compact_reference_chooser, book, chapter, verse,
+            verse_end);
 }
 
 void
@@ -499,6 +506,7 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
     gint book;
     gint chapter;
     gint verse;
+    gint verse_end;
     gchar *osis;
     gchar *text;
 
@@ -507,6 +515,8 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
     if (!gsword_reference_chooser_get_reference(page->reference_chooser,
                                                 &book, &chapter, &verse))
         return;
+    verse_end = gsword_reference_chooser_get_verse_end(
+        page->reference_chooser);
     module = gsword_window_get_module(page->window);
     if (module != NULL) {
         key = gsw_module_get_key(module);
@@ -521,7 +531,10 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
     if (same_chapter) {
         gboolean visible = verse_is_visible(page, verse);
 
-        select_verse(page, verse);
+        if (verse_end > verse)
+            select_verse_range(page, verse, verse_end);
+        else
+            select_verse(page, verse);
         if (!visible)
             schedule_scroll_to_active(page);
         return;
@@ -532,8 +545,11 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
         return;
     }
     text = g_strdup_printf("%s %d:%d", osis, chapter, verse);
-    if (!gsword_reader_page_set_key_text(page, text))
+    if (!gsword_reader_page_set_key_text(page, text)) {
         sync_reference_chooser(page);
+    } else if (verse_end > verse) {
+        select_verse_range(page, verse, verse_end);
+    }
     g_free(text);
     g_free(osis);
 }
