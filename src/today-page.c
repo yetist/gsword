@@ -5,6 +5,7 @@
  */
 
 #include "today-page.h"
+#include "app-locale.h"
 #include "insight-store.h"
 #include "notes-store.h"
 #include "plan-store.h"
@@ -265,6 +266,39 @@ load_devotion_preview(GswordWindow *window, const gchar *name)
     return NULL;
 }
 
+static gchar *
+localize_reference(const gchar *reference, gboolean include_verse)
+{
+    GswVerseKey *key;
+    const gchar *book;
+    gchar *locale;
+    gchar *result;
+    gint chapter;
+    gint verse;
+
+    if (reference == NULL || *reference == '\0')
+        return g_strdup("");
+    key = gsw_verse_key_new(reference, NULL);
+    locale = gsword_app_locale_name();
+    if (key != NULL)
+        gsw_key_set_locale((GswKey *)key, locale);
+    g_free(locale);
+    if (key == NULL || gsw_verse_key_get_book(key) <= 0 ||
+        gsw_verse_key_get_chapter(key) <= 0) {
+        g_clear_pointer(&key, gsw_key_unref);
+        return g_strdup(reference);
+    }
+    book = gsw_verse_key_get_book_name(key);
+    chapter = gsw_verse_key_get_chapter(key);
+    verse = gsw_verse_key_get_verse(key);
+    if (include_verse || verse > 1)
+        result = g_strdup_printf("%s %d:%d", book, chapter, verse);
+    else
+        result = g_strdup_printf("%s %d", book, chapter);
+    gsw_key_unref((GswKey *)key);
+    return result;
+}
+
 void
 gsword_today_page_refresh(GswordTodayPage *page)
 {
@@ -299,10 +333,14 @@ gsword_today_page_refresh(GswordTodayPage *page)
         plan_id = g_settings_get_string(settings, "active-plan-id");
         devotion_name = g_settings_get_string(settings, "devotion-module");
     }
-    if (module != NULL && *module != '\0' && key != NULL && *key != '\0')
-        value = g_strdup_printf("%s · %s", module, key);
-    else
+    if (module != NULL && *module != '\0' && key != NULL && *key != '\0') {
+        gchar *reference = localize_reference(key, TRUE);
+
+        value = g_strdup_printf("%s · %s", module, reference);
+        g_free(reference);
+    } else {
         value = g_strdup(_("No reading position yet"));
+    }
     gtk_label_set_text(page->continue_value, value);
     g_free(value);
 
@@ -312,10 +350,13 @@ gsword_today_page_refresh(GswordTodayPage *page)
     if (plan == NULL) {
         gtk_label_set_text(page->plan_value, _("No active plan"));
     } else if (plan->next_day > 0 && plan->next_reference != NULL) {
+        gchar *reference = localize_reference(plan->next_reference, FALSE);
+
         value = g_strdup_printf(_("%s · Day %d · %s"), plan->name,
-                                plan->next_day, plan->next_reference);
+                                plan->next_day, reference);
         gtk_label_set_text(page->plan_value, value);
         g_free(value);
+        g_free(reference);
     } else {
         value = g_strdup_printf(_("%s · Complete"), plan->name);
         gtk_label_set_text(page->plan_value, value);
