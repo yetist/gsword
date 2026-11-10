@@ -7,11 +7,12 @@
 #ifndef GSWORD_PRAYER_PAGE_H
 #define GSWORD_PRAYER_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordPrayerPage GswordPrayerPage;
+G_DECLARE_FINAL_TYPE(GswordPrayerPage, gsword_prayer_page, GSWORD,
+                     PRAYER_PAGE, GswordPage)
 
 GswordPrayerPage *gsword_prayer_page_new(GswordWindow *window);
 GtkWidget *gsword_prayer_page_widget(GswordPrayerPage *page);

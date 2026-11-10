@@ -11,8 +11,8 @@
 #include <glib/gi18n.h>
 
 struct _GswordPrayerPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkEntry *search;
     GtkDropDown *filter;
     GtkLabel *count_label;
@@ -33,6 +33,11 @@ struct _GswordPrayerPage {
     GPtrArray *verses;
     gboolean loading;
 };
+
+G_DEFINE_TYPE(GswordPrayerPage, gsword_prayer_page, GSWORD_TYPE_PAGE)
+
+#define PRAYER_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void refresh_list(GswordPrayerPage *page);
 static void load_prayer(GswordPrayerPage *page, gint64 id);
@@ -177,7 +182,7 @@ on_verse_open(GtkButton *button, gpointer user_data)
                                                "gsword-prayer-page");
 
     if (verse != NULL && page != NULL)
-        gsword_window_open_module_reference(page->window, verse->module,
+        gsword_window_open_module_reference(PRAYER_WINDOW(page), verse->module,
                                             verse->key);
 }
 
@@ -191,7 +196,7 @@ on_verse_remove(GtkButton *button, gpointer user_data)
     if (index > 0 && index <= page->verses->len)
         g_ptr_array_remove_index(page->verses, index - 1);
     rebuild_verse_list(page);
-    gsword_window_set_status(page->window, _("Verse removed from prayer"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("Verse removed from prayer"));
 }
 
 static void
@@ -258,22 +263,22 @@ static void
 on_add_current_clicked(GtkButton *button, gpointer user_data)
 {
     GswordPrayerPage *page = user_data;
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(PRAYER_WINDOW(page));
     gchar *storage_key;
     gchar *display_key;
 
     (void)button;
     if (module == NULL) {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(PRAYER_WINDOW(page), _("No active verse"));
         return;
     }
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
+    storage_key = gsword_window_current_storage_key(PRAYER_WINDOW(page));
+    display_key = gsword_window_current_display_key(PRAYER_WINDOW(page));
     if (storage_key == NULL || *storage_key == '\0') {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(PRAYER_WINDOW(page), _("No active verse"));
     } else {
         add_verse(page, gsw_module_get_name(module), storage_key, display_key);
-        gsword_window_set_status(page->window, _("Verse added to prayer"));
+        gsword_window_set_status(PRAYER_WINDOW(page), _("Verse added to prayer"));
     }
     g_free(storage_key);
     g_free(display_key);
@@ -320,7 +325,7 @@ static void
 on_entry_remove(GtkButton *button, gpointer user_data)
 {
     GswordPrayerPage *page = user_data;
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     const gchar *id_text = g_object_get_data(G_OBJECT(button), "entry-id");
     GError *error = NULL;
 
@@ -328,19 +333,19 @@ on_entry_remove(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_prayer_store_delete_entry(
             store, g_ascii_strtoll(id_text, NULL, 10), &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(PRAYER_WINDOW(page),
                                  _("Cannot remove prayer update"), error);
         return;
     }
     rebuild_entry_list(page);
     refresh_list(page);
-    gsword_window_set_status(page->window, _("Prayer update removed"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("Prayer update removed"));
 }
 
 static void
 rebuild_entry_list(GswordPrayerPage *page)
 {
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     GPtrArray *entries;
     guint i;
 
@@ -413,7 +418,7 @@ static void
 on_add_entry_clicked(GtkButton *button, gpointer user_data)
 {
     GswordPrayerPage *page = user_data;
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     gchar *body = g_strdup(
         gtk_editable_get_text(GTK_EDITABLE(page->entry_input)));
     GError *error = NULL;
@@ -421,7 +426,7 @@ on_add_entry_clicked(GtkButton *button, gpointer user_data)
     (void)button;
     g_strstrip(body);
     if (body == NULL || *body == '\0') {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(PRAYER_WINDOW(page),
                                  _("Prayer update text is required"));
         g_free(body);
         return;
@@ -429,7 +434,7 @@ on_add_entry_clicked(GtkButton *button, gpointer user_data)
     if (store == NULL || page->selected_id <= 0 ||
         gsword_prayer_store_add_entry(store, page->selected_id, body,
                                       &error) == 0) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(PRAYER_WINDOW(page),
                                  _("Cannot add prayer update"), error);
         g_free(body);
         return;
@@ -437,14 +442,14 @@ on_add_entry_clicked(GtkButton *button, gpointer user_data)
     gtk_editable_set_text(GTK_EDITABLE(page->entry_input), "");
     rebuild_entry_list(page);
     refresh_list(page);
-    gsword_window_set_status(page->window, _("Prayer update added"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("Prayer update added"));
     g_free(body);
 }
 
 static void
 refresh_list(GswordPrayerPage *page)
 {
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     const gchar *query = gtk_editable_get_text(GTK_EDITABLE(page->search));
     GPtrArray *items;
     gchar *count;
@@ -524,7 +529,7 @@ on_filter_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
 static void
 load_prayer(GswordPrayerPage *page, gint64 id)
 {
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     GswordPrayer *prayer = NULL;
     gchar *date;
 
@@ -583,7 +588,7 @@ load_prayer(GswordPrayerPage *page, gint64 id)
 static gboolean
 save_prayer(GswordPrayerPage *page, gint status_override)
 {
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     gchar *title = g_strdup(
         gtk_editable_get_text(GTK_EDITABLE(page->title)));
     gchar *body;
@@ -595,13 +600,13 @@ save_prayer(GswordPrayerPage *page, gint status_override)
 
     g_strstrip(title);
     if (title == NULL || *title == '\0') {
-        gsword_window_set_status(page->window, _("Prayer title is required"));
+        gsword_window_set_status(PRAYER_WINDOW(page), _("Prayer title is required"));
         gtk_widget_grab_focus(GTK_WIDGET(page->title));
         g_free(title);
         return FALSE;
     }
     if (store == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(PRAYER_WINDOW(page),
                                  _("Prayer storage unavailable"));
         g_free(title);
         return FALSE;
@@ -626,7 +631,7 @@ save_prayer(GswordPrayerPage *page, gint status_override)
     if (ok)
         ok = gsword_prayer_store_set_verses(store, id, page->verses, &error);
     if (!ok) {
-        gsword_window_show_error(page->window, _("Cannot save prayer"), error);
+        gsword_window_show_error(PRAYER_WINDOW(page), _("Cannot save prayer"), error);
         g_free(title);
         g_free(body);
         g_free(answered_note);
@@ -634,8 +639,8 @@ save_prayer(GswordPrayerPage *page, gint status_override)
     }
 
     page->selected_id = id;
-    gsword_window_set_status(page->window, _("Prayer saved"));
-    gsword_window_toast(page->window, _("Prayer saved"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("Prayer saved"));
+    gsword_window_toast(PRAYER_WINDOW(page), _("Prayer saved"));
     g_free(title);
     g_free(body);
     g_free(answered_note);
@@ -669,7 +674,7 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
                    gpointer user_data)
 {
     GswordPrayerPage *page = user_data;
-    GswordPrayerStore *store = gsword_window_get_prayer_store(page->window);
+    GswordPrayerStore *store = gsword_window_get_prayer_store(PRAYER_WINDOW(page));
     GError *error = NULL;
 
     (void)dialog;
@@ -678,14 +683,14 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
     if (store == NULL || page->selected_id == 0)
         return;
     if (!gsword_prayer_store_delete(store, page->selected_id, &error)) {
-        gsword_window_show_error(page->window, _("Cannot delete prayer"),
+        gsword_window_show_error(PRAYER_WINDOW(page), _("Cannot delete prayer"),
                                  error);
         return;
     }
     page->selected_id = 0;
     load_prayer(page, 0);
     gtk_stack_set_visible_child_name(page->editor_stack, "empty");
-    gsword_window_set_status(page->window, _("Prayer deleted"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("Prayer deleted"));
     refresh_list(page);
 }
 
@@ -708,7 +713,7 @@ on_delete_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
     g_signal_connect(dialog, "response", G_CALLBACK(on_delete_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(PRAYER_WINDOW(page)));
 }
 
 static GtkWidget *
@@ -855,20 +860,31 @@ build_editor(GswordPrayerPage *page)
 }
 
 static void
-prayer_page_free(gpointer data)
+gsword_prayer_page_dispose(GObject *object)
 {
-    GswordPrayerPage *page = data;
+    GswordPrayerPage *page = GSWORD_PRAYER_PAGE(object);
 
-    if (page == NULL)
-        return;
     free_verse_array(page);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_prayer_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_prayer_page_class_init(GswordPrayerPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_prayer_page_dispose;
+}
+
+static void
+gsword_prayer_page_init(GswordPrayerPage *page)
+{
+    (void)page;
 }
 
 GswordPrayerPage *
 gsword_prayer_page_new(GswordWindow *window)
 {
-    GswordPrayerPage *page = g_new0(GswordPrayerPage, 1);
+    GswordPrayerPage *page = g_object_new(gsword_prayer_page_get_type(), NULL);
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *left_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -881,7 +897,7 @@ gsword_prayer_page_new(GswordWindow *window)
     GtkStringList *filters;
 
     g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     page->verses = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsword_prayer_verse_free);
 
@@ -967,9 +983,7 @@ gsword_prayer_page_new(GswordWindow *window)
     gtk_paned_set_start_child(GTK_PANED(paned), left);
     gtk_paned_set_end_child(GTK_PANED(paned), search_scroll);
     gtk_paned_set_position(GTK_PANED(paned), 260);
-    page->root = paned;
-    g_object_set_data_full(G_OBJECT(paned), "gsword-prayer-page", page,
-                           prayer_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), paned);
     refresh_list(page);
     return page;
 }
@@ -977,14 +991,14 @@ gsword_prayer_page_new(GswordWindow *window)
 GtkWidget *
 gsword_prayer_page_widget(GswordPrayerPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_PRAYER_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 void
 gsword_prayer_page_refresh(GswordPrayerPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PRAYER_PAGE(page));
     if (page->selected_id > 0)
         load_prayer(page, page->selected_id);
     else
@@ -997,10 +1011,10 @@ gsword_prayer_page_open_for_reference(GswordPrayerPage *page,
                                       const gchar *storage_key,
                                       const gchar *display_key)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PRAYER_PAGE(page));
 
     load_prayer(page, 0);
     add_verse(page, module, storage_key, display_key);
     gtk_widget_grab_focus(GTK_WIDGET(page->title));
-    gsword_window_set_status(page->window, _("New prayer draft"));
+    gsword_window_set_status(PRAYER_WINDOW(page), _("New prayer draft"));
 }
