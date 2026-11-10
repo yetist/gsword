@@ -811,7 +811,7 @@ msgstr "到期 %s  ·  记忆盒 %d"
 msgid ""
 "%s\n"
 "Due %s  ·  box %d"
-msgstr "%s\\n到期 %s  ·  卡盒 %d"
+msgstr "%s\n到期 %s  ·  卡盒 %d"
 
 #: src/memory-page.c:247
 msgid "Cannot save memory verse"
@@ -990,7 +990,7 @@ msgid ""
 "Size: %s\n"
 "Source: %s\n"
 "License: %s"
-msgstr "类型：%s\\n语言：%s\\n版本：%s\\n大小：%s\\n来源：%s\\n许可证：%s"
+msgstr "类型：%s\n语言：%s\n版本：%s\n大小：%s\n来源：%s\n许可证：%s"
 
 #: src/library-page.c:733 src/library-page.c:793 src/library-page.c:795
 #: src/library-page.c:874 src/library-page.c:929 src/library-page.c:930
@@ -1056,7 +1056,7 @@ msgid ""
 "License: %s\n"
 "\n"
 "Copyright: %s"
-msgstr "许可证：%s\\n\\n版权：%s"
+msgstr "许可证：%s\n\n版权：%s"
 
 #: src/library-page.c:801 src/library-page.c:936
 msgid "No additional information is available."
@@ -2104,7 +2104,7 @@ msgstr "第 1 天：%s"
 msgid ""
 "Day 1: %s\n"
 "Day %u: %s"
-msgstr "第 1 天：%s\\n第 %u 天：%s"
+msgstr "第 1 天：%s\n第 %u 天：%s"
 
 #: src/plan-page.c:700 src/plan-page.c:745 src/plan-page.c:769
 msgid "Cannot update plan"
