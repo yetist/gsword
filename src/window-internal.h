@@ -70,6 +70,10 @@ typedef struct {
 } GswordWindowPrivate;
 
 GswordWindowPrivate *gsword_window_get_private(GswordWindow *self);
+gchar *gsword_window_current_page_id(GswordWindow *self);
+void gsword_window_toggle_sidebar(GswordWindow *self);
+void gsword_window_open_search(GswordWindow *self);
+void gsword_window_install_actions(GswordWindow *self);
 void gsword_window_build_pages(GswordWindow *self);
 void gsword_window_dispose_pages(GswordWindow *self);
 
