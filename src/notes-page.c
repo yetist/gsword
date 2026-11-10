@@ -52,29 +52,15 @@ struct _GswordNotesPage {
     GtkButton *rename_tag_button;
     GtkButton *delete_tag_button;
     GtkButton *show_tagged_notes_button;
-    GtkListBox *lists_list;
-    GtkButton *rename_list_button;
-    GtkListBox *list_items;
-    GtkLabel *list_items_label;
-    GtkButton *open_list_item_button;
-    GtkButton *remove_list_item_button;
-    gchar *selected_item_module;
-    gchar *selected_item_key;
-    GtkEntry *new_list_entry;
-    GtkButton *delete_list_button;
     gchar *module;
     gchar *storage_key;
     gchar *display_key;
     gint64 note_id;
-    gint64 selected_list_id;
 };
 
 static gboolean save_note_page(GswordNotesPage *page, gboolean refresh);
 static void update_note_actions(GswordNotesPage *page);
 static void update_tag_actions(GswordNotesPage *page);
-static void update_list_item_actions(GswordNotesPage *page);
-static void clear_selected_item(GswordNotesPage *page);
-static void load_list_items(GswordNotesPage *page);
 static void on_note_selected(GtkListBox *list, GtkListBoxRow *row,
                              gpointer user_data);
 
@@ -151,7 +137,6 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     GswordNotesStore *notes_store;
     GPtrArray *notes;
     GPtrArray *tags;
-    GPtrArray *lists;
     guint i;
     const gchar *query;
 
@@ -164,7 +149,6 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     notes = gsword_notes_store_list_notes(notes_store, query,
                                            page->tag_filter);
     tags = gsword_notes_store_list_tags(notes_store);
-    lists = gsword_notes_store_list_lists(notes_store);
 
     gtk_list_box_set_placeholder(page->notes_list,
         make_placeholder(*query != '\0' || page->tag_filter != NULL
@@ -211,7 +195,6 @@ gsword_notes_page_refresh(GswordNotesPage *page)
 
     clear_list(page->notes_list);
     clear_list(page->tags_list);
-    clear_list(page->lists_list);
     if (page->rename_tag_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->rename_tag_button), FALSE);
     if (page->delete_tag_button != NULL)
@@ -219,10 +202,6 @@ gsword_notes_page_refresh(GswordNotesPage *page)
     if (page->show_tagged_notes_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(page->show_tagged_notes_button),
                                  FALSE);
-    if (page->rename_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button), FALSE);
-    if (page->delete_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button), FALSE);
 
     for (i = 0; i < notes->len; i++) {
         GswordNote *note = g_ptr_array_index(notes, i);
@@ -305,25 +284,9 @@ gsword_notes_page_refresh(GswordNotesPage *page)
         gtk_list_box_append(page->tags_list, row);
     }
     update_tag_actions(page);
-    for (i = 0; i < lists->len; i++) {
-        GswordVerseList *list = g_ptr_array_index(lists, i);
-        GtkWidget *row = gtk_list_box_row_new();
-        GtkWidget *label = gtk_label_new(list->name);
-        gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, list->id);
-
-        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-        gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
-        gtk_label_set_max_width_chars(GTK_LABEL(label), 24);
-        gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
-        g_object_set_data_full(G_OBJECT(row), "list-id", id, g_free);
-        g_object_set_data_full(G_OBJECT(row), "list-name",
-                               g_strdup(list->name), g_free);
-        gtk_list_box_append(page->lists_list, row);
-    }
 
     g_ptr_array_unref(notes);
     g_ptr_array_unref(tags);
-    g_ptr_array_unref(lists);
     if (page->insight_page != NULL)
         gsword_insight_page_refresh(page->insight_page);
 }
@@ -1056,169 +1019,6 @@ make_markdown_button(const gchar *label, const gchar *tooltip,
 }
 
 static void
-on_list_item_selected(GtkListBox *list, GtkListBoxRow *row,
-                      gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    const gchar *module;
-    const gchar *key;
-
-    (void)list;
-    clear_selected_item(page);
-    if (row == NULL)
-        return;
-    module = g_object_get_data(G_OBJECT(row), "item-module");
-    key = g_object_get_data(G_OBJECT(row), "item-key");
-    if (module == NULL || key == NULL)
-        return;
-    page->selected_item_module = g_strdup(module);
-    page->selected_item_key = g_strdup(key);
-    update_list_item_actions(page);
-}
-
-static void
-open_selected_list_item(GswordNotesPage *page)
-{
-    if (page->selected_item_module != NULL && page->selected_item_key != NULL)
-        gsword_window_open_module_reference(page->window,
-                                            page->selected_item_module,
-                                            page->selected_item_key);
-}
-
-static void
-on_list_item_activated(GtkListBox *list, GtkListBoxRow *row,
-                       gpointer user_data)
-{
-    (void)list;
-    if (row != NULL)
-        on_list_item_selected(list, row, user_data);
-    open_selected_list_item(user_data);
-}
-
-static void
-on_open_list_item(GtkButton *button, gpointer user_data)
-{
-    (void)button;
-    open_selected_list_item(user_data);
-}
-
-static void
-on_remove_list_item(GtkButton *button, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
-    GError *error = NULL;
-
-    (void)button;
-    if (notes_store == NULL || page->selected_list_id == 0 ||
-        page->selected_item_module == NULL || page->selected_item_key == NULL)
-        return;
-    if (!gsword_notes_store_remove_from_list(
-            notes_store, page->selected_list_id, page->selected_item_module,
-            page->selected_item_key, &error)) {
-        gsword_window_show_error(page->window,
-                                 _("Cannot remove verse from list"), error);
-        return;
-    }
-    load_list_items(page);
-    gsword_window_set_status(page->window, _("Verse removed from list"));
-}
-
-static void
-update_list_item_actions(GswordNotesPage *page)
-{
-    gboolean selected = page->selected_item_module != NULL &&
-                        page->selected_item_key != NULL;
-
-    if (page->open_list_item_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->open_list_item_button),
-                                 selected);
-    if (page->remove_list_item_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->remove_list_item_button),
-                                 selected);
-}
-
-static void
-clear_selected_item(GswordNotesPage *page)
-{
-    g_clear_pointer(&page->selected_item_module, g_free);
-    g_clear_pointer(&page->selected_item_key, g_free);
-    update_list_item_actions(page);
-}
-
-static void
-load_list_items(GswordNotesPage *page)
-{
-    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
-
-    clear_list(page->list_items);
-    clear_selected_item(page);
-    if (page->selected_list_id == 0) {
-        gtk_list_box_set_placeholder(page->list_items,
-            make_placeholder(_("Select a verse list")));
-        return;
-    }
-    if (notes_store == NULL)
-        return;
-    {
-        GPtrArray *items = gsword_notes_store_list_items(
-            notes_store, page->selected_list_id);
-        guint i;
-
-        if (items->len == 0)
-            gtk_list_box_set_placeholder(page->list_items,
-                make_placeholder(_("This list is empty")));
-        for (i = 0; i < items->len; i++) {
-            GswordVerseListItem *item = g_ptr_array_index(items, i);
-            GtkWidget *item_row = gtk_list_box_row_new();
-            GtkWidget *label = gtk_label_new(item->display_key);
-
-            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-            gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
-            gtk_label_set_max_width_chars(GTK_LABEL(label), 24);
-            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(item_row), label);
-            g_object_set_data_full(G_OBJECT(item_row), "item-module",
-                                   g_strdup(item->module), g_free);
-            g_object_set_data_full(G_OBJECT(item_row), "item-key",
-                                   g_strdup(item->key), g_free);
-            g_object_set_data_full(G_OBJECT(item_row), "item-display",
-                                   g_strdup(item->display_key), g_free);
-            gtk_list_box_append(page->list_items, item_row);
-        }
-        g_ptr_array_unref(items);
-    }
-}
-
-static void
-on_list_selected(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    const gchar *id;
-
-    (void)list;
-    if (row == NULL) {
-        page->selected_list_id = 0;
-        if (page->rename_list_button != NULL)
-            gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button),
-                                     FALSE);
-        if (page->delete_list_button != NULL)
-            gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button),
-                                     FALSE);
-        load_list_items(page);
-        return;
-    }
-    id = g_object_get_data(G_OBJECT(row), "list-id");
-    page->selected_list_id = id != NULL ? g_ascii_strtoll(id, NULL, 10) : 0;
-    if (page->rename_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button),
-                                 page->selected_list_id != 0);
-    if (page->delete_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button),
-                                 page->selected_list_id != 0);
-    load_list_items(page);
-}
-
-static void
 on_list_membership_toggled(GtkCheckButton *button, gpointer user_data)
 {
     GswordNotesPage *page = user_data;
@@ -1253,8 +1053,6 @@ on_list_membership_toggled(GtkCheckButton *button, gpointer user_data)
             return;
         }
     }
-    if (page->selected_list_id == list_id)
-        load_list_items(page);
     gsword_window_set_status(page->window, active
                              ? _("Verse added to list")
                              : _("Verse removed from list"));
@@ -1432,75 +1230,6 @@ on_rename_tag(GtkButton *button, gpointer user_data)
 }
 
 static void
-on_rename_list_response(AdwAlertDialog *dialog, const gchar *response,
-                        gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
-    GtkEntry *entry = g_object_get_data(G_OBJECT(dialog), "rename-entry");
-    const gchar *id_text = g_object_get_data(G_OBJECT(dialog), "list-id");
-    GError *error = NULL;
-    gchar *new_name;
-
-    if (g_strcmp0(response, "rename") != 0 || notes_store == NULL ||
-        entry == NULL || id_text == NULL)
-        return;
-    new_name = g_strdup(gtk_editable_get_text(GTK_EDITABLE(entry)));
-    g_strstrip(new_name);
-    if (*new_name == '\0') {
-        g_free(new_name);
-        return;
-    }
-    if (!gsword_notes_store_rename_list(notes_store,
-                                        g_ascii_strtoll(id_text, NULL, 10),
-                                        new_name, &error)) {
-        gsword_window_show_error(page->window,
-                                 _("Cannot rename verse list"), error);
-        g_free(new_name);
-        return;
-    }
-    g_free(new_name);
-    gsword_notes_page_refresh(page);
-    gsword_window_set_status(page->window, _("Verse list renamed"));
-}
-
-static void
-on_rename_list(GtkButton *button, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GtkListBoxRow *row;
-    const gchar *name;
-    const gchar *id;
-    GtkWidget *entry;
-    AdwDialog *dialog;
-
-    (void)button;
-    row = gtk_list_box_get_selected_row(page->lists_list);
-    name = row != NULL ? g_object_get_data(G_OBJECT(row), "list-name") : NULL;
-    id = row != NULL ? g_object_get_data(G_OBJECT(row), "list-id") : NULL;
-    if (name == NULL || id == NULL)
-        return;
-    dialog = adw_alert_dialog_new(_("Rename verse list"), NULL);
-    entry = gtk_entry_new();
-    gtk_editable_set_text(GTK_EDITABLE(entry), name);
-    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
-    gtk_widget_set_hexpand(entry, TRUE);
-    adw_alert_dialog_set_extra_child(ADW_ALERT_DIALOG(dialog), entry);
-    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
-                                   "cancel", _("Cancel"),
-                                   "rename", _("Rename"), NULL);
-    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "rename");
-    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
-    g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
-    g_object_set_data_full(G_OBJECT(dialog), "list-id", g_strdup(id), g_free);
-    g_signal_connect(entry, "changed", G_CALLBACK(on_rename_entry_changed),
-                     dialog);
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(on_rename_list_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
-}
-
-static void
 on_delete_tag_response(AdwAlertDialog *dialog, const gchar *response,
                        gpointer user_data)
 {
@@ -1554,84 +1283,6 @@ on_delete_tag(GtkButton *button, gpointer user_data)
 }
 
 static void
-on_create_list(GtkButton *button, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
-    GError *error = NULL;
-    const gchar *name = gtk_editable_get_text(
-        GTK_EDITABLE(page->new_list_entry));
-
-    (void)button;
-    if (notes_store == NULL || name == NULL || *name == '\0')
-        return;
-    if (!gsword_notes_store_create_list(notes_store, name, &error)) {
-        gsword_window_show_error(page->window, _("Cannot create list"), error);
-        return;
-    }
-    gtk_editable_set_text(GTK_EDITABLE(page->new_list_entry), "");
-    gsword_notes_page_refresh(page);
-    gsword_window_set_status(page->window, _("Verse list created"));
-}
-
-static void
-on_delete_list_response(AdwAlertDialog *dialog, const gchar *response,
-                        gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GswordNotesStore *notes_store = gsword_window_get_notes_store(page->window);
-    GError *error = NULL;
-
-    (void)dialog;
-    if (g_strcmp0(response, "delete") != 0 || notes_store == NULL ||
-        page->selected_list_id == 0)
-        return;
-    if (!gsword_notes_store_delete_list(notes_store, page->selected_list_id,
-                                        &error)) {
-        gsword_window_show_error(page->window,
-                                 _("Cannot delete verse list"), error);
-        return;
-    }
-    page->selected_list_id = 0;
-    clear_list(page->list_items);
-    if (page->rename_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->rename_list_button), FALSE);
-    if (page->delete_list_button != NULL)
-        gtk_widget_set_sensitive(GTK_WIDGET(page->delete_list_button), FALSE);
-    gsword_notes_page_refresh(page);
-    gsword_window_set_status(page->window, _("Verse list deleted"));
-}
-
-static void
-on_delete_list(GtkButton *button, gpointer user_data)
-{
-    GswordNotesPage *page = user_data;
-    GtkListBoxRow *row;
-    const gchar *name;
-    AdwDialog *dialog;
-
-    (void)button;
-    if (page->selected_list_id == 0)
-        return;
-    row = gtk_list_box_get_selected_row(page->lists_list);
-    name = row != NULL ? g_object_get_data(G_OBJECT(row), "list-name") : NULL;
-    dialog = adw_alert_dialog_new(_("Delete verse list"), NULL);
-    adw_alert_dialog_format_body(ADW_ALERT_DIALOG(dialog),
-                                 _("Delete “%s” and all its verses?"),
-                                 name != NULL ? name : "");
-    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
-                                   "cancel", _("Cancel"),
-                                   "delete", _("Delete"), NULL);
-    adw_alert_dialog_set_response_appearance(
-        ADW_ALERT_DIALOG(dialog), "delete", ADW_RESPONSE_DESTRUCTIVE);
-    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
-    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
-    g_signal_connect(dialog, "response",
-                     G_CALLBACK(on_delete_list_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
-}
-
-static void
 notes_page_free(gpointer data)
 {
     GswordNotesPage *page = data;
@@ -1642,8 +1293,6 @@ notes_page_free(gpointer data)
     g_free(page->module);
     g_free(page->storage_key);
     g_free(page->display_key);
-    g_free(page->selected_item_module);
-    g_free(page->selected_item_key);
     g_free(page->tag_filter);
     g_free(page);
 }
@@ -1657,16 +1306,8 @@ gsword_notes_page_new(GswordWindow *window)
     GtkWidget *right;
     GtkWidget *notes_scroll;
     GtkWidget *tags_scroll;
-    GtkWidget *lists_scroll;
-    GtkWidget *list_items_scroll;
-    GtkWidget *new_list_row;
-    GtkWidget *new_list_button;
-    GtkWidget *delete_list;
     GtkWidget *notes_page;
     GtkWidget *tags_page;
-    GtkWidget *lists_page;
-    GtkWidget *lists_paned;
-    GtkWidget *list_items_box;
     GtkWidget *stack_switcher;
     GtkWidget *filter_clear;
     GtkWidget *tags_label;
@@ -1674,12 +1315,6 @@ gsword_notes_page_new(GswordWindow *window)
     GtkWidget *show_tagged_notes;
     GtkWidget *rename_tag;
     GtkWidget *delete_tag;
-    GtkWidget *lists_header;
-    GtkWidget *rename_list;
-    GtkWidget *lists_label;
-    GtkWidget *list_items_header;
-    GtkWidget *open_list_item;
-    GtkWidget *remove_list_item;
     GtkWidget *editor_scroll;
     GtkWidget *context_scroll;
     GtkWidget *context_header;
@@ -1701,12 +1336,6 @@ gsword_notes_page_new(GswordWindow *window)
     right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     notes_scroll = gtk_scrolled_window_new();
     tags_scroll = gtk_scrolled_window_new();
-    lists_scroll = gtk_scrolled_window_new();
-    list_items_scroll = gtk_scrolled_window_new();
-    new_list_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    new_list_button = gtk_button_new_with_label(_("Add list"));
-    delete_list = gtk_button_new_from_icon_name("edit-delete-symbolic");
-    page->delete_list_button = GTK_BUTTON(delete_list);
     tags_label = gtk_label_new(_("Tags"));
     tags_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     show_tagged_notes = gtk_button_new_from_icon_name("go-next-symbolic");
@@ -1715,15 +1344,6 @@ gsword_notes_page_new(GswordWindow *window)
     page->show_tagged_notes_button = GTK_BUTTON(show_tagged_notes);
     delete_tag = gtk_button_new_from_icon_name("edit-delete-symbolic");
     page->delete_tag_button = GTK_BUTTON(delete_tag);
-    lists_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    rename_list = gtk_button_new_from_icon_name("document-edit-symbolic");
-    page->rename_list_button = GTK_BUTTON(rename_list);
-    lists_label = gtk_label_new(_("Verse lists"));
-    page->list_items_label = GTK_LABEL(gtk_label_new(_("List verses")));
-    open_list_item = gtk_button_new_from_icon_name("document-open-symbolic");
-    remove_list_item = gtk_button_new_from_icon_name("edit-delete-symbolic");
-    page->open_list_item_button = GTK_BUTTON(open_list_item);
-    page->remove_list_item_button = GTK_BUTTON(remove_list_item);
     editor_scroll = gtk_scrolled_window_new();
     buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     save = gtk_button_new_with_label(_("Save"));
@@ -1778,45 +1398,6 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_list_box_set_placeholder(page->tags_list,
                                  make_placeholder(_("No tags yet")));
 
-    page->lists_list = GTK_LIST_BOX(gtk_list_box_new());
-    g_signal_connect(page->lists_list, "row-selected",
-                     G_CALLBACK(on_list_selected), page);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(lists_scroll),
-                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(lists_scroll),
-                                  GTK_WIDGET(page->lists_list));
-    gtk_widget_set_size_request(lists_scroll, -1, 100);
-    gtk_list_box_set_placeholder(page->lists_list,
-                                 make_placeholder(_("No verse lists yet")));
-
-    page->list_items = GTK_LIST_BOX(gtk_list_box_new());
-    gtk_list_box_set_activate_on_single_click(page->list_items, FALSE);
-    g_signal_connect(page->list_items, "row-selected",
-                     G_CALLBACK(on_list_item_selected), page);
-    g_signal_connect(page->list_items, "row-activated",
-                     G_CALLBACK(on_list_item_activated), page);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(list_items_scroll),
-                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(list_items_scroll),
-                                  GTK_WIDGET(page->list_items));
-    gtk_widget_set_vexpand(list_items_scroll, TRUE);
-    gtk_list_box_set_placeholder(page->list_items,
-                                 make_placeholder(_("Select a verse list")));
-
-    page->new_list_entry = GTK_ENTRY(gtk_entry_new());
-    gtk_entry_set_placeholder_text(page->new_list_entry, _("New list"));
-    gtk_widget_set_hexpand(GTK_WIDGET(page->new_list_entry), TRUE);
-    g_signal_connect(new_list_button, "clicked",
-                     G_CALLBACK(on_create_list), page);
-    gtk_widget_add_css_class(delete_list, "flat");
-    gtk_widget_add_css_class(delete_list, "destructive-action");
-    gtk_widget_set_tooltip_text(delete_list, _("Delete verse list"));
-    gtk_widget_set_sensitive(delete_list, FALSE);
-    g_signal_connect(delete_list, "clicked",
-                     G_CALLBACK(on_delete_list), page);
-    gtk_box_append(GTK_BOX(new_list_row), GTK_WIDGET(page->new_list_entry));
-    gtk_box_append(GTK_BOX(new_list_row), new_list_button);
-
     gtk_label_set_xalign(GTK_LABEL(tags_label), 0.0f);
     gtk_widget_set_hexpand(tags_label, TRUE);
     gtk_widget_add_css_class(rename_tag, "flat");
@@ -1837,32 +1418,6 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(tags_header), show_tagged_notes);
     gtk_box_append(GTK_BOX(tags_header), rename_tag);
     gtk_box_append(GTK_BOX(tags_header), delete_tag);
-    gtk_label_set_xalign(GTK_LABEL(lists_label), 0.0f);
-    gtk_widget_set_hexpand(lists_label, TRUE);
-    gtk_widget_add_css_class(rename_list, "flat");
-    gtk_widget_set_tooltip_text(rename_list, _("Rename verse list"));
-    gtk_widget_set_sensitive(rename_list, FALSE);
-    g_signal_connect(rename_list, "clicked", G_CALLBACK(on_rename_list), page);
-    gtk_box_append(GTK_BOX(lists_header), lists_label);
-    gtk_box_append(GTK_BOX(lists_header), rename_list);
-    gtk_box_append(GTK_BOX(lists_header), delete_list);
-    gtk_label_set_xalign(page->list_items_label, 0.0f);
-    gtk_widget_set_hexpand(GTK_WIDGET(page->list_items_label), TRUE);
-    gtk_widget_add_css_class(tags_label, "heading");
-    gtk_widget_add_css_class(lists_label, "heading");
-    gtk_widget_add_css_class(GTK_WIDGET(page->list_items_label), "heading");
-    gtk_widget_add_css_class(open_list_item, "flat");
-    gtk_widget_add_css_class(remove_list_item, "flat");
-    gtk_widget_add_css_class(remove_list_item, "destructive-action");
-    gtk_widget_set_tooltip_text(open_list_item, _("Open verse"));
-    gtk_widget_set_tooltip_text(remove_list_item, _("Remove from list"));
-    gtk_widget_set_sensitive(open_list_item, FALSE);
-    gtk_widget_set_sensitive(remove_list_item, FALSE);
-    g_signal_connect(open_list_item, "clicked",
-                     G_CALLBACK(on_open_list_item), page);
-    g_signal_connect(remove_list_item, "clicked",
-                     G_CALLBACK(on_remove_list_item), page);
-
     page->tag_filter_label = GTK_LABEL(gtk_label_new(""));
     gtk_label_set_xalign(page->tag_filter_label, 0.0f);
     gtk_widget_set_hexpand(GTK_WIDGET(page->tag_filter_label), TRUE);
@@ -1897,24 +1452,6 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(tags_page), tags_header);
     gtk_box_append(GTK_BOX(tags_page), tags_scroll);
 
-    lists_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    gtk_box_append(GTK_BOX(lists_page), lists_header);
-    lists_paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-    gtk_paned_set_start_child(GTK_PANED(lists_paned), lists_scroll);
-    list_items_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    list_items_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    gtk_box_append(GTK_BOX(list_items_header),
-                   GTK_WIDGET(page->list_items_label));
-    gtk_box_append(GTK_BOX(list_items_header), open_list_item);
-    gtk_box_append(GTK_BOX(list_items_header), remove_list_item);
-    gtk_box_append(GTK_BOX(list_items_box), list_items_header);
-    gtk_box_append(GTK_BOX(list_items_box), list_items_scroll);
-    gtk_box_append(GTK_BOX(list_items_box), new_list_row);
-    gtk_paned_set_end_child(GTK_PANED(lists_paned), list_items_box);
-    gtk_paned_set_position(GTK_PANED(lists_paned), 170);
-    gtk_widget_set_vexpand(lists_paned, TRUE);
-    gtk_box_append(GTK_BOX(lists_page), lists_paned);
-
     stack_switcher = gtk_stack_switcher_new();
     page->left_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_set_hhomogeneous(page->left_stack, FALSE);
@@ -1923,15 +1460,6 @@ gsword_notes_page_new(GswordWindow *window)
     gtk_widget_set_halign(stack_switcher, GTK_ALIGN_CENTER);
     gtk_stack_add_titled(page->left_stack, notes_page, "notes", _("Notes"));
     gtk_stack_add_titled(page->left_stack, tags_page, "tags", _("Tags"));
-    gtk_stack_add_titled(page->left_stack, lists_page, "lists",
-                         _("Verse lists"));
-    {
-        GtkStackPage *lists_stack_page = gtk_stack_get_page(
-            page->left_stack, lists_page);
-
-        if (lists_stack_page != NULL)
-            gtk_stack_page_set_visible(lists_stack_page, FALSE);
-    }
     gtk_widget_set_vexpand(GTK_WIDGET(page->left_stack), TRUE);
 
     gtk_box_append(GTK_BOX(left), stack_switcher);
