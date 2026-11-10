@@ -75,6 +75,7 @@ collections_page_free(gpointer data)
         return;
     collection_view_free(page->list_view);
     collection_view_free(page->favorites_view);
+    g_clear_object(&page->bookmark_page);
     g_free(page);
 }
 

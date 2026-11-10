@@ -7,11 +7,12 @@
 #ifndef GSWORD_BOOKMARK_PAGE_H
 #define GSWORD_BOOKMARK_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordBookmarkPage GswordBookmarkPage;
+G_DECLARE_FINAL_TYPE(GswordBookmarkPage, gsword_bookmark_page, GSWORD,
+                     BOOKMARK_PAGE, GswordPage)
 
 GswordBookmarkPage *gsword_bookmark_page_new(GswordWindow *window);
 GtkWidget *gsword_bookmark_page_widget(GswordBookmarkPage *page);

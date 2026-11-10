@@ -12,8 +12,8 @@
 #include <glib/gi18n.h>
 
 struct _GswordBookmarkPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkListBox *list;
     GtkLabel *count_label;
     GswordVersePreview *preview;
@@ -26,20 +26,47 @@ struct _GswordBookmarkPage {
     gchar *selected_key;
 };
 
+G_DEFINE_TYPE(GswordBookmarkPage, gsword_bookmark_page, GSWORD_TYPE_PAGE)
+
+#define BOOKMARK_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
+
 static void on_edit_clicked(GtkButton *button, gpointer user_data);
 static void on_delete_clicked(GtkButton *button, gpointer user_data);
 
 static void
-bookmark_page_free(gpointer data)
+gsword_bookmark_page_dispose(GObject *object)
 {
-    GswordBookmarkPage *page = data;
+    GswordBookmarkPage *page = GSWORD_BOOKMARK_PAGE(object);
 
-    if (page == NULL)
-        return;
-    g_free(page->selected_module);
-    g_free(page->selected_key);
     gsword_verse_preview_free(page->preview);
-    g_free(page);
+    page->preview = NULL;
+
+    G_OBJECT_CLASS(gsword_bookmark_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_bookmark_page_finalize(GObject *object)
+{
+    GswordBookmarkPage *page = GSWORD_BOOKMARK_PAGE(object);
+
+    g_clear_pointer(&page->selected_module, g_free);
+    g_clear_pointer(&page->selected_key, g_free);
+
+    G_OBJECT_CLASS(gsword_bookmark_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_bookmark_page_class_init(GswordBookmarkPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_bookmark_page_dispose;
+    G_OBJECT_CLASS(klass)->finalize = gsword_bookmark_page_finalize;
+}
+
+static void
+gsword_bookmark_page_init(GswordBookmarkPage *page)
+{
+    (void)page;
 }
 
 static gchar *
@@ -122,7 +149,7 @@ on_row_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
     module = g_object_get_data(G_OBJECT(row), "bookmark-module");
     key = g_object_get_data(G_OBJECT(row), "bookmark-key");
     if (module != NULL && key != NULL)
-        gsword_window_open_module_reference(page->window, module, key);
+        gsword_window_open_module_reference(BOOKMARK_WINDOW(page), module, key);
 }
 
 static void
@@ -172,7 +199,7 @@ on_row_menu_open(GtkButton *button, gpointer user_data)
 
     close_row_menu(GTK_WIDGET(button));
     if (module != NULL && key != NULL)
-        gsword_window_open_module_reference(page->window, module, key);
+        gsword_window_open_module_reference(BOOKMARK_WINDOW(page), module, key);
 }
 
 static void
@@ -240,7 +267,7 @@ static void
 refresh_list(GswordBookmarkPage *page)
 {
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
-        page->window);
+        BOOKMARK_WINDOW(page));
     GPtrArray *items;
     guint i;
 
@@ -325,21 +352,21 @@ on_add_current_clicked(GtkButton *button, gpointer user_data)
 {
     GswordBookmarkPage *page = user_data;
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
-        page->window);
-    GswModule *module = gsword_window_get_module(page->window);
+        BOOKMARK_WINDOW(page));
+    GswModule *module = gsword_window_get_module(BOOKMARK_WINDOW(page));
     gchar *storage_key;
     gchar *display_key;
     GError *error = NULL;
 
     (void)button;
     if (store == NULL || module == NULL) {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(BOOKMARK_WINDOW(page), _("No active verse"));
         return;
     }
-    storage_key = gsword_window_current_storage_key(page->window);
-    display_key = gsword_window_current_display_key(page->window);
+    storage_key = gsword_window_current_storage_key(BOOKMARK_WINDOW(page));
+    display_key = gsword_window_current_display_key(BOOKMARK_WINDOW(page));
     if (storage_key == NULL || *storage_key == '\0') {
-        gsword_window_set_status(page->window, _("No active verse"));
+        gsword_window_set_status(BOOKMARK_WINDOW(page), _("No active verse"));
         g_free(display_key);
         return;
     }
@@ -350,10 +377,10 @@ on_add_current_clicked(GtkButton *button, gpointer user_data)
     if (gsword_bookmark_store_create(
             store, display_key, gsw_module_get_name(module), storage_key,
             display_key, "", &error) == 0) {
-        gsword_window_show_error(page->window, _("Cannot add bookmark"),
+        gsword_window_show_error(BOOKMARK_WINDOW(page), _("Cannot add bookmark"),
                                  error);
     } else {
-        gsword_window_set_status(page->window, _("Bookmark added"));
+        gsword_window_set_status(BOOKMARK_WINDOW(page), _("Bookmark added"));
         refresh_list(page);
     }
     g_free(storage_key);
@@ -367,7 +394,7 @@ on_open_clicked(GtkButton *button, gpointer user_data)
 
     (void)button;
     if (page->selected_module != NULL && page->selected_key != NULL)
-        gsword_window_open_module_reference(page->window,
+        gsword_window_open_module_reference(BOOKMARK_WINDOW(page),
                                             page->selected_module,
                                             page->selected_key);
 }
@@ -378,7 +405,7 @@ on_edit_response(AdwAlertDialog *dialog, const gchar *response,
 {
     GswordBookmarkPage *page = user_data;
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
-        page->window);
+        BOOKMARK_WINDOW(page));
     GtkEntry *title = g_object_get_data(G_OBJECT(dialog), "title-entry");
     GtkEntry *note = g_object_get_data(G_OBJECT(dialog), "note-entry");
     GError *error = NULL;
@@ -390,11 +417,11 @@ on_edit_response(AdwAlertDialog *dialog, const gchar *response,
             store, page->selected_id,
             gtk_editable_get_text(GTK_EDITABLE(title)),
             gtk_editable_get_text(GTK_EDITABLE(note)), &error)) {
-        gsword_window_show_error(page->window, _("Cannot update bookmark"),
+        gsword_window_show_error(BOOKMARK_WINDOW(page), _("Cannot update bookmark"),
                                  error);
         return;
     }
-    gsword_window_set_status(page->window, _("Bookmark updated"));
+    gsword_window_set_status(BOOKMARK_WINDOW(page), _("Bookmark updated"));
     refresh_list(page);
 }
 
@@ -403,7 +430,7 @@ on_edit_clicked(GtkButton *button, gpointer user_data)
 {
     GswordBookmarkPage *page = user_data;
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
-        page->window);
+        BOOKMARK_WINDOW(page));
     GswordBookmark *bookmark;
     AdwDialog *dialog;
     GtkWidget *grid;
@@ -441,7 +468,7 @@ on_edit_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "save");
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
     g_signal_connect(dialog, "response", G_CALLBACK(on_edit_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(BOOKMARK_WINDOW(page)));
     gsword_bookmark_free(bookmark);
 }
 
@@ -451,18 +478,18 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
 {
     GswordBookmarkPage *page = user_data;
     GswordBookmarkStore *store = gsword_window_get_bookmark_store(
-        page->window);
+        BOOKMARK_WINDOW(page));
     GError *error = NULL;
 
     (void)dialog;
     if (g_strcmp0(response, "delete") != 0 || store == NULL)
         return;
     if (!gsword_bookmark_store_delete(store, page->selected_id, &error)) {
-        gsword_window_show_error(page->window, _("Cannot delete bookmark"),
+        gsword_window_show_error(BOOKMARK_WINDOW(page), _("Cannot delete bookmark"),
                                  error);
         return;
     }
-    gsword_window_set_status(page->window, _("Bookmark deleted"));
+    gsword_window_set_status(BOOKMARK_WINDOW(page), _("Bookmark deleted"));
     refresh_list(page);
 }
 
@@ -486,13 +513,13 @@ on_delete_clicked(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
     g_signal_connect(dialog, "response", G_CALLBACK(on_delete_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(BOOKMARK_WINDOW(page)));
 }
 
 GswordBookmarkPage *
 gsword_bookmark_page_new(GswordWindow *window)
 {
-    GswordBookmarkPage *page = g_new0(GswordBookmarkPage, 1);
+    GswordBookmarkPage *page = g_object_new(gsword_bookmark_page_get_type(), NULL);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *title = gtk_label_new(_("Bookmarks"));
@@ -507,7 +534,7 @@ gsword_bookmark_page_new(GswordWindow *window)
     GtkEventController *motion;
 
     g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     gtk_widget_set_margin_top(box, 10);
     gtk_widget_set_margin_bottom(box, 10);
     gtk_widget_set_margin_start(box, 10);
@@ -571,9 +598,7 @@ gsword_bookmark_page_new(GswordWindow *window)
         gtk_box_append(GTK_BOX(box), hint);
     }
     gtk_box_append(GTK_BOX(box), footer);
-    page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-bookmark-page", page,
-                           bookmark_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     clear_selected(page);
     refresh_list(page);
     return page;
@@ -582,13 +607,13 @@ gsword_bookmark_page_new(GswordWindow *window)
 GtkWidget *
 gsword_bookmark_page_widget(GswordBookmarkPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_BOOKMARK_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 void
 gsword_bookmark_page_refresh(GswordBookmarkPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_BOOKMARK_PAGE(page));
     refresh_list(page);
 }
