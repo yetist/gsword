@@ -7,11 +7,12 @@
 #ifndef GSWORD_DEVOTION_PAGE_H
 #define GSWORD_DEVOTION_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordDevotionPage GswordDevotionPage;
+G_DECLARE_FINAL_TYPE(GswordDevotionPage, gsword_devotion_page, GSWORD,
+                     DEVOTION_PAGE, GswordPage)
 
 GswordDevotionPage *gsword_devotion_page_new(GswordWindow *window);
 GtkWidget *gsword_devotion_page_widget(GswordDevotionPage *page);

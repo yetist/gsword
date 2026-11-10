@@ -10,14 +10,19 @@
 #include <glib/gi18n.h>
 
 struct _GswordDevotionPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkDropDown *selector;
     GtkStringList *names;
     GDateTime *date;
     GtkTextView *view;
     GtkLabel *title;
 };
+
+G_DEFINE_TYPE(GswordDevotionPage, gsword_devotion_page, GSWORD_TYPE_PAGE)
+
+#define DEVOTION_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static gboolean
 module_info_is_devotional(GswModuleInfo *info)
@@ -47,8 +52,8 @@ module_info_is_devotional(GswModuleInfo *info)
 static void
 load_devotion(GswordDevotionPage *page)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GswManager *manager = gsword_window_get_manager(DEVOTION_WINDOW(page));
+    GSettings *settings = gsword_window_get_settings(DEVOTION_WINDOW(page));
     guint selected = page->selector != NULL
                    ? gtk_drop_down_get_selected(page->selector)
                    : GTK_INVALID_LIST_POSITION;
@@ -126,11 +131,13 @@ gsword_devotion_page_refresh(GswordDevotionPage *page)
     guint i;
     guint count = 0;
 
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_DEVOTION_PAGE(page));
     if (page->selector == NULL)
         return;
-    manager = gsword_window_get_manager(page->window);
-    settings = gsword_window_get_settings(page->window);
+    manager = gsword_window_get_manager(DEVOTION_WINDOW(page));
+    settings = gsword_window_get_settings(DEVOTION_WINDOW(page));
+    if (manager == NULL)
+        return;
     infos = gsw_manager_get_module_infos(manager);
     names = gtk_string_list_new(NULL);
     if (settings != NULL)
@@ -204,21 +211,42 @@ on_shift(GtkButton *button, gpointer user_data)
 }
 
 static void
-devotion_page_free(gpointer data)
+gsword_devotion_page_dispose(GObject *object)
 {
-    GswordDevotionPage *page = data;
+    GswordDevotionPage *page = GSWORD_DEVOTION_PAGE(object);
 
-    if (page == NULL)
-        return;
     g_clear_object(&page->names);
+
+    G_OBJECT_CLASS(gsword_devotion_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_devotion_page_finalize(GObject *object)
+{
+    GswordDevotionPage *page = GSWORD_DEVOTION_PAGE(object);
+
     g_clear_pointer(&page->date, g_date_time_unref);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_devotion_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_devotion_page_class_init(GswordDevotionPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_devotion_page_dispose;
+    G_OBJECT_CLASS(klass)->finalize = gsword_devotion_page_finalize;
+}
+
+static void
+gsword_devotion_page_init(GswordDevotionPage *page)
+{
+    (void)page;
 }
 
 GswordDevotionPage *
 gsword_devotion_page_new(GswordWindow *window)
 {
-    GswordDevotionPage *page = g_new0(GswordDevotionPage, 1);
+    GswordDevotionPage *page = g_object_new(gsword_devotion_page_get_type(), NULL);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *previous = gtk_button_new_from_icon_name(
@@ -228,7 +256,7 @@ gsword_devotion_page_new(GswordWindow *window)
     GtkWidget *refresh = gtk_button_new_with_label(_("Refresh"));
     GtkWidget *scroll = gtk_scrolled_window_new();
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     gtk_widget_set_margin_top(box, 10);
     gtk_widget_set_margin_bottom(box, 10);
     gtk_widget_set_margin_start(box, 12);
@@ -236,8 +264,8 @@ gsword_devotion_page_new(GswordWindow *window)
 
     page->selector = GTK_DROP_DOWN(gtk_drop_down_new(NULL, NULL));
     gtk_widget_set_hexpand(GTK_WIDGET(page->selector), TRUE);
-    g_signal_connect(page->selector, "notify::selected",
-                     G_CALLBACK(on_changed), page);
+    g_signal_connect_object(page->selector, "notify::selected",
+                            G_CALLBACK(on_changed), page, 0);
     g_signal_connect(refresh, "clicked", G_CALLBACK(on_refresh), page);
     g_object_set_data(G_OBJECT(previous), "direction", GINT_TO_POINTER(-1));
     g_object_set_data(G_OBJECT(next), "direction", GINT_TO_POINTER(1));
@@ -269,9 +297,7 @@ gsword_devotion_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(box), controls);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->title));
     gtk_box_append(GTK_BOX(box), scroll);
-    page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-devotion-page", page,
-                           devotion_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     gsword_devotion_page_refresh(page);
     return page;
 }
@@ -279,6 +305,6 @@ gsword_devotion_page_new(GswordWindow *window)
 GtkWidget *
 gsword_devotion_page_widget(GswordDevotionPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_DEVOTION_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
