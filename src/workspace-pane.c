@@ -5,6 +5,7 @@
  */
 
 #include "app-locale.h"
+#include "reference-selection.h"
 #include "workspace-pane.h"
 #include "workspace-page.h"
 #include "window-private.h"
@@ -27,8 +28,7 @@ struct _GswordWorkspacePane {
     GtkDropDown *module_selector;
     GtkStringList *module_names;
     GswordReferenceChooser *reference_chooser;
-    gchar *versification;
-    gchar *locale;
+    GswordReferenceContext reference_context;
     GtkDropDown *follow_mode;
     GtkEventController *focus;
     gint mode;
@@ -464,30 +464,11 @@ schedule_scroll_to_verse(GswordWorkspacePane *pane, gint verse)
 static void
 set_context(GswordWorkspacePane *pane)
 {
-    GswModuleInfo *info;
-    const gchar *versification = NULL;
-    gchar *locale;
-
     if (pane->reference_chooser == NULL || pane->module == NULL)
         return;
-    info = gsw_module_get_info(pane->module);
-    if (info != NULL)
-        versification = gsw_module_info_get_versification(info);
-    if (versification == NULL || *versification == '\0')
-        versification = "KJV";
-    if (g_strcmp0(pane->versification, versification) != 0) {
-        g_free(pane->versification);
-        pane->versification = g_strdup(versification);
-        gsword_reference_chooser_set_versification(pane->reference_chooser,
-                                                   versification);
-    }
-    locale = gsword_window_book_name_locale(pane->window, info);
-    if (g_strcmp0(pane->locale, locale) != 0) {
-        g_free(pane->locale);
-        pane->locale = g_strdup(locale);
-        gsword_reference_chooser_set_locale(pane->reference_chooser, locale);
-    }
-    g_free(locale);
+    gsword_reference_context_sync(&pane->reference_context,
+                                  pane->reference_chooser, pane->window,
+                                  pane->module);
     gsword_window_apply_book_name_locale(pane->window, pane->module);
 }
 
@@ -503,31 +484,12 @@ gsword_workspace_pane_apply_book_name_policy(GswordWorkspacePane *pane)
 static void
 sync_chooser(GswordWorkspacePane *pane)
 {
-    GswKey *key;
-    GswVerseKey *verse_key;
-    gint book;
-    gint chapter;
-    gint verse;
-
     if (pane->reference_chooser == NULL)
         return;
     set_context(pane);
-    if (pane->module == NULL ||
-        gsw_key_get_kind(gsw_module_get_key(pane->module)) !=
-            GSW_KEY_KIND_VERSE) {
-        gtk_widget_set_sensitive(GTK_WIDGET(pane->reference_chooser), FALSE);
-        return;
-    }
-    gtk_widget_set_sensitive(GTK_WIDGET(pane->reference_chooser), TRUE);
-    key = gsw_module_get_key(pane->module);
-    verse_key = (GswVerseKey *)key;
-    book = gsw_verse_key_get_global_book_number(verse_key);
-    chapter = gsw_verse_key_get_chapter(verse_key);
-    verse = MAX(gsw_verse_key_get_verse(verse_key), 1);
-    if (book < 0 || chapter < 1)
-        return;
-    gsword_reference_chooser_set_reference(pane->reference_chooser,
-                                           book, chapter, verse);
+    gsword_reference_chooser_sync_from_module(
+        pane->reference_chooser, &pane->reference_context, pane->window,
+        pane->module, 0, 0);
 }
 
 static void
@@ -1177,7 +1139,6 @@ gsword_workspace_pane_free(GswordWorkspacePane *pane)
     g_clear_object(&pane->module);
     g_clear_object(&pane->module_names);
     g_free(pane->module_name);
-    g_free(pane->versification);
-    g_free(pane->locale);
+    gsword_reference_context_clear(&pane->reference_context);
     g_free(pane);
 }

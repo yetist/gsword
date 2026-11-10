@@ -6,6 +6,7 @@
 
 #include "reader-page.h"
 #include "reader-toolbar.h"
+#include "reference-selection.h"
 #include "study-panel.h"
 #include "window-private.h"
 
@@ -25,6 +26,8 @@ struct _GswordReaderPage {
     GtkWidget *study_widget;
     GswordReferenceChooser *reference_chooser;
     GswordReferenceChooser *compact_reference_chooser;
+    GswordReferenceContext reference_context;
+    GswordReferenceContext compact_reference_context;
     GtkTextTag *highlight_tag;
     GtkTextTag *active_verse_tag;
     GtkTextTag *range_tag;
@@ -306,76 +309,44 @@ gsword_reader_page_update_favorite(GswordReaderPage *page)
 void
 gsword_reader_page_sync_context(GswordReaderPage *page)
 {
-    GswModule *module = gsword_window_get_module(page->window);
-    GswModuleInfo *info;
-    const gchar *versification = NULL;
-    gchar *locale;
+    GswModule *module;
 
-    if (page == NULL || page->reference_chooser == NULL || module == NULL)
+    if (page == NULL || page->reference_chooser == NULL)
         return;
-    info = gsw_module_get_info(module);
-    if (info != NULL)
-        versification = gsw_module_info_get_versification(info);
-    locale = gsword_window_book_name_locale(page->window, info);
-    gsword_reference_chooser_set_versification(
-        page->reference_chooser,
-        versification != NULL && *versification != '\0'
-        ? versification : "KJV");
-    gsword_reference_chooser_set_locale(page->reference_chooser, locale);
-    if (page->compact_reference_chooser != NULL) {
-        gsword_reference_chooser_set_versification(
-            page->compact_reference_chooser,
-            versification != NULL && *versification != '\0'
-            ? versification : "KJV");
-        gsword_reference_chooser_set_locale(
-            page->compact_reference_chooser, locale);
-    }
-    g_free(locale);
+    module = gsword_window_get_module(page->window);
+    if (module == NULL)
+        return;
+    gsword_reference_context_sync(&page->reference_context,
+                                  page->reference_chooser, page->window,
+                                  module);
+    if (page->compact_reference_chooser != NULL)
+        gsword_reference_context_sync(&page->compact_reference_context,
+                                      page->compact_reference_chooser,
+                                      page->window, module);
 }
 
 static void
 sync_reference_chooser(GswordReaderPage *page)
 {
-    GswModule *module = gsword_window_get_module(page->window);
-    GswKey *key;
-    GswVerseKey *verse_key;
-    gint book;
-    gint chapter;
-    gint verse;
-    gint verse_end = 0;
+    GswModule *module;
+    gint range_start = 0;
+    gint range_end = 0;
 
-    if (page->reference_chooser == NULL)
+    if (page == NULL || page->reference_chooser == NULL)
         return;
-    if (module == NULL ||
-        gsw_key_get_kind(gsw_module_get_key(module)) != GSW_KEY_KIND_VERSE) {
-        gtk_widget_set_sensitive(GTK_WIDGET(page->reference_chooser), FALSE);
-        if (page->compact_reference_chooser != NULL)
-            gtk_widget_set_sensitive(
-                GTK_WIDGET(page->compact_reference_chooser), FALSE);
-        return;
-    }
-    gtk_widget_set_sensitive(GTK_WIDGET(page->reference_chooser), TRUE);
-    if (page->compact_reference_chooser != NULL)
-        gtk_widget_set_sensitive(
-            GTK_WIDGET(page->compact_reference_chooser), TRUE);
-    key = gsw_module_get_key(module);
-    verse_key = (GswVerseKey *)key;
-    book = gsw_verse_key_get_global_book_number(verse_key);
-    chapter = gsw_verse_key_get_chapter(verse_key);
-    verse = MAX(gsw_verse_key_get_verse(verse_key), 1);
+    module = gsword_window_get_module(page->window);
     if (page->range_active && page->range_start > 0 &&
         page->range_end > 0) {
-        verse = MIN(page->range_start, page->range_end);
-        verse_end = MAX(page->range_start, page->range_end);
+        range_start = page->range_start;
+        range_end = page->range_end;
     }
-    if (book < 0 || chapter < 1)
-        return;
-    gsword_reference_chooser_set_reference_range(
-        page->reference_chooser, book, chapter, verse, verse_end);
+    gsword_reference_chooser_sync_from_module(
+        page->reference_chooser, &page->reference_context, page->window,
+        module, range_start, range_end);
     if (page->compact_reference_chooser != NULL)
-        gsword_reference_chooser_set_reference_range(
-            page->compact_reference_chooser, book, chapter, verse,
-            verse_end);
+        gsword_reference_chooser_sync_from_module(
+            page->compact_reference_chooser, &page->compact_reference_context,
+            page->window, module, range_start, range_end);
 }
 
 void
@@ -1774,6 +1745,8 @@ reader_page_free(gpointer data)
     if (page->compact_timeout_id != 0)
         g_source_remove(page->compact_timeout_id);
     gsword_reader_history_free(page->history);
+    gsword_reference_context_clear(&page->reference_context);
+    gsword_reference_context_clear(&page->compact_reference_context);
     g_free(page);
 }
 
