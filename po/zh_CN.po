@@ -1709,7 +1709,7 @@ msgid ""
 "\n"
 "Install SWORD modules or start gsword with --library PATH."
 msgstr ""
-"未找到模块。\\n\\n请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
+"未找到模块。\n\n请安装 SWORD 模块，或使用 --library PATH 启动 gsword。"
 
 #: src/reader-page.c:392
 msgid "No modules found"
@@ -2019,7 +2019,7 @@ msgid ""
 "Install a module such as Daily Light or Morning and Evening from the Library "
 "page."
 msgstr ""
-"未安装每日灵修模块。\\n\\n请从模块库安装 Daily Light 或 Morning and Evening "
+"未安装每日灵修模块。\n\n请从模块库安装 Daily Light 或 Morning and Evening "
 "等灵修模块。"
 
 #: src/devotion-page.c:227 src/plan-page.c:1143 src/personal-page.c:98
