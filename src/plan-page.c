@@ -16,8 +16,8 @@ static void gsword_plan_page_day_toggled(GtkCheckButton *button,
                                          gpointer user_data);
 
 struct _GswordPlanPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkNotebook *notebook;
     GswordDevotionPage *devotion;
     GswordMemoryPage *memory;
@@ -52,6 +52,11 @@ struct _GswordPlanPage {
     guint refresh_source;
     guint preview_source;
 };
+
+G_DEFINE_TYPE(GswordPlanPage, gsword_plan_page, GSWORD_TYPE_PAGE)
+
+#define PLAN_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static gboolean
 plan_start_reference_valid(const gchar *start_ref)
@@ -273,7 +278,7 @@ refresh_plan_list(GswordPlanPage *page)
 static void
 refresh_views(GswordPlanPage *page)
 {
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     GswordPlan *plan = selected_plan(page);
     GPtrArray *days;
     guint i;
@@ -398,9 +403,9 @@ gsword_plan_page_refresh(GswordPlanPage *page)
     guint selected = 0;
     guint i;
 
-    g_return_if_fail(page != NULL);
-    plans = gsword_window_get_plan_store(page->window);
-    settings = gsword_window_get_settings(page->window);
+    g_return_if_fail(GSWORD_IS_PLAN_PAGE(page));
+    plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
+    settings = gsword_window_get_settings(PLAN_WINDOW(page));
     if (plans == NULL || page->selector == NULL)
         return;
     g_clear_pointer(&page->items, g_ptr_array_unref);
@@ -464,7 +469,7 @@ on_plan_selected(GObject *object, GParamSpec *pspec, gpointer user_data)
         return;
     plan = g_ptr_array_index(page->items, selected);
     page->selected_id = plan->id;
-    settings = gsword_window_get_settings(page->window);
+    settings = gsword_window_get_settings(PLAN_WINDOW(page));
     if (settings != NULL) {
         gchar *id = g_strdup_printf("%" G_GINT64_FORMAT, plan->id);
 
@@ -478,7 +483,7 @@ static void
 on_plan_list_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GSettings *settings = gsword_window_get_settings(PLAN_WINDOW(page));
     const gchar *id;
 
     (void)list;
@@ -498,7 +503,7 @@ on_rename_plan_response(AdwAlertDialog *dialog, const gchar *response,
                         gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     GtkEntry *entry = g_object_get_data(G_OBJECT(dialog), "rename-entry");
     GswordPlan *plan = selected_plan(page);
     GError *error = NULL;
@@ -514,13 +519,13 @@ on_rename_plan_response(AdwAlertDialog *dialog, const gchar *response,
         return;
     }
     if (!gsword_plan_store_rename_plan(plans, plan->id, name, &error)) {
-        gsword_window_show_error(page->window, _("Cannot rename plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot rename plan"), error);
         g_free(name);
         return;
     }
     g_free(name);
     gsword_plan_page_refresh(page);
-    gsword_window_set_status(page->window, _("Reading plan renamed"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Reading plan renamed"));
 }
 
 static void
@@ -548,15 +553,15 @@ on_rename_plan(GtkButton *button, gpointer user_data)
     g_object_set_data(G_OBJECT(dialog), "rename-entry", entry);
     g_signal_connect(dialog, "response",
                      G_CALLBACK(on_rename_plan_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(PLAN_WINDOW(page)));
 }
 
 static void
 on_duplicate_plan(GtkButton *button, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
+    GSettings *settings = gsword_window_get_settings(PLAN_WINDOW(page));
     GswordPlan *plan = selected_plan(page);
     GError *error = NULL;
     gint64 new_id;
@@ -566,7 +571,7 @@ on_duplicate_plan(GtkButton *button, gpointer user_data)
         return;
     new_id = gsword_plan_store_duplicate_plan(plans, plan->id, &error);
     if (new_id == 0) {
-        gsword_window_show_error(page->window, _("Cannot duplicate plan"),
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot duplicate plan"),
                                  error);
         return;
     }
@@ -578,7 +583,7 @@ on_duplicate_plan(GtkButton *button, gpointer user_data)
         g_free(id);
     }
     gsword_plan_page_refresh(page);
-    gsword_window_set_status(page->window, _("Reading plan duplicated"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Reading plan duplicated"));
 }
 
 static gboolean
@@ -667,7 +672,7 @@ static void
 gsword_plan_page_day_toggled(GtkCheckButton *button, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     const gchar *plan_id = g_object_get_data(G_OBJECT(button), "plan-id");
     const gchar *day = g_object_get_data(G_OBJECT(button), "plan-day");
     GError *error = NULL;
@@ -678,10 +683,10 @@ gsword_plan_page_day_toggled(GtkCheckButton *button, gpointer user_data)
             plans, g_ascii_strtoll(plan_id, NULL, 10),
             (gint)g_ascii_strtoll(day, NULL, 10),
             gtk_check_button_get_active(button), &error)) {
-        gsword_window_show_error(page->window, _("Cannot update plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot update plan"), error);
         return;
     }
-    gsword_window_set_status(page->window, _("Reading plan updated"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Reading plan updated"));
     schedule_refresh(page);
 }
 
@@ -696,7 +701,7 @@ on_day_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
         return;
     reference = g_object_get_data(G_OBJECT(row), "plan-reference");
     if (reference != NULL)
-        gsword_window_open_reference(page->window, reference);
+        gsword_window_open_reference(PLAN_WINDOW(page), reference);
 }
 
 static void
@@ -707,14 +712,14 @@ on_open_today(GtkButton *button, gpointer user_data)
 
     (void)button;
     if (plan != NULL && plan->next_reference != NULL)
-        gsword_window_open_reference(page->window, plan->next_reference);
+        gsword_window_open_reference(PLAN_WINDOW(page), plan->next_reference);
 }
 
 static void
 on_complete_today(GtkButton *button, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     GswordPlan *plan = selected_plan(page);
     GError *error = NULL;
 
@@ -723,13 +728,13 @@ on_complete_today(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_complete_day(plans, plan->id, plan->next_day,
                                         TRUE, &error)) {
-        gsword_window_show_error(page->window, _("Cannot update plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot update plan"), error);
         return;
     }
     page->undo_plan_id = plan->id;
     page->undo_day = plan->next_day;
     page->undo_available = TRUE;
-    gsword_window_set_status(page->window, _("Day marked complete"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Day marked complete"));
     gsword_plan_page_refresh(page);
 }
 
@@ -737,7 +742,7 @@ static void
 on_undo_complete(GtkButton *button, gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     GswordPlan *plan = selected_plan(page);
     GError *error = NULL;
 
@@ -747,11 +752,11 @@ on_undo_complete(GtkButton *button, gpointer user_data)
         return;
     if (!gsword_plan_store_complete_day(plans, plan->id, page->undo_day,
                                         FALSE, &error)) {
-        gsword_window_show_error(page->window, _("Cannot update plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot update plan"), error);
         return;
     }
     page->undo_available = FALSE;
-    gsword_window_set_status(page->window, _("Completion undone"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Completion undone"));
     gsword_plan_page_refresh(page);
 }
 
@@ -790,8 +795,8 @@ static gboolean
 create_plan_from_values(GswordPlanPage *page, const gchar *name,
                         const gchar *start, gint days, gint chapters)
 {
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
+    GSettings *settings = gsword_window_get_settings(PLAN_WINDOW(page));
     GPtrArray *references;
     GError *error = NULL;
     gint64 plan_id;
@@ -801,7 +806,7 @@ create_plan_from_values(GswordPlanPage *page, const gchar *name,
         return FALSE;
     references = generate_plan_references(start, days, chapters);
     if (references->len == 0) {
-        gsword_window_show_error(page->window, _("Cannot create plan"),
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot create plan"),
             g_error_new_literal(G_FILE_ERROR, G_FILE_ERROR_INVAL,
                                 _("Invalid start reference or empty plan")));
         g_ptr_array_unref(references);
@@ -811,7 +816,7 @@ create_plan_from_values(GswordPlanPage *page, const gchar *name,
                                             references, &error);
     g_ptr_array_unref(references);
     if (plan_id == 0) {
-        gsword_window_show_error(page->window, _("Cannot create plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot create plan"), error);
         return FALSE;
     }
     id = g_strdup_printf("%" G_GINT64_FORMAT, plan_id);
@@ -819,7 +824,7 @@ create_plan_from_values(GswordPlanPage *page, const gchar *name,
         g_settings_set_string(settings, "active-plan-id", id);
     g_free(id);
     gsword_plan_page_refresh(page);
-    gsword_window_set_status(page->window, _("Reading plan created"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Reading plan created"));
     return TRUE;
 }
 
@@ -887,7 +892,7 @@ open_create_plan_dialog(GswordPlanPage *page)
     GtkWidget *hint;
 
     if (page->create_dialog != NULL) {
-        adw_dialog_present(page->create_dialog, GTK_WIDGET(page->window));
+        adw_dialog_present(page->create_dialog, GTK_WIDGET(PLAN_WINDOW(page)));
         return;
     }
     page->create_dialog = adw_alert_dialog_new(_("Create a plan"), NULL);
@@ -958,7 +963,7 @@ open_create_plan_dialog(GswordPlanPage *page)
     g_signal_connect(page->chapters_spin, "value-changed",
                      G_CALLBACK(on_preview_changed), page);
     update_create_response(page);
-    adw_dialog_present(page->create_dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(page->create_dialog, GTK_WIDGET(PLAN_WINDOW(page)));
     gtk_widget_grab_focus(GTK_WIDGET(page->name_entry));
 }
 
@@ -984,23 +989,23 @@ on_delete_response(AdwAlertDialog *dialog, const gchar *response,
                    gpointer user_data)
 {
     GswordPlanPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(PLAN_WINDOW(page));
     GswordPlan *plan = selected_plan(page);
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GSettings *settings = gsword_window_get_settings(PLAN_WINDOW(page));
     GError *error = NULL;
 
     (void)dialog;
     if (g_strcmp0(response, "delete") != 0 || plan == NULL || plans == NULL)
         return;
     if (!gsword_plan_store_delete_plan(plans, plan->id, &error)) {
-        gsword_window_show_error(page->window, _("Cannot delete plan"), error);
+        gsword_window_show_error(PLAN_WINDOW(page), _("Cannot delete plan"), error);
         return;
     }
     if (settings != NULL)
         g_settings_set_string(settings, "active-plan-id", "");
     page->selected_id = 0;
     gsword_plan_page_refresh(page);
-    gsword_window_set_status(page->window, _("Reading plan deleted"));
+    gsword_window_set_status(PLAN_WINDOW(page), _("Reading plan deleted"));
 }
 
 static void
@@ -1025,13 +1030,13 @@ on_delete(GtkButton *button, gpointer user_data)
     adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
     g_signal_connect(dialog, "response", G_CALLBACK(on_delete_response), page);
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(PLAN_WINDOW(page)));
 }
 
 void
 gsword_plan_page_refresh_devotion(GswordPlanPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PLAN_PAGE(page));
     if (page->devotion != NULL)
         gsword_devotion_page_refresh(page->devotion);
 }
@@ -1039,7 +1044,7 @@ gsword_plan_page_refresh_devotion(GswordPlanPage *page)
 void
 gsword_plan_page_refresh_memory(GswordPlanPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PLAN_PAGE(page));
     if (page->memory != NULL)
         gsword_memory_page_refresh(page->memory);
 }
@@ -1047,39 +1052,54 @@ gsword_plan_page_refresh_memory(GswordPlanPage *page)
 void
 gsword_plan_page_show_devotion(GswordPlanPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PLAN_PAGE(page));
     if (page->notebook != NULL)
         gtk_notebook_set_current_page(page->notebook, 1);
     gsword_plan_page_refresh_devotion(page);
-    gsword_window_show_page(page->window, "plan");
+    gsword_window_show_page(PLAN_WINDOW(page), "plan");
 }
 
 void
 gsword_plan_page_show_memory(GswordPlanPage *page)
 {
-    g_return_if_fail(page != NULL);
+    g_return_if_fail(GSWORD_IS_PLAN_PAGE(page));
     if (page->notebook != NULL)
         gtk_notebook_set_current_page(page->notebook, 2);
     gsword_plan_page_refresh_memory(page);
-    gsword_window_show_page(page->window, "plan");
+    gsword_window_show_page(PLAN_WINDOW(page), "plan");
 }
 
 static void
-plan_page_free(gpointer data)
+gsword_plan_page_dispose(GObject *object)
 {
-    GswordPlanPage *page = data;
+    GswordPlanPage *page = GSWORD_PLAN_PAGE(object);
 
-    if (page == NULL)
-        return;
-    if (page->refresh_source != 0)
+    if (page->refresh_source != 0) {
         g_source_remove(page->refresh_source);
-    if (page->preview_source != 0)
+        page->refresh_source = 0;
+    }
+    if (page->preview_source != 0) {
         g_source_remove(page->preview_source);
+        page->preview_source = 0;
+    }
     g_clear_pointer(&page->items, g_ptr_array_unref);
     g_clear_object(&page->names);
     g_clear_object(&page->devotion);
     g_clear_object(&page->memory);
-    g_free(page);
+
+    G_OBJECT_CLASS(gsword_plan_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_plan_page_class_init(GswordPlanPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_plan_page_dispose;
+}
+
+static void
+gsword_plan_page_init(GswordPlanPage *page)
+{
+    (void)page;
 }
 
 static void
@@ -1098,7 +1118,7 @@ on_management_height_changed(GObject *object, GParamSpec *pspec,
 GswordPlanPage *
 gsword_plan_page_new(GswordWindow *window)
 {
-    GswordPlanPage *page = g_new0(GswordPlanPage, 1);
+    GswordPlanPage *page = g_object_new(gsword_plan_page_get_type(), NULL);
     GtkWidget *notebook = gtk_notebook_new();
     GtkWidget *today_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     GtkWidget *today_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -1129,7 +1149,7 @@ gsword_plan_page_new(GswordWindow *window)
     GtkStringList *filters;
     GtkWidget *delete = gtk_button_new_from_icon_name("edit-delete-symbolic");
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     gtk_widget_set_margin_top(today_page, 10);
     gtk_widget_set_margin_bottom(today_page, 10);
     gtk_widget_set_margin_start(today_page, 12);
@@ -1308,9 +1328,7 @@ gsword_plan_page_new(GswordWindow *window)
                              gtk_label_new(_("Memorize")));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
     page->notebook = GTK_NOTEBOOK(notebook);
-    page->root = notebook;
-    g_object_set_data_full(G_OBJECT(notebook), "gsword-plan-page", page,
-                           plan_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), notebook);
     gsword_plan_page_refresh(page);
     return page;
 }
@@ -1318,6 +1336,6 @@ gsword_plan_page_new(GswordWindow *window)
 GtkWidget *
 gsword_plan_page_widget(GswordPlanPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_PLAN_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }

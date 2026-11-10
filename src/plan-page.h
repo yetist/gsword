@@ -7,11 +7,12 @@
 #ifndef GSWORD_PLAN_PAGE_H
 #define GSWORD_PLAN_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordPlanPage GswordPlanPage;
+G_DECLARE_FINAL_TYPE(GswordPlanPage, gsword_plan_page, GSWORD,
+                     PLAN_PAGE, GswordPage)
 
 GswordPlanPage *gsword_plan_page_new(GswordWindow *window);
 GtkWidget *gsword_plan_page_widget(GswordPlanPage *page);
