@@ -13,90 +13,6 @@
 
 #include <glib/gi18n.h>
 
-struct _GswordLibraryPage {
-    GswordPage parent_instance;
-
-    AdwNavigationSplitView *split_view;
-    GtkWidget *detail_back;
-    GswManager *manager;
-    GSettings *settings;
-    GswInstallManager *installer;
-    GswStatusReporter *install_reporter;
-    GPtrArray *install_sources;
-    GtkStringList *source_names;
-    GtkDropDown *source_dropdown;
-    GtkWidget *source_row;
-    GtkWidget *filter_row;
-    GtkStack *list_stack;
-    GtkListView *installed_view;
-    GtkListView *remote_view;
-    GtkWidget *installed_empty;
-    GtkWidget *remote_empty;
-    GListStore *installed_store;
-    GListStore *remote_store;
-    GtkFilterListModel *installed_filter_model;
-    GtkFilterListModel *remote_filter_model;
-    GtkSortListModel *installed_sort_model;
-    GtkSortListModel *remote_sort_model;
-    GtkSingleSelection *installed_selection;
-    GtkSingleSelection *remote_selection;
-    GtkCustomFilter *installed_filter;
-    GtkCustomFilter *remote_filter;
-    GtkCustomSorter *module_sorter;
-    GtkDropDown *sort_dropdown;
-    gint sort_mode;
-    GtkWidget *local_box;
-    gint library_view;
-    GtkEntry *install_search;
-    GtkDropDown *type_filter;
-    GtkDropDown *language_filter;
-    GtkDropDown *status_filter;
-    GtkButton *clear_filters_button;
-    GtkLabel *filter_count;
-    GPtrArray *language_codes;
-    GtkStringList *language_names;
-    GPtrArray *remote_infos;
-    gboolean updating_filters;
-    GtkLabel *remote_title;
-    GtkLabel *remote_description;
-    GtkLabel *remote_status;
-    GtkLabel *remote_meta;
-    GtkLabel *remote_warning;
-    GtkExpander *technical_expander;
-    GtkLabel *technical_label;
-    GtkExpander *license_expander;
-    GtkLabel *license_label;
-    GtkExpander *about_expander;
-    GtkLabel *about_label;
-    GtkProgressBar *install_progress;
-    GtkLabel *install_status;
-    GtkListBox *install_queue_list;
-    GtkWidget *install_queue_scroll;
-    GtkButton *install_button;
-    GtkButton *remove_button;
-    GtkButton *unlock_button;
-    GtkButton *cancel_button;
-    GtkButton *refresh_source_button;
-    GtkButton *refresh_sources_button;
-    GtkButton *test_source_button;
-    GtkToggleButton *installed_view_button;
-    GtkToggleButton *available_view_button;
-    GtkToggleButton *updates_view_button;
-    GtkButton *update_all_button;
-    GtkButton *retry_failed_button;
-    GtkButton *pause_queue_button;
-    gboolean queue_paused;
-    GPtrArray *update_queue;
-    GPtrArray *failed_updates;
-    GswInstallSource *update_source;
-    gboolean updating_all;
-    GCancellable *install_cancellable;
-    GtkEntry *local_dir_entry;
-    GtkEntry *local_name_entry;
-    GtkButton *local_install_button;
-    gchar *selected_remote_name;
-    gchar *selected_installed_name;
-};
 
 typedef struct {
     GswordLibraryPage *page;
@@ -127,9 +43,6 @@ gsword_library_page_get_installer(GswordLibraryPage *page)
     return page->installer;
 }
 
-static void gsword_window_refresh_remote_modules(GswordWindow *self);
-static void gsword_window_refresh_installed_list(GswordWindow *self);
-static void show_module_details(GswordWindow *self);
 static void update_common_module_details(GswordLibraryPage *priv,
                                          GswModuleInfo *info,
                                          const gchar *name,
@@ -139,15 +52,9 @@ static void update_common_module_details(GswordLibraryPage *priv,
                                          gboolean include_minimum);
 static void on_refresh_sources_finished(GObject *source, GAsyncResult *result,
                                         gpointer user_data);
-static void on_refresh_remote_finished(GObject *source, GAsyncResult *result,
-                                       gpointer user_data);
-static void on_install_finished(GObject *source, GAsyncResult *result,
-                                gpointer user_data);
-static void on_remove_finished(GObject *source, GAsyncResult *result,
-                               gpointer user_data);
 
-static GswInstallSource *
-gsword_window_current_install_source(GswordWindow *self)
+GswInstallSource *
+gsword_library_current_install_source(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
     guint selected = priv->source_dropdown != NULL
@@ -207,8 +114,6 @@ selected_language_code(GswordLibraryPage *page)
     return g_ptr_array_index(page->language_codes, selected);
 }
 
-static void apply_filters(GswordWindow *self);
-static void clear_remote_details(GswordWindow *self);
 
 static void
 rebuild_language_filter(GswordWindow *self, GPtrArray *infos)
@@ -385,8 +290,8 @@ update_filter_count(GswordLibraryPage *priv)
                                priv->library_view != 0 && count == 0);
 }
 
-static void
-apply_filters(GswordWindow *self)
+void
+gsword_library_apply_filters(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
 
@@ -424,11 +329,11 @@ refresh_remote_store(GswordWindow *self)
     }
     g_free(priv->selected_remote_name);
     priv->selected_remote_name = NULL;
-    apply_filters(self);
+    gsword_library_apply_filters(self);
 }
 
-static void
-gsword_window_refresh_installed_list(GswordWindow *self)
+void
+gsword_library_refresh_installed_list(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
     GPtrArray *infos;
@@ -448,7 +353,7 @@ gsword_window_refresh_installed_list(GswordWindow *self)
         g_object_unref(row);
     }
     g_ptr_array_unref(infos);
-    apply_filters(self);
+    gsword_library_apply_filters(self);
 }
 
 void
@@ -482,11 +387,11 @@ gsword_window_refresh_install_sources(GswordWindow *self)
     gtk_drop_down_set_model(priv->source_dropdown, G_LIST_MODEL(names));
     if (priv->install_sources->len > 0)
         gtk_drop_down_set_selected(priv->source_dropdown, 0);
-    gsword_window_refresh_remote_modules(self);
+    gsword_library_refresh_remote_modules(self);
 }
 
-static void
-clear_remote_details(GswordWindow *self)
+void
+gsword_library_clear_remote_details(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
 
@@ -513,7 +418,7 @@ static void
 gsword_window_update_remote_details(GswordWindow *self, const gchar *name)
 {
     GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
+    GswInstallSource *source = gsword_library_current_install_source(self);
     GswModuleInfo *info = NULL;
     GswModuleInfo *local = NULL;
     const gchar *remote_version;
@@ -628,11 +533,11 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     }
 }
 
-static void
-gsword_window_refresh_remote_modules(GswordWindow *self)
+void
+gsword_library_refresh_remote_modules(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
+    GswInstallSource *source = gsword_library_current_install_source(self);
     GPtrArray *infos;
     GError *error = NULL;
 
@@ -712,14 +617,14 @@ on_remote_selection_changed(GtkSingleSelection *selection, GParamSpec *pspec,
     if (row == NULL) {
         g_clear_pointer(&priv->selected_remote_name, g_free);
         if (priv->library_view != 0)
-            clear_remote_details(self);
+            gsword_library_clear_remote_details(self);
         return;
     }
     g_free(priv->selected_remote_name);
     priv->selected_remote_name = g_strdup(row->name);
     g_clear_pointer(&priv->selected_installed_name, g_free);
     gsword_window_update_remote_details(self, row->name);
-    show_module_details(self);
+    gsword_library_show_module_details(self);
 }
 
 static void
@@ -734,14 +639,14 @@ on_installed_selection_changed(GtkSingleSelection *selection,
     if (row == NULL) {
         g_clear_pointer(&priv->selected_installed_name, g_free);
         if (priv->library_view == 0)
-            clear_remote_details(self);
+            gsword_library_clear_remote_details(self);
         return;
     }
     g_free(priv->selected_installed_name);
     priv->selected_installed_name = g_strdup(row->name);
     g_clear_pointer(&priv->selected_remote_name, g_free);
     gsword_window_update_installed_details(self, row->name);
-    show_module_details(self);
+    gsword_library_show_module_details(self);
 }
 
 static void
@@ -802,7 +707,7 @@ on_test_source_finished(GObject *source, GAsyncResult *result,
         gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), TRUE);
     g_clear_object(&priv->install_cancellable);
     if (ok)
-        gsword_window_refresh_remote_modules(self);
+        gsword_library_refresh_remote_modules(self);
 }
 
 static void
@@ -810,7 +715,7 @@ on_test_source_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
+    GswInstallSource *source = gsword_library_current_install_source(self);
 
     (void)button;
     if (source == NULL) {
@@ -837,7 +742,7 @@ on_refresh_remote_clicked(GtkButton *button, gpointer user_data)
 {
     GswordWindow *self = GSWORD_WINDOW(user_data);
     GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *install_source = gsword_window_current_install_source(self);
+    GswInstallSource *install_source = gsword_library_current_install_source(self);
 
     (void)button;
     if (install_source == NULL)
@@ -852,176 +757,7 @@ on_refresh_remote_clicked(GtkButton *button, gpointer user_data)
     gsword_window_set_status(self, _("Refreshing remote module list..."));
     gsw_install_manager_refresh_remote_source_async(
         priv->installer, install_source, priv->install_cancellable,
-        on_refresh_remote_finished, self);
-}
-
-static gboolean
-clear_install_progress_cb(gpointer data)
-{
-    GswordWindow *self = GSWORD_WINDOW(data);
-    GswordLibraryPage *priv = library_page_get(self);
-
-    if (priv == NULL)
-        return G_SOURCE_REMOVE;
-    if (priv->install_cancellable == NULL) {
-        gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
-        gtk_label_set_text(priv->install_status, "");
-    }
-    return G_SOURCE_REMOVE;
-}
-
-static void
-gsword_window_clear_install_progress_later(GswordWindow *self)
-{
-    /* Progress events are queued on the main context from the worker thread.
-     * Clear after those events have been processed so a final progress update
-     * cannot leave a stale "Downloading..." label after the operation ends. */
-    g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, clear_install_progress_cb,
-                    g_object_ref(self), g_object_unref);
-}
-
-static void
-on_refresh_remote_finished(GObject *source, GAsyncResult *result,
-                           gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GError *error = NULL;
-
-    if (!gsw_install_manager_refresh_remote_source_finish(
-            GSW_INSTALL_MANAGER(source), result, &error)) {
-        gsword_window_show_error(self, _("Cannot refresh remote modules"), error);
-    } else {
-        gsword_window_set_status(self, _("Remote module list refreshed"));
-    }
-    if (priv == NULL)
-        return;
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), TRUE);
-    gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
-    gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
-    g_clear_object(&priv->install_cancellable);
-    gsword_window_refresh_remote_modules(self);
-    gsword_window_clear_install_progress_later(self);
-}
-
-static void
-rebuild_queue_view(GswordWindow *self)
-{
-    GswordLibraryPage *priv = library_page_get(self);
-    guint i;
-
-    if (priv->install_queue_list == NULL)
-        return;
-    gsword_window_clear_list(priv->install_queue_list);
-    if (priv->update_queue != NULL) {
-        for (i = 0; i < priv->update_queue->len; i++) {
-            GtkWidget *row = gtk_list_box_row_new();
-            GtkWidget *label = gtk_label_new(
-                g_ptr_array_index(priv->update_queue, i));
-
-            gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-            gtk_widget_add_css_class(label, "caption");
-            gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), label);
-            gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
-            gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), FALSE);
-            gtk_list_box_append(priv->install_queue_list, row);
-        }
-    }
-    if (priv->install_queue_scroll != NULL)
-        gtk_widget_set_visible(priv->install_queue_scroll,
-            priv->update_queue != NULL && priv->update_queue->len > 0);
-    if (priv->pause_queue_button != NULL) {
-        gtk_widget_set_visible(GTK_WIDGET(priv->pause_queue_button),
-            priv->update_queue != NULL && priv->update_queue->len > 0);
-        gtk_button_set_label(priv->pause_queue_button,
-            priv->queue_paused ? _("Resume") : _("Pause"));
-    }
-}
-
-static void
-update_retry_button(GswordLibraryPage *priv)
-{
-    if (priv->retry_failed_button != NULL)
-        gtk_widget_set_visible(GTK_WIDGET(priv->retry_failed_button),
-            priv->failed_updates != NULL && priv->failed_updates->len > 0);
-}
-
-static void
-start_next_update(GswordWindow *self)
-{
-    GswordLibraryPage *priv = library_page_get(self);
-    const gchar *name;
-
-    if (priv->update_queue == NULL || priv->update_queue->len == 0) {
-        priv->updating_all = FALSE;
-        gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
-        gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
-        g_clear_object(&priv->install_cancellable);
-        g_clear_object(&priv->update_source);
-        rebuild_queue_view(self);
-        update_retry_button(priv);
-        gsword_window_set_status(self, priv->failed_updates != NULL &&
-                                 priv->failed_updates->len > 0
-                                 ? _("Updates finished with errors")
-                                 : _("All updates complete"));
-        gsword_window_refresh_remote_modules(self);
-        return;
-    }
-    g_free(priv->selected_remote_name);
-    priv->selected_remote_name = g_ptr_array_steal_index(priv->update_queue, 0);
-    name = priv->selected_remote_name;
-    rebuild_queue_view(self);
-    if (priv->install_cancellable == NULL) {
-        priv->install_cancellable = g_cancellable_new();
-        gsw_install_manager_set_cancellable(priv->installer,
-                                            priv->install_cancellable);
-    }
-    gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), TRUE);
-    gtk_progress_bar_pulse(priv->install_progress);
-    gsword_window_set_status(self, _("Updating modules..."));
-    gsw_install_manager_install_module_async(
-        priv->installer, priv->manager, priv->update_source, name,
-        priv->install_cancellable, on_install_finished, self);
-}
-
-static void
-on_update_all_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
-    guint i;
-
-    (void)button;
-    if (source == NULL || priv->remote_infos == NULL) {
-        gsword_window_set_status(self, _("No source selected"));
-        return;
-    }
-    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
-    g_clear_pointer(&priv->failed_updates, g_ptr_array_unref);
-    priv->failed_updates = g_ptr_array_new_with_free_func(g_free);
-    priv->update_queue = g_ptr_array_new_with_free_func(g_free);
-    update_retry_button(priv);
-    for (i = 0; i < priv->remote_infos->len; i++) {
-        GswModuleInfo *info = g_ptr_array_index(priv->remote_infos, i);
-        guint status = gsw_install_manager_get_module_status(priv->manager,
-                                                             info);
-
-        if (status & GSW_MODULE_STATUS_UPDATED)
-            g_ptr_array_add(priv->update_queue,
-                            g_strdup(gsw_module_info_get_name(info)));
-    }
-    if (priv->update_queue->len == 0) {
-        rebuild_queue_view(self);
-        gsword_window_set_status(self, _("No updates available"));
-        return;
-    }
-    g_clear_object(&priv->update_source);
-    priv->update_source = g_object_ref(source);
-    priv->updating_all = TRUE;
-    priv->queue_paused = FALSE;
-    rebuild_queue_view(self);
-    start_next_update(self);
+        gsword_library_on_refresh_remote_finished, self);
 }
 
 static void
@@ -1055,7 +791,7 @@ on_unlock_response(AdwAlertDialog *dialog, const gchar *response,
         return;
     }
     gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_list(self);
+    gsword_library_refresh_installed_list(self);
     gsword_window_update_installed_details(self, cipher->module_name);
     gsword_window_set_status(self, _("Module unlocked"));
 }
@@ -1096,344 +832,6 @@ on_unlock_clicked(GtkButton *button, gpointer user_data)
     g_signal_connect(dialog, "response",
                      G_CALLBACK(on_unlock_response), cipher);
     adw_dialog_present(dialog, GTK_WIDGET(self));
-}
-
-static gboolean
-check_install_space(GswordWindow *self, GswModuleInfo *info)
-{
-    GswordLibraryPage *priv = library_page_get(self);
-    const gchar *prefix = gsw_manager_get_prefix_path(priv->manager);
-    guint64 needed = gsw_module_info_get_install_size(info);
-    GFile *file;
-    GFileInfo *fs_info;
-    GError *error = NULL;
-    guint64 available = 0;
-    gboolean ok = TRUE;
-
-    if (needed == 0 || prefix == NULL)
-        return TRUE;
-    file = g_file_new_for_path(prefix);
-    fs_info = g_file_query_filesystem_info(file,
-        G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, &error);
-    if (fs_info == NULL) {
-        gsword_window_show_error(self, _("Cannot check disk space"), error);
-        g_object_unref(file);
-        return FALSE;
-    }
-    if (g_file_info_has_attribute(fs_info,
-                                  G_FILE_ATTRIBUTE_FILESYSTEM_FREE))
-        available = g_file_info_get_attribute_uint64(
-            fs_info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
-    if (available > 0 && needed > available) {
-        gchar *need_text = gsword_library_format_size(needed);
-        gchar *free_text = gsword_library_format_size(available);
-
-        gsword_window_set_status(self, _("Not enough disk space"));
-        {
-            GtkAlertDialog *dialog = gtk_alert_dialog_new(
-                _("Not enough disk space"));
-            gchar *detail = g_strdup_printf(
-                _("This module needs %s, but only %s is available."),
-                need_text, free_text);
-
-            gtk_alert_dialog_set_detail(dialog, detail);
-            gtk_alert_dialog_show(dialog, GTK_WINDOW(self));
-            g_object_unref(dialog);
-            g_free(detail);
-        }
-        g_free(need_text);
-        g_free(free_text);
-        ok = FALSE;
-    }
-    g_object_unref(fs_info);
-    g_object_unref(file);
-    return ok;
-}
-
-static void
-on_retry_failed_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
-    guint i;
-
-    (void)button;
-    if (source == NULL || priv->failed_updates == NULL ||
-        priv->failed_updates->len == 0)
-        return;
-    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
-    priv->update_queue = g_ptr_array_new_with_free_func(g_free);
-    for (i = 0; i < priv->failed_updates->len; i++)
-        g_ptr_array_add(priv->update_queue,
-                        g_strdup(g_ptr_array_index(priv->failed_updates, i)));
-    g_clear_pointer(&priv->failed_updates, g_ptr_array_unref);
-    priv->failed_updates = g_ptr_array_new_with_free_func(g_free);
-    update_retry_button(priv);
-    g_clear_object(&priv->update_source);
-    priv->update_source = g_object_ref(source);
-    priv->updating_all = TRUE;
-    rebuild_queue_view(self);
-    start_next_update(self);
-}
-
-static void
-on_pause_queue_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-
-    (void)button;
-    if (priv->queue_paused) {
-        priv->queue_paused = FALSE;
-        priv->updating_all = TRUE;
-        gtk_button_set_label(GTK_BUTTON(button), _("Pause"));
-        gsword_window_set_status(self, _("Resuming updates"));
-        start_next_update(self);
-    } else {
-        priv->queue_paused = TRUE;
-        gtk_button_set_label(GTK_BUTTON(button), _("Resume"));
-        gsword_window_set_status(self, _("Pausing after current module..."));
-    }
-}
-
-static void
-on_install_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GswInstallSource *source = gsword_window_current_install_source(self);
-
-    (void)button;
-    if (source == NULL || priv->selected_remote_name == NULL)
-        return;
-    {
-        GswModuleInfo *info = gsw_install_manager_lookup_remote_module_info(
-            priv->installer, source, priv->selected_remote_name, NULL);
-
-        if (info != NULL && !check_install_space(self, info))
-            return;
-    }
-    priv->updating_all = FALSE;
-    priv->queue_paused = FALSE;
-    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
-    g_clear_object(&priv->update_source);
-    rebuild_queue_view(self);
-    g_clear_object(&priv->install_cancellable);
-    priv->install_cancellable = g_cancellable_new();
-    gsw_install_manager_set_cancellable(priv->installer,
-                                        priv->install_cancellable);
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->install_button), FALSE);
-    gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), TRUE);
-    gsword_window_set_status(self, _("Installing module..."));
-    gsw_install_manager_install_module_async(
-        priv->installer, priv->manager, source, priv->selected_remote_name,
-        priv->install_cancellable, on_install_finished, self);
-}
-
-static void
-on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GError *error = NULL;
-    gboolean installed;
-    gchar *installed_name = NULL;
-
-    installed = gsw_install_manager_install_module_finish(
-        GSW_INSTALL_MANAGER(source), result, &error);
-    if (priv == NULL) {
-        g_clear_error(&error);
-        return;
-    }
-    installed_name = g_strdup(priv->selected_remote_name);
-    if (!installed) {
-        gsword_window_show_error(self, _("Module install failed"), error);
-    }
-    gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
-    gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
-    g_clear_object(&priv->install_cancellable);
-    if (priv->manager != NULL)
-        gsw_manager_reload(priv->manager, NULL);
-    if (installed && installed_name != NULL && priv->settings != NULL) {
-        /* Make the newly installed module visible and selected instead of
-         * silently keeping the previously selected module. */
-        g_settings_set_string(priv->settings, "last-module", installed_name);
-        g_settings_set_string(priv->settings, "last-key", "");
-    }
-    gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_list(self);
-    gsword_window_refresh_remote_modules(self);
-    gsword_window_show_page(self, "library");
-    if (priv->updating_all) {
-        if (!installed && installed_name != NULL && priv->failed_updates != NULL)
-            g_ptr_array_add(priv->failed_updates, g_strdup(installed_name));
-        g_free(installed_name);
-        if (priv->queue_paused) {
-            priv->updating_all = FALSE;
-            gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
-            gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
-            g_clear_object(&priv->install_cancellable);
-            gsword_window_set_status(self, _("Updates paused"));
-            return;
-        }
-        start_next_update(self);
-        return;
-    }
-    if (installed && installed_name != NULL) {
-        gchar *message = g_strdup_printf(_("Installed module %s"),
-                                         installed_name);
-        gsword_window_set_status(self, message);
-        g_free(message);
-    }
-    g_free(installed_name);
-    gsword_window_clear_install_progress_later(self);
-}
-
-static void
-remove_module(GswordWindow *self, const gchar *name)
-{
-    GswordLibraryPage *priv = library_page_get(self);
-
-    if (priv->installer == NULL || name == NULL)
-        return;
-    g_clear_object(&priv->install_cancellable);
-    priv->install_cancellable = g_cancellable_new();
-    gsw_install_manager_set_cancellable(priv->installer,
-                                        priv->install_cancellable);
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
-    gsword_window_set_status(self, _("Removing module..."));
-    gsw_install_manager_remove_module_async(
-        priv->installer, priv->manager, name, priv->install_cancellable,
-        on_remove_finished, self);
-}
-
-static void
-on_remove_response(AdwAlertDialog *dialog, const gchar *response,
-                   gpointer user_data)
-{
-    GswordWindow *self = user_data;
-    const gchar *name = g_object_get_data(G_OBJECT(dialog), "module-name");
-
-    if (g_strcmp0(response, "remove") == 0)
-        remove_module(self, name);
-}
-
-static void
-on_remove_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    const gchar *name = priv->selected_installed_name;
-    AdwDialog *dialog;
-
-    (void)button;
-    if (priv->installer == NULL || name == NULL)
-        return;
-    dialog = ADW_DIALOG(adw_alert_dialog_new(_("Remove module?"), NULL));
-    adw_alert_dialog_format_body(
-        ADW_ALERT_DIALOG(dialog),
-        _("Remove “%s” from your module library? This cannot be undone."),
-        name);
-    adw_alert_dialog_add_responses(ADW_ALERT_DIALOG(dialog),
-                                   "cancel", _("Cancel"),
-                                   "remove", _("Remove"), NULL);
-    adw_alert_dialog_set_default_response(ADW_ALERT_DIALOG(dialog), "cancel");
-    adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "cancel");
-    adw_alert_dialog_set_response_appearance(
-        ADW_ALERT_DIALOG(dialog), "remove", ADW_RESPONSE_DESTRUCTIVE);
-    g_object_set_data_full(G_OBJECT(dialog), "module-name", g_strdup(name),
-                           g_free);
-    g_signal_connect(dialog, "response", G_CALLBACK(on_remove_response), self);
-    adw_dialog_present(dialog, GTK_WIDGET(self));
-}
-
-static void
-on_remove_finished(GObject *source, GAsyncResult *result, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    GError *error = NULL;
-
-    if (!gsw_install_manager_remove_module_finish(
-            GSW_INSTALL_MANAGER(source), result, &error)) {
-        gsword_window_show_error(self, _("Module removal failed"), error);
-    } else {
-        gsword_window_set_status(self, _("Module removed"));
-    }
-    if (priv == NULL)
-        return;
-    g_clear_object(&priv->install_cancellable);
-    g_clear_pointer(&priv->selected_installed_name, g_free);
-    gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
-    if (priv->manager != NULL)
-        gsw_manager_reload(priv->manager, NULL);
-    gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_list(self);
-    gsword_window_refresh_remote_modules(self);
-    gsword_window_show_page(self, "library");
-    gsword_window_clear_install_progress_later(self);
-}
-
-static void
-on_cancel_install_clicked(GtkButton *button, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    (void)button;
-
-    if (priv->install_cancellable != NULL)
-        g_cancellable_cancel(priv->install_cancellable);
-    priv->updating_all = FALSE;
-    g_clear_pointer(&priv->update_queue, g_ptr_array_unref);
-    g_clear_object(&priv->update_source);
-    rebuild_queue_view(self);
-    gsword_window_set_status(self, _("Cancelling..."));
-}
-
-static void
-on_install_pre_status(GswStatusReporter *reporter, guint64 total, guint64 done,
-                      const gchar *message, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    (void)reporter;
-
-    if (priv == NULL)
-        return;
-    gtk_progress_bar_set_fraction(priv->install_progress,
-                                  total > 0 ? (gdouble)done / total : 0.0);
-    gtk_label_set_text(priv->install_status,
-                       message != NULL ? message : _("Installing..."));
-    (void)self;
-}
-
-static void
-on_install_progress(GswStatusReporter *reporter, guint64 total, guint64 done,
-                    gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordLibraryPage *priv = library_page_get(self);
-    gchar *status;
-    (void)reporter;
-
-    if (priv == NULL)
-        return;
-
-    if (total > 0) {
-        gtk_progress_bar_set_fraction(priv->install_progress,
-                                      (gdouble)done / total);
-        status = g_strdup_printf("%s: %" G_GUINT64_FORMAT
-                                 " / %" G_GUINT64_FORMAT " %s",
-                                 _("Downloading"), done, total, _("bytes"));
-    } else {
-        gtk_progress_bar_pulse(priv->install_progress);
-        status = g_strdup_printf("%s: %" G_GUINT64_FORMAT " %s",
-                                 _("Downloading"), done, _("bytes"));
-    }
-    gtk_label_set_text(priv->install_status, status);
-    g_free(status);
-    (void)self;
 }
 
 static void
@@ -1509,8 +907,8 @@ on_local_install_clicked(GtkButton *button, gpointer user_data)
         g_settings_set_string(priv->settings, "last-key", "");
     }
     gsword_window_populate_modules(self);
-    gsword_window_refresh_installed_list(self);
-    gsword_window_refresh_remote_modules(self);
+    gsword_library_refresh_installed_list(self);
+    gsword_library_refresh_remote_modules(self);
     gsword_window_show_page(self, "library");
     gsword_window_set_status(self, _("Module installed from local directory"));
 }
@@ -1525,9 +923,9 @@ on_filter_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     (void)pspec;
     if (!priv->updating_filters) {
         if (priv->library_view == 0)
-            gsword_window_refresh_installed_list(self);
+            gsword_library_refresh_installed_list(self);
         else
-            apply_filters(self);
+            gsword_library_apply_filters(self);
     }
 }
 
@@ -1540,9 +938,9 @@ on_remote_search_changed(GtkEditable *editable, gpointer user_data)
     (void)editable;
     if (!priv->updating_filters) {
         if (priv->library_view == 0)
-            gsword_window_refresh_installed_list(self);
+            gsword_library_refresh_installed_list(self);
         else
-            apply_filters(self);
+            gsword_library_apply_filters(self);
     }
 }
 
@@ -1581,9 +979,9 @@ on_clear_filters(GtkButton *button, gpointer user_data)
     gtk_editable_set_text(GTK_EDITABLE(priv->install_search), "");
     priv->updating_filters = FALSE;
     if (priv->library_view == 0)
-        gsword_window_refresh_installed_list(self);
+        gsword_library_refresh_installed_list(self);
     else
-        apply_filters(self);
+        gsword_library_apply_filters(self);
 }
 
 static void
@@ -1592,11 +990,11 @@ on_source_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
     (void)object;
     (void)pspec;
     if (library_page_get(GSWORD_WINDOW(user_data))->library_view != 0)
-        gsword_window_refresh_remote_modules(GSWORD_WINDOW(user_data));
+        gsword_library_refresh_remote_modules(GSWORD_WINDOW(user_data));
 }
 
-static void
-show_module_details(GswordWindow *self)
+void
+gsword_library_show_module_details(GswordWindow *self)
 {
     GswordLibraryPage *priv = library_page_get(self);
 
@@ -1628,8 +1026,8 @@ on_split_collapsed_changed(GObject *object, GParamSpec *pspec,
                 ADW_NAVIGATION_SPLIT_VIEW(object)));
 }
 
-static void
-update_library_view(GswordWindow *self, gint view)
+void
+gsword_library_update_library_view(GswordWindow *self, gint view)
 {
     GswordLibraryPage *priv = library_page_get(self);
 
@@ -1649,11 +1047,11 @@ update_library_view(GswordWindow *self, gint view)
     gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
     if (view == 0) {
         g_clear_pointer(&priv->selected_remote_name, g_free);
-        clear_remote_details(self);
-        gsword_window_refresh_installed_list(self);
+        gsword_library_clear_remote_details(self);
+        gsword_library_refresh_installed_list(self);
     } else {
         g_clear_pointer(&priv->selected_installed_name, g_free);
-        gsword_window_refresh_remote_modules(self);
+        gsword_library_refresh_remote_modules(self);
     }
 }
 
@@ -1666,7 +1064,7 @@ on_view_toggled(GtkToggleButton *button, gpointer user_data)
     if (!gtk_toggle_button_get_active(button))
         return;
     view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "library-view"));
-    update_library_view(self, view);
+    gsword_library_update_library_view(self, view);
 }
 
 static void
@@ -1914,11 +1312,11 @@ gsword_library_page_new(GswordWindow *self)
     gtk_widget_set_visible(retry_failed, FALSE);
     gtk_widget_set_visible(pause_queue, FALSE);
     g_signal_connect(update_all, "clicked",
-                     G_CALLBACK(on_update_all_clicked), self);
+                     G_CALLBACK(gsword_library_on_update_all_clicked), self);
     g_signal_connect(pause_queue, "clicked",
-                     G_CALLBACK(on_pause_queue_clicked), self);
+                     G_CALLBACK(gsword_library_on_pause_queue_clicked), self);
     g_signal_connect(retry_failed, "clicked",
-                     G_CALLBACK(on_retry_failed_clicked), self);
+                     G_CALLBACK(gsword_library_on_retry_failed_clicked), self);
     gtk_widget_add_css_class(view_row, "linked");
     gtk_box_append(GTK_BOX(view_row), installed_view);
     gtk_box_append(GTK_BOX(view_row), available_view);
@@ -1953,9 +1351,9 @@ gsword_library_page_new(GswordWindow *self)
             gsw_status_reporter_set_main_context(priv->install_reporter,
                                                  g_main_context_default());
             g_signal_connect(priv->install_reporter, "pre-status",
-                             G_CALLBACK(on_install_pre_status), self);
+                             G_CALLBACK(gsword_library_on_install_pre_status), self);
             g_signal_connect(priv->install_reporter, "progress",
-                             G_CALLBACK(on_install_progress), self);
+                             G_CALLBACK(gsword_library_on_install_progress), self);
             gsw_install_manager_set_status_reporter(priv->installer,
                                                     priv->install_reporter);
             gsw_install_manager_set_user_disclaimer_confirmed(
@@ -2058,7 +1456,7 @@ gsword_library_page_new(GswordWindow *self)
     gtk_label_set_xalign(priv->install_status, 0.0f);
     gtk_widget_add_css_class(GTK_WIDGET(priv->install_status), "dim-label");
     gtk_widget_set_visible(cancel, FALSE);
-    g_signal_connect(cancel, "clicked", G_CALLBACK(on_cancel_install_clicked),
+    g_signal_connect(cancel, "clicked", G_CALLBACK(gsword_library_on_cancel_install_clicked),
                      self);
     gtk_box_append(GTK_BOX(progress_row), GTK_WIDGET(priv->install_progress));
     gtk_box_append(GTK_BOX(progress_row), GTK_WIDGET(priv->install_status));
@@ -2276,8 +1674,8 @@ gsword_library_page_new(GswordWindow *self)
     gtk_widget_set_sensitive(install, FALSE);
     gtk_widget_set_sensitive(remove, FALSE);
     gtk_widget_set_visible(unlock, FALSE);
-    g_signal_connect(install, "clicked", G_CALLBACK(on_install_clicked), self);
-    g_signal_connect(remove, "clicked", G_CALLBACK(on_remove_clicked), self);
+    g_signal_connect(install, "clicked", G_CALLBACK(gsword_library_on_install_clicked), self);
+    g_signal_connect(remove, "clicked", G_CALLBACK(gsword_library_on_remove_clicked), self);
     g_signal_connect(unlock, "clicked", G_CALLBACK(on_unlock_clicked), self);
     gtk_box_append(GTK_BOX(action_row), install);
     gtk_box_append(GTK_BOX(action_row), remove);
@@ -2337,7 +1735,7 @@ gsword_library_page_new(GswordWindow *self)
     priv->retry_failed_button = GTK_BUTTON(retry_failed);
     priv->pause_queue_button = GTK_BUTTON(pause_queue);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(installed_view), TRUE);
-    update_library_view(self, 0);
+    gsword_library_update_library_view(self, 0);
     return priv;
 }
 
@@ -2360,12 +1758,12 @@ void
 gsword_library_page_refresh_installed(GswordLibraryPage *page)
 {
     if (GSWORD_IS_LIBRARY_PAGE(page))
-        gsword_window_refresh_installed_list(LIBRARY_WINDOW(page));
+        gsword_library_refresh_installed_list(LIBRARY_WINDOW(page));
 }
 
 void
 gsword_library_page_refresh_remote(GswordLibraryPage *page)
 {
     if (GSWORD_IS_LIBRARY_PAGE(page))
-        gsword_window_refresh_remote_modules(LIBRARY_WINDOW(page));
+        gsword_library_refresh_remote_modules(LIBRARY_WINDOW(page));
 }
