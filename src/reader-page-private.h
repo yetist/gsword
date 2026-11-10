@@ -65,6 +65,8 @@ void gsword_reader_page_clear_range(GswordReaderPage *page);
 void gsword_reader_page_apply_range(GswordReaderPage *page);
 gboolean gsword_reader_page_verse_at_position(GtkTextView *view, gdouble x,
                                               gdouble y, gint *verse);
+void gsword_reader_page_sync_reference_chooser(GswordReaderPage *page);
+void gsword_reader_page_update_reference_status(GswordReaderPage *page);
 
 G_END_DECLS
 

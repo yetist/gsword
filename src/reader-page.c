@@ -21,7 +21,6 @@ static void apply_active_verse(GswordReaderPage *page);
 static void select_verse_range(GswordReaderPage *page, gint anchor,
                                gint verse);
 static void select_verse(GswordReaderPage *page, gint verse);
-static void update_reference_status(GswordReaderPage *page);
 static void record_current_history(GswordReaderPage *page);
 static void schedule_scroll_to_active(GswordReaderPage *page);
 static gboolean verse_is_visible(GswordReaderPage *page, gint verse);
@@ -274,49 +273,6 @@ gsword_reader_page_update_favorite(GswordReaderPage *page)
 }
 
 void
-gsword_reader_page_sync_context(GswordReaderPage *page)
-{
-    GswModule *module;
-
-    if (page == NULL || page->reference_chooser == NULL)
-        return;
-    module = gsword_window_get_module(READER_WINDOW(page));
-    if (module == NULL)
-        return;
-    gsword_reference_context_sync(&page->reference_context,
-                                  page->reference_chooser, READER_WINDOW(page),
-                                  module);
-    if (page->compact_reference_chooser != NULL)
-        gsword_reference_context_sync(&page->compact_reference_context,
-                                      page->compact_reference_chooser,
-                                      READER_WINDOW(page), module);
-}
-
-static void
-sync_reference_chooser(GswordReaderPage *page)
-{
-    GswModule *module;
-    gint range_start = 0;
-    gint range_end = 0;
-
-    if (page == NULL || page->reference_chooser == NULL)
-        return;
-    module = gsword_window_get_module(READER_WINDOW(page));
-    if (page->range_active && page->range_start > 0 &&
-        page->range_end > 0) {
-        range_start = page->range_start;
-        range_end = page->range_end;
-    }
-    gsword_reference_chooser_sync_from_module(
-        page->reference_chooser, &page->reference_context, READER_WINDOW(page),
-        module, range_start, range_end);
-    if (page->compact_reference_chooser != NULL)
-        gsword_reference_chooser_sync_from_module(
-            page->compact_reference_chooser, &page->compact_reference_context,
-            READER_WINDOW(page), module, range_start, range_end);
-}
-
-void
 gsword_reader_page_refresh(GswordReaderPage *page)
 {
     GswordWindow *self;
@@ -337,7 +293,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
         gsword_window_set_status(self, _("No modules found"));
         gtk_widget_set_visible(page->empty_bar, TRUE);
         gsword_reader_toolbar_set_available(page->toolbar, FALSE);
-        sync_reference_chooser(page);
+        gsword_reader_page_sync_reference_chooser(page);
         gsword_window_refresh_search_index(self);
         return;
     }
@@ -374,7 +330,7 @@ gsword_reader_page_refresh(GswordReaderPage *page)
     schedule_scroll_to_active(page);
     gsword_study_panel_refresh(page->study_panel);
     gsword_window_refresh_search_index(self);
-    sync_reference_chooser(page);
+    gsword_reader_page_sync_reference_chooser(page);
     if (page->toolbar != NULL)
         gsword_reader_toolbar_update_favorite(page->toolbar);
     gsword_window_sync_workspace_from_reader(self);
@@ -484,7 +440,7 @@ gsword_reader_page_activate_reference(GswordReaderPage *page)
     }
     text = g_strdup_printf("%s %d:%d", osis, chapter, verse);
     if (!gsword_reader_page_set_key_text(page, text)) {
-        sync_reference_chooser(page);
+        gsword_reader_page_sync_reference_chooser(page);
     } else if (verse_end > verse) {
         select_verse_range(page, verse, verse_end);
     }
@@ -584,19 +540,6 @@ gsword_reader_page_current_start_reference(GswordReaderPage *page)
         }
     }
     return gsword_reader_page_current_reference(page);
-}
-
-static void
-update_reference_status(GswordReaderPage *page)
-{
-    GswModule *module = gsword_window_get_module(READER_WINDOW(page));
-
-    if (module == NULL)
-        return;
-    sync_reference_chooser(page);
-    if (page->toolbar != NULL)
-        gsword_reader_toolbar_update_favorite(page->toolbar);
-    gsword_window_set_status(READER_WINDOW(page), gsw_module_get_name(module));
 }
 
 static void
@@ -813,7 +756,7 @@ select_verse_range(GswordReaderPage *page, gint anchor, gint verse)
     page->range_start = anchor;
     page->range_end = verse;
     page->active_verse = anchor;
-    update_reference_status(page);
+    gsword_reader_page_update_reference_status(page);
     gsword_study_panel_refresh(page->study_panel);
     apply_active_verse(page);
     gsword_window_sync_workspace_from_reader(READER_WINDOW(page));
@@ -847,7 +790,7 @@ select_verse(GswordReaderPage *page, gint verse)
     }
     g_free(text);
     page->active_verse = verse;
-    update_reference_status(page);
+    gsword_reader_page_update_reference_status(page);
     gsword_study_panel_refresh(page->study_panel);
     apply_active_verse(page);
     gsword_window_sync_workspace_from_reader(READER_WINDOW(page));
