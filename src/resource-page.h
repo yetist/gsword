@@ -7,11 +7,12 @@
 #ifndef GSWORD_RESOURCE_PAGE_H
 #define GSWORD_RESOURCE_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordResourcePage GswordResourcePage;
+G_DECLARE_FINAL_TYPE(GswordResourcePage, gsword_resource_page, GSWORD,
+                     RESOURCE_PAGE, GswordPage)
 
 GswordResourcePage *gsword_resource_page_new(GswordWindow *window);
 GtkWidget *gsword_resource_page_widget(GswordResourcePage *page);

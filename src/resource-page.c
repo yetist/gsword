@@ -20,8 +20,8 @@ typedef struct {
 } GswordResourceEntry;
 
 struct _GswordResourcePage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GswModule *module;
     gchar *data_dir;
     gboolean map_mode;
@@ -37,6 +37,11 @@ struct _GswordResourcePage {
     GtkLabel *zoom_label;
     GtkPopover *image_context_menu;
 };
+
+G_DEFINE_TYPE(GswordResourcePage, gsword_resource_page, GSWORD_TYPE_PAGE)
+
+#define RESOURCE_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void
 resource_entry_free(gpointer data)
@@ -178,9 +183,9 @@ copy_image_to_clipboard(GswordResourcePage *page)
 
     if (texture == NULL)
         return;
-    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(RESOURCE_WINDOW(page)));
     gdk_clipboard_set_texture(clipboard, texture);
-    gsword_window_toast(page->window, _("Image copied to clipboard"));
+    gsword_window_toast(RESOURCE_WINDOW(page), _("Image copied to clipboard"));
 }
 
 static void
@@ -191,9 +196,9 @@ copy_image_path_to_clipboard(GswordResourcePage *page)
 
     if (path == NULL)
         return;
-    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+    clipboard = gtk_widget_get_clipboard(GTK_WIDGET(RESOURCE_WINDOW(page)));
     gdk_clipboard_set_text(clipboard, path);
-    gsword_window_toast(page->window,
+    gsword_window_toast(RESOURCE_WINDOW(page),
                         _("Image path copied to clipboard"));
 }
 
@@ -252,14 +257,14 @@ on_save_image_finish(GObject *source, GAsyncResult *result, gpointer user_data)
     }
 
     if (error != NULL) {
-        gsword_window_show_error(page->window, _("Cannot save image"), error);
+        gsword_window_show_error(RESOURCE_WINDOW(page), _("Cannot save image"), error);
         g_clear_error(&error);
     } else {
         gchar *name = g_file_get_basename(file);
         gchar *message = g_strdup_printf(_("Image saved as %s"), name);
 
         g_free(name);
-        gsword_window_toast(page->window, message);
+        gsword_window_toast(RESOURCE_WINDOW(page), message);
         g_free(message);
     }
     g_object_unref(file);
@@ -305,7 +310,7 @@ save_image_dialog(GswordResourcePage *page)
     g_free(basename);
     g_object_set_data_full(G_OBJECT(dialog), "source-path",
                            g_strdup(source_path), g_free);
-    gtk_file_dialog_save(dialog, GTK_WINDOW(page->window), NULL,
+    gtk_file_dialog_save(dialog, GTK_WINDOW(RESOURCE_WINDOW(page)), NULL,
                          on_save_image_finish, page);
     g_object_unref(dialog);
 }
@@ -481,7 +486,7 @@ show_path(GswordResourcePage *page, const gchar *path)
     if (page->module == NULL || path == NULL)
         return;
     if (!gsw_module_set_key_text(page->module, path, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(RESOURCE_WINDOW(page),
                                  _("Cannot open resource entry"), error);
         g_clear_error(&error);
         return;
@@ -497,7 +502,7 @@ show_path(GswordResourcePage *page, const gchar *path)
             return;
         }
         if (image_error != NULL) {
-            gsword_window_show_error(page->window,
+            gsword_window_show_error(RESOURCE_WINDOW(page),
                                      _("Cannot load map image"), image_error);
             g_clear_error(&image_error);
         }
@@ -506,7 +511,7 @@ show_path(GswordResourcePage *page, const gchar *path)
     clear_image(page);
     text = gsw_module_get_text(page->module, &error);
     if (text == NULL) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(RESOURCE_WINDOW(page),
                                  _("Cannot read resource entry"), error);
         g_clear_error(&error);
         return;
@@ -573,19 +578,19 @@ gsword_resource_page_open(GswordResourcePage *page, const gchar *name,
     gchar *root_text;
     GError *error = NULL;
 
-    g_return_if_fail(page != NULL);
-    manager = gsword_window_get_manager(page->window);
+    g_return_if_fail(GSWORD_IS_RESOURCE_PAGE(page));
+    manager = gsword_window_get_manager(RESOURCE_WINDOW(page));
     if (manager == NULL || name == NULL)
         return;
     info = gsw_manager_lookup_module_info(manager, name);
     if (info == NULL) {
-        gsword_window_set_status(page->window, _("Cannot open module"));
+        gsword_window_set_status(RESOURCE_WINDOW(page), _("Cannot open module"));
         return;
     }
     g_clear_object(&page->module);
     page->module = gsw_manager_create_module(manager, name);
     if (page->module == NULL) {
-        gsword_window_set_status(page->window, _("Cannot open module"));
+        gsword_window_set_status(RESOURCE_WINDOW(page), _("Cannot open module"));
         return;
     }
     g_free(page->data_dir);
@@ -610,7 +615,7 @@ gsword_resource_page_open(GswordResourcePage *page, const gchar *name,
     g_clear_error(&error);
     fill_entries(page, entries);
     g_ptr_array_unref(entries);
-    gsword_window_show_page(page->window, "resource");
+    gsword_window_show_page(RESOURCE_WINDOW(page), "resource");
 }
 
 static void
@@ -619,7 +624,7 @@ on_resource_back(GtkButton *button, gpointer user_data)
     GswordResourcePage *page = user_data;
 
     (void)button;
-    gsword_window_show_page(page->window, "reader");
+    gsword_window_show_page(RESOURCE_WINDOW(page), "reader");
 }
 
 static void
@@ -676,21 +681,43 @@ on_image_view_destroy(GtkWidget *widget, gpointer user_data)
 }
 
 static void
-resource_page_free(gpointer data)
+gsword_resource_page_dispose(GObject *object)
 {
-    GswordResourcePage *page = data;
+    GswordResourcePage *page = GSWORD_RESOURCE_PAGE(object);
 
-    if (page == NULL)
-        return;
     g_clear_object(&page->module);
-    g_free(page->data_dir);
-    g_free(page);
+    gsword_page_dispose_popover(&page->image_context_menu);
+
+    G_OBJECT_CLASS(gsword_resource_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_resource_page_finalize(GObject *object)
+{
+    GswordResourcePage *page = GSWORD_RESOURCE_PAGE(object);
+
+    g_clear_pointer(&page->data_dir, g_free);
+
+    G_OBJECT_CLASS(gsword_resource_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_resource_page_class_init(GswordResourcePageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_resource_page_dispose;
+    G_OBJECT_CLASS(klass)->finalize = gsword_resource_page_finalize;
+}
+
+static void
+gsword_resource_page_init(GswordResourcePage *page)
+{
+    (void)page;
 }
 
 GswordResourcePage *
 gsword_resource_page_new(GswordWindow *window)
 {
-    GswordResourcePage *page = g_new0(GswordResourcePage, 1);
+    GswordResourcePage *page = g_object_new(gsword_resource_page_get_type(), NULL);
     GtkWidget *box;
     GtkWidget *header;
     GtkWidget *paned;
@@ -708,7 +735,7 @@ gsword_resource_page_new(GswordWindow *window)
     GtkGesture *context_gesture;
     GtkEventController *key_controller;
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
@@ -793,8 +820,8 @@ gsword_resource_page_new(GswordWindow *window)
 
     page->image_view = GSWORD_IMAGE_VIEW(gsword_image_view_new());
     view_widget = GTK_WIDGET(page->image_view);
-    g_signal_connect(page->image_view, "zoom-changed",
-                     G_CALLBACK(on_image_zoom_changed), page);
+    g_signal_connect_object(page->image_view, "zoom-changed",
+                            G_CALLBACK(on_image_zoom_changed), page, 0);
     gtk_widget_set_hexpand(view_widget, TRUE);
     gtk_widget_set_vexpand(view_widget, TRUE);
 
@@ -802,18 +829,18 @@ gsword_resource_page_new(GswordWindow *window)
     page->image_context_menu = GTK_POPOVER(context_menu);
     gtk_popover_set_has_arrow(page->image_context_menu, TRUE);
     gtk_widget_set_parent(context_menu, view_widget);
-    g_signal_connect(view_widget, "destroy",
-                     G_CALLBACK(on_image_view_destroy), page);
+    g_signal_connect_object(view_widget, "destroy",
+                            G_CALLBACK(on_image_view_destroy), page, 0);
     context_gesture = gtk_gesture_click_new();
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(context_gesture),
                                   GDK_BUTTON_SECONDARY);
-    g_signal_connect(context_gesture, "pressed",
-                     G_CALLBACK(on_image_context_clicked), page);
+    g_signal_connect_object(context_gesture, "pressed",
+                            G_CALLBACK(on_image_context_clicked), page, 0);
     gtk_widget_add_controller(view_widget,
                               GTK_EVENT_CONTROLLER(context_gesture));
     key_controller = gtk_event_controller_key_new();
-    g_signal_connect(key_controller, "key-pressed",
-                     G_CALLBACK(on_image_key_pressed), page);
+    g_signal_connect_object(key_controller, "key-pressed",
+                            G_CALLBACK(on_image_key_pressed), page, 0);
     gtk_widget_add_controller(view_widget, key_controller);
 
     menu_popover = build_image_popover(page);
@@ -833,15 +860,13 @@ gsword_resource_page_new(GswordWindow *window)
     gtk_widget_set_vexpand(paned, TRUE);
     gtk_box_append(GTK_BOX(box), header);
     gtk_box_append(GTK_BOX(box), paned);
-    page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-resource-page", page,
-                           resource_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     return page;
 }
 
 GtkWidget *
 gsword_resource_page_widget(GswordResourcePage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_RESOURCE_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
