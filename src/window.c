@@ -1572,6 +1572,7 @@ gsword_window_dispose(GObject *object)
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
     g_clear_object(&priv->today_page);
+    g_clear_object(&priv->search_page);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->dispose(object);
 }

@@ -12,8 +12,8 @@
 #include <gio/gio.h>
 
 struct _GswordSearchPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkSearchEntry *entry;
     GtkDropDown *module_selector;
     GtkStringList *module_names;
@@ -49,6 +49,8 @@ struct _GswordSearchPage {
     gint context_y;
 };
 
+G_DEFINE_TYPE(GswordSearchPage, gsword_search_page, GSWORD_TYPE_PAGE)
+
 typedef struct {
     GswordWindow *window;
     GswordSearchPage *page;
@@ -64,6 +66,9 @@ typedef struct {
 static void run_search(GswordSearchPage *page);
 static void clear_context(GswordSearchPage *page);
 static void ensure_result_popovers(GswordSearchPage *page);
+
+#define SEARCH_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void
 search_job_free(gpointer data)
@@ -144,8 +149,8 @@ selected_module_name(GswordSearchPage *page)
 static void
 refresh_modules(GswordSearchPage *page, const gchar *preferred_module)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
-    GswModule *current = gsword_window_get_module(page->window);
+    GswManager *manager = gsword_window_get_manager(SEARCH_WINDOW(page));
+    GswModule *current = gsword_window_get_module(SEARCH_WINDOW(page));
     GPtrArray *infos;
     GtkStringList *names;
     gchar *wanted = g_strdup(preferred_module != NULL
@@ -203,8 +208,8 @@ configure_search_index(GswordWindow *window, GswModule *module,
 static GswModule *
 create_selected_module(GswordSearchPage *page)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
-    GswModule *current = gsword_window_get_module(page->window);
+    GswManager *manager = gsword_window_get_manager(SEARCH_WINDOW(page));
+    GswModule *current = gsword_window_get_module(SEARCH_WINDOW(page));
     const gchar *name = selected_module_name(page);
     GswModule *module;
 
@@ -216,7 +221,7 @@ create_selected_module(GswordSearchPage *page)
         return NULL;
     module = gsw_manager_create_module(manager, name);
     if (module != NULL)
-        configure_search_index(page->window, module, name);
+        configure_search_index(SEARCH_WINDOW(page), module, name);
     return module;
 }
 
@@ -266,7 +271,7 @@ refresh_index_status(GswordSearchPage *page)
 static GswVerseList *
 build_scope(GswordSearchPage *page, GError **error)
 {
-    GswModule *module = gsword_window_get_module(page->window);
+    GswModule *module = gsword_window_get_module(SEARCH_WINDOW(page));
     GswVerseKey *key;
     gint selected;
 
@@ -496,7 +501,7 @@ clear_context(GswordSearchPage *page)
 static void
 prepare_context(GswordSearchPage *page, GtkListBoxRow *row)
 {
-    GswManager *manager = gsword_window_get_manager(page->window);
+    GswManager *manager = gsword_window_get_manager(SEARCH_WINDOW(page));
     GswModule *module = NULL;
     GswModuleInfo *info;
     const gchar *module_name;
@@ -541,10 +546,10 @@ static void
 copy_context_text(GswordSearchPage *page, const gchar *text)
 {
     GdkClipboard *clipboard =
-        gtk_widget_get_clipboard(GTK_WIDGET(page->window));
+        gtk_widget_get_clipboard(GTK_WIDGET(SEARCH_WINDOW(page)));
 
     gdk_clipboard_set_text(clipboard, text != NULL ? text : "");
-    gsword_window_set_status(page->window, _("Copied to clipboard"));
+    gsword_window_set_status(SEARCH_WINDOW(page), _("Copied to clipboard"));
 }
 
 static void
@@ -591,7 +596,7 @@ on_context_open_reader(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->context_menu);
-    gsword_window_open_module_reference(page->window, page->context_module,
+    gsword_window_open_module_reference(SEARCH_WINDOW(page), page->context_module,
                                         page->context_key);
 }
 
@@ -602,7 +607,7 @@ on_context_open_compare(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->context_menu);
-    gsword_window_open_compare_reference(page->window, page->context_module,
+    gsword_window_open_compare_reference(SEARCH_WINDOW(page), page->context_module,
                                          page->context_key);
 }
 
@@ -613,7 +618,7 @@ on_context_open_note(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->context_menu);
-    gsword_window_open_note_for(page->window, page->context_module,
+    gsword_window_open_note_for(SEARCH_WINDOW(page), page->context_module,
                                 page->context_storage, page->context_display);
 }
 
@@ -627,10 +632,10 @@ on_context_add_prayer(GtkButton *button, gpointer user_data)
     if (!page->context_is_bible || page->context_module == NULL ||
         page->context_storage == NULL || page->context_display == NULL) {
         gsword_window_set_status(
-            page->window, _("This result cannot be added to prayer"));
+            SEARCH_WINDOW(page), _("This result cannot be added to prayer"));
         return;
     }
-    gsword_window_open_prayer_for(page->window, page->context_module,
+    gsword_window_open_prayer_for(SEARCH_WINDOW(page), page->context_module,
                                   page->context_storage,
                                   page->context_display);
 }
@@ -639,25 +644,25 @@ static void
 on_context_add_memory(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
-    GswordPlanStore *plans = gsword_window_get_plan_store(page->window);
+    GswordPlanStore *plans = gsword_window_get_plan_store(SEARCH_WINDOW(page));
     GError *error = NULL;
 
     (void)button;
     gtk_popover_popdown(page->context_menu);
     if (plans == NULL || !page->context_is_bible ||
         page->context_text == NULL) {
-        gsword_window_set_status(page->window,
+        gsword_window_set_status(SEARCH_WINDOW(page),
                                  _("This result cannot be added to memory review"));
         return;
     }
     if (!gsword_plan_store_add_memory_verse(
             plans, page->context_module, page->context_storage,
             page->context_display, page->context_text, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(SEARCH_WINDOW(page),
                                  _("Cannot add memory verse"), error);
         return;
     }
-    gsword_window_set_status(page->window,
+    gsword_window_set_status(SEARCH_WINDOW(page),
                              _("Verse added to memory review"));
 }
 
@@ -665,7 +670,7 @@ static void
 on_list_menu_choice(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
-    GswordNotesStore *store = gsword_window_get_notes_store(page->window);
+    GswordNotesStore *store = gsword_window_get_notes_store(SEARCH_WINDOW(page));
     gint64 list_id = (gint64)GPOINTER_TO_SIZE(
         g_object_get_data(G_OBJECT(button), "list-id"));
     GError *error = NULL;
@@ -676,11 +681,11 @@ on_list_menu_choice(GtkButton *button, gpointer user_data)
     if (!gsword_notes_store_add_to_list(
             store, list_id, page->context_module, page->context_storage,
             page->context_display, &error)) {
-        gsword_window_show_error(page->window,
+        gsword_window_show_error(SEARCH_WINDOW(page),
                                  _("Cannot add verse to list"), error);
         return;
     }
-    gsword_window_set_status(page->window, _("Verse added to list"));
+    gsword_window_set_status(SEARCH_WINDOW(page), _("Verse added to list"));
 }
 
 static void
@@ -690,7 +695,7 @@ on_list_menu_open_notes(GtkButton *button, gpointer user_data)
 
     (void)button;
     gtk_popover_popdown(page->list_menu);
-    gsword_window_show_personal(page->window,
+    gsword_window_show_personal(SEARCH_WINDOW(page),
                                 GSWORD_PERSONAL_SECTION_COLLECTIONS);
 }
 
@@ -707,7 +712,7 @@ rebuild_list_menu(GswordSearchPage *page)
     ensure_result_popovers(page);
     if (page->list_menu == NULL)
         return;
-    store = gsword_window_get_notes_store(page->window);
+    store = gsword_window_get_notes_store(SEARCH_WINDOW(page));
     child = NULL;
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     title = gtk_label_new(_("Add to verse list"));
@@ -778,7 +783,7 @@ static void
 on_context_module_info(GtkButton *button, gpointer user_data)
 {
     GswordSearchPage *page = user_data;
-    GswManager *manager = gsword_window_get_manager(page->window);
+    GswManager *manager = gsword_window_get_manager(SEARCH_WINDOW(page));
     GswModuleInfo *info;
     AdwDialog *dialog;
     gchar *body;
@@ -788,7 +793,7 @@ on_context_module_info(GtkButton *button, gpointer user_data)
     info = manager != NULL && page->context_module != NULL
          ? gsw_manager_lookup_module_info(manager, page->context_module) : NULL;
     if (info == NULL) {
-        gsword_window_set_status(page->window, _("Module information unavailable"));
+        gsword_window_set_status(SEARCH_WINDOW(page), _("Module information unavailable"));
         return;
     }
     body = g_strdup_printf(
@@ -811,7 +816,7 @@ on_context_module_info(GtkButton *button, gpointer user_data)
     adw_alert_dialog_add_response(ADW_ALERT_DIALOG(dialog), "close",
                                   _("Close"));
     adw_alert_dialog_set_close_response(ADW_ALERT_DIALOG(dialog), "close");
-    adw_dialog_present(dialog, GTK_WIDGET(page->window));
+    adw_dialog_present(dialog, GTK_WIDGET(SEARCH_WINDOW(page)));
     g_free(body);
 }
 
@@ -1058,7 +1063,7 @@ populate_results(GswordSearchPage *page, GPtrArray *results)
                                          results->len);
 
         gtk_label_set_text(page->results_label, message);
-        gsword_window_set_status(page->window, message);
+        gsword_window_set_status(SEARCH_WINDOW(page), message);
         g_free(message);
     }
     page->results_count = results->len;
@@ -1129,9 +1134,9 @@ on_search_done(GObject *source_object, GAsyncResult *result,
         restore_results_label(page);
         if (g_error_matches(error, GSW_ERROR, GSW_ERROR_CANCELLED) ||
             g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-            gsword_window_set_status(page->window, _("Search cancelled"));
+            gsword_window_set_status(SEARCH_WINDOW(page), _("Search cancelled"));
         } else {
-            gsword_window_show_error(page->window, _("Search failed"), error);
+            gsword_window_show_error(SEARCH_WINDOW(page), _("Search failed"), error);
         }
         g_clear_error(&error);
         return;
@@ -1145,7 +1150,7 @@ on_search_done(GObject *source_object, GAsyncResult *result,
 static void
 run_search(GswordSearchPage *page)
 {
-    GswordWindow *window = page->window;
+    GswordWindow *window = SEARCH_WINDOW(page);
     GswModule *current = gsword_window_get_module(window);
     GswManager *manager;
     GswModule *module;
@@ -1253,7 +1258,7 @@ on_search_stop(GtkSearchEntry *entry, gpointer user_data)
     GswordSearchPage *page = user_data;
 
     (void)entry;
-    gsword_window_close_search(page->window);
+    gsword_window_close_search(SEARCH_WINDOW(page));
 }
 
 static void
@@ -1272,7 +1277,7 @@ on_back_clicked(GtkButton *button, gpointer user_data)
     GswordSearchPage *page = user_data;
 
     (void)button;
-    gsword_window_close_search(page->window);
+    gsword_window_close_search(SEARCH_WINDOW(page));
 }
 
 static void
@@ -1295,7 +1300,7 @@ on_result_selected(GtkListBox *list, GtkListBoxRow *row,
         return;
     module_name = g_object_get_data(G_OBJECT(row), "result-module");
     key = g_object_get_data(G_OBJECT(row), "result-key");
-    gsword_window_open_module_reference(page->window, module_name, key);
+    gsword_window_open_module_reference(SEARCH_WINDOW(page), module_name, key);
 }
 
 static void
@@ -1306,7 +1311,7 @@ on_index_progress(const gchar *module_name, guint processed, guint total,
     gchar *message = g_strdup_printf(_("Indexing %s: %u/%u"),
                                      module_name, processed, total);
 
-    gsword_window_set_status(page->window, message);
+    gsword_window_set_status(SEARCH_WINDOW(page), message);
     g_free(message);
     while (g_main_context_iteration(NULL, FALSE))
         ;
@@ -1349,7 +1354,7 @@ gsword_search_page_select_current(GswordSearchPage *page)
     GswModule *current;
 
     g_return_if_fail(page != NULL);
-    current = gsword_window_get_module(page->window);
+    current = gsword_window_get_module(SEARCH_WINDOW(page));
     refresh_modules(page, current != NULL
                           ? gsw_module_get_name(current) : NULL);
     refresh_index_status(page);
@@ -1367,11 +1372,11 @@ on_build_index(GtkButton *button, gpointer user_data)
         return;
     if (!gsw_module_build_search_index(module, NULL, on_index_progress, page,
                                        &error)) {
-        gsword_window_show_error(page->window, _("Cannot build index"), error);
+        gsword_window_show_error(SEARCH_WINDOW(page), _("Cannot build index"), error);
         g_clear_object(&module);
         return;
     }
-    gsword_window_set_status(page->window, _("Search index built"));
+    gsword_window_set_status(SEARCH_WINDOW(page), _("Search index built"));
     g_clear_object(&module);
     gsword_search_page_refresh_index(page);
 }
@@ -1387,22 +1392,20 @@ on_delete_index(GtkButton *button, gpointer user_data)
     if (module == NULL)
         return;
     if (!gsw_module_delete_search_index(module, &error)) {
-        gsword_window_show_error(page->window, _("Cannot delete index"), error);
+        gsword_window_show_error(SEARCH_WINDOW(page), _("Cannot delete index"), error);
         g_clear_object(&module);
         return;
     }
-    gsword_window_set_status(page->window, _("Search index deleted"));
+    gsword_window_set_status(SEARCH_WINDOW(page), _("Search index deleted"));
     g_clear_object(&module);
     gsword_search_page_refresh_index(page);
 }
 
 static void
-search_page_free(gpointer data)
+gsword_search_page_dispose(GObject *object)
 {
-    GswordSearchPage *page = data;
+    GswordSearchPage *page = GSWORD_SEARCH_PAGE(object);
 
-    if (page == NULL)
-        return;
     if (page->search_task != NULL) {
         SearchJob *job = g_task_get_task_data(page->search_task);
 
@@ -1415,13 +1418,28 @@ search_page_free(gpointer data)
     g_clear_object(&page->search_cancellable);
     g_clear_object(&page->history);
     clear_context(page);
-    g_free(page);
+    gsword_page_dispose_popover(&page->context_menu);
+    gsword_page_dispose_popover(&page->list_menu);
+
+    G_OBJECT_CLASS(gsword_search_page_parent_class)->dispose(object);
+}
+
+static void
+gsword_search_page_class_init(GswordSearchPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_search_page_dispose;
+}
+
+static void
+gsword_search_page_init(GswordSearchPage *page)
+{
+    (void)page;
 }
 
 GswordSearchPage *
 gsword_search_page_new(GswordWindow *window)
 {
-    GswordSearchPage *page = g_new0(GswordSearchPage, 1);
+    GswordSearchPage *page = g_object_new(gsword_search_page_get_type(), NULL);
     GtkWidget *box;
     GtkWidget *controls;
     GtkWidget *search_row;
@@ -1444,7 +1462,7 @@ gsword_search_page_new(GswordWindow *window)
     GtkWidget *scrolled;
     GtkStringList *types;
 
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     search_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -1619,10 +1637,10 @@ gsword_search_page_new(GswordWindow *window)
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled),
                                   GTK_WIDGET(page->results));
     ensure_result_popovers(page);
-    g_signal_connect(scrolled, "unrealize",
-                     G_CALLBACK(on_results_unrealize), page);
-    g_signal_connect(scrolled, "destroy",
-                     G_CALLBACK(on_results_unrealize), page);
+    g_signal_connect_object(scrolled, "unrealize",
+                            G_CALLBACK(on_results_unrealize), page, 0);
+    g_signal_connect_object(scrolled, "destroy",
+                            G_CALLBACK(on_results_unrealize), page, 0);
     gtk_widget_set_vexpand(scrolled, TRUE);
     page->results_stack = GTK_STACK(gtk_stack_new());
     gtk_stack_add_named(page->results_stack, GTK_WIDGET(page->empty_label),
@@ -1642,9 +1660,7 @@ gsword_search_page_new(GswordWindow *window)
     gtk_box_append(GTK_BOX(box), controls_scroll);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_label));
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(page->results_stack));
-    page->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-search-page", page,
-                           search_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), box);
     gsword_search_page_refresh_index(page);
     return page;
 }
@@ -1652,14 +1668,14 @@ gsword_search_page_new(GswordWindow *window)
 GtkWidget *
 gsword_search_page_widget(GswordSearchPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_SEARCH_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 void
 gsword_search_page_focus(GswordSearchPage *page)
 {
-    if (page == NULL || page->entry == NULL)
+    if (!GSWORD_IS_SEARCH_PAGE(page) || page->entry == NULL)
         return;
     gtk_widget_grab_focus(GTK_WIDGET(page->entry));
     gtk_editable_select_region(GTK_EDITABLE(page->entry), 0, -1);

@@ -7,11 +7,12 @@
 #ifndef GSWORD_SEARCH_PAGE_H
 #define GSWORD_SEARCH_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordSearchPage GswordSearchPage;
+G_DECLARE_FINAL_TYPE(GswordSearchPage, gsword_search_page, GSWORD,
+                     SEARCH_PAGE, GswordPage)
 
 GswordSearchPage *gsword_search_page_new(GswordWindow *window);
 GtkWidget *gsword_search_page_widget(GswordSearchPage *page);
