@@ -81,6 +81,20 @@
   <translation type="gettext">gsword</translation>
 
   <releases>
+    <release version="0.3.0" date="2026-11-10">
+      <description>
+        <p>Reader improvements and reliability update.</p>
+        <ul>
+          <li>Support same-chapter verse range input with range highlighting.</li>
+          <li>Add hover previews for verse lists, bookmarks, and favorites.</li>
+          <li>Add reader context-menu actions for verse lists and bookmarks.</li>
+          <li>Add prayer actions to search results and improve search workflows.</li>
+          <li>Refresh note lists after autosave and validate plan start references.</li>
+          <li>Improve invalid-reference feedback and localize saved references.</li>
+          <li>Fix narrow-window search layout and popover cleanup warnings.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-11-06">
       <description>
         <p>Personal study center and narrow desktop support.</p>
