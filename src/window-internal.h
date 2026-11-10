@@ -75,6 +75,10 @@ void gsword_window_toggle_sidebar(GswordWindow *self);
 void gsword_window_open_search(GswordWindow *self);
 void gsword_window_install_actions(GswordWindow *self);
 void gsword_window_build_pages(GswordWindow *self);
+void gsword_window_connect_session(GswordWindow *self);
+void gsword_window_restore_page(GswordWindow *self);
+void gsword_window_refresh_personal_section(
+    GswordWindow *self, GswordPersonalSection section);
 void gsword_window_dispose_pages(GswordWindow *self);
 
 G_END_DECLS

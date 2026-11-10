@@ -144,8 +144,9 @@ gsword_window_current_page_id(GswordWindow *self)
     return g_strdup(name != NULL ? name : "reader");
 }
 
-static void refresh_personal_section(GswordWindow *self,
-                                     GswordPersonalSection section)
+void
+gsword_window_refresh_personal_section(GswordWindow *self,
+                                       GswordPersonalSection section)
 {
     GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
@@ -190,7 +191,7 @@ on_personal_section_changed(GswordPersonalPage *page,
     if (priv->settings != NULL && priv->page_restored)
         g_settings_set_string(priv->settings, "active-page", page_id);
     g_free(page_id);
-    refresh_personal_section(self, section);
+    gsword_window_refresh_personal_section(self, section);
     if (section == GSWORD_PERSONAL_SECTION_NOTES &&
         priv->notes_page != NULL && !gsword_notes_page_has_note_key(
             priv->notes_page) && priv->module != NULL)
@@ -213,7 +214,7 @@ gsword_window_show_personal(GswordWindow *self, GswordPersonalSection section)
         g_settings_set_string(priv->settings, "active-page", page_id);
         g_free(page_id);
     }
-    refresh_personal_section(self, section);
+    gsword_window_refresh_personal_section(self, section);
 }
 
 void
@@ -776,80 +777,6 @@ gsword_window_populate_modules(GswordWindow *self)
 }
 
 static void
-on_workspace_changed(GObject *object, GParamSpec *pspec, gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    const gchar *name = adw_view_stack_get_visible_child_name(
-        ADW_VIEW_STACK(object));
-
-    (void)pspec;
-    if (priv->settings != NULL && name != NULL && priv->page_restored) {
-        gchar *page_id = gsword_window_current_page_id(self);
-
-        g_settings_set_string(priv->settings, "active-page", page_id);
-        g_free(page_id);
-    }
-    if (priv->reader_page != NULL && g_strcmp0(name, "reader") != 0)
-        gsword_reader_page_set_focus_mode(priv->reader_page, FALSE);
-    if (priv->reader_page != NULL && g_strcmp0(name, "reader") == 0)
-        gsword_reader_page_update_favorite(priv->reader_page);
-    if (g_strcmp0(name, "compare") == 0) {
-        gsword_workspace_page_sync_from_reader(priv->workspace_page);
-    } else if (g_strcmp0(name, "search") == 0) {
-        if (priv->search_page != NULL)
-            gsword_search_page_select_current(priv->search_page);
-    } else if (g_strcmp0(name, "personal") == 0 &&
-               priv->personal_page != NULL) {
-        refresh_personal_section(
-            self, gsword_personal_page_get_section(priv->personal_page));
-    } else if (g_strcmp0(name, "teaching") == 0) {
-        if (priv->teaching_page != NULL)
-            gsword_teaching_page_load(priv->teaching_page);
-    } else if (g_strcmp0(name, "library") == 0) {
-        if (priv->library_page != NULL) {
-            gsword_library_page_refresh_sources(priv->library_page);
-            gsword_library_page_refresh_installed(priv->library_page);
-            gsword_library_page_refresh_remote(priv->library_page);
-        }
-    }
-}
-
-static void
-gsword_window_restore_page(GswordWindow *self)
-{
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-    gchar *page = NULL;
-
-    if (priv->settings != NULL)
-        page = g_settings_get_string(priv->settings, "active-page");
-    if (g_strcmp0(page, "parallel") == 0) {
-        gsword_workspace_page_apply_parallel_template(priv->workspace_page);
-        gsword_window_show_page(self, "compare");
-    } else if (page != NULL &&
-               (g_strcmp0(page, "reader") == 0 ||
-                g_strcmp0(page, "compare") == 0 ||
-                g_strcmp0(page, "panes") == 0 ||
-                g_strcmp0(page, "search") == 0 ||
-                g_strcmp0(page, "notes") == 0 ||
-                g_strcmp0(page, "plan") == 0 ||
-                g_strcmp0(page, "personal") == 0 ||
-                g_str_has_prefix(page, "personal/") ||
-                g_strcmp0(page, "library") == 0 ||
-                g_strcmp0(page, "teaching") == 0)) {
-        gsword_window_show_page(self, page);
-    }
-    priv->page_restored = TRUE;
-    if (priv->settings != NULL) {
-        gchar *page_id = gsword_window_current_page_id(self);
-
-        g_settings_set_string(priv->settings, "active-page", page_id);
-        g_free(page_id);
-    }
-    g_free(page);
-}
-
-static void
 on_search_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
@@ -1004,8 +931,6 @@ gsword_window_build(GswordWindow *self)
     gsword_window_build_pages(self);
     gsword_personal_page_set_section_changed_func(
         priv->personal_page, on_personal_section_changed, self);
-    g_signal_connect(priv->content_stack, "notify::visible-child",
-                     G_CALLBACK(on_workspace_changed), self);
 
     switcher = adw_view_switcher_new();
     adw_view_switcher_set_stack(ADW_VIEW_SWITCHER(switcher),
@@ -1136,25 +1061,6 @@ gsword_window_init(GswordWindow *self)
     gsword_window_get_instance_private(self);
 }
 
-static void
-on_book_name_language_changed(GSettings *settings, const gchar *key,
-                              gpointer user_data)
-{
-    GswordWindow *self = GSWORD_WINDOW(user_data);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
-
-    (void)settings;
-    (void)key;
-    if (priv->module != NULL)
-        gsword_window_apply_book_name_locale(self, priv->module);
-    if (priv->reader_page != NULL) {
-        gsword_reader_page_sync_context(priv->reader_page);
-        gsword_reader_page_refresh(priv->reader_page);
-    }
-    if (priv->workspace_page != NULL)
-        gsword_workspace_page_apply_book_name_policy(priv->workspace_page);
-}
-
 GtkWidget *
 gsword_window_new(GtkApplication *application, GswManager *manager,
                   GSettings *settings)
@@ -1200,9 +1106,7 @@ gsword_window_new(GtkApplication *application, GswManager *manager,
     }
     gsword_window_build(self);
     gsword_window_load_settings(self);
-    if (priv->settings != NULL)
-        g_signal_connect(priv->settings, "changed::book-name-language",
-                         G_CALLBACK(on_book_name_language_changed), self);
+    gsword_window_connect_session(self);
     if (priv->reader_page != NULL)
         gsword_study_panel_refresh_lexicons(
             gsword_reader_page_get_study_panel(priv->reader_page));
