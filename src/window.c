@@ -1566,6 +1566,17 @@ gsword_window_load_settings(GswordWindow *self)
 }
 
 static void
+gsword_window_dispose(GObject *object)
+{
+    GswordWindow *self = GSWORD_WINDOW(object);
+    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
+
+    g_clear_object(&priv->today_page);
+
+    G_OBJECT_CLASS(gsword_window_parent_class)->dispose(object);
+}
+
+static void
 gsword_window_finalize(GObject *object)
 {
     GswordWindow *self = GSWORD_WINDOW(object);
@@ -1587,6 +1598,7 @@ gsword_window_finalize(GObject *object)
 static void
 gsword_window_class_init(GswordWindowClass *klass)
 {
+    G_OBJECT_CLASS(klass)->dispose = gsword_window_dispose;
     G_OBJECT_CLASS(klass)->finalize = gsword_window_finalize;
 }
 

@@ -7,11 +7,12 @@
 #ifndef GSWORD_TODAY_PAGE_H
 #define GSWORD_TODAY_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordTodayPage GswordTodayPage;
+G_DECLARE_FINAL_TYPE(GswordTodayPage, gsword_today_page, GSWORD,
+                     TODAY_PAGE, GswordPage)
 
 GswordTodayPage *gsword_today_page_new(GswordWindow *window);
 GtkWidget *gsword_today_page_widget(GswordTodayPage *page);

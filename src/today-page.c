@@ -17,8 +17,8 @@
 #include <string.h>
 
 struct _GswordTodayPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     GtkLabel *continue_value;
     GtkLabel *plan_value;
     GtkLabel *devotion_value;
@@ -28,17 +28,16 @@ struct _GswordTodayPage {
     gboolean recent_is_insight;
 };
 
-static void
-today_page_free(gpointer data)
-{
-    g_free(data);
-}
+G_DEFINE_TYPE(GswordTodayPage, gsword_today_page, GSWORD_TYPE_PAGE)
+
+#define TODAY_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static void
 on_continue_clicked(GtkButton *button, gpointer user_data)
 {
     GswordTodayPage *page = user_data;
-    GSettings *settings = gsword_window_get_settings(page->window);
+    GSettings *settings = gsword_window_get_settings(TODAY_WINDOW(page));
     gchar *module = NULL;
     gchar *key = NULL;
 
@@ -48,9 +47,9 @@ on_continue_clicked(GtkButton *button, gpointer user_data)
         key = g_settings_get_string(settings, "last-key");
     }
     if (module == NULL || *module == '\0' || key == NULL || *key == '\0')
-        gsword_window_set_status(page->window, _("No reading position yet"));
-    else if (!gsword_window_open_module_reference(page->window, module, key))
-        gsword_window_set_status(page->window, _("Cannot open reading position"));
+        gsword_window_set_status(TODAY_WINDOW(page), _("No reading position yet"));
+    else if (!gsword_window_open_module_reference(TODAY_WINDOW(page), module, key))
+        gsword_window_set_status(TODAY_WINDOW(page), _("Cannot open reading position"));
     g_free(module);
     g_free(key);
 }
@@ -59,7 +58,7 @@ static void
 on_plans_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
+    gsword_window_show_personal(TODAY_WINDOW(user_data),
                                 GSWORD_PERSONAL_SECTION_PLANS);
 }
 
@@ -67,14 +66,14 @@ static void
 on_devotion_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    gsword_window_open_devotion(((GswordTodayPage *)user_data)->window);
+    gsword_window_open_devotion(TODAY_WINDOW(user_data));
 }
 
 static void
 on_prayer_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    gsword_window_show_personal(((GswordTodayPage *)user_data)->window,
+    gsword_window_show_personal(TODAY_WINDOW(user_data),
                                 GSWORD_PERSONAL_SECTION_PRAYER);
 }
 
@@ -85,9 +84,9 @@ on_recent_clicked(GtkButton *button, gpointer user_data)
 
     (void)button;
     if (page->recent_is_insight)
-        gsword_window_open_insights(page->window);
+        gsword_window_open_insights(TODAY_WINDOW(page));
     else
-        gsword_window_show_personal(page->window,
+        gsword_window_show_personal(TODAY_WINDOW(page),
                                     GSWORD_PERSONAL_SECTION_NOTES);
 }
 
@@ -95,7 +94,7 @@ static void
 on_memory_clicked(GtkButton *button, gpointer user_data)
 {
     (void)button;
-    gsword_window_open_memory_review(((GswordTodayPage *)user_data)->window);
+    gsword_window_open_memory_review(TODAY_WINDOW(user_data));
 }
 
 static GtkWidget *
@@ -134,10 +133,22 @@ create_card(const gchar *title, const gchar *action, GCallback callback,
     return card;
 }
 
+static void
+gsword_today_page_class_init(GswordTodayPageClass *klass)
+{
+    (void)klass;
+}
+
+static void
+gsword_today_page_init(GswordTodayPage *page)
+{
+    (void)page;
+}
+
 GswordTodayPage *
 gsword_today_page_new(GswordWindow *window)
 {
-    GswordTodayPage *page = g_new0(GswordTodayPage, 1);
+    GswordTodayPage *page = g_object_new(gsword_today_page_get_type(), NULL);
     GtkWidget *scroll = gtk_scrolled_window_new();
     GtkWidget *clamp = adw_clamp_new();
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -146,7 +157,7 @@ gsword_today_page_new(GswordWindow *window)
         _("Continue reading and catch up with your personal study."));
 
     g_return_val_if_fail(GSWORD_IS_WINDOW(window), NULL);
-    page->window = window;
+    gsword_page_set_window(GSWORD_PAGE(page), window);
 
     gtk_widget_set_margin_top(box, 18);
     gtk_widget_set_margin_bottom(box, 18);
@@ -189,9 +200,7 @@ gsword_today_page_new(GswordWindow *window)
     adw_clamp_set_child(ADW_CLAMP(clamp), box);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), clamp);
     gtk_widget_set_vexpand(scroll, TRUE);
-    page->root = scroll;
-    g_object_set_data_full(G_OBJECT(scroll), "gsword-today-page", page,
-                           today_page_free);
+    gsword_page_set_widget(GSWORD_PAGE(page), scroll);
     gsword_today_page_refresh(page);
     return page;
 }
@@ -199,8 +208,8 @@ gsword_today_page_new(GswordWindow *window)
 GtkWidget *
 gsword_today_page_widget(GswordTodayPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return page->root;
+    g_return_val_if_fail(GSWORD_IS_TODAY_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 static gchar *
@@ -290,11 +299,11 @@ gsword_today_page_refresh(GswordTodayPage *page)
     guint i;
 
     g_return_if_fail(page != NULL);
-    settings = gsword_window_get_settings(page->window);
-    plans = gsword_window_get_plan_store(page->window);
-    notes = gsword_window_get_notes_store(page->window);
-    insights = gsword_window_get_insight_store(page->window);
-    prayers = gsword_window_get_prayer_store(page->window);
+    settings = gsword_window_get_settings(TODAY_WINDOW(page));
+    plans = gsword_window_get_plan_store(TODAY_WINDOW(page));
+    notes = gsword_window_get_notes_store(TODAY_WINDOW(page));
+    insights = gsword_window_get_insight_store(TODAY_WINDOW(page));
+    prayers = gsword_window_get_prayer_store(TODAY_WINDOW(page));
 
     if (settings != NULL) {
         module = g_settings_get_string(settings, "last-module");
@@ -336,7 +345,7 @@ gsword_today_page_refresh(GswordTodayPage *page)
         gchar *preview = NULL;
 
         if (devotion_name != NULL && *devotion_name != '\0')
-            preview = load_devotion_preview(page->window, devotion_name);
+            preview = load_devotion_preview(TODAY_WINDOW(page), devotion_name);
         if (preview != NULL) {
             value = g_strdup_printf("%s · %s", devotion_name, preview);
             gtk_label_set_text(page->devotion_value, value);
