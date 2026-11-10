@@ -7,11 +7,12 @@
 #ifndef GSWORD_LIBRARY_PAGE_H
 #define GSWORD_LIBRARY_PAGE_H 1
 
-#include "window.h"
+#include "gsword-page.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GswordLibraryPage GswordLibraryPage;
+G_DECLARE_FINAL_TYPE(GswordLibraryPage, gsword_library_page, GSWORD,
+                     LIBRARY_PAGE, GswordPage)
 
 GswordLibraryPage *gsword_library_page_new(GswordWindow *window);
 GtkWidget *gsword_library_page_widget(GswordLibraryPage *page);

@@ -83,8 +83,8 @@ gsword_module_row_new(GswModuleInfo *info, guint status, gboolean remote)
 }
 
 struct _GswordLibraryPage {
-    GswordWindow *window;
-    GtkWidget *root;
+    GswordPage parent_instance;
+
     AdwNavigationSplitView *split_view;
     GtkWidget *detail_back;
     GswManager *manager;
@@ -190,6 +190,11 @@ typedef struct {
     GtkEntry *user_entry;
     GtkEntry *password_entry;
 } ProxyDialogData;
+
+G_DEFINE_TYPE(GswordLibraryPage, gsword_library_page, GSWORD_TYPE_PAGE)
+
+#define LIBRARY_WINDOW(page) \
+    gsword_page_get_window(GSWORD_PAGE(page))
 
 static GswordLibraryPage *
 library_page_get(GswordWindow *self)
@@ -893,7 +898,7 @@ gsword_window_update_installed_details(GswordWindow *self, const gchar *name)
     info = gsw_manager_lookup_module_info(priv->manager, name);
     if (info == NULL)
         return;
-    writable = gsword_window_module_is_writable(priv->window, info);
+    writable = gsword_window_module_is_writable(LIBRARY_WINDOW(priv), info);
     version = gsw_module_info_get_version(info);
     version_text = g_strdup(version != NULL ? version : "?");
     update_common_module_details(
@@ -1040,7 +1045,7 @@ on_add_source_clicked(GtkButton *button, gpointer user_data)
 {
     SourceDialogData *data = user_data;
     GswordLibraryPage *priv = data->page;
-    GswordWindow *self = priv->window;
+    GswordWindow *self = LIBRARY_WINDOW(priv);
     const gchar *caption = gtk_editable_get_text(
         GTK_EDITABLE(data->caption_entry));
     const gchar *host = gtk_editable_get_text(GTK_EDITABLE(data->host_entry));
@@ -1086,7 +1091,7 @@ on_remove_source_clicked(GtkButton *button, gpointer user_data)
 {
     SourceDialogData *data = user_data;
     GswordLibraryPage *priv = data->page;
-    GswordWindow *self = priv->window;
+    GswordWindow *self = LIBRARY_WINDOW(priv);
     const gchar *caption = g_object_get_data(G_OBJECT(button),
                                              "source-caption");
     GError *error = NULL;
@@ -1257,6 +1262,8 @@ on_refresh_sources_finished(GObject *source, GAsyncResult *result,
     } else {
         gsword_window_set_status(self, _("Install sources refreshed"));
     }
+    if (priv == NULL)
+        return;
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_sources_button), TRUE);
     gsword_window_refresh_install_sources(self);
 }
@@ -1276,6 +1283,8 @@ on_test_source_finished(GObject *source, GAsyncResult *result,
         gsword_window_show_error(self, _("Cannot connect to source"), error);
     else
         gsword_window_set_status(self, _("Source connection OK"));
+    if (priv == NULL)
+        return;
     if (priv->test_source_button != NULL)
         gtk_widget_set_sensitive(GTK_WIDGET(priv->test_source_button), TRUE);
     if (priv->refresh_source_button != NULL)
@@ -1341,6 +1350,8 @@ clear_install_progress_cb(gpointer data)
     GswordWindow *self = GSWORD_WINDOW(data);
     GswordLibraryPage *priv = library_page_get(self);
 
+    if (priv == NULL)
+        return G_SOURCE_REMOVE;
     if (priv->install_cancellable == NULL) {
         gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
         gtk_label_set_text(priv->install_status, "");
@@ -1372,6 +1383,8 @@ on_refresh_remote_finished(GObject *source, GAsyncResult *result,
     } else {
         gsword_window_set_status(self, _("Remote module list refreshed"));
     }
+    if (priv == NULL)
+        return;
     gtk_widget_set_sensitive(GTK_WIDGET(priv->refresh_source_button), TRUE);
     gtk_widget_set_visible(GTK_WIDGET(priv->cancel_button), FALSE);
     gtk_progress_bar_set_fraction(priv->install_progress, 0.0);
@@ -1515,7 +1528,7 @@ on_unlock_response(AdwAlertDialog *dialog, const gchar *response,
 {
     CipherDialogData *cipher = user_data;
     GswordLibraryPage *priv = cipher->page;
-    GswordWindow *self = priv->window;
+    GswordWindow *self = LIBRARY_WINDOW(priv);
     const gchar *key;
     GError *error = NULL;
 
@@ -1714,10 +1727,15 @@ on_install_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     GswordLibraryPage *priv = library_page_get(self);
     GError *error = NULL;
     gboolean installed;
-    gchar *installed_name = g_strdup(priv->selected_remote_name);
+    gchar *installed_name = NULL;
 
     installed = gsw_install_manager_install_module_finish(
         GSW_INSTALL_MANAGER(source), result, &error);
+    if (priv == NULL) {
+        g_clear_error(&error);
+        return;
+    }
+    installed_name = g_strdup(priv->selected_remote_name);
     if (!installed) {
         gsword_window_show_error(self, _("Module install failed"), error);
     }
@@ -1832,6 +1850,8 @@ on_remove_finished(GObject *source, GAsyncResult *result, gpointer user_data)
     } else {
         gsword_window_set_status(self, _("Module removed"));
     }
+    if (priv == NULL)
+        return;
     g_clear_object(&priv->install_cancellable);
     g_clear_pointer(&priv->selected_installed_name, g_free);
     gtk_widget_set_sensitive(GTK_WIDGET(priv->remove_button), FALSE);
@@ -1868,6 +1888,8 @@ on_install_pre_status(GswStatusReporter *reporter, guint64 total, guint64 done,
     GswordLibraryPage *priv = library_page_get(self);
     (void)reporter;
 
+    if (priv == NULL)
+        return;
     gtk_progress_bar_set_fraction(priv->install_progress,
                                   total > 0 ? (gdouble)done / total : 0.0);
     gtk_label_set_text(priv->install_status,
@@ -1883,6 +1905,9 @@ on_install_progress(GswStatusReporter *reporter, guint64 total, guint64 done,
     GswordLibraryPage *priv = library_page_get(self);
     gchar *status;
     (void)reporter;
+
+    if (priv == NULL)
+        return;
 
     if (total > 0) {
         gtk_progress_bar_set_fraction(priv->install_progress,
@@ -1911,6 +1936,11 @@ on_browse_local_finished(GObject *source, GAsyncResult *result,
         GTK_FILE_DIALOG(source), result, &error);
 
     if (folder == NULL) {
+        g_clear_error(&error);
+        return;
+    }
+    if (priv == NULL) {
+        g_object_unref(folder);
         g_clear_error(&error);
         return;
     }
@@ -2157,7 +2187,7 @@ on_proxy_response(AdwAlertDialog *dialog, const gchar *response,
     }
     if (priv->installer != NULL)
         gsw_install_manager_set_proxy(priv->installer, url, user, password);
-    gsword_window_set_status(priv->window, _("Proxy settings saved"));
+    gsword_window_set_status(LIBRARY_WINDOW(priv), _("Proxy settings saved"));
 }
 
 static void
@@ -2229,12 +2259,15 @@ on_library_back_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
-library_page_free(gpointer data)
+gsword_library_page_dispose(GObject *object)
 {
-    GswordLibraryPage *page = data;
+    GswordLibraryPage *page = GSWORD_LIBRARY_PAGE(object);
+    GswordWindow *window = LIBRARY_WINDOW(page);
 
-    if (page == NULL)
-        return;
+    if (window != NULL)
+        g_object_set_data(G_OBJECT(window), "gsword-library-page", NULL);
+    if (page->install_cancellable != NULL)
+        g_cancellable_cancel(page->install_cancellable);
     g_clear_object(&page->installer);
     g_clear_object(&page->install_reporter);
     g_clear_pointer(&page->install_sources, g_ptr_array_unref);
@@ -2252,25 +2285,37 @@ library_page_free(gpointer data)
      * chain transfers ownership forward through the GTK constructors.  Those
      * fields are borrowed references and must not be unref'd here.
      */
-    g_free(page->selected_remote_name);
-    g_free(page->selected_installed_name);
-    g_free(page);
+    G_OBJECT_CLASS(gsword_library_page_parent_class)->dispose(object);
 }
 
 static void
-library_page_root_free(gpointer data)
+gsword_library_page_finalize(GObject *object)
 {
-    GswordLibraryPage *page = data;
+    GswordLibraryPage *page = GSWORD_LIBRARY_PAGE(object);
 
-    if (page->window != NULL)
-        g_object_set_data(G_OBJECT(page->window), "gsword-library-page", NULL);
-    library_page_free(page);
+    g_clear_pointer(&page->selected_remote_name, g_free);
+    g_clear_pointer(&page->selected_installed_name, g_free);
+
+    G_OBJECT_CLASS(gsword_library_page_parent_class)->finalize(object);
+}
+
+static void
+gsword_library_page_class_init(GswordLibraryPageClass *klass)
+{
+    G_OBJECT_CLASS(klass)->dispose = gsword_library_page_dispose;
+    G_OBJECT_CLASS(klass)->finalize = gsword_library_page_finalize;
+}
+
+static void
+gsword_library_page_init(GswordLibraryPage *page)
+{
+    (void)page;
 }
 
 GswordLibraryPage *
 gsword_library_page_new(GswordWindow *self)
 {
-    GswordLibraryPage *priv = g_new0(GswordLibraryPage, 1);
+    GswordLibraryPage *priv = g_object_new(gsword_library_page_get_type(), NULL);
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *controls = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     GtkWidget *header_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
@@ -2373,7 +2418,7 @@ gsword_library_page_new(GswordWindow *self)
     gtk_box_append(GTK_BOX(view_row), proxy);
     gtk_box_append(GTK_BOX(view_row), manage_sources);
 
-    priv->window = self;
+    gsword_page_set_window(GSWORD_PAGE(priv), self);
     priv->manager = gsword_window_get_manager(self);
     priv->settings = gsword_window_get_settings(self);
     g_object_set_data(G_OBJECT(self), "gsword-library-page", priv);
@@ -2773,9 +2818,7 @@ gsword_library_page_new(GswordWindow *self)
         adw_navigation_split_view_get_collapsed(split_view));
     gtk_box_append(GTK_BOX(box), controls);
     gtk_box_append(GTK_BOX(box), GTK_WIDGET(split_view));
-    priv->root = box;
-    g_object_set_data_full(G_OBJECT(box), "gsword-library-page-owner", priv,
-                           library_page_root_free);
+    gsword_page_set_widget(GSWORD_PAGE(priv), box);
     priv->installed_view_button = GTK_TOGGLE_BUTTON(installed_view);
     priv->available_view_button = GTK_TOGGLE_BUTTON(available_view);
     priv->updates_view_button = GTK_TOGGLE_BUTTON(updates_view);
@@ -2791,26 +2834,27 @@ gsword_library_page_new(GswordWindow *self)
 GtkWidget *
 gsword_library_page_widget(GswordLibraryPage *page)
 {
-    return page != NULL ? page->root : NULL;
+    g_return_val_if_fail(GSWORD_IS_LIBRARY_PAGE(page), NULL);
+    return gsword_page_get_widget(GSWORD_PAGE(page));
 }
 
 void
 gsword_library_page_refresh_sources(GswordLibraryPage *page)
 {
-    if (page != NULL)
-        gsword_window_refresh_install_sources(page->window);
+    if (GSWORD_IS_LIBRARY_PAGE(page))
+        gsword_window_refresh_install_sources(LIBRARY_WINDOW(page));
 }
 
 void
 gsword_library_page_refresh_installed(GswordLibraryPage *page)
 {
-    if (page != NULL)
-        gsword_window_refresh_installed_list(page->window);
+    if (GSWORD_IS_LIBRARY_PAGE(page))
+        gsword_window_refresh_installed_list(LIBRARY_WINDOW(page));
 }
 
 void
 gsword_library_page_refresh_remote(GswordLibraryPage *page)
 {
-    if (page != NULL)
-        gsword_window_refresh_remote_modules(page->window);
+    if (GSWORD_IS_LIBRARY_PAGE(page))
+        gsword_window_refresh_remote_modules(LIBRARY_WINDOW(page));
 }
