@@ -21,6 +21,7 @@
 #include "reader-page.h"
 #include "preferences-dialog.h"
 #include "window-private.h"
+#include "window-internal.h"
 
 #include <glib/gi18n.h>
 
@@ -33,46 +34,13 @@ struct _GswordWindow {
     AdwApplicationWindow parent_instance;
 };
 
-typedef struct {
-    GswManager *manager;
-    GSettings *settings;
-    GswModule *module;
-    GswordModuleSidebar *module_sidebar;
-    AdwOverlaySplitView *split_view;
-    GtkToggleButton *sidebar_button;
-    gboolean sidebar_visible;
-    gboolean sidebar_updating;
-    GswordWorkspacePage *workspace_page;
-    GswordReaderPage *reader_page;
-    AdwViewStack *content_stack;
-    gboolean page_restored;
-    GtkLabel *status_label;
-    AdwToastOverlay *toast_overlay;
-
-    GswordSearchPage *search_page;
-    gchar *search_return_page;
-
-    GswordLibraryPage *library_page;
-    gchar *library_return_page;
-
-    GswordPlanStore *plans;
-    GswordPlanPage *plan_page;
-    GswordPrayerStore *prayers;
-    GswordInsightStore *insights;
-    GswordBookmarkStore *bookmarks;
-    GswordPrayerPage *prayer_page;
-    GswordTodayPage *today_page;
-    GswordCollectionsPage *collections_page;
-    GswordPersonalPage *personal_page;
-
-    GswordTeachingPage *teaching_page;
-    GswordResourcePage *resource_page;
-
-    GswordNotesStore *notes;
-    GswordNotesPage *notes_page;
-} GswordWindowPrivate;
-
 G_DEFINE_TYPE_WITH_PRIVATE(GswordWindow, gsword_window, ADW_TYPE_APPLICATION_WINDOW)
+
+GswordWindowPrivate *
+gsword_window_get_private(GswordWindow *self)
+{
+    return gsword_window_get_instance_private(self);
+}
 
 GswManager *
 gsword_window_get_manager(GswordWindow *self)
@@ -1270,76 +1238,9 @@ gsword_window_build(GswordWindow *self)
     g_signal_connect(priv->split_view, "notify::show-sidebar",
                      G_CALLBACK(on_sidebar_visibility_changed), self);
 
-    priv->search_page = gsword_search_page_new(self);
-    priv->teaching_page = gsword_teaching_page_new(self);
-    priv->resource_page = gsword_resource_page_new(self);
-    priv->notes_page = gsword_notes_page_new(self);
-    priv->plan_page = gsword_plan_page_new(self);
-    priv->today_page = gsword_today_page_new(self);
-    priv->prayer_page = gsword_prayer_page_new(self);
-    priv->collections_page = gsword_collections_page_new(self);
-    priv->personal_page = gsword_personal_page_new(
-        self, gsword_today_page_widget(priv->today_page),
-        gsword_notes_page_widget(priv->notes_page),
-        gsword_prayer_page_widget(priv->prayer_page),
-        gsword_plan_page_widget(priv->plan_page),
-        gsword_collections_page_widget(priv->collections_page));
+    gsword_window_build_pages(self);
     gsword_personal_page_set_section_changed_func(
         priv->personal_page, on_personal_section_changed, self);
-    priv->library_page = gsword_library_page_new(self);
-    priv->content_stack = ADW_VIEW_STACK(adw_view_stack_new());
-    adw_view_stack_set_hhomogeneous(priv->content_stack, FALSE);
-    adw_view_stack_set_vhomogeneous(priv->content_stack, FALSE);
-    priv->reader_page = gsword_reader_page_new(self);
-    adw_view_stack_add_titled_with_icon(priv->content_stack,
-                                        gsword_reader_page_widget(
-                                            priv->reader_page),
-                                        "reader", _("Reading"),
-                                        "x-office-document-symbolic");
-    priv->workspace_page = gsword_workspace_page_new(self);
-    adw_view_stack_add_titled_with_icon(priv->content_stack,
-                                        gsword_workspace_page_widget(
-                                            priv->workspace_page),
-                                        "compare", _("Compare"),
-                                        "view-dual-symbolic");
-    {
-        AdwViewStackPage *page;
-
-        page = adw_view_stack_add_named(priv->content_stack,
-                                        gsword_search_page_widget(
-                                            priv->search_page),
-                                        "search");
-        adw_view_stack_page_set_visible(page, FALSE);
-    }
-    adw_view_stack_add_titled_with_icon(priv->content_stack,
-                                        gsword_personal_page_widget(
-                                            priv->personal_page),
-                                        "personal", _("Personal"),
-                                        "avatar-default-symbolic");
-    {
-        AdwViewStackPage *page;
-
-        page = adw_view_stack_add_named(priv->content_stack,
-                                        gsword_teaching_page_widget(
-                                            priv->teaching_page),
-                                        "teaching");
-        adw_view_stack_page_set_visible(page, FALSE);
-        page = adw_view_stack_add_named(priv->content_stack,
-                                        gsword_resource_page_widget(
-                                            priv->resource_page),
-                                        "resource");
-        adw_view_stack_page_set_visible(page, FALSE);
-    }
-    {
-        AdwViewStackPage *page;
-
-        page = adw_view_stack_add_named(priv->content_stack,
-                                        gsword_library_page_widget(
-                                            priv->library_page),
-                                        "library");
-        adw_view_stack_page_set_visible(page, FALSE);
-    }
-    adw_view_stack_set_visible_child_name(priv->content_stack, "reader");
     g_signal_connect(priv->content_stack, "notify::visible-child",
                      G_CALLBACK(on_workspace_changed), self);
 
@@ -1569,20 +1470,8 @@ static void
 gsword_window_dispose(GObject *object)
 {
     GswordWindow *self = GSWORD_WINDOW(object);
-    GswordWindowPrivate *priv = gsword_window_get_instance_private(self);
 
-    g_clear_object(&priv->today_page);
-    g_clear_object(&priv->search_page);
-    g_clear_object(&priv->teaching_page);
-    g_clear_object(&priv->personal_page);
-    g_clear_object(&priv->prayer_page);
-    g_clear_object(&priv->resource_page);
-    g_clear_object(&priv->plan_page);
-    g_clear_object(&priv->notes_page);
-    g_clear_object(&priv->collections_page);
-    g_clear_object(&priv->workspace_page);
-    g_clear_object(&priv->reader_page);
-    g_clear_object(&priv->library_page);
+    gsword_window_dispose_pages(self);
 
     G_OBJECT_CLASS(gsword_window_parent_class)->dispose(object);
 }
