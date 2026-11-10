@@ -4,9 +4,8 @@
  * plan-page.c: reading plan page for the gsword window
  */
 
-#include "app-locale.h"
-#include "gsword-reference-parser.h"
 #include "plan-page.h"
+#include "reference-utils.h"
 #include "devotion-page.h"
 #include "memory-page.h"
 #include "window-private.h"
@@ -59,16 +58,12 @@ plan_start_reference_valid(const gchar *start_ref)
 {
     GswordReference reference;
     GError *error = NULL;
-    gchar *locale;
     gboolean valid;
 
     if (start_ref == NULL || *start_ref == '\0')
         return FALSE;
     memset(&reference, 0, sizeof(reference));
-    locale = gsword_app_locale_name();
-    valid = gsword_reference_parse(start_ref, locale, "KJV", &reference,
-                                   &error);
-    g_free(locale);
+    valid = gsword_reference_parse_ui(start_ref, &reference, &error);
     g_clear_error(&error);
     gsword_reference_clear(&reference);
     return valid;
@@ -79,7 +74,8 @@ generate_plan_references(const gchar *start_ref, gint days,
                          gint chapters_per_day)
 {
     GPtrArray *references = g_ptr_array_new_with_free_func(g_free);
-    GswVerseKey *key;
+    GswordReference parsed;
+    GError *error = NULL;
     GswVersificationMgr *mgr;
     GswVersification *versification;
     gint global_book;
@@ -90,25 +86,22 @@ generate_plan_references(const gchar *start_ref, gint days,
     gint extra;
     gint day;
 
-    if (!plan_start_reference_valid(start_ref))
-        return references;
-    key = gsw_verse_key_new(start_ref, NULL);
-    if (key == NULL)
-        return references;
-    global_book = gsw_verse_key_get_global_book_number(key);
-    chapter = gsw_verse_key_get_chapter(key);
-    if (global_book < 0 || chapter < 1) {
-        gsw_key_unref(key);
+    memset(&parsed, 0, sizeof(parsed));
+    if (!gsword_reference_parse_ui(start_ref, &parsed, &error)) {
+        g_clear_error(&error);
+        gsword_reference_clear(&parsed);
         return references;
     }
+    global_book = parsed.book;
+    chapter = parsed.chapter;
+    gsword_reference_clear(&parsed);
+    if (global_book < 0 || chapter < 1)
+        return references;
 
     mgr = gsw_versification_mgr_get_default();
-    versification = gsw_versification_mgr_get_system(
-        mgr, gsw_verse_key_get_versification(key));
-    if (versification == NULL) {
-        gsw_key_unref(key);
+    versification = gsw_versification_mgr_get_system(mgr, "KJV");
+    if (versification == NULL)
         return references;
-    }
     book_count = gsw_versification_get_book_count(versification);
 
     {
@@ -130,10 +123,8 @@ generate_plan_references(const gchar *start_ref, gint days,
         }
     }
 
-    if (total_chapters <= 0) {
-        gsw_key_unref(key);
+    if (total_chapters <= 0)
         return references;
-    }
 
     if (total_chapters <= days * chapters_per_day) {
         per_day = total_chapters / days;
@@ -175,7 +166,6 @@ generate_plan_references(const gchar *start_ref, gint days,
             }
         }
     }
-    gsw_key_unref(key);
     return references;
 }
 
@@ -194,39 +184,6 @@ selected_plan(GswordPlanPage *page)
     }
     return page->items->len > 0
          ? g_ptr_array_index(page->items, 0) : NULL;
-}
-
-static gchar *
-localize_plan_reference(const gchar *reference)
-{
-    GswVerseKey *key;
-    const gchar *book;
-    gint chapter;
-    gint verse;
-    gchar *locale;
-    gchar *result;
-
-    if (reference == NULL || *reference == '\0')
-        return g_strdup("");
-    key = gsw_verse_key_new(reference, NULL);
-    locale = gsword_app_locale_name();
-    if (key != NULL)
-        gsw_key_set_locale((GswKey *)key, locale);
-    g_free(locale);
-    if (key == NULL || gsw_verse_key_get_book(key) <= 0 ||
-        gsw_verse_key_get_chapter(key) <= 0) {
-        g_clear_pointer(&key, gsw_key_unref);
-        return g_strdup(reference);
-    }
-    book = gsw_verse_key_get_book_name(key);
-    chapter = gsw_verse_key_get_chapter(key);
-    verse = gsw_verse_key_get_verse(key);
-    if (verse > 1)
-        result = g_strdup_printf("%s %d:%d", book, chapter, verse);
-    else
-        result = g_strdup_printf("%s %d", book, chapter);
-    gsw_key_unref((GswKey *)key);
-    return result;
 }
 
 static void
@@ -358,7 +315,7 @@ refresh_views(GswordPlanPage *page)
         g_free(summary);
     }
     if (plan->next_day > 0) {
-        gchar *reference = localize_plan_reference(plan->next_reference);
+        gchar *reference = gsword_reference_localize(plan->next_reference, FALSE);
         gchar *today = g_strdup_printf(_("Day %d: %s"), plan->next_day,
                                        reference);
 
@@ -395,7 +352,7 @@ refresh_views(GswordPlanPage *page)
             row = gtk_list_box_row_new();
             box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
             check = gtk_check_button_new();
-            gchar *localized = localize_plan_reference(day->reference);
+            gchar *localized = gsword_reference_localize(day->reference, FALSE);
 
             is_today = day->day == plan->next_day;
             day_number = g_strdup_printf("%d", day->day);
@@ -649,14 +606,14 @@ update_plan_preview(gpointer data)
     if (references->len == 0) {
         text = g_strdup(_("Preview unavailable for this reference."));
     } else {
-        gchar *first = localize_plan_reference(
-            g_ptr_array_index(references, 0));
+        gchar *first = gsword_reference_localize(
+            g_ptr_array_index(references, 0), FALSE);
 
         if (references->len == 1) {
             text = g_strdup_printf(_("Day 1: %s"), first);
         } else {
-            gchar *last = localize_plan_reference(
-                g_ptr_array_index(references, references->len - 1));
+            gchar *last = gsword_reference_localize(
+                g_ptr_array_index(references, references->len - 1), FALSE);
 
             text = g_strdup_printf(_("Day 1: %s\nDay %u: %s"),
                                    first, references->len, last);

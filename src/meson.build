@@ -27,7 +27,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
      'today-page.c',
      'prayer-page.c', 'insight-page.c', 'bookmark-page.c',
      'collections-page.c', 'app-paths.c', 'app-locale.c',
-     'verse-preview.c',
+     'reference-utils.c', 'verse-preview.c',
      'gsword-reference-chooser.c', 'gsword-reference-parser.c'],
     dependencies: app_deps,
     c_args: app_c_args,
