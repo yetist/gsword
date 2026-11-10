@@ -50,6 +50,35 @@ update_column_buttons(GswordWorkspacePage *page)
     }
 }
 
+static gint
+max_columns_for_window(GswordWorkspacePage *page)
+{
+    gint width = 0;
+
+    if (page == NULL || page->window == NULL)
+        return 4;
+    width = gtk_widget_get_width(GTK_WIDGET(page->window));
+    if (width <= 0)
+        gtk_window_get_default_size(GTK_WINDOW(page->window), &width, NULL);
+    return width > 0 && width < 1000 ? 2 : 4;
+}
+
+static gboolean
+clamp_columns_to_window(GswordWorkspacePage *page)
+{
+    gint maximum;
+
+    if (page == NULL)
+        return FALSE;
+    maximum = max_columns_for_window(page);
+    if (page->columns <= maximum)
+        return FALSE;
+    page->columns = maximum;
+    update_column_buttons(page);
+    gsword_workspace_page_reflow(page);
+    return TRUE;
+}
+
 static gchar *
 default_module(GswordWorkspacePage *page)
 {
@@ -579,6 +608,7 @@ gsword_workspace_page_restore(GswordWorkspacePage *page)
     }
     if (columns < 1 || columns > 4)
         columns = 2;
+    columns = MIN(columns, max_columns_for_window(page));
     page->restoring = TRUE;
     page->columns = columns;
     update_column_buttons(page);
@@ -898,6 +928,22 @@ on_empty_add_clicked(GtkButton *button, gpointer user_data)
 }
 
 static void
+on_workspace_map(GtkWidget *widget, gpointer user_data)
+{
+    (void)widget;
+    clamp_columns_to_window(user_data);
+}
+
+static void
+on_workspace_window_width_changed(GObject *object, GParamSpec *pspec,
+                                  gpointer user_data)
+{
+    (void)object;
+    (void)pspec;
+    clamp_columns_to_window(user_data);
+}
+
+static void
 on_column_toggled(GtkToggleButton *button, gpointer user_data)
 {
     GswordWorkspacePage *page = user_data;
@@ -911,6 +957,7 @@ on_column_toggled(GtkToggleButton *button, gpointer user_data)
         gtk_widget_get_width(GTK_WIDGET(page->window)) < 1000) {
         page->columns = 2;
         update_column_buttons(page);
+        gsword_workspace_page_reflow(page);
         gsword_window_set_status(
             page->window, _("Narrow windows support at most two comparison panes"));
         return;
@@ -989,6 +1036,9 @@ gsword_workspace_page_new(GswordWindow *window)
 
     page->window = window;
     page->root = box;
+    g_signal_connect(box, "map", G_CALLBACK(on_workspace_map), page);
+    g_signal_connect(window, "notify::width",
+                     G_CALLBACK(on_workspace_window_width_changed), page);
     page->panes = g_ptr_array_new_with_free_func(
         (GDestroyNotify)gsword_workspace_pane_free);
 
