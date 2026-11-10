@@ -60,6 +60,11 @@ struct _GswordReaderPage {
     gsword_page_get_window(GSWORD_PAGE(page))
 
 void gsword_reader_page_build_context_menu(GswordReaderPage *page);
+void gsword_reader_page_apply_highlights(GswordReaderPage *page);
+void gsword_reader_page_clear_range(GswordReaderPage *page);
+void gsword_reader_page_apply_range(GswordReaderPage *page);
+gboolean gsword_reader_page_verse_at_position(GtkTextView *view, gdouble x,
+                                              gdouble y, gint *verse);
 
 G_END_DECLS
 
