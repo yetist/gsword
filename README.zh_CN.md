@@ -258,15 +258,9 @@ meson compile -C build-doc docs
 ## 文档
 
 - [`docs/design.md`](docs/design.md)：libgsword 架构、对象模型和 API 设计
-- [`docs/milestones.md`](docs/milestones.md)：M0–M13 实现记录和验收条件
 - [`docs/formats.md`](docs/formats.md)：配置文件、模块目录、Raw/z 存储格式和安装源
 - [`docs/upstream-analysis.md`](docs/upstream-analysis.md)：上游 SWORD 1.9 源码分析
 - [`docs/app-design.md`](docs/app-design.md)：GSword 桌面应用的功能与界面设计
-- [`docs/personal-prayer-design.md`](docs/personal-prayer-design.md)：全局信息架构与个人中心规划（笔记、祷告、计划、收藏、书签、收获）
-- [`docs/workspace-design.md`](docs/workspace-design.md)：阅读工作区、活动经文和多资源协同设计
-- [`docs/reference-chooser.md`](docs/reference-chooser.md)：书卷/章/节引用选择器设计
-- [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md)：GTK4 窗口页面对象拆分计划
-- [`docs/window-refactor-acceptance.md`](docs/window-refactor-acceptance.md)：窗口重构验收记录
 
 ## 依赖
 

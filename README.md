@@ -258,15 +258,9 @@ meson compile -C build-doc docs
 ## Documentation
 
 - [`docs/design.md`](docs/design.md): libgsword architecture, object model, and API design
-- [`docs/milestones.md`](docs/milestones.md): M0–M13 implementation record and acceptance criteria
 - [`docs/formats.md`](docs/formats.md): configuration files, module directories, Raw/z storage formats, and install sources
 - [`docs/upstream-analysis.md`](docs/upstream-analysis.md): upstream SWORD 1.9 source analysis
 - [`docs/app-design.md`](docs/app-design.md): GSword desktop application features and UI design
-- [`docs/personal-prayer-design.md`](docs/personal-prayer-design.md): global information architecture and personal center plan (notes, prayer, plans, collections, bookmarks, insights)
-- [`docs/workspace-design.md`](docs/workspace-design.md): reading workspace, active verse, and multi-resource study design
-- [`docs/reference-chooser.md`](docs/reference-chooser.md): book/chapter/verse reference chooser design
-- [`docs/window-refactor-plan.md`](docs/window-refactor-plan.md): GTK4 window page object split plan
-- [`docs/window-refactor-acceptance.md`](docs/window-refactor-acceptance.md): window refactor acceptance record
 
 ## Dependencies
 
