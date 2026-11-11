@@ -41,7 +41,7 @@ if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
       sh = find_program('sh')
       test('app-ui-smoke', xvfb_run,
         args: [
-          '-a', sh,
+          '-a', sh.full_path(),
           meson.project_source_root() / 'tests/app-ui-smoke.sh',
           gsword_app.full_path(),
         ],

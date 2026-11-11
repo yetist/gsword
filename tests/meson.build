@@ -222,7 +222,7 @@ if get_option('tests')
       )
       test('ui-smoke', xvfb_run,
         args: ['-a', test_ui_smoke],
-        env: ['GSETTINGS_BACKEND=memory', 'ASAN_OPTIONS=detect_leaks=0'],
+        env: ['GSETTINGS_BACKEND=memory', 'ASAN_OPTIONS=detect_leaks=0', 'GTK_A11Y=none'],
         is_parallel: false,
         timeout: 30)
     endif

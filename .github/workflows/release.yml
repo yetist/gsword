@@ -43,6 +43,8 @@ jobs:
             meson \
             ninja-build \
             pkg-config \
+            xauth \
+            xvfb \
             zlib1g-dev
 
       - name: Configure
