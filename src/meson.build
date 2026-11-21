@@ -7,8 +7,11 @@ gtksourceview_dep = dependency('gtksourceview-5', required: false)
 
 if gtk4_dep.found() and adw_dep.found() and sqlite3_dep.found()
   app_deps = [gsword_dep, gtk4_dep, adw_dep, sqlite3_dep]
+  icon_install_dir = join_paths(
+    get_option('prefix'), get_option('datadir'), 'icons')
   app_c_args = [
-    '-DGSW_ICON_DIR="' + meson.project_source_root() + '/data/icons"',
+    '-DGSW_ICON_DIR="' + icon_install_dir + '"',
+    '-DGSW_SOURCE_ICON_DIR="' + meson.project_source_root() + '/data/icons"',
   ]
   if gtksourceview_dep.found()
     app_deps += gtksourceview_dep

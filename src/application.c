@@ -55,13 +55,21 @@ gsword_application_startup(GApplication *application)
 
     G_APPLICATION_CLASS(gsword_application_parent_class)->startup(application);
 
-#ifdef GSW_ICON_DIR
+#if defined(GSW_ICON_DIR) || defined(GSW_SOURCE_ICON_DIR)
     {
         GdkDisplay *display = gdk_display_get_default();
 
-        if (display != NULL)
-            gtk_icon_theme_add_search_path(
-                gtk_icon_theme_get_for_display(display), GSW_ICON_DIR);
+        if (display != NULL) {
+            GtkIconTheme *theme = gtk_icon_theme_get_for_display(display);
+
+#ifdef GSW_ICON_DIR
+            gtk_icon_theme_add_search_path(theme, GSW_ICON_DIR);
+#endif
+#ifdef GSW_SOURCE_ICON_DIR
+            if (g_file_test(GSW_SOURCE_ICON_DIR, G_FILE_TEST_IS_DIR))
+                gtk_icon_theme_add_search_path(theme, GSW_SOURCE_ICON_DIR);
+#endif
+        }
     }
 #endif
     gtk_window_set_default_icon_name("org.gsword.GSword");
